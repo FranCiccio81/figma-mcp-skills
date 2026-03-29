@@ -1,1 +1,2 @@
-# Voir SETUP.md complet sur le chat Claude
+# SETUP — voir le fichier complet sur ce chat Claude
+# Version complète avec 63 skills disponible sur demande
