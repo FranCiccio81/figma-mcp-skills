@@ -32,7 +32,7 @@ vendor (react, react-dom, babel) → `lib_dc6bb704` → **`swiss-params-2025.js`
 JSX components → `app-shell.js` (mounts last). `swiss-params` must precede `pp-engine`; `live-engine` is last of the engine scripts.
 
 ## Where things live
-- **Front-end / design:** `index.html` (inline CSS = Bridge 2.0 tokens), `ui-*.js`, `comp_*.js`, `app-shell.js`.
+- **Front-end / design:** `index.html` (inline CSS = Bridge 2.0 tokens), `ui-*.js`, the named screen modules (`scenes.js`, `dashboard-living.js`, `readiness-app-v2.js`, `ai-widgets.js`, `ai-assistant.js`, `product-recs.js`, `advisor-glance.js`, `convo-onboard.js`, `dev-tweaks.js`), `app-shell.js`.
 - **Engine / logic:** `pp-*.js`, `ppai.js`, `live-engine.js`, `swiss-params-2025.js`.
 - **Don't edit:** `assets/js/vendor/*` (pre-minified React/ReactDOM/Babel).
 
@@ -52,7 +52,7 @@ JSX components → `app-shell.js` (mounts last). `swiss-params` must precede `pp
 ## Good next tasks
 - ✅ Done — reconciliation banner on the confirm screen (`ReconBanner` in `ui-upload.js`): reads `_checks`/`_flags`, shows cross-check ✓ / N need review ⚠ / N don't reconcile.
 - ✅ Verified — mobile layout already reflows from the same engine via the `.pp-mobile` responsive CSS + viewport toggle (`window.__ppSetMobile`). No horizontal overflow at 390px.
-- Rename `comp_*.js` to what each screen actually is (cosmetic; remember the load order in `index.html` is critical — update every `<script>` ref and any cross-file globals together).
+- ✅ Done — the old `comp_*.js` files are renamed to what each screen is (`scenes.js`, `dashboard-living.js`, `readiness-app-v2.js`, `ai-widgets.js`, `ai-assistant.js`, `product-recs.js`, `advisor-glance.js`, `convo-onboard.js`, `dev-tweaks.js`). Load order in `index.html` is unchanged — files cross-reference via `window` globals, not filenames.
 
 ## Asset wiring (don't re-break)
 The images are bundled as hashed files under `assets/img/`. `index.html` defines

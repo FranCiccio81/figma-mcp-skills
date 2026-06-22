@@ -39,9 +39,17 @@ app/
       ppai.js                     ← AI gateway (BYOK + saved key + native vision)
       live-engine.js              ← readFile → extract → build → enrich + validate()
       ui-kit.js                   shared components (incl. ConfirmCorrect)
-      ui-upload.js                ← the upload + OCR + confirm-figures flow
+      ui-upload.js                ← the upload + OCR + confirm-figures flow (incl. reconciliation banner)
       app-shell.js                top-level app, screens, key modal (mounts last)
-      comp_*.js                   remaining screen components
+      dev-tweaks.js               prototype tweaks/dev-control panel
+      dashboard-living.js         LivingDashboard + readiness hero & charts
+      scenes.js                   welcome / upload / confirm / gapfill / manual scenes + convos
+      convo-onboard.js            conversational onboarding flow
+      ai-widgets.js               in-chat AI result widgets (gauge, scenarios, plans…)
+      product-recs.js             Swissquote catalog cross-sell cards
+      advisor-glance.js           advisor "at a glance" summary
+      ai-assistant.js             voice/chat AI assistant
+      readiness-app-v2.js         V2 readiness experience (ReadinessApp)
     fonts/                        Inter, Roboto Mono, Remix Icon (vendored)
     img/                          icons / illustration
 ```
@@ -59,7 +67,7 @@ The four `←` files are where the upgrades live; everything else is your origin
 
 ## Where to iterate
 
-- **Design / front-end:** `index.html` (inline CSS = your Bridge 2.0 tokens), `ui-*.js`, `comp_*.js`, `app-shell.js`. Editing these changes the look and flow; the engine is untouched.
+- **Design / front-end:** `index.html` (inline CSS = your Bridge 2.0 tokens), `ui-*.js`, the named screen modules (`scenes.js`, `dashboard-living.js`, `readiness-app-v2.js`, `ai-*.js`, `product-recs.js`, `advisor-glance.js`, `convo-onboard.js`, `dev-tweaks.js`), `app-shell.js`. Editing these changes the look and flow; the engine is untouched.
 - **Engine / logic:** the `pp-*.js`, `ppai.js`, `live-engine.js`, `swiss-params-2025.js`. Editing these changes extraction, scoring, and the Swiss model.
 
 The contract between them: the engine returns a `persona` object; the components render it.
