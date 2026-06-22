@@ -50,9 +50,15 @@ JSX components → `app-shell.js` (mounts last). `swiss-params` must precede `pp
 - **Prototype, not production:** BYOK key is browser-side. For customer-facing, move it behind a backend proxy. Keep FINMA / revDSG disclaimers. Not financial/tax advice.
 
 ## Good next tasks
-- Surface a reconciliation banner on the confirm screen ("figures cross-check ✓ / N need review ⚠").
-- Build the mobile layout from the same engine.
-- Rename `comp_*.js` to what each screen actually is.
+- ✅ Done — reconciliation banner on the confirm screen (`ReconBanner` in `ui-upload.js`): reads `_checks`/`_flags`, shows cross-check ✓ / N need review ⚠ / N don't reconcile.
+- ✅ Verified — mobile layout already reflows from the same engine via the `.pp-mobile` responsive CSS + viewport toggle (`window.__ppSetMobile`). No horizontal overflow at 390px.
+- Rename `comp_*.js` to what each screen actually is (cosmetic; remember the load order in `index.html` is critical — update every `<script>` ref and any cross-file globals together).
+
+## Asset wiring (don't re-break)
+The images are bundled as hashed files under `assets/img/`. `index.html` defines
+`window.__resources` mapping them to the names the components expect
+(`heroRetire` → `464c4b28.png`, `brandSwissquote` → `1584b969.png`, `brandYuh` → `424ee148.png`).
+Without this map the hero + brand logos 404.
 
 ## Test
 Serve → key or demo → upload a tax return (+ certificate) → confirm figures → portrait renders.
