@@ -325,6 +325,60 @@ function BuildLoader() {
   );
 }
 
+/* ── Reconciliation banner (EPIC: trust) ───────────────────────────
+   Surfaces the deterministic self-checks PP_LIVE.validate() ran during
+   extraction. Pure presentation: it reads ex._checks / ex._flags only,
+   never recomputes — the maths stays in the engine. Three tones:
+   ✓ figures cross-check · ⚠ a few need review · ✗ figures don't reconcile. */
+function ReconBanner({ ex }) {
+  if (!ex) return null;
+  const checks = ex._checks || [];
+  const flags = ex._flags || [];
+  const passed = checks.filter((c) => c.status === "pass").length;
+  const failed = checks.filter((c) => c.status === "fail").length;
+  const reviews = flags.length;
+  if (passed === 0 && failed === 0 && reviews === 0) return null; // nothing checkable yet
+
+  const tone = failed > 0 ? "bad" : reviews > 0 ? "warn" : "ok";
+  const P = {
+    ok:   { bg: "var(--ontrack-50)", bd: "var(--ontrack)", fg: "var(--ontrack-700)", ic: "ri-checkbox-circle-fill" },
+    warn: { bg: "var(--warning-50)", bd: "var(--warning)", fg: "var(--warning)",     ic: "ri-error-warning-fill" },
+    bad:  { bg: "var(--danger-50)",  bd: "var(--danger)",  fg: "var(--danger)",      ic: "ri-alert-fill" },
+  }[tone];
+  const plural = (n) => (n === 1 ? "" : "s");
+  const title = tone === "ok"
+    ? "Figures cross-check ✓"
+    : tone === "bad"
+      ? failed + " figure" + plural(failed) + " don’t reconcile"
+      : reviews + " figure" + plural(reviews) + " need a quick look";
+  const sub = tone === "ok"
+    ? passed + " reconciliation" + plural(passed) + " passed — your numbers are internally consistent."
+    : "Nothing is wrong with your plan; these just need your eye before we trust them.";
+
+  return (
+    <div role="status" style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "11px 13px", marginBottom: 12, borderRadius: 12, background: P.bg, border: "1px solid " + P.bd }}>
+      <i className={P.ic} style={{ color: P.fg, fontSize: 18, lineHeight: 1.2, flex: "0 0 auto" }} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ font: "700 12.5px/1.35 var(--font-display)", color: P.fg }}>{title}</div>
+        <div style={{ font: "400 11.5px/1.45 var(--font-body)", color: "var(--fg-3)", marginTop: 2 }}>{sub}</div>
+        {reviews > 0 && (
+          <ul style={{ margin: "7px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+            {flags.slice(0, 4).map((f, i) => (
+              <li key={i} style={{ font: "400 11px/1.4 var(--font-body)", color: "var(--fg-3)", display: "flex", gap: 6 }}>
+                <i className="ri-arrow-right-s-line" style={{ color: P.fg, flex: "0 0 auto" }} /><span style={{ minWidth: 0 }}>{f}</span>
+              </li>
+            ))}
+            {flags.length > 4 && <li style={{ font: "400 11px/1.4 var(--font-body)", color: "var(--fg-4)" }}>+{flags.length - 4} more</li>}
+          </ul>
+        )}
+      </div>
+      {passed > 0 && (
+        <span style={{ marginLeft: "auto", flex: "0 0 auto", font: "700 10.5px/1 var(--font-body)", color: P.fg, background: "#fff", borderRadius: 999, padding: "5px 9px" }}>{passed}/{passed + failed} ok</span>
+      )}
+    </div>
+  );
+}
+
 function TaxUploadModal({ open, onClose, persona, toast, onDone }) {
   const [mount, setMount] = React.useState(open);
   const [show, setShow] = React.useState(false);
@@ -517,6 +571,7 @@ function TaxUploadModal({ open, onClose, persona, toast, onDone }) {
                 <div className="ub"><div className="fn">{(step === 1 ? "Tax return" : "Pension certificate") + " " + (anyReal() ? "analysed" : "read")}</div><div className="fs" style={{ color: "var(--ontrack)" }}>{(filesRef.current[step === 1 ? "tax" : "lpp"] && filesRef.current[step === 1 ? "tax" : "lpp"].name) || cur.file} · {fields.filter((f) => f.real).length > 0 ? fields.filter((f) => f.real).length + " read from your document" : fields.length + " fields, review below"}</div></div>
                 <span style={{ font: "700 11px/1 var(--font-body)", color: "var(--ontrack)", background: "#fff", borderRadius: 999, padding: "5px 10px", flex: "0 0 auto" }}>{(up.tax ? 1 : 0) + (up.lpp ? 1 : 0)} of 2</span>
               </div>
+              <ReconBanner ex={ex} />
               <div className="ppm-ocr-fields">
                 {fields.map((f) => <ConfirmCorrect key={f.key} field={f} onResolve={(fk, v) => { const map = { income: "grossIncome", wealth: "netWorth", canton: "canton", p2: "pillar2", p3a: "pillar3a", retire: "retireAge" }; const tgt = map[fk]; if (!tgt) return; const dkey = step === 1 ? "tax" : "lpp"; let val = v; if (tgt !== "canton") { val = Number(String(v).replace(/[^0-9.\-]/g, "")); if (isNaN(val)) return; } setExData((d) => { const cur = Object.assign({}, d[dkey]); cur[tgt] = val; cur._extracted = Object.assign({}, cur._extracted, { [tgt]: true }); cur._confirmed = Object.assign({}, cur._confirmed, { [tgt]: true }); return Object.assign({}, d, { [dkey]: cur }); }); }} />)}
               </div>
