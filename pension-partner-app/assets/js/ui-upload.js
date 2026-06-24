@@ -462,7 +462,7 @@ function TaxUploadModal({ open, onClose, persona, toast, onDone }) {
     }, 110);
     timers.current.push(iv);
   };
-  const nextStep = (to) => { setStep(to || 2); setState("idle"); setProg(0); setErr(null); };
+  const nextStep = (to) => { const n = (typeof to === "number") ? to : 2; setStep(n); setState("idle"); setProg(0); setErr(null); };
   const finish = () => {
     setState("building");
     const real = anyReal();
@@ -581,7 +581,7 @@ function TaxUploadModal({ open, onClose, persona, toast, onDone }) {
                   <a className="ppm-foot-link" onClick={() => { onClose(); window.__ppOpenConsult && window.__ppOpenConsult(); }}><i className="ri-user-voice-line" />Contact a consultant</a>
                 </div>
                 {step === 1
-                  ? <button className="pp-btn pp-btn-brand pp-btn-sm" onClick={nextStep}><i className="ri-arrow-right-line" />Confirm &amp; add pension certificate</button>
+                  ? <button className="pp-btn pp-btn-brand pp-btn-sm" onClick={() => nextStep(2)}><i className="ri-arrow-right-line" />Confirm &amp; add pension certificate</button>
                   : <button className="pp-btn pp-btn-brand pp-btn-sm" onClick={() => nextStep(3)} disabled={!(up.tax && up.lpp)}><i className="ri-arrow-right-line" />Confirm &amp; add a few words</button>}
               </div>
             </>
