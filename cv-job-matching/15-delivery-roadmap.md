@@ -137,3 +137,88 @@ Chevauchements assumés : E13 court de S6 à S13 (l'annotation humaine est le ch
 4. L'alpha fermée : recrutement des 20–50 testeurs 🟡 (canal, incitation) — à lancer dès M3 pour ne pas bloquer M5.
 5. La revue juridique AI Act (R2) doit-elle être rendue avant l'ouverture de l'alpha ou avant le lancement public ?
 6. Faut-il un jalon M4.5 de « gel des prompts » (version figée pour l'alpha) pour stabiliser les mesures H2/H4 ?
+
+---
+
+## Annexe — Phase 10 : Préparation de l'implémentation
+
+### A. Arborescence du repository (monorepo)
+
+```
+boussole/
+├── api/                          # FastAPI (Python 3.12)
+│   ├── app/
+│   │   ├── modules/              # frontières D01 — un package par module
+│   │   │   ├── auth/  profiles/  preferences/  ingestion/
+│   │   │   ├── jobs/  matching/  explanations/  generation/
+│   │   │   ├── applications/  privacy/
+│   │   │   └── (chaque module : router.py, service.py, repository.py, schemas.py, purge.py)
+│   │   ├── ai/                   # LLM gateway (providers/, tasks/, schemas/, anchoring.py)
+│   │   ├── core/                 # config, db, redis, sécurité, observabilité
+│   │   └── workers/              # tâches Celery par file (ingestion, ai, scoring, maintenance)
+│   ├── alembic/                  # migrations (0001 = initial-schema.sql)
+│   ├── config/scoring-config.json
+│   ├── prompts/                  # templates versionnés (source des template_key)
+│   └── tests/  (unit/ integration/ prompts/ eval/)
+├── web/                          # Next.js App Router (TS, Tailwind, shadcn/ui)
+│   ├── app/  (auth)/ (main)/dashboard offres candidatures profil preferences parametres
+│   ├── components/  lib/api/     # client typé généré depuis openapi.yaml
+│   └── messages/fr.json en.json  # i18n (D15)
+├── infra/                        # docker-compose.dev.yml, Dockerfiles, IaC 🟡, CI
+├── docs/                         # les présents livrables 01–17 + artefacts
+└── datasets/                     # jeux de référence versionnés (eval-set-vX, prompts)
+```
+
+### B. Conventions
+
+- **Python** : ruff + mypy strict sur `matching/` et `ai/` ; imports inter-modules uniquement via `modules/<x>/service.py` (contrôlé par import-linter — D01) ; le module `matching/` n'importe jamais `ai/` (gate CI, D02).
+- **TypeScript** : ESLint + Prettier ; types API générés depuis `openapi.yaml` (openapi-typescript) — jamais écrits à la main ; Zod pour les formulaires (RHF).
+- **Git** : trunk-based, branches courtes `feat/…`, revue obligatoire, Conventional Commits ; un changement de `scoring-config.json` ou `prompts/` exige le label `needs-eval` (déclenche le run d'évaluation).
+- **API** : tout endpoint nouveau = mise à jour d'`openapi.yaml` dans la même PR (schemathesis nightly le vérifie).
+
+### C. Variables d'environnement (extrait normatif)
+
+| Variable | Exemple | Notes |
+|---|---|---|
+| `DATABASE_URL` | postgres://…  | jamais committée (D23) |
+| `REDIS_PERSISTENT_URL` / `REDIS_CACHE_URL` | redis://… | deux instances (D17) |
+| `S3_ENDPOINT` / `S3_BUCKET` / `S3_REGION` | … | stockage UE (D09) |
+| `ANTHROPIC_API_KEY` / `FALLBACK_LLM_API_KEY` | … | via vault (D23) |
+| `EMBEDDINGS_MODEL` / `EMBEDDINGS_DIM` | …/1024 | 🟡 Q11 |
+| `SCORING_CONFIG_PATH` | config/scoring-config.json | version chargée au boot |
+| `SESSION_TTL_DAYS` | 30 | |
+| `FEATURE_SOURCE_FRANCE_TRAVAIL` etc. | false | connecteurs derrière flags (Q2/Q3) |
+| `SENTRY_DSN`, `OTEL_EXPORTER_OTLP_ENDPOINT` | … | observabilité (D20) |
+
+### D. Migrations initiales et données de démo
+
+1. `alembic upgrade head` → 0001 (extensions + schéma complet de `initial-schema.sql`).
+2. Seeds idempotents : `sectors` (NACE simplifié), `skills`+`skill_aliases` (sous-ensemble ESCO tech 🟡), `prompt_versions` (v1 de chaque tâche), `sources` (inactives par défaut).
+3. Données de démo (dev/staging uniquement — D22) : `make seed-demo` génère 3 profils synthétiques, 200 offres synthétiques FR/EN, scores pré-calculés. Jamais exécutable en prod (garde sur `ENV`).
+
+### E. Commandes de développement
+
+```
+make up            # docker compose : postgres, redis ×2, minio, mailpit, api, web, workers
+make migrate       # alembic upgrade head
+make seed / seed-demo
+make test          # unit + integration (testcontainers)
+make eval-matching # jeu annoté → gates de scoring-config.json
+make eval-prompts  # jeux prompts (échantillon) — complet en nightly
+make lint typecheck openapi-gen
+```
+
+### F. Pipeline CI/CD
+
+1. **PR** : lint + typecheck (py/ts) → tests unitaires → intégration (testcontainers) → build images → `eval-matching` si `scoring-config.json`/`matching/` touchés → `eval-prompts` (échantillon) si `prompts/` touché → scan dépendances + secrets (gate bloquante).
+2. **main** : E2E Playwright sur environnement éphémère → déploiement staging auto → smoke tests.
+3. **prod** : déploiement manuel approuvé (tag), migrations auto avec verrou, rollback = image précédente + `alembic downgrade` documenté.
+4. **Nightly** : schemathesis contre staging, eval-prompts complet, test de restauration backup (mensuel), audit dépendances.
+
+### G. Definition of Done (par user story)
+
+- Critères d'acceptation (AC-x-n de 05) automatisés ou explicitement testés en manuel documenté ;
+- Tests unitaires + intégration verts, couverture du module ≥ seuils de 13 ;
+- `openapi.yaml` et docs impactées mises à jour ; i18n externalisée ; a11y AA vérifiée sur les écrans touchés ;
+- Pas de secret/donnée personnelle en logs ; événements analytics de 14 émis ;
+- Revue de code approuvée ; feature flag si la fonctionnalité dépend d'une validation juridique ouverte (17).

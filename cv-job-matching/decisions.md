@@ -90,7 +90,7 @@ Statuts : ✅ actée · 🟡 hypothèse de travail (à confirmer) · Voir `17-op
 - **Réévaluation** : problèmes de fiabilité récurrents.
 
 ## D13 — Déduplication déterministe à deux étages ✅
-- **Décision** : étage 1 : clé exacte `hash(normalized(company_name) + normalized(title) + location + source_ref)` ; étage 2 : candidats par similarité (trigram sur titre+entreprise, puis cosinus embeddings > 0,92 🟡 seuil initial) → fusion en `job_posting` canonique avec liste de `job_sources`. Le lien original de **chaque** source est conservé.
+- **Décision** : étage 1 : clé exacte `sha256(norm(company_name) + norm(title) + norm_location + norm_ref)` où `norm_ref` est la **référence employeur** si la source l'expose, chaîne vide sinon (résolution 2026-07-23 — l'idempotence par source reste assurée par l'unicité `(source_id, external_ref)` ; définition exacte de `norm()` dans 07 §6.1) ; étage 2 : candidats par similarité (trigram sur titre+entreprise, puis cosinus embeddings > 0,92 🟡 seuil initial) → fusion en `job_posting` canonique avec liste de `job_sources`. Le lien original de **chaque** source est conservé.
 - **Justification** : exigence F ; multi-sources d'une même offre fréquent.
 - **Alternatives** : dédup LLM (rejeté : coût, non-déterminisme).
 - **Compromis** : faux négatifs possibles (doublons non fusionnés) — préférés aux faux positifs.
@@ -111,5 +111,36 @@ Statuts : ✅ actée · 🟡 hypothèse de travail (à confirmer) · Voir `17-op
 
 ---
 
+## D16 — Files Celery spécialisées ✅ *(précise D12)*
+- **Décision** : quatre files — `ingestion`, `ai`, `scoring`, `maintenance` — avec priorités, `acks_late=true` et dead-letter queue ; détail dans 10 §4.
+- **Justification** : isoler les charges (une panne LLM ne bloque pas l'ingestion) ; **Compromis** : plus de workers à dimensionner ; **Réévaluation** : saturation récurrente d'une file.
+
+## D17 — Deux Redis logiques ✅
+- **Décision** : instance persistante (broker Celery + sessions, AOF, `noeviction`) séparée de l'instance volatile (cache, rate-limit, LRU).
+- **Justification** : une éviction LRU ne doit jamais détruire une session ou un message broker ; **Compromis** : deux instances à opérer ; **Réévaluation** : offre managée UE ne le permettant pas (cf. questions ouvertes).
+
+## D18 — Dégradation gracieuse sans LLM ✅
+- **Décision** : circuit breaker par provider + fallback second provider ; en panne totale, l'application reste pleinement fonctionnelle (recherche, scores, facts déterministes) — seuls parsing de nouveaux CV, reformulations et générations sont suspendus avec message explicite.
+- **Justification** : le cœur de valeur (matching explicable) ne dépend d'aucun appel LLM (D02/D14) ; **Réévaluation** : jamais — propriété structurante.
+
+## D19 — Sauvegarde PITR ✅ *(précise D09)*
+- **Décision** : PITR PostgreSQL, RPO 1 h / RTO 4 h 🟡, rétention des backups 30 j alignée sur la fenêtre de purge RGPD, test de restauration mensuel.
+- **Réévaluation** : validation produit des RPO/RTO avant beta.
+
+## D20 — Observabilité ✅
+- **Décision** : logs JSON structurés avec `trace_id` propagé API↔workers, métriques Prometheus/Grafana 🟡, Sentry, dashboard de conformité (purges en retard = alerte critique).
+
+## D21 — Purge et export par interfaces de module ✅
+- **Décision** : chaque module expose `purge_user()` / `export_user()` ; le module `privacy` orchestre, journalise et vérifie l'exhaustivité (aucun module ne peut être oublié : registre déclaratif contrôlé par test).
+
+## D22 — Données synthétiques hors production ✅
+- **Décision** : staging et local n'utilisent que des données synthétiques ; jamais de dump de prod, même « anonymisé ».
+
+## D23 — Secrets et chiffrement ✅
+- **Décision** : secrets via vault de plateforme 🟡, clés gérées par KMS cloud UE, rotation planifiée, aucun secret en variable d'environnement committée.
+
+---
+
 ## Journal des mises à jour
 - 2026-07-23 : création, D01–D15 actées pour le MVP (phases 1–10). Hypothèses 🟡 signalées : providers exacts, seuils de dédup, next-intl, liste initiale des connecteurs.
+- 2026-07-23 (revue de phase 4–10) : ajout D16–D23 (issus de 10-system-architecture.md) ; résolution de l'ambiguïté `source_ref` de D13 (référence employeur, sinon vide — 07 §6.1 Q4 close) ; contrats API complétés (`GET /generations`, filtre `saved` sur `GET /jobs`) suite à la revue UX (03) ; questions ouvertes consolidées dans 17.

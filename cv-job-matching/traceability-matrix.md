@@ -38,3 +38,10 @@
 | Docs importés = données non fiables | délimiteurs + règles anti-injection (08) | jeu adversarial en CI |
 
 *(Les IDs fins RM-x-n / AC-x-n / SCR-xx sont définis dans les docs 03–05 ; cette matrice est mise à jour à chaque revue de phase.)*
+
+## Revue de phase — 2026-07-23
+
+- Docs 02–05, 07–10, 13–16 livrés ; conventions d'ID respectées (F-A…F-Q, RM-x-n, AC-x-n, SCR-01…SCR-92, RM-T-1…RM-T-11 pour les règles transverses de 05).
+- Contrats API complétés suite à la revue UX : `GET /generations` (bibliothèque, écrans SCR-30/31/32) et `saved_only` sur `GET /jobs` (feature K).
+- Contradiction D13/07 sur la clé de dédup résolue (référence employeur) — voir decisions.md et 17 §Résolues.
+- D16–D23 intégrés à decisions.md depuis 10-system-architecture.md.

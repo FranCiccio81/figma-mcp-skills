@@ -34,7 +34,8 @@
 | | `POST /jobs/{id}/explanation` | reformulation LLM des faits (cache par version) | ✔ |
 | | `PUT /jobs/{id}/saved-state` / `DELETE` | sauvegarder ou masquer / retirer | ✔ |
 | Matches | `GET /matches` | liste classée des offres scorées pour le profil | ✔ |
-| Générations | `POST /generations` | crée un brouillon (email, lettre, cv_variant, cv_optimization) → 202 | ✔ |
+| Générations | `GET /generations` | bibliothèque des contenus générés (filtres `doc_type`, `status`, `job_id`) | ✔ |
+| | `POST /generations` | crée un brouillon (email, lettre, cv_variant, cv_optimization) → 202 | ✔ |
 | | `GET /generations/{id}` | statut + contenu + claims d'ancrage | ✔ |
 | | `PATCH /generations/{id}` | édition manuelle du brouillon | ✔ |
 | | `POST /generations/{id}/validate` | validation humaine (D10) | ✔ |
@@ -48,7 +49,7 @@
 
 ## 3. Paramètres de recherche `GET /jobs`
 
-`q` (texte libre), `location_id` (référence à une preference_location) ou `lat,lon,radius_km`, `remote[]`, `contract[]`, `seniority[]`, `language`, `salary_min`, `posted_since` (jours), `source[]`, `include_blocked` (défaut `true` — badgées, jamais silencieusement retirées), `include_hidden` (défaut `false`), `sort` (`match` par défaut si profil validé, sinon `relevance`), `limit`, `cursor`.
+`q` (texte libre), `location_id` (référence à une preference_location) ou `lat,lon,radius_km`, `remote[]`, `contract[]`, `seniority[]`, `language`, `salary_min`, `posted_since` (jours), `source[]`, `include_blocked` (défaut `true` — badgées, jamais silencieusement retirées), `include_hidden` (défaut `false`), `saved_only` (défaut `false`), `sort` (`match` par défaut si profil validé, sinon `relevance`), `limit`, `cursor`.
 
 ## 4. Exemples
 

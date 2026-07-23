@@ -213,6 +213,7 @@ paths:
         - { name: posted_since, in: query, schema: { type: integer, description: jours } }
         - { name: include_blocked, in: query, schema: { type: boolean, default: true } }
         - { name: include_hidden, in: query, schema: { type: boolean, default: false } }
+        - { name: saved_only, in: query, schema: { type: boolean, default: false }, description: ne renvoyer que les offres sauvegardées }
         - { name: sort, in: query, schema: { type: string, enum: [match, date, relevance], default: match } }
         - { $ref: "#/components/parameters/Limit" }
         - { $ref: "#/components/parameters/Cursor" }
@@ -310,6 +311,26 @@ paths:
                   next_cursor: { type: [string, "null"] }
 
   /generations:
+    get:
+      summary: Lister les contenus générés (bibliothèque de documents)
+      parameters:
+        - { name: doc_type, in: query, schema: { type: string, enum: [email, cover_letter, cv_variant, cv_optimization] } }
+        - { name: status, in: query, schema: { type: string, enum: [pending, draft, validated, exported, failed] } }
+        - { name: job_id, in: query, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Cursor" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/GeneratedDocument" }
+                  next_cursor: { type: [string, "null"] }
     post:
       summary: Créer un contenu (email, lettre, variante CV, optimisation CV) — asynchrone
       parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
