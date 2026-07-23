@@ -36,5 +36,5 @@ async def check_redis(client: Redis) -> bool:
     try:
         await client.ping()
         return True
-    except Exception:  # noqa: BLE001 — sonde volontairement large
+    except Exception:  # sonde volontairement large
         return False

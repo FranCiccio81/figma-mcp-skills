@@ -54,5 +54,5 @@ async def check_database() -> bool:
         async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))
         return True
-    except Exception:  # noqa: BLE001 — sonde volontairement large
+    except Exception:  # sonde volontairement large
         return False

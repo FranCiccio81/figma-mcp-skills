@@ -52,17 +52,25 @@ async def require_current_user(
 
 
 def _set_auth_cookies(response: Response, cookies: AuthCookies, settings: Settings) -> None:
-    common = {
-        "max_age": settings.session_ttl_seconds,
-        "secure": True,
-        "samesite": "lax",
-        "path": "/",
-    }
     response.set_cookie(
-        settings.session_cookie_name, cookies.session_token, httponly=True, **common
+        settings.session_cookie_name,
+        cookies.session_token,
+        max_age=settings.session_ttl_seconds,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
     )
     # Cookie CSRF lisible par le front (double-submit).
-    response.set_cookie(settings.csrf_cookie_name, cookies.csrf_token, httponly=False, **common)
+    response.set_cookie(
+        settings.csrf_cookie_name,
+        cookies.csrf_token,
+        max_age=settings.session_ttl_seconds,
+        httponly=False,
+        secure=True,
+        samesite="lax",
+        path="/",
+    )
 
 
 def _clear_auth_cookies(response: Response, settings: Settings) -> None:

@@ -140,7 +140,7 @@ class TestCsrfProtection:
     def test_mutation_with_wrong_csrf_header_is_403(self, client: TestClient) -> None:
         register(client)
         response = client.post(
-            "/api/v1/auth/logout", headers={"X-CSRF-Token": "jeton-falsifié"}
+            "/api/v1/auth/logout", headers={"X-CSRF-Token": "jeton-falsifie"}
         )
         assert response.status_code == 403
 

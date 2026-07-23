@@ -1,7 +1,6 @@
 """Logique métier du module auth : register, login, logout, utilisateur courant."""
 
 import logging
-import uuid
 from dataclasses import dataclass
 
 from app.core.security import (

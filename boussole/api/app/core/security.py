@@ -8,6 +8,7 @@
   comparés en temps constant. Aucun état serveur.
 """
 
+import contextlib
 import hmac
 import json
 import secrets
@@ -43,10 +44,8 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def waste_time_like_verify(password: str) -> None:
     """Consomme le même temps qu'une vérification réelle (anti-timing)."""
-    try:
+    with contextlib.suppress(VerificationError):
         _hasher.verify(_DUMMY_HASH, password)
-    except VerificationError:
-        pass
 
 
 def generate_session_token() -> str:
@@ -118,7 +117,8 @@ class SessionStore:
     async def delete_all_for_user(self, user_id: uuid.UUID) -> None:
         """Révoque toutes les sessions d'un utilisateur (purge RGPD, D21)."""
         index_key = self._user_index_key(user_id)
-        tokens: set[str] = set(await self._redis.smembers(index_key))
+        members = await self._redis.smembers(index_key)
+        tokens: set[str] = {m.decode() if isinstance(m, bytes) else str(m) for m in members}
         pipe = self._redis.pipeline()
         for token in tokens:
             pipe.delete(self._key(token))
