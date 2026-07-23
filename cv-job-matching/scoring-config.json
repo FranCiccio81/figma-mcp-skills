@@ -1,0 +1,107 @@
+{
+  "scoring_version": "1.0.0",
+  "description": "Configuration du moteur de matching déterministe Boussole. Toute modification exige un run d'évaluation (voir 06-matching-specification.md §5).",
+  "min_known_weight_ratio": 0.4,
+  "extraction_confidence_floor": 0.5,
+  "blocking_confidence_floor": 0.7,
+  "dimensions": {
+    "skills_required": {
+      "weight": 25,
+      "method": "coverage",
+      "exact_credit": 1.0,
+      "related_credit": 0.5,
+      "related_similarity_threshold": 0.75
+    },
+    "skills_nice": {
+      "weight": 10,
+      "method": "coverage",
+      "exact_credit": 1.0,
+      "related_credit": 0.5,
+      "related_similarity_threshold": 0.75
+    },
+    "title_similarity": {
+      "weight": 15,
+      "method": "embedding_piecewise",
+      "zero_below": 0.55,
+      "one_above": 0.8
+    },
+    "seniority": {
+      "weight": 8,
+      "method": "ordinal_table",
+      "levels": ["intern", "junior", "mid", "senior", "lead", "principal", "executive"],
+      "delta_scores": { "0": 1.0, "-1": 0.8, "-2": 0.5, "-3": 0.3, "1": 0.6, "2": 0.25, "3": 0.0 },
+      "delta_cap": 3
+    },
+    "experience_years": {
+      "weight": 7,
+      "method": "range_fit",
+      "below_min_slope_offset": 0.2,
+      "above_max_penalty_per_year": 0.05,
+      "above_max_floor": 0.7
+    },
+    "sector": {
+      "weight": 4,
+      "method": "categorical",
+      "scores": { "preferred": 1.0, "experienced": 0.8, "adjacent": 0.6, "other": 0.3 }
+    },
+    "location": {
+      "weight": 8,
+      "method": "geo_decay",
+      "default_radius_km": 30,
+      "zero_at_radius_multiplier": 2.0
+    },
+    "remote": {
+      "weight": 6,
+      "method": "matrix",
+      "matrix": {
+        "required":        { "full_remote": 1.0, "hybrid": 0.4, "onsite": 0.0 },
+        "preferred":       { "full_remote": 1.0, "hybrid": 0.8, "onsite": 0.3 },
+        "indifferent":     { "full_remote": 1.0, "hybrid": 1.0, "onsite": 1.0 },
+        "onsite_preferred":{ "full_remote": 0.5, "hybrid": 0.8, "onsite": 1.0 }
+      }
+    },
+    "languages": {
+      "weight": 8,
+      "method": "per_requirement_mean",
+      "meets_level": 1.0,
+      "one_level_below": 0.5,
+      "missing_or_lower": 0.0
+    },
+    "contract": {
+      "weight": 4,
+      "method": "membership",
+      "in_accepted": 1.0,
+      "not_accepted_soft": 0.2
+    },
+    "salary": {
+      "weight": 3,
+      "method": "range_overlap",
+      "open_range_padding_ratio": 0.15
+    },
+    "preference_boost": {
+      "weight": 2,
+      "method": "categorical",
+      "scores": { "target_company": 1.0, "keyword_match": 0.7, "none": 0.0 }
+    }
+  },
+  "blocking_rules": [
+    { "code": "location_incompatible", "description": "Poste sur site strict hors zone acceptée (d > 2x rayon)" },
+    { "code": "remote_required", "description": "Candidat exige full-remote, offre sur site" },
+    { "code": "language_missing", "description": "Langue requise absente ou >= 2 niveaux CECRL en dessous" },
+    { "code": "contract_excluded", "description": "Type de contrat refusé en mode strict" },
+    { "code": "salary_below_minimum", "description": "Maximum de l'offre sous le minimum strict déclaré" },
+    { "code": "sector_excluded", "description": "Secteur exclu par l'utilisateur" }
+  ],
+  "explanation_thresholds": {
+    "strength_min_subscore": 0.8,
+    "strength_min_weight": 6,
+    "gap_max_subscore": 0.4
+  },
+  "evaluation_gates": {
+    "spearman_min": 0.6,
+    "ndcg_at_10_min": 0.75,
+    "blocking_precision_min": 0.95,
+    "blocking_recall_min": 0.85,
+    "max_spearman_regression": 0.02
+  }
+}

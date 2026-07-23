@@ -1,0 +1,73 @@
+flowchart TB
+    subgraph Client
+        WEB["Next.js App Router\nReact · TS · Tailwind · shadcn/ui\nTanStack Query · RHF+Zod"]
+    end
+
+    subgraph Edge
+        PROXY["Next route proxy (BFF léger)\ncookies httpOnly · même origine"]
+    end
+
+    subgraph API["FastAPI — monolithe modulaire (D01)"]
+        AUTH[auth]
+        PROF[profiles]
+        PREF[preferences]
+        JOBS[jobs / search]
+        MATCH["matching engine\n(déterministe, scoring-config.json)"]
+        EXPL[explanations]
+        GEN[generation]
+        APPL[applications]
+        PRIV[privacy / export / deletion]
+    end
+
+    subgraph Async["Workers Celery (files : ingestion · ai · scoring)"]
+        ING["connecteurs sources\n(France Travail · ATS feeds · partenaires)"]
+        NORM["normalisation + dédup (D13)\nextraction attributs (règles + LLM)"]
+        EMB["embeddings"]
+        SCORE["scoring en masse"]
+        PARSE["parsing CV\n(texte + extraction LLM)"]
+        PURGE["purge RGPD J+30 · expiration offres"]
+    end
+
+    subgraph Data
+        PG[("PostgreSQL 16\n+ pgvector + pg_trgm")]
+        REDIS[("Redis\nbroker + cache + rate limit")]
+        S3[("Objet S3 (UE)\nCV · payloads bruts · exports")]
+    end
+
+    subgraph AI["Couche IA (D08)"]
+        LLMGW["LLM Gateway multi-provider\nsorties JSON validées (ai-output-schemas.json)\nprompts versionnés"]
+        ANTH["Anthropic (défaut)"]
+        ALT["Provider fallback"]
+        EMBM["Modèle d'embeddings"]
+    end
+
+    subgraph Ext["Services externes"]
+        SRC1["API France Travail"]
+        SRC2["Flux ATS publics\n(Greenhouse · Lever)"]
+        SRC3["Partenaires"]
+        GEO["Géocodage"]
+        MAIL["E-mail transactionnel"]
+    end
+
+    subgraph Obs["Observabilité"]
+        SENTRY["Error tracking"]
+        PROM["Métriques + logs structurés"]
+    end
+
+    WEB --> PROXY --> API
+    AUTH & PROF & PREF & JOBS & MATCH & EXPL & GEN & APPL & PRIV --> PG
+    API --> REDIS
+    PROF --> S3
+    GEN --> LLMGW
+    EXPL --> LLMGW
+    PARSE --> LLMGW
+    NORM --> LLMGW
+    LLMGW --> ANTH & ALT & EMBM
+    ING --> SRC1 & SRC2 & SRC3
+    ING --> NORM --> EMB --> SCORE
+    NORM --> GEO
+    PARSE & NORM & EMB & SCORE & PURGE --> PG
+    ING --> S3
+    Async --- REDIS
+    API --> MAIL
+    API & Async --> SENTRY & PROM

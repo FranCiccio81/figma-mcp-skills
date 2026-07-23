@@ -1,0 +1,254 @@
+{
+  "$comment": "Boussole — schémas JSON des sorties LLM. Toute sortie est validée (Pydantic) contre ces schémas ; échec => 1 retry avec l'erreur, puis repair-parse, puis échec propre. Version: 1.0.0",
+  "$defs": {
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "evidence": {
+      "type": "object",
+      "description": "Citation exacte du document source justifiant l'extraction (ancrage anti-hallucination).",
+      "required": ["quote"],
+      "properties": { "quote": { "type": "string", "maxLength": 500 } },
+      "additionalProperties": false
+    }
+  },
+  "cv_extraction": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["experiences", "educations", "skills", "languages", "warnings"],
+    "additionalProperties": false,
+    "properties": {
+      "headline": { "type": ["string", "null"], "maxLength": 200 },
+      "summary": { "type": ["string", "null"], "maxLength": 2000 },
+      "experiences": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["title", "company", "start_date", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string" },
+            "company": { "type": "string" },
+            "start_date": { "type": "string", "pattern": "^\\d{4}(-\\d{2})?$" },
+            "end_date": { "type": ["string", "null"], "pattern": "^\\d{4}(-\\d{2})?$" },
+            "description": { "type": ["string", "null"], "maxLength": 3000 },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "educations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["degree", "institution", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "degree": { "type": "string" },
+            "institution": { "type": "string" },
+            "start_year": { "type": ["integer", "null"] },
+            "end_year": { "type": ["integer", "null"] },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "skills": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["label", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string", "maxLength": 100 },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "languages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["lang_code", "level", "confidence"],
+          "additionalProperties": false,
+          "properties": {
+            "lang_code": { "type": "string", "pattern": "^[a-z]{2}$" },
+            "level": { "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "description": "Zones illisibles, ambiguïtés, contenu suspect (tentative d'injection).",
+        "items": { "type": "string", "maxLength": 300 }
+      }
+    }
+  },
+  "job_extraction": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["skills_required", "skills_nice", "languages", "warnings"],
+    "additionalProperties": false,
+    "properties": {
+      "seniority": { "type": ["string", "null"], "enum": ["intern", "junior", "mid", "senior", "lead", "principal", "executive", null] },
+      "seniority_confidence": { "$ref": "#/$defs/confidence" },
+      "experience_min_years": { "type": ["number", "null"] },
+      "experience_max_years": { "type": ["number", "null"] },
+      "contract": { "type": ["string", "null"], "enum": ["permanent", "fixed_term", "freelance", "internship", "apprenticeship", "other", null] },
+      "contract_confidence": { "$ref": "#/$defs/confidence" },
+      "remote": { "type": ["string", "null"], "enum": ["onsite", "hybrid", "full_remote", null] },
+      "remote_confidence": { "$ref": "#/$defs/confidence" },
+      "salary_min": { "type": ["integer", "null"] },
+      "salary_max": { "type": ["integer", "null"] },
+      "salary_currency": { "type": ["string", "null"], "pattern": "^[A-Z]{3}$" },
+      "salary_period": { "type": ["string", "null"], "enum": ["year", "month", "day", "hour", null] },
+      "sector_code": { "type": ["string", "null"] },
+      "skills_required": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["label", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string", "maxLength": 100 },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "skills_nice": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["label", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string", "maxLength": 100 },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "languages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["lang_code", "min_level", "confidence", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "lang_code": { "type": "string", "pattern": "^[a-z]{2}$" },
+            "min_level": { "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+            "confidence": { "$ref": "#/$defs/confidence" },
+            "evidence": { "$ref": "#/$defs/evidence" }
+          }
+        }
+      },
+      "warnings": { "type": "array", "items": { "type": "string", "maxLength": 300 } }
+    }
+  },
+  "match_explanation": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$comment": "Entrée du LLM = explanation_facts du moteur UNIQUEMENT (D14). Interdiction d'introduire tout chiffre ou fait absent des entrées — contrôle post-génération.",
+    "type": "object",
+    "required": ["summary", "strengths", "gaps", "uncertainties"],
+    "additionalProperties": false,
+    "properties": {
+      "summary": { "type": "string", "maxLength": 400 },
+      "strengths": { "type": "array", "maxItems": 5, "items": { "type": "string", "maxLength": 250 } },
+      "gaps": { "type": "array", "maxItems": 5, "items": { "type": "string", "maxLength": 250 } },
+      "uncertainties": { "type": "array", "maxItems": 5, "items": { "type": "string", "maxLength": 250 } },
+      "blocking_notes": { "type": "array", "maxItems": 3, "items": { "type": "string", "maxLength": 250 } }
+    }
+  },
+  "generated_email": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["subject", "body", "claims"],
+    "additionalProperties": false,
+    "properties": {
+      "subject": { "type": "string", "maxLength": 150 },
+      "body": { "type": "string", "maxLength": 3000 },
+      "claims": {
+        "type": "array",
+        "description": "Chaque affirmation factuelle sur le candidat, avec la référence du champ de profil qui la fonde. Vérifiée par le contrôle d'ancrage.",
+        "items": {
+          "type": "object",
+          "required": ["claim", "profile_ref"],
+          "additionalProperties": false,
+          "properties": {
+            "claim": { "type": "string", "maxLength": 300 },
+            "profile_ref": { "type": "string", "description": "ex: experience:<uuid>, skill:<uuid>, education:<uuid>, summary" }
+          }
+        }
+      }
+    }
+  },
+  "generated_cover_letter": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["body", "claims"],
+    "additionalProperties": false,
+    "properties": {
+      "body": { "type": "string", "maxLength": 6000 },
+      "claims": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["claim", "profile_ref"],
+          "additionalProperties": false,
+          "properties": {
+            "claim": { "type": "string", "maxLength": 300 },
+            "profile_ref": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "cv_tailoring": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$comment": "Adaptation du CV à une offre : uniquement réordonner, sélectionner, reformuler. Jamais créer une expérience, compétence, formation ou métrique absente du profil.",
+    "type": "object",
+    "required": ["changes"],
+    "additionalProperties": false,
+    "properties": {
+      "changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["kind", "target_ref", "rationale"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["reorder", "emphasize", "rephrase", "omit"] },
+            "target_ref": { "type": "string", "description": "référence du champ de profil concerné" },
+            "new_text": { "type": ["string", "null"], "maxLength": 1500, "description": "requis si kind=rephrase" },
+            "rationale": { "type": "string", "maxLength": 300 }
+          }
+        }
+      }
+    }
+  },
+  "cv_optimization": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["suggestions"],
+    "additionalProperties": false,
+    "properties": {
+      "suggestions": {
+        "type": "array",
+        "maxItems": 15,
+        "items": {
+          "type": "object",
+          "required": ["category", "target_ref", "issue", "proposal"],
+          "additionalProperties": false,
+          "properties": {
+            "category": { "enum": ["clarity", "impact", "structure", "missing_info_question", "wording"] },
+            "target_ref": { "type": "string" },
+            "issue": { "type": "string", "maxLength": 300 },
+            "proposal": { "type": ["string", "null"], "maxLength": 1000, "description": "null si category=missing_info_question : on pose une question, on n'invente pas la réponse" }
+          }
+        }
+      }
+    }
+  }
+}

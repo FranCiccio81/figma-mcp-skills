@@ -1,0 +1,104 @@
+erDiagram
+    users ||--o| profiles : "1:1"
+    users ||--o| preferences : "1:1"
+    users ||--o{ cv_documents : uploads
+    users ||--o{ consents : grants
+    users ||--o{ deletion_requests : requests
+    users ||--o{ saved_jobs : saves_hides
+    users ||--o{ applications : tracks
+    users ||--o{ generated_documents : owns
+    users ||--o{ preference_locations : ""
+    users ||--o{ preference_titles : ""
+    users ||--o{ preference_sectors : ""
+    users ||--o{ preference_companies : ""
+    users ||--o{ preference_keywords : ""
+
+    cv_documents ||--o{ extraction_runs : parsed_by
+    profiles ||--o{ profile_experiences : has
+    profiles ||--o{ profile_educations : has
+    profiles ||--o{ profile_skills : has
+    profiles ||--o{ profile_languages : has
+    profiles }o--o| cv_documents : source_cv
+
+    skills ||--o{ skill_aliases : known_as
+    skills ||--o{ profile_skills : normalizes
+    skills ||--o{ job_skills : normalizes
+    sectors ||--o{ job_postings : classifies
+    sectors ||--o{ profile_experiences : classifies
+
+    sources ||--o{ job_sources : provides
+    job_postings ||--o{ job_sources : "aggregated from (>=1)"
+    job_postings ||--o{ job_locations : located_at
+    job_postings ||--o{ job_skills : requires
+    job_postings ||--o{ job_languages : requires
+
+    profiles ||--o{ match_results : scored
+    job_postings ||--o{ match_results : scored
+    match_results ||--o{ match_explanations : "LLM rephrasing (cache)"
+
+    job_postings ||--o{ saved_jobs : target
+    job_postings ||--o{ applications : "target (nullable)"
+    applications ||--o{ application_events : history
+    applications ||--o{ generated_documents : "attached (nullable)"
+
+    prompt_versions ||--o{ ai_calls : used_by
+
+    users {
+        uuid id PK
+        citext email UK
+        text locale
+        timestamptz deleted_at "soft delete"
+    }
+    profiles {
+        uuid id PK
+        uuid user_id FK "unique"
+        profile_status status
+        int version
+        seniority_level seniority
+        vector embedding "1024"
+    }
+    profile_skills {
+        uuid profile_id FK
+        uuid skill_id FK
+        field_source source "provenance"
+        numeric confidence "0..1"
+    }
+    job_postings {
+        uuid id PK
+        text dedup_hash UK
+        text title
+        text company_name
+        job_status status
+        contract_type contract
+        remote_policy remote
+        vector embedding "1024"
+        tsvector tsv
+    }
+    job_sources {
+        uuid job_posting_id FK
+        uuid source_id FK
+        text external_ref "UK avec source"
+        text original_url "NOT NULL"
+    }
+    match_results {
+        uuid profile_id PK_FK
+        uuid job_posting_id PK_FK
+        text scoring_version
+        smallint score "0..100"
+        smallint confidence "0..100"
+        jsonb blocking_criteria
+        jsonb unknown_dimensions
+        jsonb dimension_scores
+    }
+    applications {
+        uuid id PK
+        application_status status
+        uuid job_posting_id FK "nullable si externe"
+    }
+    generated_documents {
+        uuid id PK
+        generated_doc_type doc_type
+        generated_doc_status status
+        int based_on_profile_version "ancrage anti-invention"
+        text prompt_version
+    }
