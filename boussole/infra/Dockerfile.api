@@ -1,0 +1,39 @@
+# Boussole API — image multi-stage, exécution non-root.
+# Contexte de build : la racine boussole/ (voir docker-compose.dev.yml).
+
+# ---------- Étape 1 : build des dépendances ----------
+FROM python:3.12-slim AS builder
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY api/pyproject.toml ./
+# Installe les dépendances seules d'abord (cache de couche), puis le code.
+COPY api/app ./app
+COPY api/alembic ./alembic
+RUN pip install .
+
+# ---------- Étape 2 : runtime minimal non-root ----------
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+RUN groupadd --system boussole && useradd --system --gid boussole --no-create-home boussole
+
+WORKDIR /srv/boussole
+
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=boussole:boussole api/app ./app
+COPY --chown=boussole:boussole api/alembic ./alembic
+
+USER boussole
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
