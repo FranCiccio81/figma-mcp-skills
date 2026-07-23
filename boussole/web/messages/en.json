@@ -1,0 +1,93 @@
+{
+  "common": {
+    "appName": "Boussole",
+    "loading": "Loading…",
+    "skipToContent": "Skip to main content"
+  },
+  "errors": {
+    "unexpected": "An unexpected error occurred. Please try again."
+  },
+  "validation": {
+    "required": "This field is required.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordTooShort": "The password must be at least 12 characters long.",
+    "consentRequired": "This box must be checked to create your account."
+  },
+  "nav": {
+    "mainLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "applications": "Applications",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "submit": "Log in",
+      "noAccount": "No account yet?",
+      "registerLink": "Create an account",
+      "valueReminder": "Your data stays in Europe. No application is ever sent without you.",
+      "errors": {
+        "invalidCredentials": "Incorrect credentials.",
+        "rateLimited": "Too many attempts. Try again in {seconds} seconds."
+      }
+    },
+    "register": {
+      "title": "Sign up",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "passwordHint": "At least 12 characters.",
+      "consentsLegend": "Consents",
+      "termsLabel": "I accept the terms of service and the processing of my data required to operate the service (required).",
+      "privacyLabel": "I have read and accept the privacy policy (required).",
+      "euHostingNotice": "Your data is hosted in Europe.",
+      "submit": "Create my account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "errors": {
+        "emailUnavailable": "Unable to create an account with this information. If you already have an account, log in.",
+        "rateLimited": "Too many attempts. Try again in {seconds} seconds."
+      }
+    }
+  },
+  "placeholder": {
+    "availableAt": "Available at milestone {milestone}."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "emptyTitle": "Your dashboard is coming soon",
+      "emptyDescription": "Your current best matches, applications to follow up on, and your profile progress will appear here."
+    },
+    "jobs": {
+      "title": "Jobs",
+      "emptyTitle": "Job search is coming soon",
+      "emptyDescription": "Search, filters and compatibility scores will appear here. Every job keeps a link to its original posting."
+    },
+    "applications": {
+      "title": "Applications",
+      "emptyTitle": "Application tracking is coming soon",
+      "emptyDescription": "Your applications, internal or external, will be tracked here by status, with history and notes."
+    },
+    "profile": {
+      "title": "Profile",
+      "emptyTitle": "Your profile is coming soon",
+      "emptyDescription": "Import your CV, review the extracted information (provenance and confidence per field), then validate your profile."
+    },
+    "preferences": {
+      "title": "Preferences",
+      "emptyTitle": "Search preferences are coming soon",
+      "emptyDescription": "Target roles, locations and radius, remote work, contracts, salary, languages and sectors — your criteria will drive matching."
+    },
+    "settings": {
+      "title": "Settings",
+      "emptyTitle": "Settings are coming soon",
+      "emptyDescription": "Account and security, privacy and data (GDPR export, deletion), job sources and score calculation method."
+    }
+  }
+}
