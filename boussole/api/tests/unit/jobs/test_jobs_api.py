@@ -303,6 +303,7 @@ class TestDetail:
         register(client)
         body = client.get(f"{JOBS_URL}/{job.id}").json()
         assert body["status"] == "expired"  # bandeau « offre expirée » côté front
+        assert body["expires_at"] is not None  # date du bandeau
 
     def test_job_expired_beyond_12_months_is_404(
         self, client: TestClient, jobs_repository: InMemoryJobsRepository

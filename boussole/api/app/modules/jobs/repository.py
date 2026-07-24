@@ -23,10 +23,20 @@ import json
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 from fastapi import Depends
-from sqlalchemy import Select, and_, exists, func, or_, select, text, tuple_
+from sqlalchemy import (
+    ColumnElement,
+    Select,
+    and_,
+    exists,
+    func,
+    or_,
+    select,
+    text,
+    tuple_,
+)
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -139,7 +149,7 @@ class SourceRow:
     last_sync_at: datetime | None
 
 
-def _haversine_km(lat: float, lon: float) -> object:
+def _haversine_km(lat: float, lon: float) -> ColumnElement[float]:
     """Distance haversine SQL (km) entre (lat, lon) et une ``job_locations``.
 
     ``least(1.0, …)`` borne l'argument d'``acos`` contre les erreurs d'arrondi
@@ -172,7 +182,7 @@ def build_search_statement(
     filters: SearchFilters,
     limit: int,
     cursor: SearchCursor | None,
-) -> Select[tuple[JobPosting, str | None, datetime | float]]:
+) -> Select[Any]:
     """Construit le SELECT de recherche (étapes 1-2 du pipeline D07).
 
     Fonction pure (aucune E/S) : testable par compilation vers le dialecte
@@ -224,6 +234,9 @@ def build_search_statement(
     else:
         rank = None
 
+    # Any : InstrumentedAttribute et Function n'ont pas d'ancêtre commun
+    # satisfaisant pour mypy ; les deux portent .desc()/.label().
+    sort_expr: Any
     if filters.sort == "relevance" and rank is not None:
         sort_expr = rank
         order_by = (rank.desc(), JobPosting.id.desc())

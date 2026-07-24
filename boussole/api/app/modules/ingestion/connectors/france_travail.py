@@ -112,9 +112,9 @@ def parse_offer(offer: dict[str, Any]) -> RawJob:
 
     return RawJob(
         external_ref=str(offer["id"]),
-        # Numéro d'annonce d'origine si l'offre est une republication
-        # (partenaire origine=2) : sert de référence employeur (D13) 🟡.
-        employer_ref=origine.get("origine") == "2" and origine.get("partenaires") and None or None,
+        # FT n'expose pas de référence employeur exploitable de façon fiable
+        # (D13/Q4) : norm_ref vide — l'étage 2 fait le travail inter-sources.
+        employer_ref=None,
         title=offer.get("intitule") or "",
         company=company,
         description=offer.get("description") or "",

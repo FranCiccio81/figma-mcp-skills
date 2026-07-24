@@ -22,6 +22,7 @@ SeniorityLevel = Literal["intern", "junior", "mid", "senior", "lead", "principal
 JobStatus = Literal["active", "expired", "withdrawn"]
 SavedState = Literal["saved", "hidden"]
 SortMode = Literal["match", "date", "relevance"]
+SourceKind = Literal["public_api", "ats_feed", "partner"]
 
 
 class MatchSummary(BaseModel):
@@ -72,6 +73,10 @@ class JobDetail(JobCard):
     status: JobStatus = Field(
         description="Champ additif : permet le bandeau « offre expirée » côté front."
     )
+    expires_at: datetime | None = Field(
+        default=None,
+        description="Champ additif : date d'expiration si connue (bandeau front).",
+    )
     sources: list[JobSourceOut] = Field(min_length=1)
 
 
@@ -93,5 +98,5 @@ class SourceOut(BaseModel):
 
     slug: str
     name: str
-    kind: Literal["public_api", "ats_feed", "partner"]
+    kind: SourceKind
     last_sync_at: datetime | None = None

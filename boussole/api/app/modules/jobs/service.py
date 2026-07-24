@@ -14,6 +14,7 @@ Règles portées ici (le repository ne fait que des requêtes) :
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 from app.core.problems import Problem
 from app.modules.jobs.models import JobPosting
@@ -27,10 +28,16 @@ from app.modules.jobs.repository import (
     encode_cursor,
 )
 from app.modules.jobs.schemas import (
+    ContractType,
     JobCard,
     JobDetail,
     JobSourceOut,
+    JobStatus,
+    RemotePolicy,
+    SavedState,
     SearchPage,
+    SeniorityLevel,
+    SourceKind,
     SourceOut,
 )
 
@@ -203,7 +210,12 @@ class JobsService:
     async def list_sources(self) -> list[SourceOut]:
         rows = await self._repository.list_sources()
         return [
-            SourceOut(slug=r.slug, name=r.name, kind=r.kind, last_sync_at=r.last_sync_at)
+            SourceOut(
+                slug=r.slug,
+                name=r.name,
+                kind=cast(SourceKind, r.kind),
+                last_sync_at=r.last_sync_at,
+            )
             for r in rows
         ]
 
@@ -215,14 +227,15 @@ class JobsService:
         return min(dates) if dates else None
 
     def _to_card(self, row: JobSearchRow) -> JobCard:
+        # Les casts vers les Literal sont sûrs : colonnes ENUM PostgreSQL.
         posting = row.posting
         return JobCard(
             id=posting.id,
             title=posting.title,
             company_name=posting.company_name,
             locations=[loc.raw_label for loc in posting.locations],
-            remote=posting.remote,
-            contract=posting.contract,
+            remote=cast(RemotePolicy | None, posting.remote),
+            contract=cast(ContractType | None, posting.contract),
             salary_label=format_salary_label(
                 posting.salary_min,
                 posting.salary_max,
@@ -231,18 +244,19 @@ class JobsService:
             ),
             posted_at=self._earliest_posted_at(posting),
             match=None,  # M2 : toujours null, le scoring arrive au M3.
-            saved_state=row.saved_state,
+            saved_state=cast(SavedState | None, row.saved_state),
         )
 
     def _to_detail(self, row: JobDetailRow) -> JobDetail:
+        # Les casts vers les Literal sont sûrs : colonnes ENUM PostgreSQL.
         posting = row.posting
         return JobDetail(
             id=posting.id,
             title=posting.title,
             company_name=posting.company_name,
             locations=[loc.raw_label for loc in posting.locations],
-            remote=posting.remote,
-            contract=posting.contract,
+            remote=cast(RemotePolicy | None, posting.remote),
+            contract=cast(ContractType | None, posting.contract),
             salary_label=format_salary_label(
                 posting.salary_min,
                 posting.salary_max,
@@ -251,13 +265,14 @@ class JobsService:
             ),
             posted_at=self._earliest_posted_at(posting),
             match=None,  # M2 : toujours null, le scoring arrive au M3.
-            saved_state=row.saved_state,
+            saved_state=cast(SavedState | None, row.saved_state),
             description_text=posting.description_text,
             language=posting.language,
-            seniority=posting.seniority,
+            seniority=cast(SeniorityLevel | None, posting.seniority),
             skills_required=[s.label_raw for s in posting.skills if s.required],
             skills_nice=[s.label_raw for s in posting.skills if not s.required],
-            status=posting.status,
+            status=cast(JobStatus, posting.status),
+            expires_at=posting.expires_at,
             # Garantie produit (07-job-ingestion) : au moins une source avec
             # lien d'origine — minItems 1 vérifié par le schéma de réponse.
             sources=[
