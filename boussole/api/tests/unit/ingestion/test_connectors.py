@@ -1,19 +1,36 @@
-"""Tests de parsing des connecteurs sur fixtures réalistes (aucun réseau)."""
+"""Tests de parsing des connecteurs sur fixtures réalistes (aucun réseau —
+les fetch passent par ``httpx.MockTransport``)."""
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from email.utils import format_datetime
 from pathlib import Path
 from typing import Any
 
-from app.modules.ingestion.connectors.france_travail import parse_offer
-from app.modules.ingestion.connectors.greenhouse import parse_job
-from app.modules.ingestion.connectors.lever import parse_posting
+import httpx
+import pytest
+
+from app.modules.ingestion.connectors import base as connectors_base
+from app.modules.ingestion.connectors import france_travail as ft
+from app.modules.ingestion.connectors.base import get_with_retry, parse_retry_after
+from app.modules.ingestion.connectors.france_travail import (
+    FranceTravailConnector,
+    parse_offer,
+)
+from app.modules.ingestion.connectors.greenhouse import GreenhouseConnector, parse_job
+from app.modules.ingestion.connectors.lever import LeverConnector, parse_posting
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures"
 
 
 def _load(name: str) -> Any:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+@pytest.fixture(autouse=True)
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Aucune attente réelle dans les retries/politesse des connecteurs."""
+    monkeypatch.setattr(connectors_base.time, "sleep", lambda _s: None)
 
 
 class TestFranceTravail:
@@ -110,3 +127,131 @@ class TestLever:
         assert raw.remote == "onsite"
         assert raw.salary_min is None
         assert raw.salary_conf is None
+
+
+# ------------------------------------------------- correctifs revue M2
+class TestRetryAfter:
+    def test_delta_secondes(self) -> None:
+        assert parse_retry_after("120") == 120.0
+
+    def test_date_http_rfc9110(self) -> None:
+        future = datetime.now(UTC) + timedelta(seconds=90)
+        delay = parse_retry_after(format_datetime(future, usegmt=True))
+        assert delay is not None
+        assert 0 <= delay <= 91
+
+    def test_date_http_passee_delai_nul(self) -> None:
+        past = datetime.now(UTC) - timedelta(seconds=90)
+        assert parse_retry_after(format_datetime(past, usegmt=True)) == 0.0
+
+    def test_valeur_illisible_fallback_none(self) -> None:
+        assert parse_retry_after("n'importe quoi") is None
+
+    def test_get_with_retry_date_http_sans_valueerror(self) -> None:
+        """Correctif 11 : un Retry-After au format date HTTP ne lève plus."""
+        attempts = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                retry_at = datetime.now(UTC) + timedelta(seconds=1)
+                return httpx.Response(
+                    429, headers={"Retry-After": format_datetime(retry_at, usegmt=True)}
+                )
+            return httpx.Response(200, json={"ok": True})
+
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        response = get_with_retry(client, "https://api.example/x")
+        assert response.status_code == 200
+        assert attempts == 2
+
+
+class TestFetchParOffre:
+    """Correctif 12 : try/except PAR OFFRE — un item malformé est compté en
+    erreur, le cycle continue (07 §4.5)."""
+
+    def test_greenhouse_item_malforme_et_board_en_echec(self) -> None:
+        good_board = _load("greenhouse.json")
+        good_board["jobs"].append({"title": "Sans id ni absolute_url"})  # malformé
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if "/boards/acme/" in request.url.path:
+                return httpx.Response(200, json=good_board)
+            return httpx.Response(500)  # board globex en échec (tous les retries)
+
+        connector = GreenhouseConnector(
+            boards=[("acme", "ACME Corp"), ("globex", "Globex")],
+            http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+            min_interval_seconds=0.0,
+        )
+        result = connector.fetch(None)
+
+        assert len(result.jobs) == 2  # les 2 offres valides du board acme
+        assert result.parse_errors == 1  # l'offre malformée est comptée
+        assert result.failed_scopes == ["globex"]  # correctif 5a : périmètre exclu
+        assert result.cursor is None
+        assert result.complete is True
+
+    def test_lever_item_malforme_et_site_en_echec(self) -> None:
+        postings = _load("lever.json")
+        postings.append({"text": "Sans id ni hostedUrl"})  # malformé
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if "/postings/globex" in request.url.path:
+                return httpx.Response(200, json=postings)
+            return httpx.Response(503)
+
+        connector = LeverConnector(
+            sites=[("globex", "Globex"), ("initech", "Initech")],
+            http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+            min_interval_seconds=0.0,
+        )
+        result = connector.fetch(None)
+
+        assert len(result.jobs) == 2
+        assert result.parse_errors == 1
+        assert result.failed_scopes == ["initech"]
+
+    def test_france_travail_item_malforme(self) -> None:
+        resultats = _load("france_travail.json")["resultats"]
+        resultats.insert(0, {"intitule": "Offre sans id"})  # malformé (KeyError id)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.method == "POST":
+                return httpx.Response(200, json={"access_token": "tok"})
+            return httpx.Response(200, json={"resultats": resultats})
+
+        connector = FranceTravailConnector(
+            client_id="id", client_secret="secret",
+            http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        )
+        result = connector.fetch(None)
+
+        assert [raw.external_ref for raw in result.jobs] == ["185XYZW", "185ABCD"]
+        assert result.parse_errors == 1
+        assert result.complete is True
+        assert result.cursor is not None
+
+    def test_france_travail_fetch_tronque_complete_false(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Correctif 5b : MAX_PAGES atteint → ``complete=False`` (pas de
+        mark_expired, curseur inchangé ce cycle)."""
+        monkeypatch.setattr(ft, "PAGE_SIZE", 2)
+        monkeypatch.setattr(ft, "MAX_PAGES", 2)
+        page = {"resultats": [{"id": "a"}, {"id": "b"}]}  # toujours une page pleine
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.method == "POST":
+                return httpx.Response(200, json={"access_token": "tok"})
+            return httpx.Response(200, json=page)
+
+        connector = FranceTravailConnector(
+            client_id="id", client_secret="secret",
+            http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        )
+        result = connector.fetch(None)
+
+        assert result.complete is False
+        assert len(result.jobs) == 4  # 2 pages fetchées malgré la troncature
