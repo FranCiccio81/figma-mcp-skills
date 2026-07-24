@@ -11,7 +11,8 @@
     "required": "This field is required.",
     "emailInvalid": "Enter a valid email address.",
     "passwordTooShort": "The password must be at least 12 characters long.",
-    "consentRequired": "This box must be checked to create your account."
+    "consentRequired": "This box must be checked to create your account.",
+    "langCode": "Enter a 2-letter language code (e.g. en)."
   },
   "nav": {
     "mainLabel": "Main navigation",
@@ -96,6 +97,7 @@
     },
     "card": {
       "linkAria": "{title}, {company} — view job details",
+      "linkAriaWithMatch": "{title}, {company} — Compatibility {score} out of 100, confidence {confidence} out of 100 — view job details",
       "salaryNotDisclosed": "Salary not disclosed",
       "postedOn": "Posted on {date}"
     },
@@ -114,6 +116,7 @@
       "searchLabel": "Search for a job",
       "searchPlaceholder": "Role, company, keyword…",
       "sortLabel": "Sort by",
+      "sortMatch": "Compatibility",
       "sortRelevance": "Relevance",
       "sortDate": "Posting date",
       "resultsCount": "{count, plural, =0 {No jobs displayed} one {# job displayed} other {# jobs displayed}}",
@@ -136,9 +139,6 @@
       "errorTitle": "Unable to load this job.",
       "expiredBanner": "This job is no longer published by its source (expired on {date}).",
       "expiredBannerNoDate": "This job is no longer published by its source.",
-      "matchTitle": "Compatibility score",
-      "matchSummary": "Compatibility {score} out of 100. Confidence {confidence} out of 100.",
-      "matchPlaceholder": "The compatibility score with your profile arrives at milestone M3, once your profile is validated and the matching engine ships. No approximate score will be shown until then.",
       "descriptionTitle": "Job description",
       "skillsRequiredTitle": "Required skills",
       "skillsNiceTitle": "Nice-to-have skills",
@@ -151,6 +151,253 @@
       "sourceLink": "Published on {name} — view the original posting",
       "sourceExternalHint": "(new window)",
       "sourcePostedOn": "on {date}"
+    }
+  },
+  "match": {
+    "card": {
+      "summary": "Compatibility {score} · Confidence {confidence}",
+      "lowData": "Insufficient data",
+      "blockingBadge": "⛔ Blocking criterion"
+    },
+    "panel": {
+      "title": "Compatibility score",
+      "loading": "Computing the compatibility score…",
+      "errorTitle": "Unable to load the compatibility score.",
+      "retry": "Try again",
+      "notValidatedTitle": "Validate your profile to see your score",
+      "notValidatedBody": "Your compatibility score will be computed as soon as your profile is completed and validated. Jobs remain browsable in the meantime.",
+      "notValidatedCta": "Complete and validate my profile",
+      "groupAria": "Compatibility {score} out of 100. Confidence {confidence} out of 100.",
+      "scoreLabel": "Compatibility: {score} / 100",
+      "scoreHelp": "the quality of the match, computed only on the known criteria.",
+      "confidenceLabel": "Confidence: {confidence} / 100",
+      "confidenceHelp": "the share of information actually available for this calculation.",
+      "helpToggle": "What do these two numbers mean?",
+      "helpText": "Two numbers, two questions. Compatibility answers: “does what is known match your profile?”. Confidence answers: “how much do we really know about this job and your profile?”. A high score with low confidence rests on little information: the missing elements are listed under “Not specified”.",
+      "lowDataTitle": "Insufficient data",
+      "lowDataBody": "less than 40% of the criteria are known for this job. The score of {score} is provided as an indication only."
+    },
+    "blocking": {
+      "title": "Blocking criteria",
+      "badge": "⛔ Blocking criterion",
+      "transparency": "This job remains displayed for transparency. A blocking criterion does not cancel the score: it flags an incompatibility with your requirements. Adjustable in your preferences.",
+      "fallbackLabel": "Incompatibility with your requirements ({code})."
+    },
+    "unknown": {
+      "title": "Not specified",
+      "note": "Unknown data is never replaced by an estimate: it lowers the confidence index, not the score.",
+      "jobFallback": "{label}: not specified in the job",
+      "profileFallback": "{label}: missing from your profile — complete your profile to evaluate this criterion.",
+      "uncertainFallback": "{label}: information extracted from the job is uncertain — check the original posting."
+    },
+    "dimensions": {
+      "title": "Detail by criterion",
+      "strengths": "Strengths",
+      "gaps": "Gaps",
+      "others": "Other known criteria",
+      "subscoreText": "{percent} / 100",
+      "weight": "weight {weight}",
+      "matched": "Covered: {items}",
+      "related": "Close: {items}",
+      "relatedPair": "{required} (via {matchedWith})",
+      "missing": "Missing: {items}",
+      "distance": "Distance: {distance} km",
+      "distanceWithLocation": "{distance} km from {location}",
+      "names": {
+        "skills_required": "Must-have skills",
+        "skills_nice": "Nice-to-have skills",
+        "title_similarity": "Role similarity",
+        "seniority": "Seniority",
+        "experience_years": "Years of experience",
+        "sector": "Sector",
+        "location": "Location",
+        "remote": "Remote work",
+        "languages": "Languages",
+        "contract": "Contract type",
+        "salary": "Salary",
+        "fine_preferences": "Fine preferences"
+      }
+    },
+    "explanation": {
+      "title": "Score explanation",
+      "cta": "Explain this score",
+      "loading": "Generating the explanation…",
+      "disclaimer": "Rephrasing generated from the facts above.",
+      "failed": "The rephrasing is temporarily unavailable. The elements above remain accurate and complete.",
+      "quota": "Generation limit reached ({hourly} per hour, {daily} per day). Next generation possible at {time}. Your existing drafts remain accessible.",
+      "strengths": "Strengths",
+      "gaps": "Gaps",
+      "uncertainties": "Uncertainties",
+      "blockingNotes": "Notes on blocking criteria"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "loading": "Loading profile…",
+    "errorTitle": "Unable to load your profile.",
+    "retry": "Try again",
+    "version": "Profile version: v{version}",
+    "status": {
+      "validated": "Profile validated",
+      "draft": "Profile not validated"
+    },
+    "announce": {
+      "saved": "Change saved. Your compatibility scores will be recomputed.",
+      "deleted": "Item deleted. Your compatibility scores will be recomputed."
+    },
+    "actionError": "The action could not be saved. Please try again.",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "provenance": {
+      "cvBadge": "Extracted from your CV — confidence {percent}%",
+      "cvHelp": "Extracted from your CV — confidence {percent}%. Check this information: below 50%, it is not used for your scores."
+    },
+    "info": {
+      "title": "Information",
+      "headlineLabel": "Profile headline",
+      "summaryLabel": "Summary",
+      "seniorityLabel": "Seniority",
+      "notProvided": "Not provided",
+      "totalYearsLabel": "Total experience",
+      "totalYears": "{years} years"
+    },
+    "experiences": {
+      "title": "Experience",
+      "add": "Add an experience",
+      "empty": "No experience listed.",
+      "current": "ongoing",
+      "editAria": "Edit the experience {label}",
+      "deleteAria": "Delete the experience {label}",
+      "form": {
+        "titleLabel": "Job title",
+        "companyLabel": "Company",
+        "startLabel": "Start date",
+        "endLabel": "End date",
+        "endHint": "Leave empty if the position is ongoing.",
+        "descriptionLabel": "Description"
+      }
+    },
+    "educations": {
+      "title": "Education",
+      "add": "Add an education",
+      "empty": "No education listed.",
+      "degreeLabel": "Degree or title",
+      "schoolLabel": "Institution",
+      "startLabel": "Start date",
+      "endLabel": "End date",
+      "descriptionLabel": "Description",
+      "editAria": "Edit the education {label}",
+      "deleteAria": "Delete the education {label}"
+    },
+    "skills": {
+      "title": "Skills",
+      "inputLabel": "New skill",
+      "add": "Add",
+      "empty": "No skills listed.",
+      "removeAria": "Delete the skill {label}"
+    },
+    "languages": {
+      "title": "Languages",
+      "codeLabel": "Language code (ISO 639-1, e.g. en)",
+      "levelLabel": "Level (CEFR)",
+      "add": "Add",
+      "empty": "No languages listed.",
+      "removeAria": "Delete the language {label}",
+      "levelAria": "Level of the language {label}"
+    },
+    "validate": {
+      "cta": "Validate my profile",
+      "preconditions": "Add at least {minSkills} skills and 1 experience or education to validate your profile.",
+      "success": "Profile validated. Your compatibility scores are now computed from this information.",
+      "errorFallback": "Validation failed: your profile does not yet meet the prerequisites."
+    }
+  },
+  "preferences": {
+    "title": "Preferences",
+    "loading": "Loading preferences…",
+    "errorTitle": "Unable to load your preferences.",
+    "retry": "Try again",
+    "success": "Preferences saved. Your scores are being updated.",
+    "seeJobs": "See my jobs",
+    "errorSave": "Saving failed. Please try again.",
+    "submit": "Save my preferences",
+    "saving": "Saving…",
+    "strictConsequence": "Incompatible jobs will be marked “Blocking criterion”. They will remain visible, never removed from your results.",
+    "validation": {
+      "strictAboveMin": "The strict minimum must be less than or equal to the desired salary.",
+      "radiusRange": "Enter a radius between 1 and 500 km."
+    },
+    "tags": {
+      "add": "Add",
+      "added": "{label} added to the list.",
+      "removed": "{label} removed from the list."
+    },
+    "targetTitles": {
+      "legend": "Target roles",
+      "inputLabel": "Add a role title",
+      "removeAria": "Remove the target role {label}",
+      "emptyNote": "Without a target role, we will use your most recent job titles."
+    },
+    "locations": {
+      "legend": "Locations",
+      "geocodingNote": "Enter the city as free text: the exact position (geocoding) will be computed automatically from milestone M4.",
+      "cityLabel": "City",
+      "radiusLabel": "Radius (km)",
+      "add": "Add a location",
+      "remove": "Remove",
+      "removeAria": "Remove the location {label}",
+      "empty": "No locations — add a city or choose remote work."
+    },
+    "remote": {
+      "legend": "Remote work",
+      "options": {
+        "required": "Fully remote required",
+        "preferred": "Remote preferred",
+        "indifferent": "No preference",
+        "onsite_preferred": "On site preferred"
+      }
+    },
+    "contracts": {
+      "legend": "Contract types",
+      "strictLabel": "Strict mode: mark other contract types as blocking"
+    },
+    "salary": {
+      "legend": "Salary",
+      "difference": "The desired salary guides the compatibility score. The strict minimum, on the other hand, marks jobs whose advertised maximum is below it as blocking — it does not lower the score.",
+      "minLabel": "Desired salary (€ gross/year)",
+      "strictMinLabel": "Strict minimum (€ gross/year)"
+    },
+    "sectors": {
+      "legend": "Sectors",
+      "preferredLabel": "Preferred sectors",
+      "excludedLabel": "Excluded sectors",
+      "removeAria": "Remove the sector {label}"
+    },
+    "companies": {
+      "legend": "Target companies",
+      "inputLabel": "Add a company",
+      "removeAria": "Remove the company {label}"
+    },
+    "keywords": {
+      "legend": "Keywords",
+      "inputLabel": "Add a keyword",
+      "removeAria": "Remove the keyword {label}"
+    }
+  },
+  "dashboard": {
+    "topMatches": {
+      "title": "Best matches",
+      "loading": "Loading your matches…",
+      "errorTitle": "Unable to load your matches.",
+      "retry": "Try again",
+      "empty": "No matches yet. Widen your preferences or come back later.",
+      "notValidated": "Validate your profile to see your best matches.",
+      "notValidatedCta": "Complete my profile",
+      "seeAll": "See all jobs sorted by compatibility"
     }
   },
   "pages": {
@@ -170,16 +417,6 @@
       "title": "Applications",
       "emptyTitle": "Application tracking is coming soon",
       "emptyDescription": "Your applications, internal or external, will be tracked here by status, with history and notes."
-    },
-    "profile": {
-      "title": "Profile",
-      "emptyTitle": "Your profile is coming soon",
-      "emptyDescription": "Import your CV, review the extracted information (provenance and confidence per field), then validate your profile."
-    },
-    "preferences": {
-      "title": "Preferences",
-      "emptyTitle": "Search preferences are coming soon",
-      "emptyDescription": "Target roles, locations and radius, remote work, contracts, salary, languages and sectors — your criteria will drive matching."
     },
     "settings": {
       "title": "Settings",

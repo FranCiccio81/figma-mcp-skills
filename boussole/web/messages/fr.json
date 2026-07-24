@@ -11,7 +11,8 @@
     "required": "Ce champ est obligatoire.",
     "emailInvalid": "Saisissez une adresse e-mail valide.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 12 caractères.",
-    "consentRequired": "Cette case doit être cochée pour créer votre compte."
+    "consentRequired": "Cette case doit être cochée pour créer votre compte.",
+    "langCode": "Saisissez un code langue à 2 lettres (ex. fr)."
   },
   "nav": {
     "mainLabel": "Navigation principale",
@@ -96,6 +97,7 @@
     },
     "card": {
       "linkAria": "{title}, {company} — voir le détail de l'offre",
+      "linkAriaWithMatch": "{title}, {company} — Compatibilité {score} sur 100, confiance {confidence} sur 100 — voir le détail de l'offre",
       "salaryNotDisclosed": "Salaire non communiqué",
       "postedOn": "Publiée le {date}"
     },
@@ -114,6 +116,7 @@
       "searchLabel": "Rechercher une offre",
       "searchPlaceholder": "Poste, entreprise, mot-clé…",
       "sortLabel": "Trier par",
+      "sortMatch": "Compatibilité",
       "sortRelevance": "Pertinence",
       "sortDate": "Date de publication",
       "resultsCount": "{count, plural, =0 {Aucune offre affichée} one {# offre affichée} other {# offres affichées}}",
@@ -136,9 +139,6 @@
       "errorTitle": "Impossible de charger cette offre.",
       "expiredBanner": "Cette offre n'est plus publiée par sa source (expirée le {date}).",
       "expiredBannerNoDate": "Cette offre n'est plus publiée par sa source.",
-      "matchTitle": "Score de compatibilité",
-      "matchSummary": "Compatibilité {score} sur 100. Confiance {confidence} sur 100.",
-      "matchPlaceholder": "Le score de compatibilité avec votre profil arrive au jalon M3, une fois votre profil validé et le moteur de matching livré. Aucun score approximatif ne sera affiché d'ici là.",
       "descriptionTitle": "Description du poste",
       "skillsRequiredTitle": "Compétences requises",
       "skillsNiceTitle": "Compétences souhaitées",
@@ -151,6 +151,253 @@
       "sourceLink": "Publiée sur {name} — voir l'annonce d'origine",
       "sourceExternalHint": "(nouvelle fenêtre)",
       "sourcePostedOn": "le {date}"
+    }
+  },
+  "match": {
+    "card": {
+      "summary": "Compatibilité {score} · Confiance {confidence}",
+      "lowData": "Données insuffisantes",
+      "blockingBadge": "⛔ Critère bloquant"
+    },
+    "panel": {
+      "title": "Score de compatibilité",
+      "loading": "Calcul du score de compatibilité…",
+      "errorTitle": "Impossible de charger le score de compatibilité.",
+      "retry": "Réessayer",
+      "notValidatedTitle": "Validez votre profil pour voir votre score",
+      "notValidatedBody": "Votre score de compatibilité sera calculé dès que votre profil sera complété et validé. Les offres restent consultables en attendant.",
+      "notValidatedCta": "Compléter et valider mon profil",
+      "groupAria": "Compatibilité {score} sur 100. Confiance {confidence} sur 100.",
+      "scoreLabel": "Compatibilité : {score} / 100",
+      "scoreHelp": "la qualité du match, calculée uniquement sur les critères connus.",
+      "confidenceLabel": "Confiance : {confidence} / 100",
+      "confidenceHelp": "la part des informations réellement disponibles pour ce calcul.",
+      "helpToggle": "Que signifient ces deux chiffres ?",
+      "helpText": "Deux chiffres, deux questions. La compatibilité répond à : “ce qui est connu correspond-il à votre profil ?”. La confiance répond à : “que sait-on vraiment de cette offre et de votre profil ?”. Un score élevé avec une confiance basse repose sur peu d'informations : les éléments manquants sont listés sous “Non précisé”.",
+      "lowDataTitle": "Données insuffisantes",
+      "lowDataBody": "moins de 40 % des critères sont connus pour cette offre. Le score de {score} est donné à titre indicatif."
+    },
+    "blocking": {
+      "title": "Critères bloquants",
+      "badge": "⛔ Critère bloquant",
+      "transparency": "Cette offre reste affichée par transparence. Un critère bloquant n'annule pas le score : il signale une incompatibilité avec vos exigences. Modifiable dans vos préférences.",
+      "fallbackLabel": "Incompatibilité avec vos exigences ({code})."
+    },
+    "unknown": {
+      "title": "Non précisé",
+      "note": "Une donnée inconnue n'est jamais remplacée par une estimation : elle abaisse l'indice de confiance, pas le score.",
+      "jobFallback": "{label} : non précisé dans l'offre",
+      "profileFallback": "{label} : absent de votre profil — complétez votre profil pour évaluer ce critère.",
+      "uncertainFallback": "{label} : information extraite de l'offre incertaine — vérifiez l'annonce d'origine."
+    },
+    "dimensions": {
+      "title": "Détail par critère",
+      "strengths": "Forces",
+      "gaps": "Lacunes",
+      "others": "Autres critères connus",
+      "subscoreText": "{percent} / 100",
+      "weight": "poids {weight}",
+      "matched": "Couvertes : {items}",
+      "related": "Proches : {items}",
+      "relatedPair": "{required} (via {matchedWith})",
+      "missing": "Manquantes : {items}",
+      "distance": "Distance : {distance} km",
+      "distanceWithLocation": "À {distance} km de {location}",
+      "names": {
+        "skills_required": "Compétences indispensables",
+        "skills_nice": "Compétences complémentaires",
+        "title_similarity": "Similarité du métier",
+        "seniority": "Séniorité",
+        "experience_years": "Années d'expérience",
+        "sector": "Secteur",
+        "location": "Localisation",
+        "remote": "Télétravail",
+        "languages": "Langues",
+        "contract": "Type de contrat",
+        "salary": "Salaire",
+        "fine_preferences": "Préférences fines"
+      }
+    },
+    "explanation": {
+      "title": "Explication du score",
+      "cta": "Expliquer ce score",
+      "loading": "Génération de l'explication…",
+      "disclaimer": "Reformulation générée à partir des faits ci-dessus.",
+      "failed": "La reformulation est momentanément indisponible. Les éléments ci-dessus restent exacts et complets.",
+      "quota": "Limite de générations atteinte ({hourly} par heure, {daily} par jour). Prochaine génération possible à {time}. Vos brouillons existants restent accessibles.",
+      "strengths": "Forces",
+      "gaps": "Lacunes",
+      "uncertainties": "Incertitudes",
+      "blockingNotes": "Notes sur les critères bloquants"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "loading": "Chargement du profil…",
+    "errorTitle": "Impossible de charger votre profil.",
+    "retry": "Réessayer",
+    "version": "Version du profil : v{version}",
+    "status": {
+      "validated": "Profil validé",
+      "draft": "Profil non validé"
+    },
+    "announce": {
+      "saved": "Modification enregistrée. Vos scores de compatibilité seront recalculés.",
+      "deleted": "Élément supprimé. Vos scores de compatibilité seront recalculés."
+    },
+    "actionError": "L'action n'a pas pu être enregistrée. Réessayez.",
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer"
+    },
+    "provenance": {
+      "cvBadge": "Extrait du CV — confiance {percent} %",
+      "cvHelp": "Extrait du CV — confiance {percent} %. Vérifiez cette information : en dessous de 50 %, elle n'est pas utilisée pour vos scores."
+    },
+    "info": {
+      "title": "Informations",
+      "headlineLabel": "Titre du profil",
+      "summaryLabel": "Résumé",
+      "seniorityLabel": "Séniorité",
+      "notProvided": "Non renseigné",
+      "totalYearsLabel": "Expérience totale",
+      "totalYears": "{years} ans"
+    },
+    "experiences": {
+      "title": "Expériences",
+      "add": "Ajouter une expérience",
+      "empty": "Aucune expérience renseignée.",
+      "current": "en cours",
+      "editAria": "Modifier l'expérience {label}",
+      "deleteAria": "Supprimer l'expérience {label}",
+      "form": {
+        "titleLabel": "Intitulé du poste",
+        "companyLabel": "Entreprise",
+        "startLabel": "Date de début",
+        "endLabel": "Date de fin",
+        "endHint": "Laissez vide si le poste est en cours.",
+        "descriptionLabel": "Description"
+      }
+    },
+    "educations": {
+      "title": "Formations",
+      "add": "Ajouter une formation",
+      "empty": "Aucune formation renseignée.",
+      "degreeLabel": "Diplôme ou intitulé",
+      "schoolLabel": "Établissement",
+      "startLabel": "Date de début",
+      "endLabel": "Date de fin",
+      "descriptionLabel": "Description",
+      "editAria": "Modifier la formation {label}",
+      "deleteAria": "Supprimer la formation {label}"
+    },
+    "skills": {
+      "title": "Compétences",
+      "inputLabel": "Nouvelle compétence",
+      "add": "Ajouter",
+      "empty": "Aucune compétence renseignée.",
+      "removeAria": "Supprimer la compétence {label}"
+    },
+    "languages": {
+      "title": "Langues",
+      "codeLabel": "Code langue (ISO 639-1, ex. fr)",
+      "levelLabel": "Niveau (CECRL)",
+      "add": "Ajouter",
+      "empty": "Aucune langue renseignée.",
+      "removeAria": "Supprimer la langue {label}",
+      "levelAria": "Niveau de la langue {label}"
+    },
+    "validate": {
+      "cta": "Valider mon profil",
+      "preconditions": "Ajoutez au moins {minSkills} compétences et 1 expérience ou formation pour valider votre profil.",
+      "success": "Profil validé. Vos scores de compatibilité sont désormais calculés sur ces informations.",
+      "errorFallback": "La validation a échoué : votre profil ne remplit pas encore les prérequis."
+    }
+  },
+  "preferences": {
+    "title": "Préférences",
+    "loading": "Chargement des préférences…",
+    "errorTitle": "Impossible de charger vos préférences.",
+    "retry": "Réessayer",
+    "success": "Préférences enregistrées. Vos scores sont en cours de mise à jour.",
+    "seeJobs": "Voir mes offres",
+    "errorSave": "L'enregistrement a échoué. Réessayez.",
+    "submit": "Enregistrer mes préférences",
+    "saving": "Enregistrement…",
+    "strictConsequence": "Les offres incompatibles seront marquées “Critère bloquant”. Elles resteront visibles, jamais supprimées de vos résultats.",
+    "validation": {
+      "strictAboveMin": "Le minimum strict doit être inférieur ou égal au salaire souhaité.",
+      "radiusRange": "Saisissez un rayon entre 1 et 500 km."
+    },
+    "tags": {
+      "add": "Ajouter",
+      "added": "{label} ajouté à la liste.",
+      "removed": "{label} retiré de la liste."
+    },
+    "targetTitles": {
+      "legend": "Métiers cibles",
+      "inputLabel": "Ajouter un intitulé de métier",
+      "removeAria": "Retirer le métier cible {label}",
+      "emptyNote": "Sans métier cible, nous utiliserons vos derniers intitulés de poste."
+    },
+    "locations": {
+      "legend": "Localisations",
+      "geocodingNote": "Saisissez la ville en texte libre : la position exacte (géocodage) sera calculée automatiquement à partir du jalon M4.",
+      "cityLabel": "Ville",
+      "radiusLabel": "Rayon (km)",
+      "add": "Ajouter une localisation",
+      "remove": "Retirer",
+      "removeAria": "Retirer la localisation {label}",
+      "empty": "Aucune localisation — ajoutez une ville ou choisissez le télétravail."
+    },
+    "remote": {
+      "legend": "Télétravail",
+      "options": {
+        "required": "Télétravail complet exigé",
+        "preferred": "Télétravail préféré",
+        "indifferent": "Indifférent",
+        "onsite_preferred": "Sur site de préférence"
+      }
+    },
+    "contracts": {
+      "legend": "Types de contrat",
+      "strictLabel": "Mode strict : marquer les autres types de contrat comme bloquants"
+    },
+    "salary": {
+      "legend": "Salaire",
+      "difference": "Le salaire souhaité guide le score de compatibilité. Le minimum strict, lui, marque comme bloquantes les offres dont le salaire maximum annoncé est inférieur — il n'abaisse pas le score.",
+      "minLabel": "Salaire souhaité (€ brut/an)",
+      "strictMinLabel": "Minimum strict (€ brut/an)"
+    },
+    "sectors": {
+      "legend": "Secteurs",
+      "preferredLabel": "Secteurs préférés",
+      "excludedLabel": "Secteurs exclus",
+      "removeAria": "Retirer le secteur {label}"
+    },
+    "companies": {
+      "legend": "Entreprises cibles",
+      "inputLabel": "Ajouter une entreprise",
+      "removeAria": "Retirer l'entreprise {label}"
+    },
+    "keywords": {
+      "legend": "Mots-clés",
+      "inputLabel": "Ajouter un mot-clé",
+      "removeAria": "Retirer le mot-clé {label}"
+    }
+  },
+  "dashboard": {
+    "topMatches": {
+      "title": "Meilleures correspondances",
+      "loading": "Chargement de vos correspondances…",
+      "errorTitle": "Impossible de charger vos correspondances.",
+      "retry": "Réessayer",
+      "empty": "Aucune correspondance pour le moment. Élargissez vos préférences ou revenez plus tard.",
+      "notValidated": "Validez votre profil pour voir vos meilleures correspondances.",
+      "notValidatedCta": "Compléter mon profil",
+      "seeAll": "Voir toutes les offres triées par compatibilité"
     }
   },
   "pages": {
@@ -170,16 +417,6 @@
       "title": "Candidatures",
       "emptyTitle": "Le suivi des candidatures arrive bientôt",
       "emptyDescription": "Vos candidatures, internes ou externes, seront suivies ici par statut, avec historique et notes."
-    },
-    "profile": {
-      "title": "Profil",
-      "emptyTitle": "Votre profil arrive bientôt",
-      "emptyDescription": "Importez votre CV, relisez les informations extraites (provenance et confiance par champ), puis validez votre profil."
-    },
-    "preferences": {
-      "title": "Préférences",
-      "emptyTitle": "Les préférences de recherche arrivent bientôt",
-      "emptyDescription": "Métiers cibles, localisations et rayon, télétravail, contrats, salaire, langues et secteurs — vos critères alimenteront le matching."
     },
     "settings": {
       "title": "Paramètres",

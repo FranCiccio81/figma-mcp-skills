@@ -13,7 +13,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useId, useMemo, useRef, useState, type TextareaHTMLAttributes } from "react";
+import {
+  useCallback,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ProvenanceBadge } from "@/components/profile/provenance-badge";
@@ -106,8 +114,8 @@ function SectionCard({
 }: {
   titleId: string;
   title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section
@@ -1011,7 +1019,7 @@ function LanguagesSection({
                     level: event.target.value as CefrLevel,
                   })
                 }
-                className={clsx(selectClass, "h-11 w-24")}
+                className="h-11 w-24 rounded-md border border-border bg-surface px-3 text-sm text-content focus:border-action-primary focus:shadow-input-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {CEFR_LEVELS.map((level) => (
                   <option key={level} value={level}>

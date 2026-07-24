@@ -1,10 +1,12 @@
-// SCR-10 — M3
-// Coquille livrée en M1 (E2) ; le contenu (checklist d'onboarding, top matches,
-// candidatures à relancer, rappel des sources) arrive avec E7/E8 au jalon M3.
+// SCR-10 — M3 (partiel)
+// Coquille livrée en M1 (E2) ; M3 : carte « Meilleures correspondances »
+// (GET /matches, TopMatchesCard). Reste à venir : checklist d'onboarding,
+// candidatures à relancer, rappel des sources.
 
 import { ArrowRight, Briefcase, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { TopMatchesCard } from "@/components/match/top-matches-card";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function DashboardPage() {
@@ -33,6 +35,9 @@ export default async function DashboardPage() {
         </span>
         <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-content-secondary" />
       </Link>
+
+      {/* M3 : meilleures correspondances (GET /matches, 5 premiers résultats). */}
+      <TopMatchesCard />
 
       <EmptyState
         icon={LayoutDashboard}
