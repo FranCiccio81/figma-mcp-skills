@@ -71,6 +71,13 @@ class TestHardFilters:
         assert "IS NULL" in sql
         assert ">=" in sql
 
+    def test_salary_min_compares_annualized_amounts(self) -> None:
+        # Une offre à 4 000 €/mois (~48 k€/an) ne doit pas être exclue par
+        # salary_min=45000 : le filtre annualise via CASE sur salary_period.
+        sql = build_sql(SearchFilters(salary_min=45000, sort="date"))
+        assert "CASE WHEN (job_postings.salary_period = " in sql
+        assert "* CASE" in sql or "CASE WHEN" in sql
+
     def test_posted_since_filters_on_last_seen_at(self) -> None:
         sql = build_sql(SearchFilters(posted_since_days=7, sort="date"))
         assert "job_postings.last_seen_at >=" in sql

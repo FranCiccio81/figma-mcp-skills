@@ -194,29 +194,39 @@ class JobsService:
     async def set_saved_state(
         self, user_id: uuid.UUID, job_id: uuid.UUID, state: str
     ) -> None:
-        """Upsert saved/hidden — 404 si l'offre n'existe pas (anti-énumération)."""
-        if not await self._repository.job_exists(job_id):
-            raise _not_found()
+        """Upsert saved/hidden — 404 selon la même règle de lisibilité que le
+        détail (anti-énumération : une ressource illisible en GET ne doit pas
+        être mutable, sinon le 204 révèle son existence)."""
+        await self._readable_or_404(user_id, job_id)
         await self._repository.set_saved_state(user_id, job_id, state)
 
     async def clear_saved_state(self, user_id: uuid.UUID, job_id: uuid.UUID) -> None:
         """Retire saved/hidden — idempotent si aucun état n'existait (204)."""
-        if not await self._repository.job_exists(job_id):
-            raise _not_found()
+        await self._readable_or_404(user_id, job_id)
         await self._repository.clear_saved_state(user_id, job_id)
+
+    async def _readable_or_404(self, user_id: uuid.UUID, job_id: uuid.UUID) -> None:
+        row = await self._repository.get_detail(job_id, user_id)
+        if row is None or not self._is_readable(row):
+            raise _not_found()
 
     # ------------------------------------------------------------ sources
 
     async def list_sources(self) -> list[SourceOut]:
         rows = await self._repository.list_sources()
+        # sources.kind est du texte libre en base (pas de CHECK) : une valeur
+        # hors vocabulaire est ignorée plutôt que de casser tout GET /sources
+        # par une ResponseValidationError.
+        valid_kinds: tuple[SourceKind, ...] = ("public_api", "ats_feed", "partner")
         return [
             SourceOut(
                 slug=r.slug,
                 name=r.name,
-                kind=cast(SourceKind, r.kind),
+                kind=r.kind,
                 last_sync_at=r.last_sync_at,
             )
             for r in rows
+            if r.kind in valid_kinds
         ]
 
     # ------------------------------------------------------------ mapping

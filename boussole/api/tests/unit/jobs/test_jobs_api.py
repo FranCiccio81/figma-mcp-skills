@@ -324,6 +324,24 @@ class TestDetail:
         register(client)
         assert client.get(f"{JOBS_URL}/{job.id}").status_code == 404
 
+    def test_saved_state_follows_detail_readability(
+        self, client: TestClient, jobs_repository: InMemoryJobsRepository
+    ) -> None:
+        """Une offre 404 en lecture doit l'être aussi en mutation saved-state
+        (anti-énumération : un 204 révélerait l'existence de l'offre retirée)."""
+        job = jobs_repository.add(make_posting(status="withdrawn"))
+        register(client)
+        put = client.put(
+            f"{JOBS_URL}/{job.id}/saved-state",
+            json={"state": "saved"},
+            headers=csrf_headers(client),
+        )
+        assert put.status_code == 404
+        delete = client.delete(
+            f"{JOBS_URL}/{job.id}/saved-state", headers=csrf_headers(client)
+        )
+        assert delete.status_code == 404
+
 
 class TestSources:
     def test_lists_active_sources(

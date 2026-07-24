@@ -88,7 +88,9 @@ async def search_jobs(
         salary_min=salary_min,
         posted_since=posted_since,
         language=language,
-        country=country,
+        # Codes ISO stockés en majuscules par l'ingestion — normalisation
+        # sinon country=fr renvoie silencieusement 0 résultat.
+        country=country.upper() if country else None,
         lat=lat,
         lon=lon,
         radius_km=radius_km,

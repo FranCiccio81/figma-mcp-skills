@@ -30,6 +30,7 @@ from sqlalchemy import (
     ColumnElement,
     Select,
     and_,
+    case,
     exists,
     func,
     or_,
@@ -199,8 +200,20 @@ def build_search_statement(
     if filters.salary_min is not None:
         # Q32 : les offres sans salaire sont INCLUSES (badge « non communiqué »
         # côté front) — l'inconnu n'est pas un fait négatif.
+        # Le filtre compare des montants ANNUALISÉS : les périodes non annuelles
+        # sont converties (mois ×12, jour ×220, heure ×1600 🟡 — approximations
+        # FR à calibrer), sans quoi une offre à 4 000 €/mois serait exclue par
+        # salary_min=45000 alors qu'elle paie ~48 k€/an.
+        period_factor = case(
+            (JobPosting.salary_period == "month", 12),
+            (JobPosting.salary_period == "day", 220),
+            (JobPosting.salary_period == "hour", 1600),
+            else_=1,
+        )
         best_salary = func.coalesce(JobPosting.salary_max, JobPosting.salary_min)
-        conditions.append(or_(best_salary.is_(None), best_salary >= filters.salary_min))
+        conditions.append(
+            or_(best_salary.is_(None), best_salary * period_factor >= filters.salary_min)
+        )
     if filters.posted_since_days is not None:
         threshold = datetime.now(UTC) - timedelta(days=filters.posted_since_days)
         conditions.append(JobPosting.last_seen_at >= threshold)
@@ -292,8 +305,6 @@ class JobsRepository(Protocol):
         self, job_id: uuid.UUID, user_id: uuid.UUID
     ) -> JobDetailRow | None: ...
 
-    async def job_exists(self, job_id: uuid.UUID) -> bool: ...
-
     async def set_saved_state(
         self, user_id: uuid.UUID, job_id: uuid.UUID, state: str
     ) -> None: ...
@@ -347,10 +358,6 @@ class SqlAlchemyJobsRepository:
             return None
         posting, saved_state = row
         return JobDetailRow(posting=posting, saved_state=saved_state)
-
-    async def job_exists(self, job_id: uuid.UUID) -> bool:
-        stmt = select(JobPosting.id).where(JobPosting.id == job_id)
-        return (await self._session.execute(stmt)).scalar_one_or_none() is not None
 
     async def set_saved_state(
         self, user_id: uuid.UUID, job_id: uuid.UUID, state: str

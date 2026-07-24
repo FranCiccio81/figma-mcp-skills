@@ -210,9 +210,6 @@ class InMemoryJobsRepository:
             return None
         return JobDetailRow(posting=posting, saved_state=self.saved.get((user_id, job_id)))
 
-    async def job_exists(self, job_id: uuid.UUID) -> bool:
-        return job_id in self.postings
-
     async def set_saved_state(
         self, user_id: uuid.UUID, job_id: uuid.UUID, state: str
     ) -> None:
