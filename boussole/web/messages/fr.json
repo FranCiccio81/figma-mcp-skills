@@ -58,11 +58,108 @@
   "placeholder": {
     "availableAt": "Disponible au jalon {milestone}."
   },
+  "jobs": {
+    "badges": {
+      "label": "Caractéristiques de l'offre"
+    },
+    "contract": {
+      "permanent": "CDI",
+      "fixed_term": "CDD",
+      "freelance": "Freelance",
+      "internship": "Stage",
+      "apprenticeship": "Alternance",
+      "other": "Autre contrat"
+    },
+    "remote": {
+      "onsite": "Sur site",
+      "hybrid": "Hybride",
+      "full_remote": "Télétravail complet"
+    },
+    "seniority": {
+      "intern": "Stagiaire",
+      "junior": "Junior",
+      "mid": "Confirmé",
+      "senior": "Senior",
+      "lead": "Lead",
+      "principal": "Principal",
+      "executive": "Direction"
+    },
+    "actions": {
+      "save": "Sauvegarder",
+      "saved": "Sauvegardée",
+      "hide": "Masquer",
+      "hidden": "Masquée",
+      "saveAria": "Sauvegarder l'offre {title}",
+      "unsaveAria": "Retirer l'offre {title} des sauvegardées",
+      "hideAria": "Masquer l'offre {title}",
+      "unhideAria": "Ne plus masquer l'offre {title}"
+    },
+    "card": {
+      "linkAria": "{title}, {company} — voir le détail de l'offre",
+      "salaryNotDisclosed": "Salaire non communiqué",
+      "postedOn": "Publiée le {date}"
+    },
+    "filters": {
+      "title": "Filtres",
+      "remoteLegend": "Télétravail",
+      "contractLegend": "Type de contrat",
+      "salaryMinLabel": "Salaire minimum (€ brut/an)",
+      "postedSinceLabel": "Fraîcheur de publication",
+      "postedSinceAny": "Toutes les dates",
+      "postedSinceDays": "{days, plural, one {Dernières 24 heures} other {# derniers jours}}",
+      "savedOnlyLabel": "Sauvegardées uniquement",
+      "reset": "Réinitialiser les filtres"
+    },
+    "list": {
+      "searchLabel": "Rechercher une offre",
+      "searchPlaceholder": "Poste, entreprise, mot-clé…",
+      "sortLabel": "Trier par",
+      "sortRelevance": "Pertinence",
+      "sortDate": "Date de publication",
+      "resultsCount": "{count, plural, =0 {Aucune offre trouvée} one {# offre trouvée} other {# offres trouvées}}",
+      "loading": "Chargement des offres…",
+      "loadMore": "Charger plus d'offres",
+      "endOfList": "Vous avez vu toutes les offres correspondant à ces critères.",
+      "emptyTitle": "Aucune offre ne correspond à ces critères.",
+      "emptyDescription": "Essayez d'élargir votre recherche : retirez le dernier filtre appliqué ou réinitialisez l'ensemble des filtres. Aucun résultat approchant n'est ajouté à votre insu.",
+      "resetFilters": "Réinitialiser les filtres",
+      "sourcesReminder": "Boussole interroge {count, plural, one {# source} other {# sources}} d'offres actives.",
+      "errorTitle": "Impossible de charger les offres.",
+      "retry": "Réessayer",
+      "rateLimited": "Vous filtrez plus vite que nous ! Réessayez dans {seconds} s.",
+      "hiddenNotice": "Offre « {title} » masquée. Elle reste restaurable.",
+      "undo": "Annuler",
+      "actionError": "L'action n'a pas pu être enregistrée. Réessayez."
+    },
+    "detail": {
+      "backToList": "Retour aux offres",
+      "errorTitle": "Impossible de charger cette offre.",
+      "expiredBanner": "Cette offre n'est plus publiée par sa source (expirée le {date}).",
+      "expiredBannerNoDate": "Cette offre n'est plus publiée par sa source.",
+      "matchTitle": "Score de compatibilité",
+      "matchSummary": "Compatibilité {score} sur 100. Confiance {confidence} sur 100.",
+      "matchPlaceholder": "Le score de compatibilité avec votre profil arrive au jalon M3, une fois votre profil validé et le moteur de matching livré. Aucun score approximatif ne sera affiché d'ici là.",
+      "descriptionTitle": "Description du poste",
+      "skillsRequiredTitle": "Compétences requises",
+      "skillsNiceTitle": "Compétences souhaitées",
+      "aboutTitle": "À propos de l'offre",
+      "languageLabel": "Langue de l'offre",
+      "seniorityLabel": "Séniorité",
+      "notSpecified": "Non précisé dans l'offre",
+      "sourcesTitle": "Sources",
+      "sourcesIntro": "Chaque offre conserve le lien vers son annonce d'origine.",
+      "sourceLink": "Publiée sur {name} — voir l'annonce d'origine",
+      "sourceExternalHint": "(nouvelle fenêtre)",
+      "sourcePostedOn": "le {date}"
+    }
+  },
   "pages": {
     "dashboard": {
       "title": "Tableau de bord",
       "emptyTitle": "Votre tableau de bord arrive bientôt",
-      "emptyDescription": "Vos meilleures offres du moment, vos candidatures à relancer et l'avancement de votre profil s'afficheront ici."
+      "emptyDescription": "Vos meilleures offres du moment, vos candidatures à relancer et l'avancement de votre profil s'afficheront ici.",
+      "exploreJobsTitle": "Explorer les offres",
+      "exploreJobsDescription": "Recherchez parmi les offres agrégées, filtrez par contrat, télétravail ou salaire, et sauvegardez celles à examiner."
     },
     "jobs": {
       "title": "Offres",

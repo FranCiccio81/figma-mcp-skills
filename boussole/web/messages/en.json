@@ -58,11 +58,108 @@
   "placeholder": {
     "availableAt": "Available at milestone {milestone}."
   },
+  "jobs": {
+    "badges": {
+      "label": "Job characteristics"
+    },
+    "contract": {
+      "permanent": "Permanent",
+      "fixed_term": "Fixed-term",
+      "freelance": "Freelance",
+      "internship": "Internship",
+      "apprenticeship": "Apprenticeship",
+      "other": "Other contract"
+    },
+    "remote": {
+      "onsite": "On site",
+      "hybrid": "Hybrid",
+      "full_remote": "Fully remote"
+    },
+    "seniority": {
+      "intern": "Intern",
+      "junior": "Junior",
+      "mid": "Mid-level",
+      "senior": "Senior",
+      "lead": "Lead",
+      "principal": "Principal",
+      "executive": "Executive"
+    },
+    "actions": {
+      "save": "Save",
+      "saved": "Saved",
+      "hide": "Hide",
+      "hidden": "Hidden",
+      "saveAria": "Save the job {title}",
+      "unsaveAria": "Remove the job {title} from saved jobs",
+      "hideAria": "Hide the job {title}",
+      "unhideAria": "Stop hiding the job {title}"
+    },
+    "card": {
+      "linkAria": "{title}, {company} — view job details",
+      "salaryNotDisclosed": "Salary not disclosed",
+      "postedOn": "Posted on {date}"
+    },
+    "filters": {
+      "title": "Filters",
+      "remoteLegend": "Remote work",
+      "contractLegend": "Contract type",
+      "salaryMinLabel": "Minimum salary (€ gross/year)",
+      "postedSinceLabel": "Posting freshness",
+      "postedSinceAny": "Any date",
+      "postedSinceDays": "{days, plural, one {Last 24 hours} other {Last # days}}",
+      "savedOnlyLabel": "Saved only",
+      "reset": "Reset filters"
+    },
+    "list": {
+      "searchLabel": "Search for a job",
+      "searchPlaceholder": "Role, company, keyword…",
+      "sortLabel": "Sort by",
+      "sortRelevance": "Relevance",
+      "sortDate": "Posting date",
+      "resultsCount": "{count, plural, =0 {No jobs found} one {# job found} other {# jobs found}}",
+      "loading": "Loading jobs…",
+      "loadMore": "Load more jobs",
+      "endOfList": "You have seen every job matching these criteria.",
+      "emptyTitle": "No jobs match these criteria.",
+      "emptyDescription": "Try widening your search: remove the last filter you applied or reset all filters. No approximate results are ever silently added.",
+      "resetFilters": "Reset filters",
+      "sourcesReminder": "Boussole queries {count, plural, one {# active job source} other {# active job sources}}.",
+      "errorTitle": "Unable to load jobs.",
+      "retry": "Try again",
+      "rateLimited": "You are filtering faster than us! Try again in {seconds} s.",
+      "hiddenNotice": "Job \"{title}\" hidden. It remains restorable.",
+      "undo": "Undo",
+      "actionError": "The action could not be saved. Please try again."
+    },
+    "detail": {
+      "backToList": "Back to jobs",
+      "errorTitle": "Unable to load this job.",
+      "expiredBanner": "This job is no longer published by its source (expired on {date}).",
+      "expiredBannerNoDate": "This job is no longer published by its source.",
+      "matchTitle": "Compatibility score",
+      "matchSummary": "Compatibility {score} out of 100. Confidence {confidence} out of 100.",
+      "matchPlaceholder": "The compatibility score with your profile arrives at milestone M3, once your profile is validated and the matching engine ships. No approximate score will be shown until then.",
+      "descriptionTitle": "Job description",
+      "skillsRequiredTitle": "Required skills",
+      "skillsNiceTitle": "Nice-to-have skills",
+      "aboutTitle": "About this job",
+      "languageLabel": "Job language",
+      "seniorityLabel": "Seniority",
+      "notSpecified": "Not specified in the job",
+      "sourcesTitle": "Sources",
+      "sourcesIntro": "Every job keeps the link to its original posting.",
+      "sourceLink": "Published on {name} — view the original posting",
+      "sourceExternalHint": "(new window)",
+      "sourcePostedOn": "on {date}"
+    }
+  },
   "pages": {
     "dashboard": {
       "title": "Dashboard",
       "emptyTitle": "Your dashboard is coming soon",
-      "emptyDescription": "Your current best matches, applications to follow up on, and your profile progress will appear here."
+      "emptyDescription": "Your current best matches, applications to follow up on, and your profile progress will appear here.",
+      "exploreJobsTitle": "Explore jobs",
+      "exploreJobsDescription": "Search aggregated jobs, filter by contract, remote work or salary, and save the ones worth reviewing."
     },
     "jobs": {
       "title": "Jobs",

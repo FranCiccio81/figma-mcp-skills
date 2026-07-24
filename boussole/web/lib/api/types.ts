@@ -58,3 +58,95 @@ export interface Page<T> {
   items: T[];
   next_cursor: string | null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Offres — jalon M2 (openapi.yaml : /jobs, /jobs/{id}, /sources)      */
+/* ------------------------------------------------------------------ */
+
+/** Politique de télétravail d'une offre (openapi.yaml → RemotePolicy). */
+export type RemotePolicy = "onsite" | "hybrid" | "full_remote";
+
+/** Type de contrat (openapi.yaml → ContractType). */
+export type ContractType =
+  | "permanent"
+  | "fixed_term"
+  | "freelance"
+  | "internship"
+  | "apprenticeship"
+  | "other";
+
+/** Niveau de séniorité (openapi.yaml → SeniorityLevel — nullable côté API). */
+export type SeniorityLevel =
+  | "intern"
+  | "junior"
+  | "mid"
+  | "senior"
+  | "lead"
+  | "principal"
+  | "executive";
+
+/** État utilisateur d'une offre (`PUT /jobs/{id}/saved-state`). */
+export type SavedState = "saved" | "hidden";
+
+/** Tri de `GET /jobs` — `match` inopérant avant le jalon M3 (profil + scoring). */
+export type JobSort = "match" | "date" | "relevance";
+
+/** Résumé de matching embarqué dans une carte d'offre — `null` au jalon M2. */
+export interface JobMatchSummary {
+  score: number;
+  confidence: number;
+  low_data: boolean;
+  has_blocking: boolean;
+}
+
+/** Carte d'offre — item de `GET /jobs` (openapi.yaml → JobCard). */
+export interface JobCard {
+  id: string;
+  title: string;
+  company_name: string;
+  locations: string[];
+  remote: RemotePolicy | null;
+  contract: ContractType | null;
+  /** « 45–55 k€ » ou `null` si non communiqué (microcopie M3-a — jamais estimé). */
+  salary_label: string | null;
+  posted_at: string | null;
+  /** `null` tant que le matching n'est pas livré (M3) — aucun faux score affiché. */
+  match: JobMatchSummary | null;
+  saved_state: SavedState | null;
+}
+
+/** Source d'origine d'une offre — chaque offre en a au moins une (D13, 04 Flux 4 §2). */
+export interface JobSourceLink {
+  name: string;
+  original_url: string;
+  posted_at?: string | null;
+}
+
+/** Détail d'une offre — `GET /jobs/{id}` (openapi.yaml → JobDetail, allOf JobCard). */
+export interface JobDetail extends JobCard {
+  description_text: string;
+  language: string;
+  seniority: SeniorityLevel | null;
+  skills_required: string[];
+  skills_nice: string[];
+  sources: JobSourceLink[];
+  /**
+   * 🟡 Cycle de vie de l'offre (11 §jobs : `active | expired | withdrawn`) —
+   * non déclaré dans openapi.yaml mais requis pour le bandeau « offre expirée »
+   * (04 Flux 4). Optionnel tant que le contrat n'est pas amendé.
+   */
+  status?: "active" | "expired" | "withdrawn";
+  /** 🟡 Voir {@link JobDetail.status} — date d'expiration si connue. */
+  expires_at?: string | null;
+}
+
+/** Page de résultats de `GET /jobs` (curseur, jamais d'offset). */
+export type SearchPage = Page<JobCard>;
+
+/** Source d'offres active — `GET /sources` (transparence, SCR-73). */
+export interface SourceInfo {
+  slug: string;
+  name: string;
+  kind: "public_api" | "ats_feed" | "partner";
+  last_sync_at: string | null;
+}
