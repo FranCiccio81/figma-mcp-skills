@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from app.matching import CandidateInput, Confident, JobInput
-
 from tests.unit.matching.factories import E1, outcome, vector_with_cosine
 
 # --------------------------------------------------------- similarité métier
@@ -62,7 +61,7 @@ def test_title_missing_embeddings_means_unknown() -> None:
         ("senior", "senior", 1.0),  # Δ=0
         ("lead", "senior", 0.8),  # UM-08 : sur-qualifié de 1
         ("mid", "senior", 0.6),  # UM-08 : sous-qualifié de 1
-        ("executive", "lead", 0.8),
+        ("principal", "lead", 0.8),
         ("lead", "mid", 0.5),  # sur-qualifié de 2
         ("executive", "senior", 0.3),  # sur-qualifié de 3
         ("executive", "junior", 0.3),  # Δ=−5 borné à −3
@@ -84,7 +83,9 @@ def test_seniority_ordinal_table(candidate_level: str, job_level: str, expected:
 def test_seniority_unknown_cases() -> None:
     missing_job = outcome("seniority", CandidateInput(seniority="senior"), JobInput())
     assert not missing_job.known and missing_job.unknown_reason == "job_missing"
-    missing_candidate = outcome("seniority", CandidateInput(), JobInput(seniority=Confident("senior")))
+    missing_candidate = outcome(
+        "seniority", CandidateInput(), JobInput(seniority=Confident("senior"))
+    )
     assert not missing_candidate.known
     assert missing_candidate.unknown_reason == "candidate_missing"
 

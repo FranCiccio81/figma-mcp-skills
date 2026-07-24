@@ -145,8 +145,12 @@ def _coverage(
     related_threshold = dim.num("related_similarity_threshold")
 
     candidate_skills = _norm_set(candidate.skills)
+    # Seules les compétences réellement présentes au profil peuvent donner un
+    # crédit « proche » — un embedding orphelin n'est pas une compétence.
     candidate_embeddings: dict[str, Vector] = {
-        _norm(label): vector for label, vector in candidate.skill_embeddings.items()
+        _norm(label): vector
+        for label, vector in candidate.skill_embeddings.items()
+        if _norm(label) in candidate_skills
     }
     job_embeddings: dict[str, Vector] = {
         _norm(label): vector for label, vector in job.skill_embeddings.items()

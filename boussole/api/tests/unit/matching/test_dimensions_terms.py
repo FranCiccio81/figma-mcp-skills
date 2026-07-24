@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from app.matching import CandidateInput, Confident, JobInput
-
 from tests.unit.matching.factories import outcome
 
 # --------------------------------------------------------------------- contrat
@@ -111,7 +110,7 @@ def test_salary_open_job_range_padded() -> None:
         "salary", _salary_candidate(45_000, 55_000), JobInput(salary_min=50_000)
     )
     # « à partir de 50 k€ » → [50k, 57,5k] (+15 %) → recouvrement 5 k€ / 10 k€.
-    assert result.details["job_range_eur_year"] == [50_000.0, 57_500.0]
+    assert result.details["job_range_eur_year"] == pytest.approx([50_000.0, 57_500.0])
     assert result.subscore == pytest.approx(0.5)
 
 
@@ -120,7 +119,7 @@ def test_salary_open_candidate_range_padded() -> None:
         "salary", _salary_candidate(50_000, None), JobInput(salary_min=40_000, salary_max=60_000)
     )
     # Souhait « 50 k€ min » → [50k, 57,5k] entièrement couvert.
-    assert result.details["candidate_range_eur_year"] == [50_000.0, 57_500.0]
+    assert result.details["candidate_range_eur_year"] == pytest.approx([50_000.0, 57_500.0])
     assert result.subscore == pytest.approx(1.0)
 
 

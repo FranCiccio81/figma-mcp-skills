@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from app.matching import CandidateInput, JobInput, JobSkill
-
 from tests.unit.matching.factories import outcome
 
 

@@ -12,7 +12,6 @@ from app.matching import (
     JobLanguage,
     JobLocation,
 )
-
 from tests.unit.matching.factories import PARIS_LAT, PARIS_LON, lat_offset_deg, outcome
 
 # --------------------------------------------------------------- localisation
@@ -184,34 +183,27 @@ def _lang_candidate(**levels: str) -> CandidateInput:
 
 
 def test_um13_language_levels() -> None:
-    meets = outcome(
-        "languages", _lang_candidate(en="C1"), JobInput(languages_required=(JobLanguage("en", "C1"),))
-    )
+    job = JobInput(languages_required=(JobLanguage("en", "C1"),))
+    meets = outcome("languages", _lang_candidate(en="C1"), job)
     assert meets.subscore == pytest.approx(1.0)
-    one_below = outcome(
-        "languages", _lang_candidate(en="B2"), JobInput(languages_required=(JobLanguage("en", "C1"),))
-    )
+    one_below = outcome("languages", _lang_candidate(en="B2"), job)
     assert one_below.subscore == pytest.approx(0.5)
     assert one_below.blocking == []
-    two_below = outcome(
-        "languages", _lang_candidate(en="B1"), JobInput(languages_required=(JobLanguage("en", "C1"),))
-    )
+    two_below = outcome("languages", _lang_candidate(en="B1"), job)
     assert two_below.subscore == pytest.approx(0.0)
     assert two_below.blocking == ["language_missing"]
 
 
 def test_language_absent_blocks() -> None:
-    result = outcome(
-        "languages", _lang_candidate(fr="native"), JobInput(languages_required=(JobLanguage("de", "B2"),))
-    )
+    job = JobInput(languages_required=(JobLanguage("de", "B2"),))
+    result = outcome("languages", _lang_candidate(fr="native"), job)
     assert result.subscore == pytest.approx(0.0)
     assert result.blocking == ["language_missing"]
 
 
 def test_native_counts_as_c2() -> None:
-    result = outcome(
-        "languages", _lang_candidate(fr="native"), JobInput(languages_required=(JobLanguage("fr", "C2"),))
-    )
+    job = JobInput(languages_required=(JobLanguage("fr", "C2"),))
+    result = outcome("languages", _lang_candidate(fr="native"), job)
     assert result.subscore == pytest.approx(1.0)
 
 
