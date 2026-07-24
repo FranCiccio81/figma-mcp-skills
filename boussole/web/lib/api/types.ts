@@ -130,13 +130,9 @@ export interface JobDetail extends JobCard {
   skills_required: string[];
   skills_nice: string[];
   sources: JobSourceLink[];
-  /**
-   * 🟡 Cycle de vie de l'offre (11 §jobs : `active | expired | withdrawn`) —
-   * non déclaré dans openapi.yaml mais requis pour le bandeau « offre expirée »
-   * (04 Flux 4). Optionnel tant que le contrat n'est pas amendé.
-   */
+  /** Cycle de vie de l'offre (openapi.yaml `JobDetail.status`) — bandeau « offre expirée » (04 Flux 4). */
   status?: "active" | "expired" | "withdrawn";
-  /** 🟡 Voir {@link JobDetail.status} — date d'expiration si connue. */
+  /** Date d'expiration si connue (openapi.yaml `JobDetail.expires_at`). */
   expires_at?: string | null;
 }
 

@@ -116,7 +116,7 @@
       "sortLabel": "Sort by",
       "sortRelevance": "Relevance",
       "sortDate": "Posting date",
-      "resultsCount": "{count, plural, =0 {No jobs found} one {# job found} other {# jobs found}}",
+      "resultsCount": "{count, plural, =0 {No jobs displayed} one {# job displayed} other {# jobs displayed}}",
       "loading": "Loading jobs…",
       "loadMore": "Load more jobs",
       "endOfList": "You have seen every job matching these criteria.",

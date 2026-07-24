@@ -8,6 +8,7 @@
 // (partage / rafraîchissement). Le tri `match` et les scores arrivent au M3.
 
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -17,7 +18,7 @@ import {
 import { SearchX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JobCard } from "@/components/jobs/job-card";
 import { JobFilters, type JobFiltersValue } from "@/components/jobs/job-filters";
 import { Alert } from "@/components/ui/alert";
@@ -125,6 +126,22 @@ interface HiddenNotice {
   previousState: SavedState | null;
 }
 
+type JobItem = SearchPage["items"][number];
+
+/**
+ * Snapshot ciblé d'une offre dans une recherche en cache, avant mutation
+ * optimiste. Le rollback ne restaure que cette entrée : deux mutations
+ * concurrentes sur des offres différentes ne s'écrasent plus.
+ */
+interface JobSnapshot {
+  queryKey: ReturnType<typeof jobsKeys.search>;
+  pageIndex: number;
+  itemIndex: number;
+  item: JobItem;
+  /** L'offre a été retirée de cette liste (masquage, ou dé-sauvegarde en `saved_only`). */
+  removed: boolean;
+}
+
 function JobsSearchScreen() {
   const t = useTranslations();
   const router = useRouter();
@@ -147,12 +164,26 @@ function JobsSearchScreen() {
 
   // Champ de recherche : état local, propagé vers l'URL après 300 ms (Flux 3 §3).
   const [searchInput, setSearchInput] = useState(state.q);
+  // Dernière valeur `q` commitée vers l'URL — garde contre l'écrasement d'une
+  // saisie en cours quand `state.q` revient de manière asynchrone.
+  const committedQRef = useRef(state.q);
   useEffect(() => {
-    setSearchInput(state.q);
+    // Ne resynchronise depuis l'URL que si aucune saisie n'est en cours
+    // (la valeur locale correspond à la dernière valeur commitée).
+    if (searchInput === committedQRef.current) {
+      setSearchInput(state.q);
+    }
+    committedQRef.current = state.q;
+    // `searchInput` est volontairement hors dépendances : seul un changement
+    // externe de `state.q` doit déclencher la resynchronisation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.q]);
   useEffect(() => {
     if (searchInput === state.q) return;
-    const handle = setTimeout(() => applyPatch({ q: searchInput }), SEARCH_DEBOUNCE_MS);
+    const handle = setTimeout(() => {
+      committedQRef.current = searchInput;
+      applyPatch({ q: searchInput });
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);
   }, [searchInput, state.q, applyPatch]);
 
@@ -163,6 +194,9 @@ function JobsSearchScreen() {
     queryFn: ({ pageParam, signal }) => searchJobs(apiParams, pageParam, signal),
     initialPageParam: null as string | null,
     getNextPageParam: (page: SearchPage) => getNextCursor(page) ?? null,
+    // Garde les résultats précédents affichés pendant un changement de filtres
+    // (évite le flash d'écran vide entre deux requêtes).
+    placeholderData: keepPreviousData,
   });
 
   const jobs = useMemo(
@@ -173,36 +207,64 @@ function JobsSearchScreen() {
   const [hiddenNotice, setHiddenNotice] = useState<HiddenNotice | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Gestion de focus au masquage (Flux 3 §5) : la carte disparaissant du DOM,
+  // le focus est déplacé sur l'avis « Offre masquée » ; à l'annulation, sur le
+  // titre de la liste (les deux focalisables via `tabIndex={-1}`).
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const hiddenNoticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (hiddenNotice) {
+      hiddenNoticeRef.current?.focus();
+    }
+  }, [hiddenNotice]);
+
   const savedMutation = useMutation({
     mutationFn: ({ id, state: nextState }: SavedMutationVars) =>
       nextState ? setSavedState(id, nextState) : clearSavedState(id),
     onMutate: async ({ id, state: nextState }) => {
       setActionError(null);
       await queryClient.cancelQueries({ queryKey: jobsKeys.searches() });
-      const previous = queryClient.getQueriesData<InfiniteData<SearchPage, string | null>>({
-        queryKey: jobsKeys.searches(),
-      });
       // Mise à jour optimiste de chaque recherche en cache, selon ses propres
       // paramètres : une offre masquée sort des listes (include_hidden=false),
       // une offre dé-sauvegardée sort des listes « Sauvegardées uniquement ».
-      for (const [queryKey, data] of previous) {
+      // Snapshot par (queryKey, offre) — jamais de rollback global.
+      const snapshots: JobSnapshot[] = [];
+      const cached = queryClient.getQueriesData<InfiniteData<SearchPage, string | null>>({
+        queryKey: jobsKeys.searches(),
+      });
+      for (const [queryKey, data] of cached) {
         if (!data) continue;
         const params = queryKey[2] as JobSearchParams | undefined;
         const removed =
           nextState === "hidden" || (params?.saved_only === true && nextState !== "saved");
-        queryClient.setQueryData<InfiniteData<SearchPage, string | null>>(queryKey, {
-          ...data,
-          pages: data.pages.map((page) => ({
+        let touched = false;
+        const pages = data.pages.map((page, pageIndex) => {
+          const itemIndex = page.items.findIndex((item) => item.id === id);
+          if (itemIndex === -1) return page;
+          touched = true;
+          snapshots.push({
+            queryKey: queryKey as JobSnapshot["queryKey"],
+            pageIndex,
+            itemIndex,
+            item: page.items[itemIndex],
+            removed,
+          });
+          return {
             ...page,
             items: removed
               ? page.items.filter((item) => item.id !== id)
               : page.items.map((item) =>
                   item.id === id ? { ...item, saved_state: nextState } : item,
                 ),
-          })),
+          };
+        });
+        if (!touched) continue;
+        queryClient.setQueryData<InfiniteData<SearchPage, string | null>>(queryKey, {
+          ...data,
+          pages,
         });
       }
-      return { previous };
+      return { snapshots };
     },
     onSuccess: (_data, vars) => {
       if (vars.state === "hidden") {
@@ -212,13 +274,35 @@ function JobsSearchScreen() {
       }
     },
     onError: (_error, _vars, context) => {
-      for (const [queryKey, data] of context?.previous ?? []) {
-        queryClient.setQueryData(queryKey, data);
+      // Rollback ciblé : ne restaure que l'offre concernée dans chaque cache,
+      // sans écraser les mutations optimistes concurrentes d'autres offres.
+      for (const { queryKey, pageIndex, itemIndex, item, removed } of context?.snapshots ?? []) {
+        const data = queryClient.getQueryData<InfiniteData<SearchPage, string | null>>(queryKey);
+        if (!data || !data.pages[pageIndex]) continue;
+        queryClient.setQueryData<InfiniteData<SearchPage, string | null>>(queryKey, {
+          ...data,
+          pages: data.pages.map((page, index) => {
+            if (index !== pageIndex) return page;
+            if (removed) {
+              if (page.items.some((entry) => entry.id === item.id)) return page;
+              const items = [...page.items];
+              items.splice(Math.min(itemIndex, items.length), 0, item);
+              return { ...page, items };
+            }
+            return {
+              ...page,
+              items: page.items.map((entry) => (entry.id === item.id ? item : entry)),
+            };
+          }),
+        });
       }
       setActionError(t("jobs.list.actionError"));
     },
-    onSettled: () => {
+    onSettled: (_data, _error, vars) => {
       void queryClient.invalidateQueries({ queryKey: jobsKeys.searches() });
+      // Resynchronise aussi le cache détail (staleTime 30 s) : l'écran SCR-21
+      // doit refléter le nouvel état sauvegardé/masqué sans attendre.
+      void queryClient.invalidateQueries({ queryKey: jobsKeys.detail(vars.id) });
     },
   });
 
@@ -256,11 +340,18 @@ function JobsSearchScreen() {
 
   return (
     <section aria-labelledby="jobs-title" className="space-y-6">
-      <h1 id="jobs-title" className="text-2xl font-semibold text-content">
+      <h1
+        id="jobs-title"
+        ref={titleRef}
+        tabIndex={-1}
+        className="text-2xl font-semibold text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      >
         {t("pages.jobs.title")}
       </h1>
 
       <div className="space-y-4 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:space-y-0">
+        {/* TODO M3 : chips de filtres actifs supprimables au clavier au-dessus
+            de la liste (04-user-flows SCR-20). */}
         <JobFilters value={state} onChange={applyPatch} onReset={resetAll} />
 
         <div className="space-y-4">
@@ -301,12 +392,15 @@ function JobsSearchScreen() {
           </p>
 
           {hiddenNotice ? (
-            <Alert variant="info">
+            <Alert ref={hiddenNoticeRef} tabIndex={-1} variant="info">
               <div className="flex flex-wrap items-center gap-3">
                 <span>{t("jobs.list.hiddenNotice", { title: hiddenNotice.title })}</span>
                 <Button
                   variant="secondary"
                   onClick={() => {
+                    // TODO M3 : réinsertion optimiste de la carte dans la liste
+                    // à l'annulation d'un masquage (aujourd'hui elle ne
+                    // réapparaît qu'après l'invalidation de la recherche).
                     savedMutation.mutate({
                       id: hiddenNotice.id,
                       title: hiddenNotice.title,
@@ -314,6 +408,7 @@ function JobsSearchScreen() {
                       previousState: "hidden",
                     });
                     setHiddenNotice(null);
+                    titleRef.current?.focus();
                   }}
                 >
                   {t("jobs.list.undo")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,31 @@ export function JobFilters({ value, onChange, onReset }: JobFiltersProps) {
   const t = useTranslations("jobs.filters");
   const tJobs = useTranslations("jobs");
   const baseId = useId();
+
+  // Saisie locale du salaire, propagée après 300 ms d'inactivité (même
+  // pattern que le champ q) : une requête par frappe déclencherait le
+  // rate-limit et polluerait le cache de recherche.
+  const [salaryDraft, setSalaryDraft] = useState<string>(
+    value.salaryMin === null ? "" : String(value.salaryMin)
+  );
+  const salaryCommitted = useRef(value.salaryMin);
+  useEffect(() => {
+    if (value.salaryMin !== salaryCommitted.current) {
+      salaryCommitted.current = value.salaryMin;
+      setSalaryDraft(value.salaryMin === null ? "" : String(value.salaryMin));
+    }
+  }, [value.salaryMin]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const parsed = Number.parseInt(salaryDraft, 10);
+      const next = Number.isNaN(parsed) ? null : parsed;
+      if (next !== salaryCommitted.current) {
+        salaryCommitted.current = next;
+        onChange({ salaryMin: next });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [salaryDraft, onChange]);
   const salaryId = `${baseId}-salary`;
   const postedId = `${baseId}-posted`;
   const savedOnlyId = `${baseId}-saved-only`;
@@ -116,11 +141,8 @@ export function JobFilters({ value, onChange, onReset }: JobFiltersProps) {
           inputMode="numeric"
           min={0}
           step={1000}
-          value={value.salaryMin ?? ""}
-          onChange={(event) => {
-            const parsed = Number.parseInt(event.target.value, 10);
-            onChange({ salaryMin: Number.isNaN(parsed) ? null : parsed });
-          }}
+          value={salaryDraft}
+          onChange={(event) => setSalaryDraft(event.target.value)}
         />
       </div>
 

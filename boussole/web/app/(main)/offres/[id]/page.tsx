@@ -8,6 +8,7 @@
 // arrive au jalon M3 : en attendant, une carte placeholder l'annonce —
 // jamais de faux score (`match` est `null`).
 
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Compass } from "lucide-react";
 import Link from "next/link";
@@ -57,10 +58,15 @@ export default function JobDetailPage() {
     queryFn: ({ signal }) => getJob(id, signal),
   });
 
+  // Échec de mutation : rollback + message visible (04 §conventions — jamais
+  // de retour silencieux à l'état antérieur).
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const savedMutation = useMutation({
     mutationFn: (nextState: SavedState | null) =>
       nextState ? setSavedState(id, nextState) : clearSavedState(id),
     onMutate: async (nextState) => {
+      setActionError(null);
       await queryClient.cancelQueries({ queryKey: jobsKeys.detail(id) });
       const previous = queryClient.getQueryData<JobDetail>(jobsKeys.detail(id));
       if (previous) {
@@ -75,6 +81,7 @@ export default function JobDetailPage() {
       if (context?.previous) {
         queryClient.setQueryData(jobsKeys.detail(id), context.previous);
       }
+      setActionError(t("jobs.list.actionError"));
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: jobsKeys.detail(id) });
@@ -168,6 +175,7 @@ export default function JobDetailPage() {
           onChange={(nextState) => savedMutation.mutate(nextState)}
           disabled={savedMutation.isPending}
         />
+        {actionError ? <Alert variant="error">{actionError}</Alert> : null}
       </header>
 
       {/* Emplacement du panneau match (SCR-21) — placeholder tant que match=null. */}

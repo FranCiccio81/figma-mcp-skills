@@ -16,6 +16,16 @@ export interface SourceListProps {
  * (`rel="noopener noreferrer"`, icône lien externe, mention « nouvelle
  * fenêtre » pour les lecteurs d'écran), date de publication si connue.
  */
+/** N'autorise que http(s) — une source compromise ne doit pas injecter `javascript:`. */
+function safeHttpUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export function SourceList({ sources }: SourceListProps) {
   const t = useTranslations("jobs.detail");
   const locale = useLocale();
@@ -24,10 +34,25 @@ export function SourceList({ sources }: SourceListProps) {
     <ul className="space-y-1">
       {sources.map((source) => {
         const postedDate = formatDate(source.posted_at, locale);
+        const href = safeHttpUrl(source.original_url);
+        if (href === null) {
+          return (
+            <li key={source.original_url} className="flex flex-wrap items-center gap-x-2 text-sm">
+              <span className="inline-flex min-h-11 items-center font-medium text-content">
+                {t("sourceLink", { name: source.name })}
+              </span>
+              {postedDate ? (
+                <span className="text-content-secondary">
+                  {t("sourcePostedOn", { date: postedDate })}
+                </span>
+              ) : null}
+            </li>
+          );
+        }
         return (
           <li key={source.original_url} className="flex flex-wrap items-center gap-x-2 text-sm">
             <a
-              href={source.original_url}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center gap-1.5 rounded-sm font-medium text-action-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"

@@ -116,7 +116,7 @@
       "sortLabel": "Trier par",
       "sortRelevance": "Pertinence",
       "sortDate": "Date de publication",
-      "resultsCount": "{count, plural, =0 {Aucune offre trouvée} one {# offre trouvée} other {# offres trouvées}}",
+      "resultsCount": "{count, plural, =0 {Aucune offre affichée} one {# offre affichée} other {# offres affichées}}",
       "loading": "Chargement des offres…",
       "loadMore": "Charger plus d'offres",
       "endOfList": "Vous avez vu toutes les offres correspondant à ces critères.",
