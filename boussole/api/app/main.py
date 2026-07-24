@@ -146,8 +146,10 @@ def create_app() -> FastAPI:
     api.include_router(auth_router)
     api.include_router(profiles_router)
     api.include_router(preferences_router)
-    api.include_router(ingestion_router)
+    # jobs avant ingestion : GET /sources (M2, module jobs, domaine Meta du
+    # contrat) doit précéder le stub 501 « /sources » du module ingestion.
     api.include_router(jobs_router)
+    api.include_router(ingestion_router)
     api.include_router(matching_router)
     api.include_router(explanations_router)
     api.include_router(generation_router)

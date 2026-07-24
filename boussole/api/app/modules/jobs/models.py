@@ -29,6 +29,7 @@ contract_enum = ENUM(
 remote_enum = ENUM("onsite", "hybrid", "full_remote", name="remote_policy", create_type=False)
 job_status_enum = ENUM("active", "expired", "withdrawn", name="job_status", create_type=False)
 cefr_enum = ENUM("A1", "A2", "B1", "B2", "C1", "C2", name="cefr_level", create_type=False)
+saved_state_enum = ENUM("saved", "hidden", name="saved_state", create_type=False)
 
 
 class Source(Base):
@@ -152,6 +153,29 @@ class JobSkill(Base):
     label_raw: Mapped[str] = mapped_column(Text(), nullable=False)
     required: Mapped[bool] = mapped_column(Boolean(), nullable=False, server_default=text("true"))
     confidence: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False)
+
+
+class SavedJob(Base):
+    """Action utilisateur sur une offre — conforme à ``saved_jobs`` (initial-schema.sql).
+
+    Clé primaire composite (user_id, job_posting_id) : un seul état par couple
+    utilisateur/offre (``saved`` ou ``hidden``), upsert côté repository.
+    """
+
+    __tablename__ = "saved_jobs"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    job_posting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("job_postings.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    state: Mapped[str] = mapped_column(saved_state_enum, nullable=False)  # saved | hidden
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("now()"))
 
 
 class JobLanguage(Base):
