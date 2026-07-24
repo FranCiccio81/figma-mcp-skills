@@ -189,15 +189,14 @@ export interface Experience extends ExperienceInput {
 }
 
 /**
- * 🟡 `educations[]` n'est pas détaillé dans openapi.yaml (`type: object`) —
- * forme alignée sur Experience (12 §2 : « idem educations, skills, languages »).
+ * Formation — alignée sur l'API (`profile_educations` : degree, institution,
+ * années entières 1900–2100, pas de description).
  */
 export interface EducationInput {
   degree: string;
-  school: string;
-  start_date?: string | null;
-  end_date?: string | null;
-  description?: string | null;
+  institution: string;
+  start_year?: number | null;
+  end_year?: number | null;
 }
 
 /** Formation du profil. */

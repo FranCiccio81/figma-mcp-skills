@@ -96,7 +96,7 @@ export function TagListInput({
                 type="button"
                 aria-label={removeAriaLabel(item)}
                 onClick={() => remove(item)}
-                className="inline-flex h-11 min-w-6 items-center justify-center rounded-sm px-1 font-semibold text-content-secondary hover:text-feedback-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="inline-flex h-11 min-w-11 items-center justify-center rounded-sm px-1 font-semibold text-content-secondary hover:text-feedback-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <span aria-hidden="true">×</span>
               </button>

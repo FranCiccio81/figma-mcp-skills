@@ -12,7 +12,8 @@
     "emailInvalid": "Saisissez une adresse e-mail valide.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 12 caractères.",
     "consentRequired": "Cette case doit être cochée pour créer votre compte.",
-    "langCode": "Saisissez un code langue à 2 lettres (ex. fr)."
+    "langCode": "Saisissez un code langue à 2 lettres (ex. fr).",
+    "invalidYear": "Année invalide (format AAAA, entre 1900 et 2100)"
   },
   "nav": {
     "mainLabel": "Navigation principale",
@@ -287,9 +288,8 @@
       "empty": "Aucune formation renseignée.",
       "degreeLabel": "Diplôme ou intitulé",
       "schoolLabel": "Établissement",
-      "startLabel": "Date de début",
-      "endLabel": "Date de fin",
-      "descriptionLabel": "Description",
+      "startLabel": "Année de début",
+      "endLabel": "Année de fin",
       "editAria": "Modifier la formation {label}",
       "deleteAria": "Supprimer la formation {label}"
     },

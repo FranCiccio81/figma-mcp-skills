@@ -582,15 +582,20 @@ function EducationForm({
   const tActions = useTranslations("profile.actions");
   const baseId = useId();
 
+  const yearField = z
+    .string()
+    .refine((v) => v === "" || (/^\d{4}$/.test(v) && Number(v) >= 1900 && Number(v) <= 2100), {
+      message: tv("invalidYear"),
+    });
   const schema = useMemo(
     () =>
       z.object({
         degree: z.string().min(1, tv("required")).max(200),
-        school: z.string().min(1, tv("required")).max(200),
-        start_date: z.string(),
-        end_date: z.string(),
-        description: z.string().max(3000),
+        institution: z.string().min(1, tv("required")).max(200),
+        start_year: yearField,
+        end_year: yearField,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [tv],
   );
   type FormValues = z.infer<typeof schema>;
@@ -603,10 +608,9 @@ function EducationForm({
     resolver: zodResolver(schema),
     defaultValues: {
       degree: initial?.degree ?? "",
-      school: initial?.school ?? "",
-      start_date: initial?.start_date ?? "",
-      end_date: initial?.end_date ?? "",
-      description: initial?.description ?? "",
+      institution: initial?.institution ?? "",
+      start_year: initial?.start_year != null ? String(initial.start_year) : "",
+      end_year: initial?.end_year != null ? String(initial.end_year) : "",
     },
   });
 
@@ -615,7 +619,6 @@ function EducationForm({
     school: `${baseId}-school`,
     start: `${baseId}-start`,
     end: `${baseId}-end`,
-    description: `${baseId}-description`,
   };
 
   return (
@@ -624,10 +627,9 @@ function EducationForm({
       onSubmit={handleSubmit((values) =>
         onSubmit({
           degree: values.degree.trim(),
-          school: values.school.trim(),
-          start_date: values.start_date || null,
-          end_date: values.end_date || null,
-          description: values.description.trim() || null,
+          institution: values.institution.trim(),
+          start_year: values.start_year === "" ? null : Number(values.start_year),
+          end_year: values.end_year === "" ? null : Number(values.end_year),
         }),
       )}
       className="space-y-4 rounded-md border border-border bg-surface-muted p-4"
@@ -643,24 +645,38 @@ function EducationForm({
             {...register("degree")}
           />
         </FormField>
-        <FormField id={ids.school} label={t("schoolLabel")} required error={errors.school?.message}>
+        <FormField
+          id={ids.school}
+          label={t("schoolLabel")}
+          required
+          error={errors.institution?.message}
+        >
           <Input
             id={ids.school}
-            aria-invalid={errors.school ? true : undefined}
-            aria-describedby={fieldDescribedBy(ids.school, { error: Boolean(errors.school) })}
-            {...register("school")}
+            aria-invalid={errors.institution ? true : undefined}
+            aria-describedby={fieldDescribedBy(ids.school, { error: Boolean(errors.institution) })}
+            {...register("institution")}
           />
         </FormField>
-        <FormField id={ids.start} label={t("startLabel")}>
-          <Input id={ids.start} type="date" {...register("start_date")} />
+        <FormField id={ids.start} label={t("startLabel")} error={errors.start_year?.message}>
+          <Input
+            id={ids.start}
+            inputMode="numeric"
+            placeholder="2020"
+            aria-invalid={errors.start_year ? true : undefined}
+            {...register("start_year")}
+          />
         </FormField>
-        <FormField id={ids.end} label={t("endLabel")}>
-          <Input id={ids.end} type="date" {...register("end_date")} />
+        <FormField id={ids.end} label={t("endLabel")} error={errors.end_year?.message}>
+          <Input
+            id={ids.end}
+            inputMode="numeric"
+            placeholder="2023"
+            aria-invalid={errors.end_year ? true : undefined}
+            {...register("end_year")}
+          />
         </FormField>
       </div>
-      <FormField id={ids.description} label={t("descriptionLabel")}>
-        <Textarea id={ids.description} {...register("description")} />
-      </FormField>
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={pending} aria-busy={pending}>
           {tActions("save")}
@@ -762,13 +778,13 @@ function EducationsSection({
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-content">
-                      {education.degree} — {education.school}
+                      {education.degree} — {education.institution}
                     </p>
                     <ProvenanceBadge provenance={education.provenance} />
                   </div>
-                  {education.description ? (
-                    <p className="whitespace-pre-wrap text-sm text-content-secondary">
-                      {education.description}
+                  {education.start_year != null || education.end_year != null ? (
+                    <p className="text-sm text-content-secondary">
+                      {[education.start_year, education.end_year].filter(Boolean).join(" – ")}
                     </p>
                   ) : null}
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -885,7 +901,7 @@ function SkillsSection({
                 aria-label={t("removeAria", { label: skill.label })}
                 disabled={deleteMutation.isPending}
                 onClick={() => deleteMutation.mutate(skill.id)}
-                className="inline-flex h-11 min-w-6 items-center justify-center rounded-sm px-1 font-semibold text-content-secondary hover:text-feedback-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="inline-flex h-11 min-w-11 items-center justify-center rounded-sm px-1 font-semibold text-content-secondary hover:text-feedback-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <span aria-hidden="true">×</span>
               </button>

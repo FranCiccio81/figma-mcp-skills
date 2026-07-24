@@ -12,7 +12,8 @@
     "emailInvalid": "Enter a valid email address.",
     "passwordTooShort": "The password must be at least 12 characters long.",
     "consentRequired": "This box must be checked to create your account.",
-    "langCode": "Enter a 2-letter language code (e.g. en)."
+    "langCode": "Enter a 2-letter language code (e.g. en).",
+    "invalidYear": "Invalid year (YYYY format, between 1900 and 2100)"
   },
   "nav": {
     "mainLabel": "Main navigation",
@@ -287,9 +288,8 @@
       "empty": "No education listed.",
       "degreeLabel": "Degree or title",
       "schoolLabel": "Institution",
-      "startLabel": "Start date",
-      "endLabel": "End date",
-      "descriptionLabel": "Description",
+      "startLabel": "Start year",
+      "endLabel": "End year",
       "editAria": "Edit the education {label}",
       "deleteAria": "Delete the education {label}"
     },
