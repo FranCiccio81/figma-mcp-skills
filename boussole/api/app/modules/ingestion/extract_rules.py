@@ -132,15 +132,19 @@ def extract_remote(text: str) -> RemoteRule | None:
 
 # ------------------------------------------------------------------- salaire
 _SEP = r"(?:\s*[-–—]\s*|\s+(?:a|et|to)\s+)"
-_CUR = r"(?:€|eur|\$|usd|£|gbp)"
+_CUR = r"(?:€|eur(?:os?)?|\$|usd|£|gbp)"
 _K_RANGE_RE = re.compile(
     rf"\b(\d{{2,3}})\s*k?\s*{_CUR}?{_SEP}(\d{{2,3}})\s*k\s*{_CUR}?", re.IGNORECASE
 )
 # Montant : « 45 000 », « 45000 », ou petit montant (TJM/horaire) « 500 ».
 _NUM = "\\d{1,3}[   .,]?\\d{3}|\\d{4,6}|\\d{2,3}"
-_FULL_RANGE_RE = re.compile(rf"\b({_NUM})\s*{_CUR}?{_SEP}({_NUM})\s*{_CUR}", re.IGNORECASE)
+# Partie décimale optionnelle (« 42000.0 Euros » — libellés France Travail).
+_DEC = r"(?:[.,]\d{1,2})?"
+_FULL_RANGE_RE = re.compile(
+    rf"\b({_NUM}){_DEC}\s*{_CUR}?{_SEP}({_NUM}){_DEC}\s*{_CUR}", re.IGNORECASE
+)
 _K_SINGLE_RE = re.compile(rf"\b(\d{{2,3}})\s*k\s*{_CUR}", re.IGNORECASE)
-_FULL_SINGLE_RE = re.compile(rf"\b({_NUM})\s*{_CUR}", re.IGNORECASE)
+_FULL_SINGLE_RE = re.compile(rf"\b({_NUM}){_DEC}\s*{_CUR}", re.IGNORECASE)
 
 _PERIOD_RES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("month", re.compile(r"/\s*mois|par\s+mois|mensuel|monthly|per\s+month|/\s*month")),
@@ -171,10 +175,9 @@ def _window(folded: str, start: int, end: int, radius: int = 60) -> str:
 
 
 def _period_and_currency(window: str, is_k: bool) -> tuple[str, str]:
-    period = next((p for p, rx in _PERIOD_RES if rx.search(window)), None)
-    if period is None:
-        # k€ sans contexte : lecture annuelle par convention (07 §5.2).
-        period = "year" if is_k else "year"
+    del is_k
+    # Sans contexte de période : lecture annuelle par convention (07 §5.2).
+    period = next((p for p, rx in _PERIOD_RES if rx.search(window)), "year")
     if "$" in window or "usd" in window:
         currency = "USD"
     elif "£" in window or "gbp" in window:
@@ -345,15 +348,18 @@ def extract_seniority(text: str) -> RuleResult | None:
 
 
 # ------------------------------------------------- langue de rédaction 🟡
-_FR_STOPWORDS = frozenset(
-    "le la les des une un et ou nous vous pour avec dans sur est sont notre vos "
-    "du de au aux ce cette qui que plus pas chez poste equipe entreprise vous "
-    "missions profil recherche annees".split()
-)
-_EN_STOPWORDS = frozenset(
-    "the and of to in for with you we our is are will on at as this that be or "
-    "from have work team role about your join years skills experience".split()
-)
+_FR_STOPWORDS = frozenset([
+    "le", "la", "les", "des", "une", "un", "et", "ou", "nous", "vous", "pour",
+    "avec", "dans", "sur", "est", "sont", "notre", "vos", "du", "de", "au",
+    "aux", "ce", "cette", "qui", "que", "plus", "pas", "chez", "poste",
+    "equipe", "entreprise", "missions", "profil", "recherche", "annees",
+])
+_EN_STOPWORDS = frozenset([
+    "the", "and", "of", "to", "in", "for", "with", "you", "we", "our", "is",
+    "are", "will", "on", "at", "as", "this", "that", "be", "or", "from",
+    "have", "work", "team", "role", "about", "your", "join", "years",
+    "skills", "experience",
+])
 
 
 def detect_language(text: str) -> tuple[str, float]:

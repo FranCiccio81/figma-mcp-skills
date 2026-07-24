@@ -9,6 +9,7 @@ Lancement (dev) :
 """
 
 from celery import Celery
+from celery.schedules import crontab
 from kombu import Queue
 
 from app.core.config import get_settings
@@ -19,6 +20,7 @@ celery_app = Celery(
     "boussole",
     broker=settings.redis_persistent_url,
     backend=settings.redis_persistent_url,
+    include=["app.workers.ingestion_tasks"],
 )
 
 celery_app.conf.update(
@@ -41,6 +43,38 @@ celery_app.conf.update(
         "maintenance.*": {"queue": "maintenance"},
     },
     broker_connection_retry_on_startup=True,
+    # Planification 07 §4.2 🟡 : FT toutes les 2 h + réconciliation complète
+    # nocturne (03:00 UTC) ; ATS toutes les 6 h (fetch complet, la
+    # réconciliation par absence est portée par ingestion.reconcile) ;
+    # expiration par signal chaque nuit. Les sources restent derrière leurs
+    # feature flags FEATURE_SOURCE_* (défaut false) : une tâche planifiée
+    # sur une source désactivée est un no-op logué.
+    beat_schedule={
+        "ingestion-sync-france-travail": {
+            "task": "ingestion.sync_source",
+            "schedule": crontab(minute=0, hour="*/2"),
+            "args": ("france-travail",),
+        },
+        "ingestion-reconcile-france-travail": {
+            "task": "ingestion.reconcile",
+            "schedule": crontab(minute=0, hour=3),
+            "args": ("france-travail",),
+        },
+        "ingestion-reconcile-greenhouse": {
+            "task": "ingestion.reconcile",
+            "schedule": crontab(minute=15, hour="*/6"),
+            "args": ("greenhouse",),
+        },
+        "ingestion-reconcile-lever": {
+            "task": "ingestion.reconcile",
+            "schedule": crontab(minute=30, hour="*/6"),
+            "args": ("lever",),
+        },
+        "maintenance-expire-jobs": {
+            "task": "maintenance.expire_jobs",
+            "schedule": crontab(minute=45, hour=3),
+        },
+    },
 )
 
 

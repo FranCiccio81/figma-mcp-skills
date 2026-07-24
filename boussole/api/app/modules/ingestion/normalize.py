@@ -119,8 +119,11 @@ def strip_html(s: str) -> str:
 
     Scripts/styles supprimés, balises bloc → sauts de ligne, autres balises
     retirées, entités décodées, NFKC, espaces compactés. Idempotent sur du
-    texte sans balisage.
+    texte sans balisage. Gère le HTML doublement échappé (``&lt;p&gt;``…)
+    renvoyé par l'API Greenhouse (07 §2.2).
     """
+    if "&lt;" in s:
+        s = _html.unescape(s)
     if _HAS_HTML_RE.search(s):
         s = _SCRIPT_STYLE_RE.sub(" ", s)
         s = _BLOCK_TAG_RE.sub("\n", s)
