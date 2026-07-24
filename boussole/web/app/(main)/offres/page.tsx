@@ -58,9 +58,11 @@ const CONTRACT_VALUES: ReadonlySet<string> = new Set([
 /** État complet de l'écran, sérialisé dans l'URL (`?q=…&remote=…`). */
 interface ListState extends JobFiltersValue {
   q: string;
-  /** M2 : `relevance` (défaut) ou `date` — le tri `match` attend le jalon M3. */
-  sort: Extract<JobSort, "relevance" | "date">;
+  /** `relevance` (défaut), `date` ou `match` (M3 — profil validé requis côté API). */
+  sort: JobSort;
 }
+
+const SORT_VALUES: ReadonlySet<string> = new Set(["relevance", "date", "match"]);
 
 function parseIntOrNull(raw: string | null): number | null {
   if (!raw) return null;
@@ -79,7 +81,9 @@ function parseListState(searchParams: URLSearchParams): ListState {
     salaryMin: parseIntOrNull(searchParams.get("salary_min")),
     postedSince: parseIntOrNull(searchParams.get("posted_since")),
     savedOnly: searchParams.get("saved_only") === "1",
-    sort: searchParams.get("sort") === "date" ? "date" : "relevance",
+    sort: ((raw) => (raw && SORT_VALUES.has(raw) ? (raw as JobSort) : "relevance"))(
+      searchParams.get("sort"),
+    ),
   };
 }
 
@@ -376,10 +380,15 @@ function JobsSearchScreen() {
                 id="jobs-sort"
                 value={state.sort}
                 onChange={(event) =>
-                  applyPatch({ sort: event.target.value === "date" ? "date" : "relevance" })
+                  applyPatch({
+                    sort: SORT_VALUES.has(event.target.value)
+                      ? (event.target.value as JobSort)
+                      : "relevance",
+                  })
                 }
                 className="h-11 rounded-md border border-border bg-surface px-3 text-sm text-content focus:border-action-primary focus:shadow-input-focus focus:outline-none"
               >
+                <option value="match">{t("jobs.list.sortMatch")}</option>
                 <option value="relevance">{t("jobs.list.sortRelevance")}</option>
                 <option value="date">{t("jobs.list.sortDate")}</option>
               </select>

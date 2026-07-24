@@ -1,22 +1,22 @@
 "use client";
 
-// SCR-21 — M2 (partiel)
+// SCR-21 — M3
 // Détail d'une offre (Flux 4) : en-tête (titre, entreprise, lieux, badges,
-// date), description en texte brut (espaces préservés), compétences, langue,
-// sources avec liens d'origine (obligation produit), actions sauvegarder/
-// masquer optimistes. Le panneau match (score + confiance + explication)
-// arrive au jalon M3 : en attendant, une carte placeholder l'annonce —
-// jamais de faux score (`match` est `null`).
+// date), panneau match (score + confiance + bloquants + inconnues +
+// dimensions + explication — voir MatchPanel), description en texte brut
+// (espaces préservés), compétences, langue, sources avec liens d'origine
+// (obligation produit), actions sauvegarder/masquer optimistes.
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Compass } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { JobBadges } from "@/components/jobs/job-badges";
 import { SavedToggle } from "@/components/jobs/saved-toggle";
 import { SourceList } from "@/components/jobs/source-list";
+import { MatchPanel } from "@/components/match/match-panel";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { isApiProblem } from "@/lib/api/client";
@@ -178,26 +178,8 @@ export default function JobDetailPage() {
         {actionError ? <Alert variant="error">{actionError}</Alert> : null}
       </header>
 
-      {/* Emplacement du panneau match (SCR-21) — placeholder tant que match=null. */}
-      <section
-        aria-labelledby="job-match-title"
-        className="space-y-2 rounded-lg border border-border bg-surface-muted p-4"
-      >
-        <h2 id="job-match-title" className="flex items-center gap-2 text-lg font-semibold text-content">
-          <Compass aria-hidden="true" className="h-5 w-5" />
-          {t("jobs.detail.matchTitle")}
-        </h2>
-        {job.match ? (
-          <p className="text-sm text-content">
-            {t("jobs.detail.matchSummary", {
-              score: job.match.score,
-              confidence: job.match.confidence,
-            })}
-          </p>
-        ) : (
-          <p className="text-sm text-content-secondary">{t("jobs.detail.matchPlaceholder")}</p>
-        )}
-      </section>
+      {/* Panneau match (SCR-21 §3) — requête dédiée `GET /jobs/{id}/match`. */}
+      <MatchPanel jobId={id} />
 
       <section aria-labelledby="job-description-title" className="space-y-2">
         <h2 id="job-description-title" className="text-lg font-semibold text-content">

@@ -88,10 +88,10 @@ export type SeniorityLevel =
 /** État utilisateur d'une offre (`PUT /jobs/{id}/saved-state`). */
 export type SavedState = "saved" | "hidden";
 
-/** Tri de `GET /jobs` — `match` inopérant avant le jalon M3 (profil + scoring). */
+/** Tri de `GET /jobs` (openapi.yaml — défaut API : `match`, profil validé requis). */
 export type JobSort = "match" | "date" | "relevance";
 
-/** Résumé de matching embarqué dans une carte d'offre — `null` au jalon M2. */
+/** Résumé de matching embarqué dans une carte d'offre (M1-a — `null` = rien d'affiché). */
 export interface JobMatchSummary {
   score: number;
   confidence: number;
@@ -110,7 +110,7 @@ export interface JobCard {
   /** « 45–55 k€ » ou `null` si non communiqué (microcopie M3-a — jamais estimé). */
   salary_label: string | null;
   posted_at: string | null;
-  /** `null` tant que le matching n'est pas livré (M3) — aucun faux score affiché. */
+  /** `null` si non scorée (profil non validé…) — aucun faux score affiché. */
   match: JobMatchSummary | null;
   saved_state: SavedState | null;
 }
@@ -145,4 +145,244 @@ export interface SourceInfo {
   name: string;
   kind: "public_api" | "ats_feed" | "partner";
   last_sync_at: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Profil & provenance — jalon M3 (openapi.yaml : /profile*)           */
+/* ------------------------------------------------------------------ */
+
+/** Origine d'un champ de profil (D05) — pilote les badges « Extrait du CV ». */
+export type ProvenanceSource = "cv_extraction" | "user_input" | "user_confirmed";
+
+/**
+ * Provenance et confiance d'un champ extrait (openapi.yaml → Provenance).
+ * `confidence` (0–1) n'est significative que pour `cv_extraction` : en dessous
+ * de 0,5 la donnée est traitée comme inconnue par le moteur (06 §1, M3-d).
+ */
+export interface Provenance {
+  source: ProvenanceSource;
+  confidence?: number;
+}
+
+/** Niveau de langue CECRL (openapi.yaml → CefrLevel). */
+export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
+/** Statut du profil — le tri `match` et la génération exigent `validated`. */
+export type ProfileStatus = "draft" | "validated";
+
+/** Corps de création/édition d'une expérience (openapi.yaml → ExperienceInput). */
+export interface ExperienceInput {
+  title: string;
+  company: string;
+  sector_code?: string | null;
+  /** Date ISO `YYYY-MM-DD`. */
+  start_date: string;
+  /** `null` = poste en cours. */
+  end_date?: string | null;
+  description?: string | null;
+}
+
+/** Expérience du profil (openapi.yaml → Experience). */
+export interface Experience extends ExperienceInput {
+  id: string;
+  provenance?: Provenance;
+}
+
+/**
+ * 🟡 `educations[]` n'est pas détaillé dans openapi.yaml (`type: object`) —
+ * forme alignée sur Experience (12 §2 : « idem educations, skills, languages »).
+ */
+export interface EducationInput {
+  degree: string;
+  school: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  description?: string | null;
+}
+
+/** Formation du profil. */
+export interface Education extends EducationInput {
+  id: string;
+  provenance?: Provenance;
+}
+
+/** Compétence du profil (openapi.yaml → Profile.skills[]). */
+export interface ProfileSkill {
+  id: string;
+  label: string;
+  provenance?: Provenance;
+}
+
+/** Corps de création d'une compétence (source = user_input). */
+export interface ProfileSkillInput {
+  label: string;
+}
+
+/**
+ * Langue du profil (openapi.yaml → Profile.languages[]).
+ * 🟡 `id` absent du schéma openapi mais requis pour le CRUD sous-ressource
+ * (12 §2 : « idem experiences ») — supposé fourni par l'API.
+ */
+export interface ProfileLanguage {
+  id: string;
+  lang_code: string;
+  level: CefrLevel;
+  provenance?: Provenance;
+}
+
+/** Corps de création/édition d'une langue. */
+export interface ProfileLanguageInput {
+  lang_code: string;
+  level: CefrLevel;
+}
+
+/** Profil complet avec provenance par champ — `GET /profile` (openapi.yaml → Profile). */
+export interface Profile {
+  id: string;
+  status: ProfileStatus;
+  version: number;
+  headline: string | null;
+  summary: string | null;
+  seniority: SeniorityLevel | null;
+  total_experience_years: number | null;
+  experiences: Experience[];
+  educations: Education[];
+  skills: ProfileSkill[];
+  languages: ProfileLanguage[];
+}
+
+/** Corps de `PATCH /profile` — champs racine uniquement. */
+export interface ProfilePatch {
+  headline?: string | null;
+  summary?: string | null;
+  seniority?: SeniorityLevel | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Préférences — jalon M3 (openapi.yaml : /preferences)                */
+/* ------------------------------------------------------------------ */
+
+/** Préférence de télétravail du candidat (openapi.yaml → RemotePreference). */
+export type RemotePreference = "required" | "preferred" | "indifferent" | "onsite_preferred";
+
+/**
+ * Lieu accepté avec rayon (openapi.yaml → Preferences.locations[]).
+ * 🟡 `lat`/`lon` sont requis par l'API mais le géocodage des villes n'arrive
+ * qu'au jalon M4 : l'UI saisit `label` en texte libre et envoie `0`/`0` pour
+ * les nouveaux lieux (valeurs existantes préservées à l'édition).
+ */
+export interface PreferenceLocation {
+  label: string;
+  lat: number;
+  lon: number;
+  /** Défaut API : 30 km. */
+  radius_km?: number;
+}
+
+/** Préférences de recherche — `GET`/`PUT /preferences` (payload complet). */
+export interface Preferences {
+  remote_pref?: RemotePreference;
+  contract_types: ContractType[];
+  /** « strict » : les autres contrats deviennent des critères bloquants. */
+  contract_strict: boolean;
+  /** Salaire souhaité (€ brut/an) — guide le score. */
+  salary_min: number | null;
+  /** Minimum strict (€ brut/an) — en dessous : bloquant `salary_below_minimum`. */
+  salary_min_strict: number | null;
+  locations: PreferenceLocation[];
+  target_titles: string[];
+  sectors_preferred: string[];
+  sectors_excluded: string[];
+  target_companies: string[];
+  keywords: string[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Matching — jalon M3 (openapi.yaml : /jobs/{id}/match, /matches,     */
+/* /jobs/{id}/explanation)                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Critère bloquant (openapi.yaml → MatchResult.blocking_criteria[]).
+ * `label` porte la microcopie M2 interpolée côté serveur (12 §4 —
+ * libellés API repris tels quels) ; les codes sont ceux de 06 §3.
+ */
+export interface BlockingCriterion {
+  code: string;
+  label?: string;
+}
+
+/** Côté manquant d'une dimension inconnue (openapi.yaml → unknown_dimensions[].reason). */
+export type UnknownDimensionReason =
+  | "job_not_provided"
+  | "profile_not_provided"
+  | "low_extraction_confidence";
+
+/** Dimension non évaluable, listée sous « Non précisé » (M3-a/M3-b — jamais estimée). */
+export interface UnknownDimension {
+  dimension: string;
+  reason: UnknownDimensionReason;
+  /** Libellé API repris tel quel (ex. « Salaire non communiqué »). */
+  label?: string;
+}
+
+/** Compétence requise couverte par une compétence proche (06 dim. 1). */
+export interface DimensionRelatedSkill {
+  required: string;
+  matched_with: string;
+}
+
+/**
+ * Valeurs comparées d'une dimension (openapi.yaml → dimensions[].details,
+ * objet libre — champs connus d'après l'exemple de 12 §4).
+ */
+export interface DimensionDetails {
+  /** Compétences requises couvertes nominativement. */
+  matched?: string[];
+  /** Compétences couvertes par proximité. */
+  related?: DimensionRelatedSkill[];
+  /** Compétences requises manquantes — alimentent les lacunes. */
+  missing?: string[];
+  /** Distance au lieu retenu (dimension localisation). */
+  distance_km?: number;
+  /** Lieu accepté retenu (dimension localisation). */
+  matched_location?: string;
+  [extra: string]: unknown;
+}
+
+/** Sous-score d'une dimension (openapi.yaml → MatchResult.dimensions[]). */
+export interface DimensionScore {
+  dimension: string;
+  /** 0–1. */
+  subscore: number;
+  weight: number;
+  /** `false` = dimension inconnue (`k=0`) — n'entre pas dans le score. */
+  known: boolean;
+  details?: DimensionDetails;
+}
+
+/** Résultat de matching — `GET /jobs/{id}/match` (openapi.yaml → MatchResult, D03). */
+export interface MatchResult {
+  job_id: string;
+  profile_version: number;
+  scoring_version: string;
+  /** Compatibilité 0–100, calculée sur les seules dimensions connues. */
+  score: number;
+  /** Part des informations réellement disponibles, 0–100 — jamais fusionnée au score. */
+  confidence: number;
+  /** `true` si < 40 % du poids est connu — score affiché grisé mais lisible (M1-d). */
+  low_data: boolean;
+  blocking_criteria: BlockingCriterion[];
+  unknown_dimensions: UnknownDimension[];
+  dimensions: DimensionScore[];
+}
+
+/** Reformulation LLM des faits d'explication — `POST /jobs/{id}/explanation` (D14). */
+export interface MatchExplanation {
+  summary: string;
+  strengths: string[];
+  gaps: string[];
+  uncertainties: string[];
+  blocking_notes: string[];
+  prompt_version: string;
 }
