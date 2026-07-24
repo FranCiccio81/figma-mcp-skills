@@ -1,0 +1,773 @@
+openapi: 3.1.0
+info:
+  title: Boussole API
+  version: 1.0.0
+  description: >
+    API du MVP Boussole (assistant de candidature). Conventions transverses
+    (auth cookie+CSRF, pagination curseur, idempotence, rate limiting) :
+    voir 12-api-contracts.md. Erreurs au format RFC 9457.
+servers:
+  - url: /api/v1
+security:
+  - cookieAuth: []
+
+paths:
+  /auth/register:
+    post:
+      security: []
+      summary: Créer un compte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, accepted_terms_version, accepted_privacy_version]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 12 }
+                locale: { type: string, default: fr }
+                accepted_terms_version: { type: string }
+                accepted_privacy_version: { type: string }
+      responses:
+        "201": { description: Compte créé, session ouverte }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /auth/login:
+    post:
+      security: []
+      summary: Ouvrir une session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "204": { description: Session ouverte (cookie httpOnly) }
+        "401": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+
+  /auth/logout:
+    post:
+      summary: Fermer la session
+      responses: { "204": { description: OK } }
+
+  /me:
+    get:
+      summary: Utilisateur courant et état d'onboarding
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  email: { type: string }
+                  locale: { type: string }
+                  onboarding:
+                    type: object
+                    properties:
+                      cv_imported: { type: boolean }
+                      profile_validated: { type: boolean }
+                      preferences_set: { type: boolean }
+
+  /cv-documents:
+    post:
+      summary: Importer un CV (PDF/DOCX, <= 10 Mo) — parsing asynchrone
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "202":
+          description: Upload accepté, parsing en file
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CvDocument" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+
+  /cv-documents/{id}:
+    get:
+      summary: Statut du parsing et résultat d'extraction
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CvDocument" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /profile:
+    get:
+      summary: Profil complet avec provenance et confiance par champ
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+    patch:
+      summary: Modifier les champs racine du profil
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                headline: { type: [string, "null"], maxLength: 200 }
+                summary: { type: [string, "null"], maxLength: 2000 }
+                seniority: { $ref: "#/components/schemas/SeniorityLevel" }
+      responses:
+        "200":
+          description: Profil mis à jour (version incrémentée)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+
+  /profile/validate:
+    post:
+      summary: Valider le profil (promeut la provenance cv_extraction -> user_confirmed)
+      description: Préconditions — au moins 3 compétences et 1 expérience ou formation.
+      responses:
+        "200":
+          description: Profil validé
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /profile/experiences:
+    post:
+      summary: Ajouter une expérience (source = user_input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExperienceInput" }
+      responses:
+        "201":
+          description: Créée
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Experience" }
+
+  /profile/experiences/{id}:
+    patch:
+      summary: Modifier une expérience (provenance passe à user_input)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExperienceInput" }
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Supprimer une expérience
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: Supprimée } }
+
+  /preferences:
+    get:
+      summary: Lire les préférences
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preferences" }
+    put:
+      summary: Remplacer les préférences (payload complet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Preferences" }
+      responses:
+        "200": { description: OK — déclenche un re-scoring asynchrone }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /jobs:
+    get:
+      summary: Recherche d'offres (filtres SQL + full-text + rerank vectoriel)
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: remote, in: query, schema: { type: array, items: { $ref: "#/components/schemas/RemotePolicy" } }, style: form, explode: true }
+        - { name: contract, in: query, schema: { type: array, items: { $ref: "#/components/schemas/ContractType" } }, style: form, explode: true }
+        - { name: salary_min, in: query, schema: { type: integer } }
+        - { name: posted_since, in: query, schema: { type: integer, description: jours } }
+        - { name: include_blocked, in: query, schema: { type: boolean, default: true } }
+        - { name: include_hidden, in: query, schema: { type: boolean, default: false } }
+        - { name: saved_only, in: query, schema: { type: boolean, default: false }, description: ne renvoyer que les offres sauvegardées }
+        - { name: sort, in: query, schema: { type: string, enum: [match, date, relevance], default: match } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Cursor" }
+      responses:
+        "200":
+          description: Page de résultats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/JobCard" }
+                  next_cursor: { type: [string, "null"] }
+
+  /jobs/{id}:
+    get:
+      summary: Détail d'une offre (sources et liens d'origine inclus)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobDetail" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /jobs/{id}/match:
+    get:
+      summary: Résultat de matching pour le profil courant
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchResult" }
+        "409":
+          description: profile_not_validated
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+
+  /jobs/{id}/explanation:
+    post:
+      summary: Reformulation LLM des faits d'explication (mise en cache)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchExplanation" }
+        "429": { $ref: "#/components/responses/Problem" }
+
+  /jobs/{id}/saved-state:
+    put:
+      summary: Sauvegarder ou masquer une offre
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state: { type: string, enum: [saved, hidden] }
+      responses: { "204": { description: OK } }
+    delete:
+      summary: Retirer la sauvegarde / le masquage
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: OK } }
+
+  /matches:
+    get:
+      summary: Offres classées par score pour le profil courant
+      parameters:
+        - { name: min_score, in: query, schema: { type: integer, minimum: 0, maximum: 100 } }
+        - { name: include_blocked, in: query, schema: { type: boolean, default: true } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Cursor" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/JobCard" }
+                  next_cursor: { type: [string, "null"] }
+
+  /generations:
+    get:
+      summary: Lister les contenus générés (bibliothèque de documents)
+      parameters:
+        - { name: doc_type, in: query, schema: { type: string, enum: [email, cover_letter, cv_variant, cv_optimization] } }
+        - { name: status, in: query, schema: { type: string, enum: [pending, draft, validated, exported, failed] } }
+        - { name: job_id, in: query, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Cursor" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/GeneratedDocument" }
+                  next_cursor: { type: [string, "null"] }
+    post:
+      summary: Créer un contenu (email, lettre, variante CV, optimisation CV) — asynchrone
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doc_type]
+              properties:
+                doc_type: { type: string, enum: [email, cover_letter, cv_variant, cv_optimization] }
+                job_id: { type: [string, "null"], format: uuid, description: requis sauf cv_optimization }
+                application_id: { type: [string, "null"], format: uuid }
+                options:
+                  type: object
+                  properties:
+                    tone: { type: string, enum: [sobre, chaleureux, direct], default: sobre }
+                    language: { type: string, enum: [fr, en] }
+                    length: { type: string, enum: [court, standard], default: standard }
+      responses:
+        "202":
+          description: Génération en file
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeneratedDocument" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+
+  /generations/{id}:
+    get:
+      summary: Statut et contenu d'une génération
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeneratedDocument" }
+    patch:
+      summary: Éditer manuellement le brouillon
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: object }
+      responses: { "200": { description: OK } }
+
+  /generations/{id}/validate:
+    post:
+      summary: Validation humaine du contenu (obligatoire avant export)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200": { description: Statut = validated }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /generations/{id}/export:
+    post:
+      summary: Exporter (texte, PDF ou DOCX) — exige le statut validated
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format: { type: string, enum: [text, pdf, docx], default: text }
+      responses:
+        "200":
+          description: Lien signé de téléchargement ou contenu texte
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  format: { type: string }
+                  content: { type: [string, "null"] }
+                  download_url: { type: [string, "null"], description: lien signé 7 jours }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /applications:
+    get:
+      summary: Lister les candidatures
+      parameters:
+        - { name: status, in: query, schema: { $ref: "#/components/schemas/ApplicationStatus" } }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Cursor" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Application" }
+                  next_cursor: { type: [string, "null"] }
+    post:
+      summary: Créer une candidature (offre interne ou externe)
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationInput" }
+      responses:
+        "201":
+          description: Créée
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+
+  /applications/{id}/status:
+    post:
+      summary: Changer le statut (transition historisée)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_status]
+              properties:
+                to_status: { $ref: "#/components/schemas/ApplicationStatus" }
+                note: { type: [string, "null"], maxLength: 1000 }
+      responses:
+        "200": { description: OK }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /privacy/export:
+    post:
+      summary: Demander un export RGPD (archive JSON) — asynchrone
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }]
+      responses:
+        "202":
+          description: Export en préparation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  status: { type: string, enum: [pending, ready, expired] }
+
+  /privacy/exports/{id}:
+    get:
+      summary: Statut de l'export et lien signé (validité 7 jours)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  status: { type: string, enum: [pending, ready, expired] }
+                  download_url: { type: [string, "null"] }
+
+  /account:
+    delete:
+      summary: Supprimer le compte (soft delete immédiat, purge sous 30 jours)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "204": { description: Compte désactivé, purge planifiée }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /sources:
+    get:
+      summary: Sources d'offres actives (transparence)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    slug: { type: string }
+                    name: { type: string }
+                    kind: { type: string, enum: [public_api, ats_feed, partner] }
+                    last_sync_at: { type: [string, "null"], format: date-time }
+
+components:
+  securitySchemes:
+    cookieAuth: { type: apiKey, in: cookie, name: boussole_session }
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    Limit: { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+    Cursor: { name: cursor, in: query, schema: { type: string } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: false, schema: { type: string, format: uuid } }
+  responses:
+    Problem:
+      description: Erreur RFC 9457
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        trace_id: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+    SeniorityLevel: { type: [string, "null"], enum: [intern, junior, mid, senior, lead, principal, executive, null] }
+    ContractType: { type: string, enum: [permanent, fixed_term, freelance, internship, apprenticeship, other] }
+    RemotePolicy: { type: string, enum: [onsite, hybrid, full_remote] }
+    RemotePreference: { type: string, enum: [required, preferred, indifferent, onsite_preferred] }
+    CefrLevel: { type: string, enum: [A1, A2, B1, B2, C1, C2] }
+    ApplicationStatus: { type: string, enum: [draft, to_apply, applied, interviewing, offer, rejected, withdrawn] }
+    Provenance:
+      type: object
+      description: Provenance et confiance d'un champ extrait (D05)
+      properties:
+        source: { type: string, enum: [cv_extraction, user_input, user_confirmed] }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+    CvDocument:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        filename: { type: string }
+        status: { type: string, enum: [uploaded, parsing, parsed, failed] }
+        error_code: { type: [string, "null"], enum: [unreadable, image_only_pdf, too_large, unsupported_format, extraction_failed, null] }
+        extraction_warnings: { type: array, items: { type: string } }
+    Experience:
+      allOf:
+        - $ref: "#/components/schemas/ExperienceInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            provenance: { $ref: "#/components/schemas/Provenance" }
+    ExperienceInput:
+      type: object
+      required: [title, company, start_date]
+      properties:
+        title: { type: string, maxLength: 200 }
+        company: { type: string, maxLength: 200 }
+        sector_code: { type: [string, "null"] }
+        start_date: { type: string, format: date }
+        end_date: { type: [string, "null"], format: date }
+        description: { type: [string, "null"], maxLength: 3000 }
+    Profile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [draft, validated] }
+        version: { type: integer }
+        headline: { type: [string, "null"] }
+        summary: { type: [string, "null"] }
+        seniority: { $ref: "#/components/schemas/SeniorityLevel" }
+        total_experience_years: { type: [number, "null"] }
+        experiences: { type: array, items: { $ref: "#/components/schemas/Experience" } }
+        educations: { type: array, items: { type: object } }
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              label: { type: string }
+              provenance: { $ref: "#/components/schemas/Provenance" }
+        languages:
+          type: array
+          items:
+            type: object
+            properties:
+              lang_code: { type: string }
+              level: { $ref: "#/components/schemas/CefrLevel" }
+              provenance: { $ref: "#/components/schemas/Provenance" }
+    Preferences:
+      type: object
+      properties:
+        remote_pref: { $ref: "#/components/schemas/RemotePreference" }
+        contract_types: { type: array, items: { $ref: "#/components/schemas/ContractType" } }
+        contract_strict: { type: boolean }
+        salary_min: { type: [integer, "null"] }
+        salary_min_strict: { type: [integer, "null"] }
+        locations:
+          type: array
+          items:
+            type: object
+            required: [label, lat, lon]
+            properties:
+              label: { type: string }
+              lat: { type: number }
+              lon: { type: number }
+              radius_km: { type: integer, default: 30 }
+        target_titles: { type: array, items: { type: string } }
+        sectors_preferred: { type: array, items: { type: string } }
+        sectors_excluded: { type: array, items: { type: string } }
+        target_companies: { type: array, items: { type: string } }
+        keywords: { type: array, items: { type: string } }
+    JobCard:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        company_name: { type: string }
+        locations: { type: array, items: { type: string } }
+        remote: { type: [string, "null"] }
+        contract: { type: [string, "null"] }
+        salary_label: { type: [string, "null"], description: "'45–55 k€' ou null si non communiqué" }
+        posted_at: { type: [string, "null"], format: date-time }
+        match:
+          type: [object, "null"]
+          properties:
+            score: { type: integer }
+            confidence: { type: integer }
+            low_data: { type: boolean }
+            has_blocking: { type: boolean }
+        saved_state: { type: [string, "null"], enum: [saved, hidden, null] }
+    JobDetail:
+      allOf:
+        - $ref: "#/components/schemas/JobCard"
+        - type: object
+          properties:
+            description_text: { type: string }
+            language: { type: string }
+            seniority: { $ref: "#/components/schemas/SeniorityLevel" }
+            skills_required: { type: array, items: { type: string } }
+            skills_nice: { type: array, items: { type: string } }
+            sources:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [name, original_url]
+                properties:
+                  name: { type: string }
+                  original_url: { type: string, format: uri }
+                  posted_at: { type: [string, "null"], format: date-time }
+    MatchResult:
+      type: object
+      properties:
+        job_id: { type: string, format: uuid }
+        profile_version: { type: integer }
+        scoring_version: { type: string }
+        score: { type: integer, minimum: 0, maximum: 100 }
+        confidence: { type: integer, minimum: 0, maximum: 100 }
+        low_data: { type: boolean }
+        blocking_criteria:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              label: { type: string }
+        unknown_dimensions:
+          type: array
+          items:
+            type: object
+            properties:
+              dimension: { type: string }
+              reason: { type: string, enum: [job_not_provided, profile_not_provided, low_extraction_confidence] }
+              label: { type: string }
+        dimensions:
+          type: array
+          items:
+            type: object
+            properties:
+              dimension: { type: string }
+              subscore: { type: number }
+              weight: { type: number }
+              known: { type: boolean }
+              details: { type: object }
+    MatchExplanation:
+      type: object
+      properties:
+        summary: { type: string }
+        strengths: { type: array, items: { type: string } }
+        gaps: { type: array, items: { type: string } }
+        uncertainties: { type: array, items: { type: string } }
+        blocking_notes: { type: array, items: { type: string } }
+        prompt_version: { type: string }
+    GeneratedDocument:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        doc_type: { type: string, enum: [email, cover_letter, cv_variant, cv_optimization] }
+        status: { type: string, enum: [pending, draft, validated, exported, failed] }
+        based_on_profile_version: { type: integer }
+        prompt_version: { type: string }
+        content: { type: [object, "null"] }
+        anchoring_check:
+          type: [object, "null"]
+          properties:
+            status: { type: string, enum: [passed, failed] }
+            unanchored_claims: { type: array, items: { type: string } }
+    ApplicationInput:
+      type: object
+      properties:
+        job_posting_id: { type: [string, "null"], format: uuid }
+        external_title: { type: [string, "null"] }
+        external_company: { type: [string, "null"] }
+        external_url: { type: [string, "null"], format: uri }
+        notes: { type: [string, "null"] }
+    Application:
+      allOf:
+        - $ref: "#/components/schemas/ApplicationInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: "#/components/schemas/ApplicationStatus" }
+            applied_at: { type: [string, "null"], format: date-time }
+            events:
+              type: array
+              items:
+                type: object
+                properties:
+                  from_status: { type: [string, "null"] }
+                  to_status: { type: string }
+                  at: { type: string, format: date-time }
+                  note: { type: [string, "null"] }

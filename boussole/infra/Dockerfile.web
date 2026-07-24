@@ -1,0 +1,35 @@
+# Boussole Web (Next.js) — image multi-stage, exécution non-root.
+# Contexte de build : la racine boussole/. Le dossier web/ arrive avec E2
+# (shell front) — ce Dockerfile est prêt pour un projet Next.js standard
+# avec `output: "standalone"` dans next.config.js.
+
+# ---------- Étape 1 : dépendances + build ----------
+FROM node:22-alpine AS builder
+
+WORKDIR /build
+
+COPY web/package.json web/package-lock.json* ./
+RUN npm ci
+
+COPY web/ ./
+RUN npm run build
+
+# ---------- Étape 2 : runtime minimal non-root ----------
+FROM node:22-alpine AS runtime
+
+ENV NODE_ENV=production \
+    PORT=3000
+
+RUN addgroup --system boussole && adduser --system --ingroup boussole boussole
+
+WORKDIR /srv/boussole
+
+COPY --from=builder --chown=boussole:boussole /build/.next/standalone ./
+COPY --from=builder --chown=boussole:boussole /build/.next/static ./.next/static
+COPY --from=builder --chown=boussole:boussole /build/public ./public
+
+USER boussole
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

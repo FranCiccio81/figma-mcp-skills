@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens Bridge — variables CSS sémantiques (core → semantic).
+ * Seule source de couleurs de l'app : les composants consomment ces tokens
+ * via le mapping tailwind.config.ts, jamais de valeur hex en dur.
+ *
+ * Contrastes vérifiés WCAG 2.1 AA : 4,5:1 texte, 3:1 UI et focus ring.
+ * --color-text-disabled ne doit JAMAIS porter du texte informatif.
+ */
+:root {
+  color-scheme: light;
+
+  --color-surface-default: #ffffff;
+  --color-surface-muted: #f4f5f7;
+
+  --color-text-primary: #16181d;
+  --color-text-secondary: #4a5361;
+  --color-text-disabled: #9aa1ad;
+  --color-text-inverse: #ffffff;
+  --color-text-on-action: #ffffff;
+
+  --color-border-default: #d2d6dc;
+  --color-border-strong: #7d8694;
+
+  --color-action-primary: #0f62fe;
+  --color-action-primary-hover: #0043ce;
+
+  --color-feedback-error: #b3261e;
+  --color-feedback-error-surface: #fdecec;
+  --color-feedback-success: #1a7f37;
+  --color-feedback-success-surface: #e9f7ee;
+  --color-feedback-warning: #7a5300;
+  --color-feedback-warning-surface: #fff4d6;
+  --color-feedback-info: #0043ce;
+  --color-feedback-info-surface: #e8f0fe;
+
+  --color-focus-ring: #0f62fe;
+  --shadow-input-focus: 0 0 0 3px rgba(15, 98, 254, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-surface-default: #111318;
+    --color-surface-muted: #1b1e26;
+
+    --color-text-primary: #f2f4f8;
+    --color-text-secondary: #b6bdc9;
+    --color-text-disabled: #6b7280;
+    --color-text-inverse: #16181d;
+    --color-text-on-action: #0b1a3d;
+
+    --color-border-default: #363b46;
+    --color-border-strong: #6b7280;
+
+    --color-action-primary: #7aa7ff;
+    --color-action-primary-hover: #9dbdff;
+
+    --color-feedback-error: #ff8f88;
+    --color-feedback-error-surface: #3a1513;
+    --color-feedback-success: #57c777;
+    --color-feedback-success-surface: #10301c;
+    --color-feedback-warning: #e0b23e;
+    --color-feedback-warning-surface: #33270a;
+    --color-feedback-info: #7aa7ff;
+    --color-feedback-info-surface: #14213d;
+
+    --color-focus-ring: #7aa7ff;
+    --shadow-input-focus: 0 0 0 3px rgba(122, 167, 255, 0.4);
+  }
+}
+
+@layer base {
+  /* Focus visible par défaut — 3:1 minimum sur le ring (WCAG 2.4.11/1.4.11). */
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}

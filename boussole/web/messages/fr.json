@@ -1,0 +1,93 @@
+{
+  "common": {
+    "appName": "Boussole",
+    "loading": "Chargement…",
+    "skipToContent": "Aller au contenu principal"
+  },
+  "errors": {
+    "unexpected": "Une erreur inattendue est survenue. Réessayez."
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "emailInvalid": "Saisissez une adresse e-mail valide.",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 12 caractères.",
+    "consentRequired": "Cette case doit être cochée pour créer votre compte."
+  },
+  "nav": {
+    "mainLabel": "Navigation principale",
+    "dashboard": "Tableau de bord",
+    "jobs": "Offres",
+    "applications": "Candidatures",
+    "profile": "Profil",
+    "preferences": "Préférences",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "emailLabel": "Adresse e-mail",
+      "passwordLabel": "Mot de passe",
+      "submit": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "registerLink": "Créer un compte",
+      "valueReminder": "Vos données restent en Europe. Aucune candidature envoyée sans vous.",
+      "errors": {
+        "invalidCredentials": "Identifiants incorrects.",
+        "rateLimited": "Trop de tentatives. Réessayez dans {seconds} secondes."
+      }
+    },
+    "register": {
+      "title": "Inscription",
+      "emailLabel": "Adresse e-mail",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Au moins 12 caractères.",
+      "consentsLegend": "Consentements",
+      "termsLabel": "J'accepte les conditions générales d'utilisation et le traitement de mes données nécessaire au fonctionnement du service (obligatoire).",
+      "privacyLabel": "J'ai lu et j'accepte la politique de confidentialité (obligatoire).",
+      "euHostingNotice": "Vos données sont hébergées en Europe.",
+      "submit": "Créer mon compte",
+      "haveAccount": "Déjà un compte ?",
+      "loginLink": "Se connecter",
+      "errors": {
+        "emailUnavailable": "Impossible de créer un compte avec ces informations. Si vous avez déjà un compte, connectez-vous.",
+        "rateLimited": "Trop de tentatives. Réessayez dans {seconds} secondes."
+      }
+    }
+  },
+  "placeholder": {
+    "availableAt": "Disponible au jalon {milestone}."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Tableau de bord",
+      "emptyTitle": "Votre tableau de bord arrive bientôt",
+      "emptyDescription": "Vos meilleures offres du moment, vos candidatures à relancer et l'avancement de votre profil s'afficheront ici."
+    },
+    "jobs": {
+      "title": "Offres",
+      "emptyTitle": "La recherche d'offres arrive bientôt",
+      "emptyDescription": "Recherche, filtres et scores de compatibilité s'afficheront ici. Chaque offre conservera le lien vers son annonce d'origine."
+    },
+    "applications": {
+      "title": "Candidatures",
+      "emptyTitle": "Le suivi des candidatures arrive bientôt",
+      "emptyDescription": "Vos candidatures, internes ou externes, seront suivies ici par statut, avec historique et notes."
+    },
+    "profile": {
+      "title": "Profil",
+      "emptyTitle": "Votre profil arrive bientôt",
+      "emptyDescription": "Importez votre CV, relisez les informations extraites (provenance et confiance par champ), puis validez votre profil."
+    },
+    "preferences": {
+      "title": "Préférences",
+      "emptyTitle": "Les préférences de recherche arrivent bientôt",
+      "emptyDescription": "Métiers cibles, localisations et rayon, télétravail, contrats, salaire, langues et secteurs — vos critères alimenteront le matching."
+    },
+    "settings": {
+      "title": "Paramètres",
+      "emptyTitle": "Les paramètres arrivent bientôt",
+      "emptyDescription": "Compte et sécurité, confidentialité et données (export RGPD, suppression), sources des offres et méthode de calcul du score."
+    }
+  }
+}

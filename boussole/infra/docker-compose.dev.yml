@@ -1,0 +1,121 @@
+# Boussole — environnement de développement (make up).
+# Deux Redis logiques (D17) : persistant (sessions + broker Celery) et cache.
+name: boussole
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: boussole
+      POSTGRES_PASSWORD: boussole   # dev uniquement — jamais en prod (D23)
+      POSTGRES_DB: boussole
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boussole -d boussole"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-persistent:
+    image: redis:7-alpine
+    # Sessions + broker Celery : AOF, aucune éviction (D17).
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-persistent-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-cache:
+    image: redis:7-alpine
+    # Cache + rate limiting : LRU, perte acceptable (D17).
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: boussole-dev
+      MINIO_ROOT_PASSWORD: boussole-dev-secret   # dev uniquement (D23)
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"   # UI web
+      - "1025:1025"   # SMTP
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    environment:
+      ENV: development
+      DATABASE_URL: postgresql+asyncpg://boussole:boussole@postgres:5432/boussole
+      REDIS_PERSISTENT_URL: redis://redis-persistent:6379/0
+      REDIS_CACHE_URL: redis://redis-cache:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: boussole-dev
+      S3_REGION: eu-west-1
+      S3_ACCESS_KEY: boussole-dev
+      S3_SECRET_KEY: boussole-dev-secret
+      SESSION_TTL_DAYS: "30"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-persistent:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-persistent-data:
+  minio-data:

@@ -1,0 +1,46 @@
+# CI Boussole — lint (ruff + mypy) et tests unitaires sur PR touchant boussole/.
+# Voir README.md de ce dossier : à déplacer vers .github/workflows/ à la racine
+# du repo (les permissions de l'app GitHub ne permettent pas toujours de
+# pousser des workflows directement).
+
+name: boussole-ci
+
+on:
+  pull_request:
+    paths:
+      - "boussole/**"
+
+defaults:
+  run:
+    working-directory: boussole/api
+
+jobs:
+  lint:
+    name: Lint (ruff + mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Ruff
+        run: ruff check .
+      - name: Mypy
+        run: mypy
+
+  test:
+    name: Tests unitaires (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Pytest
+        run: pytest tests/unit -q
