@@ -27,6 +27,7 @@ import httpx
 from app.modules.ingestion import extract_rules
 from app.modules.ingestion.connectors.base import (
     DEFAULT_TIMEOUT,
+    FetchResult,
     RawJob,
     RawLocation,
     get_with_retry,
@@ -167,8 +168,14 @@ class FranceTravailConnector:
         response.raise_for_status()
         return response.json()["access_token"]
 
-    def fetch(self, state: str | None) -> tuple[list[RawJob], str | None]:
-        """Fetch incrémental depuis ``state − 15 min`` (07 §4.3), paginé."""
+    def fetch(self, state: str | None) -> FetchResult:
+        """Fetch incrémental depuis ``state − 15 min`` (07 §4.3), paginé.
+
+        Fetch TRONQUÉ (``MAX_PAGES`` atteint) → ``complete=False`` : le
+        périmètre observé n'étant pas exhaustif, l'appelant ne doit ni
+        avancer le curseur ni compter les absences (mécanisme 2) ce cycle.
+        Un item malformé est compté en erreur, le cycle continue (07 §4.5).
+        """
         now = datetime.now(UTC)
         headers = {"Authorization": f"Bearer {self._token()}"}
         params: dict[str, Any] = {"sort": "1"}
@@ -178,6 +185,8 @@ class FranceTravailConnector:
             params["maxCreationDate"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         jobs: list[RawJob] = []
+        parse_errors = 0
+        complete = True
         for page in range(MAX_PAGES):
             start = page * PAGE_SIZE
             params["range"] = f"{start}-{start + PAGE_SIZE - 1}"
@@ -188,12 +197,24 @@ class FranceTravailConnector:
                 break
             payload = response.json()
             offers = payload.get("resultats") or []
-            jobs.extend(parse_offer(offer) for offer in offers)
+            for offer in offers:
+                try:
+                    jobs.append(parse_offer(offer))
+                except Exception:
+                    parse_errors += 1
+                    logger.exception(
+                        "france_travail_offer_parse_error id=%r",
+                        offer.get("id") if isinstance(offer, dict) else None,
+                    )
             if len(offers) < PAGE_SIZE:
                 break
         else:
+            complete = False  # tronqué : périmètre non exhaustif ce cycle
             logger.warning("france_travail_max_pages_reached pages=%d", MAX_PAGES)
 
         # Le curseur n'avance qu'après un cycle complet réussi (07 §4.3) :
-        # toute exception au-dessus empêche d'atteindre cette ligne.
-        return jobs, now.isoformat()
+        # toute exception au-dessus empêche d'atteindre cette ligne, et un
+        # cycle tronqué est signalé via ``complete=False``.
+        return FetchResult(
+            jobs=jobs, cursor=now.isoformat(), complete=complete, parse_errors=parse_errors
+        )

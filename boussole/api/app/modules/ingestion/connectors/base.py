@@ -9,7 +9,8 @@ font AUCUNE écriture en base : l'orchestration est dans ``service.py``.
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import Any, Protocol
 
 import httpx
@@ -68,18 +69,60 @@ class RawJob:
     withdrawn: bool = False  # signal « annulée/pourvue » (07 §4.6.1)
 
 
+@dataclass(slots=True)
+class FetchResult:
+    """Résultat d'un cycle de fetch d'un connecteur (07 §4.3, §4.5).
+
+    - ``complete`` : ``False`` si le fetch est TRONQUÉ (garde-fou
+      ``MAX_PAGES`` atteint…) — le périmètre observé n'est pas exhaustif,
+      l'expiration par absence (mécanisme 2) doit être sautée ce cycle et
+      le curseur ne doit pas avancer ;
+    - ``failed_scopes`` : périmètres (board Greenhouse, site Lever) dont le
+      fetch a ÉCHOUÉ — leurs job_sources doivent être exclues du périmètre
+      ``mark_expired`` du cycle (ni absence, ni remise à zéro) ;
+    - ``parse_errors`` : items malformés ignorés (07 §4.5, classe
+      « permanente requête » — le cycle continue).
+    """
+
+    jobs: list[RawJob]
+    cursor: str | None = None
+    complete: bool = True
+    failed_scopes: list[str] = field(default_factory=list)
+    parse_errors: int = 0
+
+
 class Connector(Protocol):
     """Protocole des connecteurs — implémentations dans ce package."""
 
     slug: str
 
-    def fetch(self, state: str | None) -> tuple[list[RawJob], str | None]:
+    def fetch(self, state: str | None) -> FetchResult:
         """Récupère un cycle d'offres.
 
         ``state`` : curseur persisté (``connector_state.cursor``) ou ``None``
-        au premier cycle. Retourne ``(offres, nouveau_curseur)``.
+        au premier cycle. Retourne un :class:`FetchResult` (offres, nouveau
+        curseur, complétude du cycle, périmètres en échec).
         """
         ...
+
+
+def parse_retry_after(value: str) -> float | None:
+    """``Retry-After`` : delta en secondes OU date HTTP (RFC 9110 §10.2.3).
+
+    Retourne ``None`` si la valeur est illisible — l'appelant retombe sur
+    son backoff exponentiel (jamais de ``ValueError``).
+    """
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        pass
+    try:
+        dt = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return max(0.0, (dt - datetime.now(UTC)).total_seconds())
 
 
 def get_with_retry(
@@ -103,7 +146,9 @@ def get_with_retry(
             response = client.get(url, params=params, headers=headers)
             if response.status_code == 429 or response.status_code >= 500:
                 retry_after = response.headers.get("Retry-After")
-                delay = float(retry_after) if retry_after else backoff_seconds * (2**attempt)
+                delay = parse_retry_after(retry_after) if retry_after else None
+                if delay is None:
+                    delay = backoff_seconds * (2**attempt)
                 logger.warning(
                     "transient_http_error url=%s status=%s attempt=%d",
                     url, response.status_code, attempt + 1,

@@ -8,6 +8,12 @@
   détection d'expiration par disparition du flux (07 §4.6.2) ;
 - ``maintenance.expire_jobs`` : mécanisme 1 (``expires_at`` dépassé).
 
+Boucle d'événements : chaque tâche exécute UNE seule coroutine via
+``asyncio.run`` (curseur lu DANS la coroutine) sur un moteur dédié
+``NullPool`` (:func:`app.core.db.create_worker_engine`), disposé en fin de
+coroutine — jamais le moteur global poolé, dont les connexions asyncpg
+resteraient liées à une boucle fermée (RuntimeError au cycle suivant).
+
 Non implémenté au M2 (🟡, documenté) : verrou Redis anti-chevauchement
 ``ingestion:lock:{slug}``, circuit breaker ``ingestion:cb:{slug}``
 (07 §4.2/§4.5) — à brancher en intégration M2 avec les métriques §7.3.
@@ -15,21 +21,23 @@ Non implémenté au M2 (🟡, documenté) : verrou Redis anti-chevauchement
 
 import asyncio
 import logging
-from collections.abc import Awaitable, Callable
+import uuid
+from collections.abc import Awaitable
 from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.core.config import get_settings
-from app.core.db import get_session_factory
+from app.core.db import create_worker_engine
 from app.modules.ingestion.connectors.base import Connector, RawJob
 from app.modules.ingestion.connectors.france_travail import FranceTravailConnector
 from app.modules.ingestion.connectors.greenhouse import GreenhouseConnector
 from app.modules.ingestion.connectors.lever import LeverConnector
 from app.modules.ingestion.models import ConnectorState
 from app.modules.ingestion.service import (
+    JobStore,
     SqlAlchemyJobStore,
     ingest_batch,
     mark_expired,
@@ -40,7 +48,7 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 def _run[T](coro: Awaitable[T]) -> T:
-    """Pont sync Celery → code async SQLAlchemy."""
+    """Pont sync Celery → code async SQLAlchemy (UNE coroutine par tâche)."""
     return asyncio.run(coro)  # type: ignore[arg-type]
 
 
@@ -82,47 +90,126 @@ def _store_raw_payloads_stub(slug: str, raw_jobs: list[RawJob]) -> None:
         )
 
 
-async def _with_session[T](
-    fn: Callable[[AsyncSession], Awaitable[T]],
-) -> T:
-    factory = get_session_factory()
-    async with factory() as session:
-        result = await fn(session)
-        await session.commit()
-        return result
+async def _refs_of_failed_scopes(
+    store: JobStore, source_id: uuid.UUID, failed_scopes: list[str]
+) -> set[str]:
+    """External_refs des job_sources appartenant aux périmètres en échec.
+
+    Un board Greenhouse / site Lever dont le fetch a échoué n'a PAS été
+    observé : ses offres ne sont ni « présentes » ni « absentes » — elles
+    sont exclues du périmètre ``mark_expired`` du cycle. Le rattachement se
+    fait par le jeton du board/site dans ``original_url``
+    (``…greenhouse.io/{board}/…``, ``…lever.co/{site}/…``).
+    """
+    if not failed_scopes:
+        return set()
+    markers = tuple(f"/{scope}/" for scope in failed_scopes)
+    return {
+        job_source.external_ref
+        for job_source in await store.job_sources_for_source(source_id)
+        if any(marker in job_source.original_url for marker in markers)
+    }
 
 
-async def _sync(slug: str, raw_jobs: list[RawJob], new_cursor: str | None) -> dict[str, Any]:
-    async def _do(session: AsyncSession) -> dict[str, Any]:
-        store = SqlAlchemyJobStore(session)
-        source = await store.get_source_by_slug(slug)
-        if source is None:
-            raise ValueError(f"source non enregistrée : {slug!r}")
-        report = await ingest_batch(slug, raw_jobs, store)
-        now = datetime.now(UTC)
-        state = await session.get(ConnectorState, source.id)
-        if state is None:
-            state = ConnectorState(source_id=source.id)
-            session.add(state)
-        if new_cursor is not None:
-            state.cursor = new_cursor
-        state.last_sync_at = now
-        state.updated_at = now
-        return asdict(report)
+async def _sync_cycle(slug: str, connector: Connector) -> dict[str, Any]:
+    """Cycle incrémental complet dans UNE coroutine (curseur lu dedans)."""
+    engine = create_worker_engine()
+    try:
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with factory() as session:
+            store = SqlAlchemyJobStore(session)
+            source = await store.get_source_by_slug(slug)
+            if source is None:
+                raise ValueError(f"source non enregistrée : {slug!r}")
+            state = await session.get(ConnectorState, source.id)
+            cursor = state.cursor if state else None
+            await session.commit()  # libère la connexion pendant le fetch HTTP
 
-    return await _with_session(_do)
+            fetched = await asyncio.to_thread(connector.fetch, cursor)
+            _store_raw_payloads_stub(slug, fetched.jobs)
+
+            report = await ingest_batch(slug, fetched.jobs, store)
+            now = datetime.now(UTC)
+            state = await session.get(ConnectorState, source.id)
+            if state is None:
+                state = ConnectorState(source_id=source.id)
+                session.add(state)
+            if fetched.cursor is not None and fetched.complete:
+                # Le curseur n'avance qu'après un cycle COMPLET réussi
+                # (07 §4.3) : fetch tronqué → curseur inchangé.
+                state.cursor = fetched.cursor
+            state.last_sync_at = now
+            state.updated_at = now
+            await session.commit()
+            return asdict(report) | {
+                "parse_errors": fetched.parse_errors,
+                "complete": fetched.complete,
+            }
+    finally:
+        await engine.dispose()
 
 
-async def _read_cursor(slug: str) -> str | None:
-    async def _do(session: AsyncSession) -> str | None:
-        store = SqlAlchemyJobStore(session)
-        source = await store.get_source_by_slug(slug)
-        if source is None:
-            return None
-        state = await session.get(ConnectorState, source.id)
-        return state.cursor if state else None
+async def _reconcile_cycle(slug: str, connector: Connector) -> dict[str, Any]:
+    """Réconciliation complète dans UNE coroutine : ré-ingestion + expiration.
 
-    return await _with_session(_do)
+    Garde-fous du mécanisme 2 (07 §4.6.2, §4.5) :
+
+    - fetch TRONQUÉ (``complete=False``, ex. MAX_PAGES France Travail) →
+      ``mark_expired`` n'est PAS appelé ce cycle (le périmètre observé
+      n'est pas exhaustif : toute absence serait un faux signal) ;
+    - board/site en ÉCHEC (``failed_scopes``) → ses job_sources sont
+      exclues du périmètre (ni absence comptée, ni remise à zéro).
+    """
+    fetched = await asyncio.to_thread(connector.fetch, None)  # fetch complet
+    _store_raw_payloads_stub(slug, fetched.jobs)
+
+    engine = create_worker_engine()
+    try:
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with factory() as session:
+            store = SqlAlchemyJobStore(session)
+            source = await store.get_source_by_slug(slug)
+            if source is None:
+                raise ValueError(f"source non enregistrée : {slug!r}")
+            ingest_report = await ingest_batch(slug, fetched.jobs, store)
+
+            expiration: dict[str, Any] | None = None
+            if not fetched.complete:
+                logger.warning(
+                    "reconcile_expiration_skipped slug=%s reason=fetch_tronque", slug
+                )
+            else:
+                skip_refs = await _refs_of_failed_scopes(
+                    store, source.id, fetched.failed_scopes
+                )
+                expiration = asdict(await mark_expired(
+                    store,
+                    source_id=source.id,
+                    present_external_refs={raw.external_ref for raw in fetched.jobs},
+                    skip_external_refs=skip_refs,
+                ))
+            await session.commit()
+            return {
+                "ingest": asdict(ingest_report),
+                "expiration": expiration,
+                "parse_errors": fetched.parse_errors,
+                "failed_scopes": fetched.failed_scopes,
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _expire_cycle() -> dict[str, Any]:
+    engine = create_worker_engine()
+    try:
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with factory() as session:
+            store = SqlAlchemyJobStore(session)
+            report = asdict(await mark_expired(store))
+            await session.commit()
+            return report
+    finally:
+        await engine.dispose()
 
 
 @celery_app.task(
@@ -140,10 +227,7 @@ def sync_source(self: Any, slug: str) -> dict[str, Any] | None:
         logger.info("ingestion_cycle_skipped slug=%s reason=feature_flag_off", slug)
         return None
     connector = _build_connector(slug)
-    cursor = _run(_read_cursor(slug))
-    raw_jobs, new_cursor = connector.fetch(cursor)
-    _store_raw_payloads_stub(slug, raw_jobs)
-    report = _run(_sync(slug, raw_jobs, new_cursor))
+    report = _run(_sync_cycle(slug, connector))
     logger.info("ingestion_cycle_success slug=%s report=%s", slug, report)
     return report
 
@@ -154,29 +238,14 @@ def reconcile(self: Any, slug: str) -> dict[str, Any] | None:
 
     La détection d'expiration (07 §4.6.2) ne s'applique qu'après un fetch
     complet RÉUSSI — toute exception du connecteur interrompt la tâche
-    avant ``mark_expired``.
+    avant ``mark_expired``, un fetch tronqué la saute, un board/site en
+    échec est exclu du périmètre (voir :func:`_reconcile_cycle`).
     """
     if not _feature_enabled(slug):
         logger.info("ingestion_cycle_skipped slug=%s reason=feature_flag_off", slug)
         return None
     connector = _build_connector(slug)
-    raw_jobs, _ = connector.fetch(None)  # fetch complet (sans curseur)
-    _store_raw_payloads_stub(slug, raw_jobs)
-
-    async def _do(session: AsyncSession) -> dict[str, Any]:
-        store = SqlAlchemyJobStore(session)
-        source = await store.get_source_by_slug(slug)
-        if source is None:
-            raise ValueError(f"source non enregistrée : {slug!r}")
-        ingest_report = await ingest_batch(slug, raw_jobs, store)
-        expiration = await mark_expired(
-            store,
-            source_id=source.id,
-            present_external_refs={raw.external_ref for raw in raw_jobs},
-        )
-        return {"ingest": asdict(ingest_report), "expiration": asdict(expiration)}
-
-    report = _run(_with_session(_do))
+    report = _run(_reconcile_cycle(slug, connector))
     logger.info("ingestion_reconcile_success slug=%s report=%s", slug, report)
     return report
 
@@ -184,11 +253,6 @@ def reconcile(self: Any, slug: str) -> dict[str, Any] | None:
 @celery_app.task(name="maintenance.expire_jobs")
 def expire_jobs() -> dict[str, Any]:
     """Expiration par signal explicite : ``expires_at`` dépassé (07 §4.6.1)."""
-
-    async def _do(session: AsyncSession) -> dict[str, Any]:
-        store = SqlAlchemyJobStore(session)
-        return asdict(await mark_expired(store))
-
-    report = _run(_with_session(_do))
+    report = _run(_expire_cycle())
     logger.info("expire_jobs_done report=%s", report)
     return report

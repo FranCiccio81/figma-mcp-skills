@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -49,6 +50,23 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
     if _session_factory is None:
         _session_factory = async_sessionmaker(get_engine(), expire_on_commit=False)
     return _session_factory
+
+
+def create_worker_engine() -> AsyncEngine:
+    """Moteur DÉDIÉ aux workers Celery : ``NullPool``, à disposer par tâche.
+
+    Chaque tâche Celery exécute sa coroutine via ``asyncio.run`` (nouvelle
+    boucle d'événements à chaque exécution) : le moteur global poolé
+    lierait des connexions asyncpg à une boucle déjà fermée → ``RuntimeError``
+    au cycle suivant. ``NullPool`` = une connexion par usage, fermée au
+    retour — aucun état ne survit à la boucle. L'appelant DOIT
+    ``await engine.dispose()`` en fin de coroutine (et ne jamais partager ce
+    moteur entre deux ``asyncio.run``).
+
+    N'altère pas le moteur global de l'API (:func:`get_engine`).
+    """
+    settings = get_settings()
+    return create_async_engine(settings.database_url, echo=settings.debug, poolclass=NullPool)
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:

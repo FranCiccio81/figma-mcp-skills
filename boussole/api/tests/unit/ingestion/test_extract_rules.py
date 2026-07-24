@@ -120,6 +120,32 @@ class TestSalary:
     def test_aucun_montant(self) -> None:
         assert rules.extract_salary("Rémunération attractive selon profil") is None
 
+    # --- garde-fous revue : marqueur salarial + itération des matches ---
+    def test_montant_sans_marqueur_salarial_ignore(self) -> None:
+        # Un montant en devise SANS contexte de rémunération n'est pas un salaire.
+        assert rules.extract_salary("Capital de 100 000 €") is None
+
+    def test_montant_aberrant_nabandonne_pas_les_suivants(self) -> None:
+        result = rules.extract_salary(
+            "Prime de 1 500 € par an. Salaire : 45 000 € brut annuel."
+        )
+        assert result is not None
+        assert (result.salary_min, result.salary_max) == (45000, 45000)
+        assert result.period == "year"
+
+    def test_avantage_hors_contexte_puis_salaire_marque(self) -> None:
+        result = rules.extract_salary(
+            "Tickets restaurant 10 €/jour pris en charge. Salaire : 50 000 € annuel."
+        )
+        assert result is not None
+        assert (result.salary_min, result.salary_max) == (50000, 50000)
+        assert result.period == "year"  # « /jour » de la phrase voisine non lu
+
+    def test_periode_adjacente_vaut_marqueur(self) -> None:
+        result = rules.extract_salary("De 38 000 € à 45 000 € par an")
+        assert result is not None
+        assert (result.salary_min, result.salary_max) == (38000, 45000)
+
 
 class TestExperience:
     def test_5_plus_ans(self) -> None:
@@ -147,6 +173,39 @@ class TestExperience:
     def test_duree_sans_contexte_experience_ignoree(self) -> None:
         assert rules.extract_experience("CDD de 2 ans à pourvoir") is None
 
+    # --- garde-fous revue : adjacence stricte, plus de fenêtre ±60 ---
+    def test_anciennete_societe_non_adjacente_ignoree(self) -> None:
+        assert rules.extract_experience(
+            "Notre société existe depuis 25 ans et recherche un profil avec expérience"
+        ) is None
+
+    def test_duree_cdd_et_experience_dans_autre_phrase(self) -> None:
+        assert rules.extract_experience(
+            "CDD de 2 ans. Une première expérience est demandée."
+        ) is None
+
+    def test_experience_avant_le_nombre(self) -> None:
+        result = rules.extract_experience("Expérience de 5 ans en gestion de projet")
+        assert result is not None
+        assert (result.minimum, result.maximum) == (5.0, 5.0)
+
+    def test_experience_deux_points_libelle_france_travail(self) -> None:
+        result = rules.extract_experience("expérience : 3 ans")
+        assert result is not None
+        assert result.minimum == 3.0
+
+    def test_experience_au_moins_apres_le_mot(self) -> None:
+        result = rules.extract_experience("Expérience d'au moins 4 ans exigée")
+        assert result is not None
+        assert result.minimum == 4.0
+        assert result.maximum is None
+
+    def test_minimum_x_ans_adjacent_experience(self) -> None:
+        result = rules.extract_experience("Minimum 5 ans d'expérience sur Python")
+        assert result is not None
+        assert result.minimum == 5.0
+        assert result.maximum is None
+
 
 class TestLanguages:
     def test_anglais_courant(self) -> None:
@@ -173,6 +232,32 @@ class TestLanguages:
         results = rules.extract_languages("Anglais courant et notions d'italien")
         codes = {r.lang_code for r in results}
         assert codes == {"en", "it"}
+
+    # --- garde-fous revue : adjacence langue↔niveau, plus de fenêtre ±30 ---
+    def test_niveau_non_adjacent_non_associe(self) -> None:
+        # « professionnel » dans la phrase voisine n'est PAS un niveau d'anglais,
+        # et « un plus » n'est pas une exigence → rien n'est émis.
+        assert rules.extract_languages(
+            "environnement professionnel exigeant. L'anglais est un plus."
+        ) == []
+
+    def test_cecrl_hors_contexte_non_associe_mais_requis_adjacent(self) -> None:
+        # Le « B2 » de l'adresse n'est jamais associé ; « anglais est requis »
+        # (motif adjacent) déclenche le défaut B2 🟡 — pas le B2 de l'adresse.
+        results = rules.extract_languages(
+            "Local B2, avenue de la gare. L'anglais est requis."
+        )
+        assert results == [rules.LanguageRule("en", "B2", 0.8)]
+
+    def test_langue_requise_sans_motif_adjacent_non_emise(self) -> None:
+        # « requis » porte sur autre chose : aucune exigence de langue émise.
+        assert rules.extract_languages(
+            "Un diplôme est requis. L'anglais sera apprécié au quotidien."
+        ) == []
+
+    def test_required_english_adjacent(self) -> None:
+        results = rules.extract_languages("English required for this position")
+        assert results == [rules.LanguageRule("en", "B2", 0.8)]
 
 
 class TestSeniority:

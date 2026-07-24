@@ -23,6 +23,7 @@ import httpx
 
 from app.modules.ingestion.connectors.base import (
     DEFAULT_TIMEOUT,
+    FetchResult,
     RawJob,
     RawLocation,
     get_with_retry,
@@ -130,9 +131,16 @@ class LeverConnector:
         self._http = http_client or httpx.Client(timeout=DEFAULT_TIMEOUT)
         self._min_interval = min_interval_seconds
 
-    def fetch(self, state: str | None) -> tuple[list[RawJob], str | None]:
-        """Un GET par site, ≤ 1 req/s ; échec d'un site → cycle continue."""
+    def fetch(self, state: str | None) -> FetchResult:
+        """Un GET par site, ≤ 1 req/s ; échec d'un site → cycle continue.
+
+        Un site en échec est signalé dans ``failed_scopes`` (exclusion du
+        périmètre ``mark_expired`` du cycle) ; une offre malformée est
+        comptée en erreur sans tuer le parsing du site (07 §4.5).
+        """
         jobs: list[RawJob] = []
+        failed_scopes: list[str] = []
+        parse_errors = 0
         for index, (site, company_name) in enumerate(self._sites):
             if index > 0:
                 time.sleep(self._min_interval)
@@ -140,8 +148,18 @@ class LeverConnector:
             try:
                 response = get_with_retry(self._http, url, params={"mode": "json"})
             except httpx.HTTPError:
+                failed_scopes.append(site)
                 logger.exception("lever_site_failed site=%s", site)
                 continue
             payload = response.json()
-            jobs.extend(parse_posting(posting, company_name) for posting in payload)
-        return jobs, None  # pas de curseur : fetch complet par cycle
+            for posting in payload:
+                try:
+                    jobs.append(parse_posting(posting, company_name))
+                except Exception:
+                    parse_errors += 1
+                    logger.exception(
+                        "lever_posting_parse_error site=%s id=%r",
+                        site, posting.get("id") if isinstance(posting, dict) else None,
+                    )
+        # Pas de curseur : fetch complet par cycle.
+        return FetchResult(jobs=jobs, failed_scopes=failed_scopes, parse_errors=parse_errors)

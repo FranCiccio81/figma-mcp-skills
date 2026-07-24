@@ -26,6 +26,7 @@ import httpx
 
 from app.modules.ingestion.connectors.base import (
     DEFAULT_TIMEOUT,
+    FetchResult,
     RawJob,
     RawLocation,
     get_with_retry,
@@ -79,10 +80,19 @@ class GreenhouseConnector:
         self._http = http_client or httpx.Client(timeout=DEFAULT_TIMEOUT)
         self._min_interval = min_interval_seconds
 
-    def fetch(self, state: str | None) -> tuple[list[RawJob], str | None]:
+    def fetch(self, state: str | None) -> FetchResult:
         """Un GET par board, ≤ 1 req/s ; l'échec d'un board n'arrête pas
-        les autres (item en erreur, cycle continue — 07 §4.5)."""
+        les autres (item en erreur, cycle continue — 07 §4.5).
+
+        Un board en échec est signalé dans ``failed_scopes`` : ses
+        job_sources doivent être EXCLUES du périmètre ``mark_expired`` du
+        cycle (leurs offres ne sont pas « absentes », elles n'ont pas été
+        observées). Une offre malformée est comptée en erreur sans tuer le
+        parsing du board.
+        """
         jobs: list[RawJob] = []
+        failed_scopes: list[str] = []
+        parse_errors = 0
         for index, (board_token, company_name) in enumerate(self._boards):
             if index > 0:
                 time.sleep(self._min_interval)
@@ -90,8 +100,18 @@ class GreenhouseConnector:
             try:
                 response = get_with_retry(self._http, url, params={"content": "true"})
             except httpx.HTTPError:
+                failed_scopes.append(board_token)
                 logger.exception("greenhouse_board_failed board=%s", board_token)
                 continue
             payload = response.json()
-            jobs.extend(parse_job(job, company_name) for job in payload.get("jobs", []))
-        return jobs, None  # pas de curseur : fetch complet par cycle
+            for job in payload.get("jobs", []):
+                try:
+                    jobs.append(parse_job(job, company_name))
+                except Exception:
+                    parse_errors += 1
+                    logger.exception(
+                        "greenhouse_job_parse_error board=%s id=%r",
+                        board_token, job.get("id") if isinstance(job, dict) else None,
+                    )
+        # Pas de curseur : fetch complet par cycle.
+        return FetchResult(jobs=jobs, failed_scopes=failed_scopes, parse_errors=parse_errors)

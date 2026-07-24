@@ -154,6 +154,20 @@ _PERIOD_RES: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 _ANNUAL_FACTOR = {"year": 1, "month": 12, "day": _DAYS_PER_YEAR, "hour": _HOURS_PER_YEAR}
 
+# Marqueur salarial obligatoire dans la fenêtre contextuelle : un montant en
+# devise sans contexte de rémunération (« Capital de 100 000 € ») n'est PAS
+# un salaire. Une période explicite adjacente (« par an », « /mois », TJM…)
+# vaut aussi marqueur : elle est déjà un contexte de rémunération.
+_SALARY_MARKER_RE = re.compile(
+    r"salair|remuneration|\bbrut\b|\bnet\b|package|\btjm\b|salary|compensation|\bpay\b"
+)
+
+
+def _has_salary_marker(window: str) -> bool:
+    if _SALARY_MARKER_RE.search(window):
+        return True
+    return any(rx.search(window) for _, rx in _PERIOD_RES)
+
 
 @dataclass(frozen=True)
 class SalaryRule:
@@ -172,6 +186,27 @@ def _parse_amount(raw: str) -> int:
 
 def _window(folded: str, start: int, end: int, radius: int = 60) -> str:
     return folded[max(0, start - radius) : end + radius]
+
+
+_SENTENCE_BOUNDARY_RE = re.compile(r"[;\n!?]|\.(?!\d)")  # « . » décimal exclu
+
+
+def _sentence_window(folded: str, start: int, end: int, radius: int = 60) -> str:
+    """Fenêtre ±radius TRONQUÉE à la phrase du match.
+
+    Le contexte (marqueur salarial, période) ne doit pas fuir d'une phrase
+    voisine : « Tickets restaurant 10 €/jour … Salaire : 50 000 € annuel »
+    ne doit pas lire « /jour » comme période du second montant.
+    """
+    left = folded[max(0, start - radius) : start]
+    boundaries = list(_SENTENCE_BOUNDARY_RE.finditer(left))
+    if boundaries:
+        left = left[boundaries[-1].end() :]
+    right = folded[end : end + radius]
+    boundary = _SENTENCE_BOUNDARY_RE.search(right)
+    if boundary:
+        right = right[: boundary.start()]
+    return left + folded[start:end] + right
 
 
 def _period_and_currency(window: str, is_k: bool) -> tuple[str, str]:
@@ -196,8 +231,16 @@ def extract_salary(text: str) -> SalaryRule | None:
     """Salaire par regex à fenêtres contextuelles (07 §5.2).
 
     Fourchettes ``45-55k€``, montants pleins ``45 000 €``, périodes /an,
-    /mois, TJM. Montants aberrants (< 10 k€/an ou > 500 k€/an après
-    annualisation 🟡) → rejet (étage 2).
+    /mois, TJM. Deux garde-fous :
+
+    - un marqueur salarial (salaire, rémunération, brut, net, package, TJM,
+      salary, compensation, pay — ou une période explicite) est exigé dans
+      la fenêtre contextuelle, sinon le montant est ignoré
+      (« Capital de 100 000 € » → ``None``) ;
+    - TOUS les matches sont examinés : un montant aberrant (< 10 k€/an ou
+      > 500 k€/an après annualisation 🟡) ou hors contexte n'abandonne pas
+      l'extraction (« Prime de 1 500 € par an. Salaire : 45 000 € brut
+      annuel. » → 45 000).
     """
     folded = _fold(text)
     for pattern, is_k, is_range in (
@@ -206,30 +249,53 @@ def extract_salary(text: str) -> SalaryRule | None:
         (_K_SINGLE_RE, True, False),
         (_FULL_SINGLE_RE, False, False),
     ):
-        match = pattern.search(folded)
-        if not match:
-            continue
-        low = _parse_amount(match.group(1)) * (1000 if is_k else 1)
-        high = _parse_amount(match.group(2)) * (1000 if is_k else 1) if is_range else low
-        if low > high:
-            low, high = high, low
-        period, currency = _period_and_currency(
-            _window(folded, match.start(), match.end()), is_k
-        )
-        if not (_plausible(low, period) and _plausible(high, period)):
-            return None  # aberrant → étage 2
-        return SalaryRule(low, high, currency, period)
+        for match in pattern.finditer(folded):
+            window = _sentence_window(folded, match.start(), match.end())
+            # La notation compacte « 45-55k€ » est intrinsèquement salariale
+            # (self-marking) ; un montant plein exige un marqueur contextuel.
+            if not is_k and not _has_salary_marker(window):
+                continue  # montant sans contexte salarial → ignoré
+            low = _parse_amount(match.group(1)) * (1000 if is_k else 1)
+            high = _parse_amount(match.group(2)) * (1000 if is_k else 1) if is_range else low
+            if low > high:
+                low, high = high, low
+            period, currency = _period_and_currency(window, is_k)
+            if not (_plausible(low, period) and _plausible(high, period)):
+                continue  # aberrant → match suivant (étage 2 si aucun)
+            return SalaryRule(low, high, currency, period)
     return None
 
 
 # --------------------------------------------------------------- expérience
-_EXP_CONTEXT_RE = re.compile(r"experien|\bxp\b")
-_EXP_RANGE_RE = re.compile(r"\b(\d{1,2})\s*(?:a|-|–|to)\s*(\d{1,2})\s*(?:ans?\b|years?\b)")
-_EXP_PLUS_RE = re.compile(r"\b(\d{1,2})\s*\+\s*(?:ans?\b|years?\b)")
-_EXP_MIN_RE = re.compile(
-    r"(?:au\s+moins|minimum|min\.?|at\s+least)\s+(\d{1,2})\s*(?:ans?\b|years?\b)"
+# Motifs ADJACENTS uniquement (pas de fenêtre large) : une durée n'est une
+# expérience que si le mot « expérience »/« experience » lui est contigu
+# (petit écart toléré, sans franchir de ponctuation de phrase). Ainsi
+# « Notre société existe depuis 25 ans … profil avec expérience » ou
+# « CDD de 2 ans. Une première expérience est demandée. » → None.
+_YEARS = r"(?:ans?\b|annees?\b|years?\b|yrs?\b)"
+_EXP_WORD = r"(?:experiences?|\bxp\b)"
+_GAP_AFTER = r"[^\n.;!?]{0,12}?"  # « ans d'expérience », « years of experience »
+_GAP_BEFORE = r"[^\n.;!?\d]{0,15}?"  # « expérience de … 3 ans », « expérience : 3 ans »
+_MIN_MARK = r"(?:au\s+moins|minimum|min\.?|at\s+least|plus\s+de)"
+
+# Nombre (± fourchette / +) suivi de « ans/years » puis du mot expérience.
+_EXP_RANGE_ADJ_RE = re.compile(
+    rf"\b(\d{{1,2}})\s*(?:a|-|–|to)\s*(\d{{1,2}})\s*{_YEARS}{_GAP_AFTER}{_EXP_WORD}"
 )
-_EXP_SINGLE_RE = re.compile(r"\b(\d{1,2})\s*(?:ans?\b|years?\b)")
+_EXP_PLUS_ADJ_RE = re.compile(rf"\b(\d{{1,2}})\s*\+\s*{_YEARS}{_GAP_AFTER}{_EXP_WORD}")
+_EXP_MIN_ADJ_RE = re.compile(
+    rf"{_MIN_MARK}\s+(\d{{1,2}})\s*{_YEARS}{_GAP_AFTER}{_EXP_WORD}"
+)
+_EXP_SINGLE_ADJ_RE = re.compile(rf"\b(\d{{1,2}})\s*{_YEARS}{_GAP_AFTER}{_EXP_WORD}")
+
+# Mot expérience suivi du nombre : « expérience de 3 à 5 ans »,
+# « expérience : 3 ans », « expérience d'au moins 5 ans ».
+_EXP_BEFORE_RANGE_RE = re.compile(
+    rf"{_EXP_WORD}{_GAP_BEFORE}(\d{{1,2}})\s*(?:a|-|–|to)\s*(\d{{1,2}})\s*{_YEARS}"
+)
+_EXP_BEFORE_SINGLE_RE = re.compile(
+    rf"{_EXP_WORD}{_GAP_BEFORE}({_MIN_MARK}\s+)?(\d{{1,2}})\s*(\+)?\s*{_YEARS}"
+)
 
 
 class ExperienceRule(NamedTuple):
@@ -241,29 +307,38 @@ class ExperienceRule(NamedTuple):
 
 
 def extract_experience(text: str) -> ExperienceRule | None:
-    """« 5+ ans », « 3 à 5 ans », « 5 years of experience »…
+    """« 5+ ans d'expérience », « 3 à 5 ans d'expérience », « expérience de
+    X ans », « X+ years of experience », « minimum X ans …expérience »…
 
-    Le motif doit être adjacent au mot « expérience »/« experience »
-    (fenêtre ±60 caractères) pour éviter les durées non pertinentes.
+    Le nombre d'années doit être ADJACENT au mot « expérience » : les durées
+    non pertinentes (ancienneté de la société, durée du CDD…) ne matchent
+    jamais, même si « expérience » apparaît ailleurs dans le texte.
     """
     folded = _fold(text)
 
-    def _in_context(start: int, end: int) -> bool:
-        return bool(_EXP_CONTEXT_RE.search(_window(folded, start, end)))
-
-    match = _EXP_RANGE_RE.search(folded)
-    if match and _in_context(*match.span()):
+    match = _EXP_RANGE_ADJ_RE.search(folded)
+    if match:
         return ExperienceRule(float(match.group(1)), float(match.group(2)),
                               EXPERIENCE_CONFIDENCE)
-    match = _EXP_PLUS_RE.search(folded)
-    if match and _in_context(*match.span()):
+    match = _EXP_PLUS_ADJ_RE.search(folded)
+    if match:
         return ExperienceRule(float(match.group(1)), None, EXPERIENCE_CONFIDENCE)
-    match = _EXP_MIN_RE.search(folded)
-    if match and _in_context(*match.span()):
+    match = _EXP_MIN_ADJ_RE.search(folded)
+    if match:
         return ExperienceRule(float(match.group(1)), None, EXPERIENCE_CONFIDENCE)
-    match = _EXP_SINGLE_RE.search(folded)
-    if match and _in_context(*match.span()):
+    match = _EXP_SINGLE_ADJ_RE.search(folded)
+    if match:
         years = float(match.group(1))
+        return ExperienceRule(years, years, EXPERIENCE_CONFIDENCE)
+    match = _EXP_BEFORE_RANGE_RE.search(folded)
+    if match:
+        return ExperienceRule(float(match.group(1)), float(match.group(2)),
+                              EXPERIENCE_CONFIDENCE)
+    match = _EXP_BEFORE_SINGLE_RE.search(folded)
+    if match:
+        years = float(match.group(2))
+        if match.group(1) or match.group(3):  # « au moins X » / « X+ » → min seul
+            return ExperienceRule(years, None, EXPERIENCE_CONFIDENCE)
         return ExperienceRule(years, years, EXPERIENCE_CONFIDENCE)
     return None
 
@@ -278,13 +353,35 @@ _LANG_WORDS: dict[str, str] = {
 }
 # Mapping courant→B2 🟡, bilingue/natif→C2 (07 §5.2).
 _LEVEL_WORDS: tuple[tuple[str, str], ...] = (
-    ("bilingue", "C2"), ("bilingual", "C2"), ("natif", "C2"), ("native", "C2"),
-    ("langue maternelle", "C2"), ("courant", "B2"), ("courante", "B2"),
+    ("langue maternelle", "C2"),  # multi-mots d'abord (alternation regex)
+    ("bilingue", "C2"), ("bilingual", "C2"), ("native", "C2"), ("natif", "C2"),
+    ("courante", "B2"), ("courant", "B2"),
     ("fluent", "B2"), ("professionnel", "B2"), ("professional", "B2"),
     ("intermediaire", "B1"), ("intermediate", "B1"),
     ("notions", "A2"), ("basique", "A2"), ("basic", "A2"), ("beginner", "A2"),
 )
-_CEFR_RE = re.compile(r"\b([abc][12])\b")
+_LEVEL_ALT = "|".join(word.replace(" ", r"\s+") for word, _ in _LEVEL_WORDS) + r"|[abc][12]"
+# Adjacence STRICTE langue↔niveau : « anglais courant », « anglais niveau
+# B2 », « fluent english », « notions d'italien ». Pas de fenêtre : un
+# niveau CECRL ou un mot de niveau ailleurs dans la phrase (« Local B2,
+# avenue de la gare ») n'est jamais associé à la langue.
+_LEVEL_AFTER_TPL = r"\b{word}\s*[:,(]?\s*(?:niveau\s+|level\s+)?({levels})\b"
+_LEVEL_BEFORE_TPL = r"\b({levels})(?:\s+de\s+|\s+d\s*['’]?\s*|\s+){word}\b"
+# Langue requise SANS niveau → B2 par défaut 🟡 UNIQUEMENT si le motif
+# « requis/exigé » est adjacent à la langue (sinon rien : « l'anglais est
+# un plus » n'est pas une exigence).
+_REQUIRED_AFTER_TPL = (
+    r"\b{word}\s+(?:est\s+|is\s+)?"
+    r"(?:requis(?:e)?|exige(?:e)?|obligatoire|imperatif|imperative|required|mandatory)\b"
+)
+
+
+def _cefr_of(level_token: str) -> str:
+    token = re.sub(r"\s+", " ", level_token.strip())
+    for word, cefr in _LEVEL_WORDS:
+        if token == word:
+            return cefr
+    return token.upper()  # CECRL explicite (a1…c2)
 
 
 class LanguageRule(NamedTuple):
@@ -299,24 +396,24 @@ def extract_languages(text: str) -> list[LanguageRule]:
     """Langues requises : « anglais courant » → en B2 🟡, CECRL explicite…
 
     La langue de rédaction de l'annonce n'est JAMAIS convertie en exigence
-    (06 §2 dim. 9) : seuls les motifs explicites langue+niveau sont émis.
+    (06 §2 dim. 9) : seuls les motifs explicites langue+niveau ADJACENTS
+    sont émis (plus le défaut B2 🟡 si « requis/exigé » est adjacent).
     """
     folded = _fold(text)
     results: dict[str, LanguageRule] = {}
     for word, code in _LANG_WORDS.items():
-        for match in re.finditer(rf"\b{word}\b", folded):
-            window = _window(folded, match.start(), match.end(), radius=30)
-            level: str | None = None
-            cefr = _CEFR_RE.search(window)
-            if cefr:
-                level = cefr.group(1).upper()
-            else:
-                for level_word, cefr_level in _LEVEL_WORDS:
-                    if level_word in window:
-                        level = cefr_level
-                        break
-            if level is not None and code not in results:
-                results[code] = LanguageRule(code, level, LANGUAGE_CONFIDENCE)
+        if code in results:
+            continue
+        level: str | None = None
+        for template in (_LEVEL_AFTER_TPL, _LEVEL_BEFORE_TPL):
+            match = re.search(template.format(word=word, levels=_LEVEL_ALT), folded)
+            if match:
+                level = _cefr_of(match.group(1))
+                break
+        if level is None and re.search(_REQUIRED_AFTER_TPL.format(word=word), folded):
+            level = "B2"  # exigence explicite sans niveau → B2 par défaut 🟡
+        if level is not None:
+            results[code] = LanguageRule(code, level, LANGUAGE_CONFIDENCE)
     return list(results.values())
 
 

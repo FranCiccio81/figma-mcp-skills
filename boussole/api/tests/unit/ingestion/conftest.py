@@ -7,6 +7,8 @@ validées en intégration M2 🟡.
 """
 
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 import pytest
@@ -122,6 +124,21 @@ class InMemoryJobStore:
 
     async def flush(self) -> None:
         return None
+
+    @asynccontextmanager
+    async def savepoint(self) -> AsyncIterator[None]:
+        """Équivalent en mémoire du SAVEPOINT : snapshot des collections,
+        restauré si l'item échoue (l'échec d'un item ne pollue pas le batch)."""
+        snapshot = (
+            dict(self.postings), dict(self.job_sources),
+            list(self.locations), list(self.skills), list(self.languages),
+        )
+        try:
+            yield
+        except BaseException:
+            (self.postings, self.job_sources,
+             self.locations, self.skills, self.languages) = snapshot
+            raise
 
 
 @pytest.fixture

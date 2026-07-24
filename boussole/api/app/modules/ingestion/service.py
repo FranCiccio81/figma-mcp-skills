@@ -13,6 +13,7 @@ SQLAlchemy pour la prod, fake en mémoire dans les tests unitaires.
 
 import logging
 import uuid
+from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Protocol
@@ -26,6 +27,7 @@ from app.ai.tasks.extract_job import JobExtractionError, extract_job
 from app.modules.ingestion import extract_rules
 from app.modules.ingestion.connectors.base import RawJob
 from app.modules.ingestion.geocode import Geocoder, StaticGeocoder
+from app.modules.ingestion.models import ConnectorState
 from app.modules.ingestion.normalize import (
     compute_dedup_hash,
     norm,
@@ -56,6 +58,10 @@ ABSENCE_THRESHOLD = 2
 CONFIDENCE_EPSILON = 0.05
 
 _CEFR_ORDER = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+
+
+class DataIntegrityError(RuntimeError):
+    """Incohérence détectée en base (ex. job_source sans job_posting)."""
 
 
 # ------------------------------------------------------------------ protocole
@@ -105,6 +111,11 @@ class JobStore(Protocol):
     async def add(self, obj: object) -> None: ...
 
     async def flush(self) -> None: ...
+
+    def savepoint(self) -> AbstractAsyncContextManager[object]:
+        """Point de reprise par item : l'échec DB d'un item (IntegrityError)
+        est annulé sans empoisonner la transaction du reste du batch."""
+        ...
 
 
 # ------------------------------------------------------------- normalisation
@@ -219,7 +230,20 @@ def normalize_raw(
     ]
 
     # --- étage 2 LLM en secours : uniquement les trous (07 §5.2) ---
-    needs_llm = contract is None or remote is None or seniority is None or not skills
+    # TODO 🟡 (07 §4.3/§5.2, REPORTÉ — avant de brancher un provider réel) :
+    #  - hash du payload brut pour court-circuiter toute la re-normalisation
+    #    quand l'offre n'a pas changé entre deux cycles ;
+    #  - cache LLM par (offre, prompt_version) pour ne jamais payer deux fois
+    #    la même extraction.
+    needs_llm = (
+        contract is None
+        or remote is None
+        or seniority is None
+        or not skills
+        or (salary_min is None and salary_max is None)
+        or (experience_min is None and experience_max is None)
+        or not languages
+    )
     if needs_llm:
         try:
             extraction = extract_job(rule_text, provider)
@@ -368,56 +392,103 @@ def _merge_confidence_field(
             setattr(posting, conf_attr, new_conf)
 
 
+def _apply_same_source_fields(posting: JobPosting, incoming: NormalizedJob) -> None:
+    """Re-normalisation d'une mise à jour de la MÊME source (07 §4.4).
+
+    La règle d'arbitrage §6.3 ne vaut qu'ENTRE sources concurrentes : quand
+    la même ``(source_id, external_ref)`` republie l'offre, ses champs
+    remplacent directement les valeurs précédentes (titre, description,
+    salaire…). Un champ que la source ne fournit plus (``None``) est
+    conservé : il peut provenir d'une autre source rattachée au posting.
+    """
+    posting.title = incoming.title
+    posting.description_text = incoming.description
+    posting.language = incoming.language
+    if incoming.contract is not None:
+        posting.contract = incoming.contract
+        posting.contract_conf = incoming.contract_conf
+    if incoming.remote is not None:
+        posting.remote = incoming.remote
+        posting.remote_conf = incoming.remote_conf
+    if incoming.seniority is not None:
+        posting.seniority = incoming.seniority
+        posting.seniority_conf = incoming.seniority_conf
+    if incoming.salary_min is not None or incoming.salary_max is not None:
+        posting.salary_min = incoming.salary_min
+        posting.salary_max = incoming.salary_max
+        posting.salary_currency = incoming.salary_currency
+        posting.salary_period = incoming.salary_period
+    if incoming.experience_min is not None or incoming.experience_max is not None:
+        posting.experience_min = incoming.experience_min
+        posting.experience_max = incoming.experience_max
+    if incoming.country_code is not None:
+        posting.country_code = incoming.country_code
+
+
 async def _merge_posting(
-    store: JobStore, posting: JobPosting, incoming: NormalizedJob, now: datetime
+    store: JobStore,
+    posting: JobPosting,
+    incoming: NormalizedJob,
+    now: datetime,
+    *,
+    same_source: bool = False,
 ) -> None:
-    """Fusion 07 §6.3 : « la donnée la plus riche et la plus récente gagne »."""
+    """Fusion 07 §6.3 : « la donnée la plus riche et la plus récente gagne ».
+
+    ``same_source=True`` : mise à jour par la même ``(source_id,
+    external_ref)`` → remplacement direct des champs (07 §4.4), PAS
+    d'arbitrage de fusion inter-sources (§6.3).
+    """
     incoming_newer = (incoming.posted_at or now) >= (posting.last_seen_at or now)
 
-    # description_text : la plus longue gagne 🟡 (proxy « plus riche », Q8).
-    # Le recalcul tsv est porté par le trigger SQL ; l'embedding est
-    # recalculé par la chaîne embed+index (07 §5.6) 🟡 M3.
-    if len(incoming.description) > len(posting.description_text or ""):
-        posting.description_text = incoming.description
+    if same_source:
+        _apply_same_source_fields(posting, incoming)
+    else:
+        # description_text : la plus longue gagne 🟡 (proxy « plus riche », Q8).
+        # Le recalcul tsv est porté par le trigger SQL ; l'embedding est
+        # recalculé par la chaîne embed+index (07 §5.6) 🟡 M3.
+        if len(incoming.description) > len(posting.description_text or ""):
+            posting.description_text = incoming.description
 
-    _merge_confidence_field(posting, "contract", "contract_conf",
-                            incoming.contract, incoming.contract_conf, incoming_newer)
-    _merge_confidence_field(posting, "remote", "remote_conf",
-                            incoming.remote, incoming.remote_conf, incoming_newer)
-    _merge_confidence_field(posting, "seniority", "seniority_conf",
-                            incoming.seniority, incoming.seniority_conf, incoming_newer)
+        _merge_confidence_field(posting, "contract", "contract_conf",
+                                incoming.contract, incoming.contract_conf, incoming_newer)
+        _merge_confidence_field(posting, "remote", "remote_conf",
+                                incoming.remote, incoming.remote_conf, incoming_newer)
+        _merge_confidence_field(posting, "seniority", "seniority_conf",
+                                incoming.seniority, incoming.seniority_conf, incoming_newer)
 
-    # Salaire : pas de colonne de confiance dans le schéma → remplissage des
-    # NULL, remplacement uniquement par un champ structuré source (conf 1.0)
-    # plus récent ; conflit journalisé 🟡.
-    if incoming.salary_min is not None or incoming.salary_max is not None:
-        if posting.salary_min is None and posting.salary_max is None:
-            posting.salary_min = incoming.salary_min
-            posting.salary_max = incoming.salary_max
-            posting.salary_currency = incoming.salary_currency
-            posting.salary_period = incoming.salary_period
-        elif (incoming.salary_min, incoming.salary_max) != (
-            posting.salary_min, posting.salary_max
-        ):
-            replace = float(incoming.salary_conf or 0.0) >= 0.99 and incoming_newer
-            logger.info(
-                "job_field_conflict posting=%s field=salary current=%r incoming=%r kept=%r",
-                posting.id, (posting.salary_min, posting.salary_max),
-                (incoming.salary_min, incoming.salary_max),
-                "incoming" if replace else "current",
-            )
-            if replace:
+        # Salaire : pas de colonne de confiance dans le schéma → remplissage
+        # des NULL, remplacement uniquement par un champ structuré source
+        # (conf 1.0) plus récent ; conflit journalisé 🟡.
+        if incoming.salary_min is not None or incoming.salary_max is not None:
+            if posting.salary_min is None and posting.salary_max is None:
                 posting.salary_min = incoming.salary_min
                 posting.salary_max = incoming.salary_max
                 posting.salary_currency = incoming.salary_currency
                 posting.salary_period = incoming.salary_period
+            elif (incoming.salary_min, incoming.salary_max) != (
+                posting.salary_min, posting.salary_max
+            ):
+                replace = float(incoming.salary_conf or 0.0) >= 0.99 and incoming_newer
+                logger.info(
+                    "job_field_conflict posting=%s field=salary current=%r incoming=%r "
+                    "kept=%r",
+                    posting.id, (posting.salary_min, posting.salary_max),
+                    (incoming.salary_min, incoming.salary_max),
+                    "incoming" if replace else "current",
+                )
+                if replace:
+                    posting.salary_min = incoming.salary_min
+                    posting.salary_max = incoming.salary_max
+                    posting.salary_currency = incoming.salary_currency
+                    posting.salary_period = incoming.salary_period
 
-    if posting.experience_min is None and incoming.experience_min is not None:
-        posting.experience_min = incoming.experience_min
-        posting.experience_max = incoming.experience_max
+        if posting.experience_min is None and incoming.experience_min is not None:
+            posting.experience_min = incoming.experience_min
+            posting.experience_max = incoming.experience_max
 
-    if posting.country_code is None and incoming.country_code is not None:
-        posting.country_code = incoming.country_code
+        if posting.country_code is None and incoming.country_code is not None:
+            posting.country_code = incoming.country_code
 
     # Satellites : union (labels normalisés pour éviter les doublons).
     existing_locations = {norm(x.raw_label) for x in await store.locations_for(posting.id)}
@@ -458,12 +529,39 @@ async def _merge_posting(
             existing_lang.min_level = level
             existing_lang.confidence = confidence
 
-    # Dates (07 §6.3) : first_seen = min, last_seen = max.
+    # Dates (07 §6.3.3) : first_seen = min, last_seen = max.
     posting.last_seen_at = max(posting.last_seen_at or now, now)
+    if incoming.posted_at is not None and (
+        posting.first_seen_at is None or incoming.posted_at < posting.first_seen_at
+    ):
+        posting.first_seen_at = incoming.posted_at
+    # expires_at : max des valeurs non NULL — jamais écrasé par une date
+    # plus ancienne (une source retardataire ne raccourcit pas la vie de
+    # l'offre canonique).
     if incoming.expires_at is not None:
-        posting.expires_at = incoming.expires_at
-    if incoming.withdrawn and posting.status == "active":
-        posting.status = "withdrawn"
+        posting.expires_at = (
+            incoming.expires_at
+            if posting.expires_at is None
+            else max(posting.expires_at, incoming.expires_at)
+        )
+
+    if incoming.withdrawn:
+        if posting.status == "active":
+            posting.status = "withdrawn"
+    elif posting.status in ("expired", "withdrawn") and (
+        incoming.expires_at is None or incoming.expires_at > now
+    ):
+        # Offre republiée : un posting éteint rattaché (étage 1 ou
+        # idempotence) à une offre entrante ACTIVE redevient actif — sinon
+        # l'offre resterait invisible à jamais (dedup_hash UNIQUE). Les
+        # compteurs d'absence repartent de zéro.
+        posting.status = "active"
+        if posting.expires_at is not None and posting.expires_at <= now:
+            # Deadline dépassée d'une publication antérieure : sans reset,
+            # le mécanisme 1 ré-expirerait l'offre au prochain cycle.
+            posting.expires_at = incoming.expires_at
+        for sibling in await store.job_sources_for_posting(posting.id):
+            await store.clear_source_absence(sibling.id)
 
 
 # ----------------------------------------------------------------- étage 2
@@ -553,13 +651,24 @@ async def ingest_batch(
 
     for raw in raw_jobs:
         report.seen += 1
+        counters_before = (
+            report.created, report.updated, report.attached_stage1, report.attached_stage2
+        )
         try:
-            await _ingest_one(
-                store, source, raw, report,
-                geocoder=geocoder, resolver=resolver, provider=provider, now=now,
-            )
-            await store.flush()
+            # Savepoint par item : un échec DB (IntegrityError…) est annulé
+            # au niveau de l'item sans invalider la session pour la suite
+            # du batch (rollback du savepoint, pas de la transaction).
+            async with store.savepoint():
+                await _ingest_one(
+                    store, source, raw, report,
+                    geocoder=geocoder, resolver=resolver, provider=provider, now=now,
+                )
+                await store.flush()
         except Exception:
+            # Les compteurs suivent le rollback : l'item en erreur n'est pas
+            # aussi compté created/updated/attached (métriques 07 §7.3).
+            (report.created, report.updated,
+             report.attached_stage1, report.attached_stage2) = counters_before
             report.errors += 1
             logger.exception(
                 "ingestion_item_error source=%s external_ref=%s",
@@ -584,15 +693,21 @@ async def _ingest_one(
         resolver=resolver, provider=provider,
     )
 
-    # Idempotence (source_id, external_ref) — 07 §4.4.
+    # Idempotence (source_id, external_ref) — 07 §4.4 : mise à jour par la
+    # MÊME source → re-normalisation directe (same_source=True), l'arbitrage
+    # de fusion §6.3 ne vaut qu'entre sources concurrentes.
     existing_source = await store.get_job_source(source.id, raw.external_ref)
     if existing_source is not None:
         posting = await store.get_posting(existing_source.job_posting_id)
-        assert posting is not None  # intégrité FK
+        if posting is None:
+            raise DataIntegrityError(
+                f"job_source {existing_source.id} orpheline : job_posting "
+                f"{existing_source.job_posting_id} introuvable (intégrité FK)"
+            )
         existing_source.original_url = raw.url
         if raw.posted_at is not None:
             existing_source.posted_at = raw.posted_at
-        await _merge_posting(store, posting, normalized, now)
+        await _merge_posting(store, posting, normalized, now, same_source=True)
         report.updated += 1
         return
 
@@ -684,6 +799,7 @@ async def mark_expired(
     now: datetime | None = None,
     source_id: uuid.UUID | None = None,
     present_external_refs: set[str] | None = None,
+    skip_external_refs: set[str] | None = None,
     gone_job_source_ids: set[uuid.UUID] | None = None,
     absence_threshold: int = ABSENCE_THRESHOLD,
 ) -> ExpirationReport:
@@ -696,7 +812,10 @@ async def mark_expired(
        fournis après une réconciliation complète RÉUSSIE — une job_source
        absente de ``absence_threshold`` (2 🟡) réconciliations consécutives
        est éteinte ; l'offre ne passe ``expired`` que si TOUTES ses
-       job_sources sont éteintes (le multi-source protège, D13) ;
+       job_sources sont éteintes (le multi-source protège, D13).
+       ``skip_external_refs`` : job_sources d'un périmètre NON vérifié ce
+       cycle (board/site en échec de fetch) — ni comptées absentes, ni
+       remises à zéro (07 §4.5) ;
     3. Re-check ciblé : ``gone_job_source_ids`` = job_sources dont le GET
        unitaire a retourné 404/410 → éteintes immédiatement, même règle.
     """
@@ -713,7 +832,10 @@ async def mark_expired(
 
     # Mécanisme 2 — réconciliation complète.
     if source_id is not None and present_external_refs is not None:
+        skip_external_refs = skip_external_refs or set()
         for job_source in await store.job_sources_for_source(source_id):
+            if job_source.external_ref in skip_external_refs:
+                continue  # périmètre non fetché ce cycle : compteur intact
             if job_source.external_ref in present_external_refs:
                 await store.clear_source_absence(job_source.id)
             else:
@@ -758,13 +880,14 @@ class SqlAlchemyJobStore:
 
     Les requêtes étage 2 (trigram) sont ÉCRITES mais non testées
     unitairement 🟡 (nécessitent pg_trgm — validation en intégration M2).
-    Les compteurs d'absence (07 §4.6.2) sont conservés en mémoire du
-    processus 🟡 — à déplacer vers Redis persistant en intégration M2.
+    Les compteurs d'absence (07 §4.6.2) sont persistés dans
+    ``connector_state.absence_counters`` (jsonb, migration 0003) : ils
+    survivent aux redémarrages des workers et restent cohérents entre
+    cycles de réconciliation.
     """
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
-        self._absences: dict[uuid.UUID, int] = {}  # 🟡 Redis en intégration
 
     async def get_source_by_slug(self, slug: str) -> Source | None:
         result = await self._session.execute(select(Source).where(Source.slug == slug))
@@ -869,18 +992,51 @@ class SqlAlchemyJobStore:
         )
         return list(result.scalars())
 
+    # -- compteurs d'absence persistés (connector_state.absence_counters) --
+    async def _state_of_job_source(self, job_source_id: uuid.UUID) -> ConnectorState | None:
+        """``connector_state`` de la source d'une job_source (créé si absent)."""
+        source_id = await self._session.scalar(
+            select(JobSource.source_id).where(JobSource.id == job_source_id)
+        )
+        if source_id is None:
+            return None
+        state = await self._session.get(ConnectorState, source_id)
+        if state is None:
+            state = ConnectorState(source_id=source_id, absence_counters={})
+            self._session.add(state)
+        return state
+
     async def note_source_absence(self, job_source_id: uuid.UUID) -> int:
-        self._absences[job_source_id] = self._absences.get(job_source_id, 0) + 1
-        return self._absences[job_source_id]
+        state = await self._state_of_job_source(job_source_id)
+        if state is None:
+            return 0  # job_source disparue entre-temps
+        counters = dict(state.absence_counters or {})
+        key = str(job_source_id)
+        counters[key] = int(counters.get(key, 0)) + 1
+        state.absence_counters = counters  # réaffectation → dirty tracking
+        return counters[key]
 
     async def clear_source_absence(self, job_source_id: uuid.UUID) -> None:
-        self._absences.pop(job_source_id, None)
+        state = await self._state_of_job_source(job_source_id)
+        if state is None:
+            return
+        counters = dict(state.absence_counters or {})
+        if counters.pop(str(job_source_id), None) is not None:
+            state.absence_counters = counters
 
     async def absence_count(self, job_source_id: uuid.UUID) -> int:
-        return self._absences.get(job_source_id, 0)
+        state = await self._state_of_job_source(job_source_id)
+        if state is None:
+            return 0
+        return int((state.absence_counters or {}).get(str(job_source_id), 0))
 
     async def add(self, obj: object) -> None:
         self._session.add(obj)
 
     async def flush(self) -> None:
         await self._session.flush()
+
+    def savepoint(self) -> AbstractAsyncContextManager[object]:
+        """SAVEPOINT (``begin_nested``) : l'échec d'un item est annulé sans
+        invalider la transaction englobante du batch (07 §4.5)."""
+        return self._session.begin_nested()

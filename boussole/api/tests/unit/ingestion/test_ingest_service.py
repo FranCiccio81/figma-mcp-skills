@@ -4,10 +4,20 @@ expiration (07 §4.4, §4.6, §6) — store en mémoire, aucun réseau ni base."
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from app.ai.providers.fake import FakeProvider
 from app.modules.ingestion.connectors.base import RawJob, RawLocation
 from app.modules.ingestion.geocode import StaticGeocoder
-from app.modules.ingestion.service import ingest_batch, mark_expired
+from app.modules.ingestion.service import (
+    DataIntegrityError,
+    IngestReport,
+    _ingest_one,
+    ingest_batch,
+    mark_expired,
+)
+from app.modules.ingestion.taxonomy import SkillResolver
+from app.modules.jobs.models import JobSource
 from tests.unit.ingestion.conftest import InMemoryJobStore
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
@@ -281,3 +291,320 @@ async def test_offre_withdrawn_au_signal_source(store: InMemoryJobStore) -> None
     await ingest_batch("france-travail", [job], store, now=NOW)
     posting = next(iter(store.postings.values()))
     assert posting.status == "withdrawn"
+
+
+# ----------------------------------------------- correctifs revue M2
+
+
+async def test_offre_republiee_reactive_le_posting_expire(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 2 : offre entrante ACTIVE sur posting expired → active."""
+    source = store.add_source("france-travail")
+    await ingest_batch("france-travail", [_raw()], store, now=NOW)
+    posting = next(iter(store.postings.values()))
+    job_source = next(iter(store.job_sources.values()))
+
+    # Expirée par absence (2 réconciliations), compteur au seuil.
+    for _ in range(2):
+        await mark_expired(
+            store, now=NOW, source_id=source.id, present_external_refs=set()
+        )
+    assert posting.status == "expired"
+    assert await store.absence_count(job_source.id) >= 2
+
+    # L'offre est republiée par la même source (idempotence, dedup_hash UNIQUE).
+    report = await ingest_batch(
+        "france-travail", [_raw()], store, now=NOW + timedelta(days=3)
+    )
+    assert report.updated == 1
+    assert posting.status == "active"
+    # Compteurs d'absence remis à zéro : pas d'extinction fantôme au cycle suivant.
+    assert await store.absence_count(job_source.id) == 0
+
+
+async def test_offre_republiee_reactive_posting_withdrawn_via_etage1(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 2 : rattachement étage 1 d'une offre active → réactivation."""
+    store.add_source("greenhouse", kind="ats_feed")
+    store.add_source("lever", kind="ats_feed")
+    await ingest_batch(
+        "greenhouse",
+        [_raw("gh-1", employer_ref="REQ-7", url="https://a.example", withdrawn=True)],
+        store, now=NOW,
+    )
+    posting = next(iter(store.postings.values()))
+    assert posting.status == "withdrawn"
+
+    # Autre source, même dedup_hash, offre active → le posting redevient actif.
+    await ingest_batch(
+        "lever", [_raw("lv-9", employer_ref="REQ-7", url="https://b.example")],
+        store, now=NOW + timedelta(hours=1),
+    )
+    assert posting.status == "active"
+
+
+async def test_reactivation_reset_expires_at_depasse(store: InMemoryJobStore) -> None:
+    """Correctif 2 : une deadline dépassée est purgée à la republication,
+    sinon le mécanisme 1 ré-expirerait l'offre au cycle suivant."""
+    store.add_source("france-travail")
+    await ingest_batch(
+        "france-travail", [_raw(expires_at=NOW - timedelta(days=1))],
+        store, now=NOW - timedelta(days=10),
+    )
+    posting = next(iter(store.postings.values()))
+    await mark_expired(store, now=NOW)
+    assert posting.status == "expired"
+
+    await ingest_batch("france-travail", [_raw()], store, now=NOW + timedelta(days=1))
+    assert posting.status == "active"
+    report = await mark_expired(store, now=NOW + timedelta(days=2))
+    assert report.by_signal == 0
+    assert posting.status == "active"
+
+
+async def test_maj_meme_source_remplace_sans_arbitrage(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 3 : la MÊME source remplace directement ses champs (07 §4.4),
+    l'arbitrage de confiance §6.3 ne vaut qu'entre sources concurrentes."""
+    store.add_source("france-travail")
+    initial = _raw(
+        description="Longue description initiale du poste de Data Engineer en CDI.",
+        contract="permanent", contract_conf=1.0,
+        salary_min=50000, salary_max=60000,
+        salary_currency="EUR", salary_period="year", salary_conf=1.0,
+    )
+    await ingest_batch("france-travail", [initial], store, now=NOW)
+    posting = next(iter(store.postings.values()))
+    assert posting.contract == "permanent"
+
+    # Re-publication corrigée par la même source : CDD (conf 0.9 < 1.0),
+    # description PLUS COURTE, salaire revu à la baisse, titre corrigé.
+    updated = _raw(
+        title="Data Engineer (H/F)",
+        description="CDD de 12 mois.",
+        salary_min=42000, salary_max=45000,
+        salary_currency="EUR", salary_period="year", salary_conf=1.0,
+        contract="fixed_term", contract_conf=0.9,
+    )
+    report = await ingest_batch(
+        "france-travail", [updated], store, now=NOW + timedelta(days=1)
+    )
+    assert report.updated == 1
+    # Remplacement direct : pas d'arbitrage 1.0 vs 0.9, pas de « plus longue gagne ».
+    assert posting.contract == "fixed_term"
+    assert posting.title == "Data Engineer (H/F)"
+    assert posting.description_text == "CDD de 12 mois."
+    assert (posting.salary_min, posting.salary_max) == (42000, 45000)
+
+
+async def test_maj_meme_source_champ_absent_conserve(store: InMemoryJobStore) -> None:
+    """Correctif 3 : un champ que la source ne fournit plus reste en place
+    (il peut provenir d'une autre source du posting)."""
+    store.add_source("france-travail")
+    await ingest_batch(
+        "france-travail",
+        [_raw(remote="hybrid", remote_conf=1.0,
+              description="Data Engineer. Aucun autre attribut.")],
+        store, now=NOW,
+    )
+    posting = next(iter(store.postings.values()))
+    await ingest_batch(
+        "france-travail",
+        [_raw(description="Data Engineer. Toujours aucun autre attribut.")],
+        store, now=NOW + timedelta(days=1),
+    )
+    assert posting.remote == "hybrid"  # non fourni → conservé
+
+
+async def test_expires_at_jamais_ecrase_par_plus_ancien(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 4 : expires_at = max des valeurs non NULL."""
+    store.add_source("greenhouse", kind="ats_feed")
+    store.add_source("lever", kind="ats_feed")
+    late = NOW + timedelta(days=30)
+    early = NOW + timedelta(days=5)
+    await ingest_batch(
+        "greenhouse",
+        [_raw("gh-1", employer_ref="REQ-7", url="https://a.example", expires_at=late)],
+        store, now=NOW,
+    )
+    posting = next(iter(store.postings.values()))
+
+    # Une source concurrente avec une deadline plus courte ne raccourcit rien.
+    await ingest_batch(
+        "lever",
+        [_raw("lv-9", employer_ref="REQ-7", url="https://b.example", expires_at=early)],
+        store, now=NOW + timedelta(hours=1),
+    )
+    assert posting.expires_at == late
+
+    # Une deadline plus lointaine, elle, est prise.
+    later = NOW + timedelta(days=60)
+    await ingest_batch(
+        "lever",
+        [_raw("lv-9", employer_ref="REQ-7", url="https://b.example", expires_at=later)],
+        store, now=NOW + timedelta(hours=2),
+    )
+    assert posting.expires_at == later
+
+
+async def test_first_seen_at_min_lors_du_rattachement(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 13 : first_seen_at = min (07 §6.3.3)."""
+    store.add_source("greenhouse", kind="ats_feed")
+    store.add_source("lever", kind="ats_feed")
+    await ingest_batch(
+        "greenhouse",
+        [_raw("gh-1", employer_ref="REQ-7", url="https://a.example",
+              posted_at=NOW - timedelta(days=2))],
+        store, now=NOW,
+    )
+    posting = next(iter(store.postings.values()))
+    assert posting.first_seen_at == NOW - timedelta(days=2)
+
+    # Rattachement d'une source qui avait publié l'offre AVANT.
+    await ingest_batch(
+        "lever",
+        [_raw("lv-9", employer_ref="REQ-7", url="https://b.example",
+              posted_at=NOW - timedelta(days=10))],
+        store, now=NOW + timedelta(hours=1),
+    )
+    assert posting.first_seen_at == NOW - timedelta(days=10)
+    assert posting.last_seen_at == NOW + timedelta(hours=1)
+
+
+async def test_job_source_orpheline_erreur_explicite(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 14 : plus d'assert — exception métier explicite."""
+    source = store.add_source("france-travail")
+    # job_source pointant vers un posting inexistant (corruption FK simulée).
+    orphan = JobSource(
+        id=uuid.uuid4(), job_posting_id=uuid.uuid4(), source_id=source.id,
+        external_ref="ft-1", original_url="https://example.test/ft-1",
+        posted_at=None, ingested_at=NOW,
+    )
+    await store.add(orphan)
+
+    with pytest.raises(DataIntegrityError):
+        await _ingest_one(
+            store, source, _raw(), IngestReport(),
+            geocoder=StaticGeocoder(), resolver=SkillResolver(),
+            provider=None, now=NOW,
+        )
+    # Via le batch : l'erreur est comptée, le cycle continue (07 §4.5).
+    report = await ingest_batch(
+        "france-travail", [_raw(), _raw("ft-2", url="https://example.test/ft-2")],
+        store, now=NOW,
+    )
+    assert report.errors == 1
+    assert report.created == 1
+
+
+async def test_needs_llm_inclut_salaire_experience_langues(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 10 : salaire/expérience/langues manquants sollicitent le LLM."""
+    store.add_source("greenhouse", kind="ats_feed")
+    provider = FakeProvider()
+    complete = _raw(
+        "gh-1", title="Senior Data Engineer",
+        description="Poste complet.", url="https://a.example",
+        contract="permanent", contract_conf=1.0,
+        remote="onsite", remote_conf=1.0,
+        salary_min=50000, salary_max=60000,
+        salary_currency="EUR", salary_period="year", salary_conf=1.0,
+        experience_min=3.0, experience_max=5.0,
+        languages=[("en", "B2")], skills=["Python"],
+    )
+    await ingest_batch("greenhouse", [complete], store, provider=provider, now=NOW)
+    assert provider.calls == []  # rien ne manque → pas d'appel LLM
+
+    missing_salary = _raw(
+        "gh-2", title="Senior Data Engineer",
+        description="Poste sans salaire.", url="https://b.example",
+        contract="permanent", contract_conf=1.0,
+        remote="onsite", remote_conf=1.0,
+        experience_min=3.0, experience_max=5.0,
+        languages=[("en", "B2")], skills=["Python"],
+    )
+    await ingest_batch("greenhouse", [missing_salary], store, provider=provider, now=NOW)
+    assert len(provider.calls) == 1  # salaire manquant → LLM sollicité
+
+
+async def test_savepoint_isole_lechec_dun_item(store: InMemoryJobStore) -> None:
+    """Correctif 9 : un échec DB (flush) est annulé au savepoint de l'item,
+    le reste du batch n'est pas empoisonné."""
+
+    class FailingFlushStore(InMemoryJobStore):
+        def __init__(self) -> None:
+            super().__init__()
+            self.flush_calls = 0
+            self.savepoints_opened = 0
+
+        async def flush(self) -> None:
+            self.flush_calls += 1
+            if self.flush_calls == 1:  # 1er item : IntegrityError simulée
+                raise RuntimeError("duplicate key value violates unique constraint")
+
+        def savepoint(self):  # type: ignore[override]
+            self.savepoints_opened += 1
+            return super().savepoint()
+
+    failing_store = FailingFlushStore()
+    failing_store.add_source("france-travail")
+    report = await ingest_batch(
+        "france-travail",
+        [_raw("ft-1"), _raw("ft-2", url="https://example.test/ft-2")],
+        failing_store, now=NOW,
+    )
+
+    assert failing_store.savepoints_opened == 2  # un savepoint PAR item
+    assert report.errors == 1
+    assert report.created == 1
+    # Les écritures de l'item échoué ont été annulées (rollback savepoint).
+    assert len(failing_store.postings) == 1
+    assert len(failing_store.job_sources) == 1
+    assert next(iter(failing_store.job_sources.values())).external_ref == "ft-2"
+
+
+async def test_mark_expired_skip_refs_perimetre_non_verifie(
+    store: InMemoryJobStore,
+) -> None:
+    """Correctif 5a : les job_sources d'un périmètre en échec de fetch ne sont
+    ni comptées absentes, ni remises à zéro."""
+    source = store.add_source("greenhouse", kind="ats_feed")
+    await ingest_batch(
+        "greenhouse",
+        [_raw("gh-1", url="https://boards.greenhouse.io/acme/jobs/1"),
+         _raw("gh-2", title="Backend Engineer",
+              url="https://boards.greenhouse.io/globex/jobs/2")],
+        store, now=NOW,
+    )
+    gh1 = next(js for js in store.job_sources.values() if js.external_ref == "gh-1")
+    gh2 = next(js for js in store.job_sources.values() if js.external_ref == "gh-2")
+
+    # Board globex en échec : gh-2 est hors périmètre — 2 cycles où gh-1 et
+    # gh-2 sont absents du flux, mais seul gh-1 est réellement vérifié.
+    for _ in range(2):
+        await mark_expired(
+            store, now=NOW, source_id=source.id,
+            present_external_refs=set(), skip_external_refs={"gh-2"},
+        )
+    assert await store.absence_count(gh1.id) == 2
+    assert await store.absence_count(gh2.id) == 0  # jamais compté absent
+    posting_gh2 = store.postings[gh2.job_posting_id]
+    assert posting_gh2.status == "active"
+
+    # Compteur préexistant : le skip ne remet PAS à zéro non plus.
+    await store.note_source_absence(gh2.id)
+    await mark_expired(
+        store, now=NOW, source_id=source.id,
+        present_external_refs={"gh-2"}, skip_external_refs={"gh-2"},
+    )
+    assert await store.absence_count(gh2.id) == 1  # intact (ni clear ni +1)
