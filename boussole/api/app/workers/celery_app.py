@@ -20,7 +20,11 @@ celery_app = Celery(
     "boussole",
     broker=settings.redis_persistent_url,
     backend=settings.redis_persistent_url,
-    include=["app.workers.ingestion_tasks"],
+    include=[
+        "app.workers.ingestion_tasks",
+        "app.workers.cv_tasks",
+        "app.workers.generation_tasks",
+    ],
 )
 
 celery_app.conf.update(
