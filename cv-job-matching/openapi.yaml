@@ -676,6 +676,8 @@ components:
           properties:
             description_text: { type: string }
             language: { type: string }
+            status: { type: string, enum: [active, expired, withdrawn] }
+            expires_at: { type: [string, "null"], format: date-time }
             seniority: { $ref: "#/components/schemas/SeniorityLevel" }
             skills_required: { type: array, items: { type: string } }
             skills_nice: { type: array, items: { type: string } }

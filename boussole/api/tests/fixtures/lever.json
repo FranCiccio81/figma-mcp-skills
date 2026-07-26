@@ -1,0 +1,35 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "text": "Data Engineer",
+    "createdAt": 1753008000000,
+    "hostedUrl": "https://jobs.lever.co/globex/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "applyUrl": "https://jobs.lever.co/globex/a1b2c3d4-e5f6-7890-abcd-ef1234567890/apply",
+    "categories": {
+      "commitment": "Full-time",
+      "department": "Data",
+      "location": "Bordeaux",
+      "team": "Platform"
+    },
+    "workplaceType": "hybrid",
+    "salaryRange": { "min": 50000, "max": 60000, "currency": "EUR", "interval": "per-year-salary" },
+    "descriptionPlain": "We are hiring a Data Engineer to build our ingestion pipelines. You will work with Python, Airflow and PostgreSQL. At least 4 years of experience required.",
+    "description": "<div>We are hiring a Data Engineer…</div>",
+    "lists": [],
+    "additional": "",
+    "additionalPlain": ""
+  },
+  {
+    "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+    "text": "Customer Success Intern",
+    "createdAt": 1753094400000,
+    "hostedUrl": "https://jobs.lever.co/globex/b2c3d4e5-f6a7-8901-bcde-f23456789012",
+    "categories": {
+      "commitment": "Internship",
+      "location": "Paris",
+      "team": "Customer Success"
+    },
+    "workplaceType": "onsite",
+    "descriptionPlain": "6-month internship supporting our customer success team in Paris."
+  }
+]

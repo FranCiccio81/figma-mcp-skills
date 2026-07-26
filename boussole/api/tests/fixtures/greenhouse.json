@@ -1,0 +1,30 @@
+{
+  "jobs": [
+    {
+      "id": 4567890,
+      "internal_job_id": 2345678,
+      "title": "Senior Backend Engineer",
+      "updated_at": "2026-07-19T14:32:00-04:00",
+      "first_published": "2026-07-10T09:00:00-04:00",
+      "requisition_id": "REQ-2026-118",
+      "location": { "name": "Paris, France" },
+      "absolute_url": "https://boards.greenhouse.io/acmecorp/jobs/4567890",
+      "metadata": [],
+      "content": "&lt;div&gt;&lt;p&gt;We are looking for a &lt;strong&gt;Senior Backend Engineer&lt;/strong&gt; to join our platform team.&lt;/p&gt;&lt;p&gt;This is a permanent position. Hybrid policy: 3 days of remote work per week.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;5+ years of experience with Python&lt;/li&gt;&lt;li&gt;Fluent English required&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Compensation: 70-85k€ per year.&lt;/p&gt;&lt;/div&gt;",
+      "departments": [{ "id": 111, "name": "Engineering" }],
+      "offices": [{ "id": 222, "name": "Paris", "location": "Paris, France" }]
+    },
+    {
+      "id": 4567999,
+      "internal_job_id": 2345999,
+      "title": "Product Designer",
+      "updated_at": "2026-07-22T11:05:00-04:00",
+      "location": { "name": "Remote - France" },
+      "absolute_url": "https://boards.greenhouse.io/acmecorp/jobs/4567999",
+      "content": "&lt;p&gt;Join our design team. Full remote position (France).&lt;/p&gt;",
+      "departments": [{ "id": 112, "name": "Design" }],
+      "offices": []
+    }
+  ],
+  "meta": { "total": 2 }
+}

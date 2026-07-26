@@ -38,9 +38,9 @@ class TestProblemFormat:
             assert set(err) == {"field", "code", "message"}
 
     def test_stub_module_returns_501_problem(self, client: TestClient) -> None:
-        # Les stubs M1 (ici /profile) répondent 501 documenté, pas un TODO muet.
-        response = client.get("/api/v1/profile")
+        # Les modules non livrés (ici /generations, prévu M4) répondent un 501
+        # documenté, pas un TODO muet. (/profile est implémenté depuis M3.)
+        response = client.get("/api/v1/generations")
         assert response.status_code == 501
         body = response.json()
         assert body["type"] == "https://api.boussole.eu/errors/not_implemented"
-        assert "M2" in body["detail"]

@@ -1,0 +1,66 @@
+{
+  "resultats": [
+    {
+      "id": "185XYZW",
+      "intitule": "Développeur Full Stack (H/F)",
+      "description": "Au sein de notre équipe produit, vous concevez et développez des applications web. Poste en CDI basé à Lyon. Télétravail 2 jours par semaine. Vous justifiez de 3 à 5 ans d'expérience en développement web. Anglais courant exigé. Rémunération entre 42 et 48 k€ brut annuel.",
+      "dateCreation": "2026-07-20T08:15:00Z",
+      "dateActualisation": "2026-07-21T09:00:00Z",
+      "lieuTravail": {
+        "libelle": "69 - LYON",
+        "latitude": 45.764,
+        "longitude": 4.8357,
+        "codePostal": "69003",
+        "commune": "69383"
+      },
+      "entreprise": {
+        "nom": "ACME SAS",
+        "description": "Éditeur de logiciels",
+        "entrepriseAdaptee": false
+      },
+      "typeContrat": "CDI",
+      "typeContratLibelle": "Contrat à durée indéterminée",
+      "natureContrat": "Contrat travail",
+      "experienceExige": "E",
+      "experienceLibelle": "3 ans",
+      "competences": [
+        { "code": "300338", "libelle": "JavaScript", "exigence": "E" },
+        { "code": "300339", "libelle": "PostgreSQL", "exigence": "S" }
+      ],
+      "salaire": { "libelle": "Annuel de 42000.0 Euros à 48000.0 Euros" },
+      "dureeTravailLibelle": "35H Travail en journée",
+      "alternance": false,
+      "nombrePostes": 1,
+      "accessibleTH": false,
+      "qualificationCode": "9",
+      "qualificationLibelle": "Cadre",
+      "langues": [{ "libelle": "Anglais", "exigence": "E" }],
+      "secteurActivite": "62",
+      "secteurActiviteLibelle": "Programmation informatique",
+      "origineOffre": {
+        "origine": "1",
+        "urlOrigine": "https://candidat.francetravail.fr/offres/recherche/detail/185XYZW"
+      }
+    },
+    {
+      "id": "185ABCD",
+      "intitule": "Chargé de clientèle (H/F)",
+      "description": "Accueil et conseil des clients en agence. CDD de 6 mois. Débutant accepté.",
+      "dateCreation": "2026-07-21T10:30:00Z",
+      "lieuTravail": {
+        "libelle": "75 - PARIS 09",
+        "latitude": 48.8566,
+        "longitude": 2.3522,
+        "codePostal": "75009"
+      },
+      "entreprise": {},
+      "typeContrat": "CDD",
+      "typeContratLibelle": "Contrat à durée déterminée - 6 Mois",
+      "experienceExige": "D",
+      "experienceLibelle": "Débutant accepté",
+      "salaire": { "libelle": "Mensuel de 1900.0 Euros sur 12 mois" },
+      "origineOffre": { "origine": "1", "urlOrigine": "https://candidat.francetravail.fr/offres/recherche/detail/185ABCD" }
+    }
+  ],
+  "filtresPossibles": []
+}
