@@ -26,6 +26,7 @@ from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
 from app.core.security import SessionStore, csrf_tokens_match
+from app.core.storage import StorageConfigurationError, check_storage_configuration
 from app.modules.applications.router import router as applications_router
 from app.modules.auth.router import router as auth_router
 from app.modules.explanations.router import router as explanations_router
@@ -266,6 +267,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+def _storage_configured() -> bool:
+    """Sonde de readiness du stockage objet (configuration seule, pas d'E/S)."""
+    try:
+        check_storage_configuration()
+    except StorageConfigurationError:
+        logger.error("storage_misconfigured")
+        return False
+    return True
+
+
 def create_app(
     *,
     redis_cache_factory: RedisFactory | None = None,
@@ -282,6 +293,12 @@ def create_app(
     """
     configure_logging()
     settings = get_settings()
+
+    # Refus de démarrer plutôt que de perdre des données : en production, un
+    # stockage local signifie que le worker écrit sur SON disque et l'API lit
+    # LE SIEN — exports RGPD et CV introuvables dès que les conteneurs sont
+    # distincts (défaut relevé en revue M5).
+    check_storage_configuration(settings)
 
     app = FastAPI(
         title="Boussole API",
@@ -328,6 +345,7 @@ def create_app(
             "database": await check_database(),
             "redis_persistent": await check_redis(app.state.redis_persistent_factory()),
             "redis_cache": await check_redis(app.state.redis_cache_factory()),
+            "storage": _storage_configured(),
         }
         if all(checks.values()):
             return JSONResponse({"status": "ready", "checks": checks})

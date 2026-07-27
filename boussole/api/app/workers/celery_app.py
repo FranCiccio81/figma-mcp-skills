@@ -10,9 +10,11 @@ Lancement (dev) :
 
 from celery import Celery
 from celery.schedules import crontab
+from celery.signals import worker_ready
 from kombu import Queue
 
 from app.core.config import get_settings
+from app.core.storage import check_storage_configuration
 
 settings = get_settings()
 
@@ -98,3 +100,14 @@ celery_app.conf.update(
 def ping() -> str:
     """Tâche exemple — vérifie le tour complet broker → worker → résultat."""
     return "pong"
+
+
+@worker_ready.connect  # type: ignore[misc]
+def _check_storage_on_boot(**_kwargs: object) -> None:
+    """Refus de démarrer un worker mal configuré (même garde que l'API).
+
+    Un worker en stockage local écrit les archives d'export et les CV sur SON
+    disque : l'API ne les retrouve jamais. Mieux vaut un worker qui refuse de
+    démarrer qu'un pipeline qui perd silencieusement des données (revue M5).
+    """
+    check_storage_configuration()
