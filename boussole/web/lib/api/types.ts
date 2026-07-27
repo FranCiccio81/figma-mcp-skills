@@ -385,3 +385,288 @@ export interface MatchExplanation {
   blocking_notes: string[];
   prompt_version: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* Import CV — jalon M4 (openapi.yaml : /cv-documents*)                */
+/* ------------------------------------------------------------------ */
+
+/** Cycle de vie du parsing d'un CV importé (openapi.yaml → CvDocument.status). */
+export type CvDocumentStatus = "uploaded" | "parsing" | "parsed" | "failed";
+
+/** Code d'échec du parsing (openapi.yaml → CvDocument.error_code) — message dédié par code (04 Flux 1). */
+export type CvErrorCode =
+  | "unreadable"
+  | "image_only_pdf"
+  | "too_large"
+  | "unsupported_format"
+  | "extraction_failed";
+
+/**
+ * Champs communs d'un élément proposé à la revue (payload `parsed`, groupé) :
+ * `item_id` de sélection (`"experience:0"`…) à renvoyer à
+ * `POST /cv-documents/{id}/apply`, provenance `cv_extraction` avec confiance
+ * (< 0,5 : décoché par défaut et marqué « À vérifier », 06 §1 / M3-d) et
+ * citation du CV justifiant l'extraction (`null` si non disponible).
+ */
+export interface CvProposalItemBase {
+  item_id: string;
+  provenance: Provenance;
+  evidence_quote: string | null;
+}
+
+/** Expérience proposée par l'extraction (mêmes champs que {@link ExperienceInput}). */
+export interface CvProposedExperience extends CvProposalItemBase {
+  title: string;
+  company: string;
+  /** Date ISO `YYYY-MM-DD`. */
+  start_date: string;
+  /** `null` = poste en cours. */
+  end_date: string | null;
+  description: string | null;
+}
+
+/** Formation proposée par l'extraction (mêmes champs que {@link EducationInput}). */
+export interface CvProposedEducation extends CvProposalItemBase {
+  degree: string;
+  institution: string;
+  start_year: number | null;
+  end_year: number | null;
+}
+
+/** Compétence proposée par l'extraction. */
+export interface CvProposedSkill extends CvProposalItemBase {
+  label: string;
+}
+
+/** Langue proposée par l'extraction (niveau CECRL). */
+export interface CvProposedLanguage extends CvProposalItemBase {
+  lang_code: string;
+  level: CefrLevel;
+}
+
+/**
+ * Proposition d'extraction GROUPÉE — `GET /cv-documents/{id}` (`status=parsed`).
+ * `headline`/`summary` sont proposés à part (cases dédiées `include_headline` /
+ * `include_summary`, sans `item_id`) ; les listes portent les `item_id` cochés
+ * à renvoyer à `POST /cv-documents/{id}/apply`.
+ */
+export interface CvProposal {
+  headline: string | null;
+  summary: string | null;
+  experiences: CvProposedExperience[];
+  educations: CvProposedEducation[];
+  skills: CvProposedSkill[];
+  languages: CvProposedLanguage[];
+}
+
+/** Document CV importé — `POST /cv-documents` (202) puis `GET /cv-documents/{id}` (polling). */
+export interface CvDocument {
+  id: string;
+  filename: string;
+  status: CvDocumentStatus;
+  error_code?: CvErrorCode | null;
+  /** Sections partiellement extraites (`status=parsed`) — bandeau « À vérifier » (04 Flux 1). */
+  extraction_warnings?: string[];
+  /** Proposition groupée à revoir (`status=parsed`) — voir {@link CvProposal}. */
+  proposal?: CvProposal;
+  /** Identifiant de corrélation problem+json, exposé en détail repliable. */
+  trace_id?: string;
+}
+
+/**
+ * Corps de `POST /cv-documents/{id}/apply` — applique au profil les seuls
+ * éléments cochés lors de la revue. `item_ids: null` (ou absent) = tout
+ * appliquer ; `include_headline`/`include_summary` pilotent les deux champs
+ * racine proposés hors liste. L'existant `user_input`/`user_confirmed` n'est
+ * jamais écrasé (03 Q4 : jamais d'écrasement automatique).
+ */
+export interface CvApplyInput {
+  item_ids: string[] | null;
+  include_headline: boolean;
+  include_summary: boolean;
+}
+
+/* ------------------------------------------------------------------ */
+/* Générations — jalon M4 (openapi.yaml : /generations*)               */
+/* ------------------------------------------------------------------ */
+
+/** Type de contenu généré (openapi.yaml → GeneratedDocument.doc_type). */
+export type DocType = "email" | "cover_letter" | "cv_variant" | "cv_optimization";
+
+/** Cycle de vie d'une génération (openapi.yaml → GeneratedDocument.status, D10). */
+export type GenerationStatus = "pending" | "draft" | "validated" | "exported" | "failed";
+
+/** Ton de rédaction (openapi.yaml → options.tone — valeurs API en français). */
+export type GenerationTone = "sobre" | "chaleureux" | "direct";
+
+/** Langue de rédaction (openapi.yaml → options.language). */
+export type GenerationLanguage = "fr" | "en";
+
+/** Longueur cible (openapi.yaml → options.length — valeurs API en français). */
+export type GenerationLength = "court" | "standard";
+
+/** Options de génération (SCR-30). */
+export interface GenerationOptions {
+  tone?: GenerationTone;
+  language?: GenerationLanguage;
+  length?: GenerationLength;
+}
+
+/** Affirmation ancrée du contenu généré, reliée à sa source profil (12 §4). */
+export interface GenerationClaim {
+  claim: string;
+  /** Référence profil, ex. `experience:2f00…` — lien « Voir la source ». */
+  profile_ref: string;
+}
+
+/**
+ * 🟡 Changement proposé par une variante de CV (Flux 6, question ouverte Q6 :
+ * granularité du diff non contractualisée — champs supposés de `content.changes`).
+ */
+export interface CvVariantChange {
+  /** Section du CV concernée (ex. « Expériences »). */
+  section: string;
+  kind: "emphasized" | "reworded" | "removed";
+  /** Texte du canonique (`null` pour un simple réordonnancement). */
+  before?: string | null;
+  /** Texte de la variante (`null` pour un retrait). */
+  after?: string | null;
+}
+
+/**
+ * Contenu d'une génération (openapi.yaml → GeneratedDocument.content, objet
+ * libre — champs connus d'après l'exemple 12 §4 ; `changes` 🟡 pour le diff CV).
+ */
+export interface GeneratedContent {
+  body?: string;
+  claims?: GenerationClaim[];
+  /** 🟡 Diff par changement des variantes CV (Flux 6 §3). */
+  changes?: CvVariantChange[];
+  [extra: string]: unknown;
+}
+
+/** Contrôle d'ancrage (openapi.yaml → GeneratedDocument.anchoring_check). */
+export interface AnchoringCheck {
+  status: "passed" | "failed";
+  unanchored_claims: string[];
+}
+
+/** Document généré — `GET /generations/{id}` (openapi.yaml → GeneratedDocument). */
+export interface GeneratedDocument {
+  id: string;
+  doc_type: DocType;
+  status: GenerationStatus;
+  based_on_profile_version: number;
+  prompt_version: string;
+  content: GeneratedContent | null;
+  /** `null` = contrôle non disponible (génération en cours, ou document édité manuellement). */
+  anchoring_check: AnchoringCheck | null;
+  /** 🟡 Offre cible — présent car `GET /generations?job_id=` filtre dessus (openapi.yaml). */
+  job_id?: string | null;
+  /** 🟡 Candidature liée le cas échéant. */
+  application_id?: string | null;
+  /** 🟡 Date de création (affichage bibliothèque) — non listée dans le schéma. */
+  created_at?: string | null;
+}
+
+/** Corps de `POST /generations` (Idempotency-Key requis, 12 §1). */
+export interface GenerationCreateInput {
+  doc_type: DocType;
+  /** Requis sauf `cv_optimization` (openapi.yaml). */
+  job_id?: string | null;
+  application_id?: string | null;
+  options?: GenerationOptions;
+}
+
+/** Réponse de `POST /generations/{id}/export` (texte inline ou lien signé 7 j). */
+export interface GenerationExport {
+  format: "text" | "pdf" | "docx";
+  content: string | null;
+  download_url: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Candidatures — jalon M4 (openapi.yaml : /applications*)             */
+/* ------------------------------------------------------------------ */
+
+/** Statut d'une candidature (openapi.yaml → ApplicationStatus, ordre du flux 7). */
+export type ApplicationStatus =
+  | "draft"
+  | "to_apply"
+  | "applied"
+  | "interviewing"
+  | "offer"
+  | "rejected"
+  | "withdrawn";
+
+/**
+ * Corps de `POST /applications` — offre interne (`job_posting_id`) OU externe
+ * (`external_title` + `external_company`, 11 §5).
+ */
+export interface ApplicationInput {
+  job_posting_id?: string | null;
+  external_title?: string | null;
+  external_company?: string | null;
+  external_url?: string | null;
+  notes?: string | null;
+}
+
+/** Transition historisée d'une candidature (openapi.yaml → Application.events[]). */
+export interface ApplicationEvent {
+  from_status: ApplicationStatus | null;
+  to_status: ApplicationStatus;
+  at: string;
+  note: string | null;
+}
+
+/** Candidature suivie (openapi.yaml → Application, allOf ApplicationInput). */
+export interface Application extends ApplicationInput {
+  id: string;
+  status: ApplicationStatus;
+  applied_at: string | null;
+  events: ApplicationEvent[];
+  /** 🟡 Intitulé de l'offre interne, dénormalisé par l'API (carte SCR-40 : poste + entreprise). */
+  job_title?: string | null;
+  /** 🟡 Entreprise de l'offre interne, dénormalisée par l'API. */
+  job_company?: string | null;
+}
+
+/** Corps de `POST /applications/{id}/status` (transition historisée). */
+export interface ApplicationStatusChange {
+  to_status: ApplicationStatus;
+  /** Note optionnelle ≤ 1000 caractères, historisée avec la transition. */
+  note?: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Confidentialité & données — jalon M5 (openapi.yaml : /privacy/*,    */
+/* /account — feature Q, D09)                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Statut d'un export RGPD (openapi.yaml → `/privacy/exports/{id}`).
+ * « expired » est dérivé côté API de la date d'expiration du lien (7 jours) —
+ * jamais stocké (router privacy `_effective_status`).
+ */
+export type PrivacyExportStatus = "pending" | "ready" | "expired";
+
+/** Réponse 202 de `POST /privacy/export` (export asynchrone, quota 2/j). */
+export interface PrivacyExportRequested {
+  id: string;
+  status: PrivacyExportStatus;
+}
+
+/**
+ * Statut de l'export — `GET /privacy/exports/{id}`. `download_url` n'est
+ * présent qu'à `ready` : URL relative signée HMAC servie par
+ * `GET /privacy/exports/{id}/download?expires=…&sig=…` (même origine via le
+ * proxy Next, préfixe `/api/v1` inclus côté API — à utiliser telle quelle).
+ */
+export interface PrivacyExportStatusResponse extends PrivacyExportRequested {
+  download_url?: string | null;
+}
+
+/** Corps de `DELETE /account` — confirmation par mot de passe (RM-Q-4). */
+export interface DeleteAccountInput {
+  password: string;
+}

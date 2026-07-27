@@ -9,10 +9,11 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FilePen, Mail, Send } from "lucide-react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { GenerateModal } from "@/components/generation/generate-modal";
 import { JobBadges } from "@/components/jobs/job-badges";
 import { SavedToggle } from "@/components/jobs/saved-toggle";
 import { SourceList } from "@/components/jobs/source-list";
@@ -21,8 +22,75 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { isApiProblem } from "@/lib/api/client";
 import { clearSavedState, getJob, jobsKeys, setSavedState } from "@/lib/api/jobs";
-import type { JobDetail, SavedState } from "@/lib/api/types";
+import type { DocType, JobDetail, SavedState } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
+
+/**
+ * Section « Candidater » (SCR-21 §6, M4) : génération de lettre / e-mail /
+ * variante de CV (SCR-30 en modale) et suivi de candidature pré-rempli
+ * (Flux 7 §1a). Génération désactivée sur offre expirée 🟡 (03 Q6) avec
+ * explication — le suivi de candidature, lui, reste possible.
+ */
+function ApplySection({ job }: { job: JobDetail }) {
+  const t = useTranslations("generation.actions");
+  const [openDocType, setOpenDocType] = useState<DocType | null>(null);
+  const isExpired = job.status === "expired";
+
+  const trackHref = `/candidatures?suivre=${encodeURIComponent(job.id)}&titre=${encodeURIComponent(
+    job.title,
+  )}&entreprise=${encodeURIComponent(job.company_name)}`;
+
+  const generationButtons: { docType: DocType; labelKey: "writeLetter" | "writeEmail" | "adaptCv"; icon: typeof Mail }[] = [
+    { docType: "cover_letter", labelKey: "writeLetter", icon: FilePen },
+    { docType: "email", labelKey: "writeEmail", icon: Mail },
+    { docType: "cv_variant", labelKey: "adaptCv", icon: FilePen },
+  ];
+
+  return (
+    <section aria-labelledby="job-apply-title" className="space-y-3 rounded-lg border border-border bg-surface p-4">
+      <h2 id="job-apply-title" className="text-lg font-semibold text-content">
+        {t("sectionTitle")}
+      </h2>
+      {isExpired ? (
+        <p id="job-apply-expired" className="text-sm text-content-secondary">
+          {t("expiredDisabled")}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {generationButtons.map(({ docType, labelKey, icon: Icon }) => (
+          <Button
+            key={docType}
+            variant="secondary"
+            disabled={isExpired}
+            aria-describedby={isExpired ? "job-apply-expired" : undefined}
+            onClick={() => setOpenDocType(docType)}
+          >
+            <Icon aria-hidden="true" className="h-4 w-4" />
+            {t(labelKey)}
+          </Button>
+        ))}
+        <Link
+          href={trackHref}
+          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-action-primary px-4 text-sm font-medium text-content-on-action transition-colors hover:bg-action-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+        >
+          <Send aria-hidden="true" className="h-4 w-4" />
+          {t("trackApplication")}
+        </Link>
+      </div>
+      {/* Rappel M6 — aucune candidature automatique. */}
+      <p className="text-sm text-content-secondary">{t("noAutoSend")}</p>
+
+      {openDocType ? (
+        <GenerateModal
+          docType={openDocType}
+          jobId={job.id}
+          jobLanguage={job.language}
+          onClose={() => setOpenDocType(null)}
+        />
+      ) : null}
+    </section>
+  );
+}
 
 /** Liste de compétences en puces — requises ou souhaitées (SCR-21). */
 function SkillList({ titleId, title, skills }: { titleId: string; title: string; skills: string[] }) {
@@ -180,6 +248,9 @@ export default function JobDetailPage() {
 
       {/* Panneau match (SCR-21 §3) — requête dédiée `GET /jobs/{id}/match`. */}
       <MatchPanel jobId={id} />
+
+      {/* Candidater (M4) : génération SCR-30 + suivi de candidature (Flux 7). */}
+      <ApplySection job={job} />
 
       <section aria-labelledby="job-description-title" className="space-y-2">
         <h2 id="job-description-title" className="text-lg font-semibold text-content">

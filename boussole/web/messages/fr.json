@@ -20,6 +20,7 @@
     "dashboard": "Tableau de bord",
     "jobs": "Offres",
     "applications": "Candidatures",
+    "documents": "Mes documents",
     "profile": "Profil",
     "preferences": "Préférences",
     "settings": "Paramètres",
@@ -37,7 +38,8 @@
       "errors": {
         "invalidCredentials": "Identifiants incorrects.",
         "rateLimited": "Trop de tentatives. Réessayez dans {seconds} secondes."
-      }
+      },
+      "accountDeleted": "Votre compte a été supprimé. Vos données seront définitivement effacées sous 30 jours."
     },
     "register": {
       "title": "Inscription",
@@ -388,7 +390,295 @@
       "removeAria": "Retirer le mot-clé {label}"
     }
   },
+  "cvImport": {
+    "title": "Importer mon CV",
+    "intro": "Importez votre CV (nous en extrayons les informations), puis relisez chaque élément avant qu'il ne rejoigne votre profil.",
+    "constraints": "Formats acceptés : PDF et DOCX — 10 Mo maximum, 5 imports par jour.",
+    "fileLabel": "Fichier CV (PDF ou DOCX)",
+    "chooseAnotherFile": "Choisir un autre fichier",
+    "retry": "Réessayer",
+    "uploading": "Envoi du fichier…",
+    "steps": {
+      "reading": "Lecture du document",
+      "extracting": "Extraction des informations",
+      "preparing": "Préparation de votre profil"
+    },
+    "stepAnnounce": "Import du CV — étape en cours : {step}",
+    "errors": {
+      "unreadable": "Nous n'avons pas réussi à lire ce fichier. Vérifiez qu'il s'ouvre correctement, ou essayez un export PDF récent.",
+      "imageOnlyPdf": "Ce PDF ne contient que des images, sans texte extractible. Exportez votre CV en PDF depuis votre traitement de texte, ou importez le fichier DOCX d'origine.",
+      "tooLarge": "Fichier trop volumineux (max 10 Mo).",
+      "unsupportedFormat": "Formats acceptés : PDF et DOCX.",
+      "extractionFailed": "L'extraction a échoué de notre côté. Réessayez ; si le problème persiste, vous pouvez saisir votre profil manuellement.",
+      "quota": "Limite de 5 imports par jour atteinte. Réessayez demain — votre dernier import reste disponible.",
+      "pollFailed": "Impossible de suivre l'avancement de l'import. Réessayez.",
+      "generic": "L'import a échoué. Réessayez."
+    },
+    "manualEntryHint": "Vous pouvez aussi saisir ces informations manuellement dans les sections du profil ci-dessous.",
+    "traceToggle": "Détail technique",
+    "traceId": "Identifiant de trace : {traceId}",
+    "review": {
+      "title": "Relire les informations extraites",
+      "intro": "Cochez les éléments à ajouter à votre profil. Les éléments à confiance faible (moins de 50 %) sont décochés par défaut : vérifiez-les avant de les appliquer.",
+      "noOverwrite": "Les informations que vous avez déjà saisies ou confirmées ne sont jamais écrasées.",
+      "partialWarnings": "Certaines sections n'ont pas pu être entièrement extraites : {list}. Les champs concernés sont marqués “À vérifier”.",
+      "toVerify": "À vérifier",
+      "confidence": "Extrait du CV — confiance {percent} %",
+      "evidenceLabel": "Citation du CV :",
+      "noEvidence": "Aucune citation disponible pour cet élément.",
+      "present": "aujourd'hui",
+      "empty": "Aucune information exploitable n'a été extraite de ce CV. Vous pouvez saisir votre profil manuellement.",
+      "selectedCount": "{count, plural, =0 {Aucun élément sélectionné} one {# élément sélectionné} other {# éléments sélectionnés}}",
+      "apply": "Appliquer au profil",
+      "applyError": "L'application au profil a échoué. Réessayez.",
+      "applied": "Profil mis à jour depuis votre CV. Relisez les champs marqués « Extrait du CV » puis validez votre profil.",
+      "kinds": {
+        "headline": "Titre du profil",
+        "summary": "Résumé",
+        "experience": "Expériences",
+        "education": "Formations",
+        "skill": "Compétences",
+        "language": "Langues"
+      }
+    }
+  },
+  "generation": {
+    "docTypes": {
+      "email": "E-mail de candidature",
+      "cover_letter": "Lettre de motivation",
+      "cv_variant": "CV adapté à l'offre",
+      "cv_optimization": "Optimisation du CV"
+    },
+    "status": {
+      "pending": "Génération en cours",
+      "draft": "Brouillon",
+      "validated": "Validé",
+      "exported": "Exporté",
+      "failed": "Échec"
+    },
+    "anchoring": {
+      "title": "Contrôle d'ancrage",
+      "badgePassed": "Ancrage vérifié",
+      "badgeFailed": "Ancrage en échec",
+      "badgeManual": "Ancrage non re-vérifié (texte édité)",
+      "failedBody": "{count, plural, one {# affirmation n'a pas pu être reliée à votre profil. Supprimez-la ou corrigez-la avant validation.} other {# affirmations n'ont pas pu être reliées à votre profil. Supprimez-les ou corrigez-les avant validation.}}",
+      "manualBody": "Le texte a été modifié manuellement : le contenu édité est sous votre responsabilité.",
+      "unanchoredTitle": "Affirmations non ancrées"
+    },
+    "actions": {
+      "sectionTitle": "Candidater",
+      "writeLetter": "Rédiger une lettre",
+      "writeEmail": "Rédiger un e-mail",
+      "adaptCv": "Adapter mon CV",
+      "optimizeCv": "Optimiser mon CV",
+      "optimizeCvHint": "Générez une version optimisée de votre CV, sans offre cible : réorganisation et reformulation à partir de votre seul profil validé.",
+      "expiredDisabled": "Offre expirée : la génération est désactivée. Le lien vers l'annonce d'origine reste disponible.",
+      "trackApplication": "Suivre ma candidature",
+      "noAutoSend": "Boussole n'envoie jamais de candidature à votre place."
+    },
+    "modal": {
+      "title": "Configurer la génération",
+      "docTypeLabel": "Type de document",
+      "toneLegend": "Ton",
+      "tones": {
+        "sobre": "Sobre",
+        "chaleureux": "Chaleureux",
+        "direct": "Direct"
+      },
+      "languageLegend": "Langue",
+      "languages": {
+        "fr": "Français",
+        "en": "Anglais"
+      },
+      "lengthLegend": "Longueur",
+      "lengths": {
+        "court": "Court",
+        "standard": "Standard"
+      },
+      "quotaInfo": "Quota : {hourly} générations par heure, {daily} par jour.",
+      "warningTitle": "Rédigé uniquement à partir de votre profil validé.",
+      "warningBody": "Boussole n'inventera aucune compétence, expérience ou formation. Chaque affirmation du texte sera reliée à sa source dans votre profil. Vous devrez relire et valider le document avant de pouvoir l'exporter — rien n'est envoyé à votre place.",
+      "variantNote": "La variante ne réordonne et reformule que des éléments présents dans votre profil validé. Votre profil d'origine n'est pas modifié.",
+      "submit": "Générer",
+      "cancel": "Annuler",
+      "noAutoSend": "Boussole n'envoie jamais de candidature à votre place.",
+      "errors": {
+        "quota": "Limite de générations atteinte ({hourly} par heure, {daily} par jour). Prochaine génération possible à {time}. Vos brouillons existants restent accessibles.",
+        "profileNotValidated": "Validez votre profil pour générer un document : la rédaction s'appuie uniquement sur votre profil validé.",
+        "profileNotValidatedCta": "Compléter et valider mon profil",
+        "jobExpired": "Cette offre n'est plus publiée : la génération n'est plus disponible.",
+        "generic": "La génération n'a pas pu être lancée. Réessayez."
+      }
+    },
+    "document": {
+      "backToList": "Retour à mes documents",
+      "loading": "Chargement du document…",
+      "loadErrorTitle": "Impossible de charger ce document.",
+      "retry": "Réessayer",
+      "pending": "Rédaction en cours…",
+      "pendingHint": "Vous pouvez quitter cette page : le document restera disponible dans « Mes documents ».",
+      "draftReady": "Brouillon prêt à relire",
+      "failed": "La rédaction a échoué. Aucun contenu n'a été produit.",
+      "retryGenerate": "Réessayer",
+      "basedOn": "Basé sur votre profil v{version}",
+      "promptVersion": "Modèle de rédaction : {version}",
+      "staleProfile": "Ce document est basé sur une version antérieure de votre profil (v{version}).",
+      "viewJob": "Voir l'offre liée",
+      "contentTitle": "Contenu du document",
+      "emptyContent": "Aucun contenu à afficher.",
+      "edit": "Modifier le texte",
+      "editLabel": "Texte du document",
+      "editHint": "L'édition manuelle est sous votre responsabilité : le contrôle d'ancrage ne s'applique plus au texte modifié.",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "saveError": "L'enregistrement a échoué. Réessayez.",
+      "saved": "Modifications enregistrées.",
+      "claimsTitle": "Affirmations et leurs sources",
+      "claimsIntro": "Chaque affirmation du texte est reliée à sa source dans votre profil validé.",
+      "claimSourceLink": "Voir la source dans votre profil : {claim}",
+      "claimSourceShort": "Voir la source",
+      "validateCta": "J'ai relu ce document, je le valide",
+      "validated": "Document validé.",
+      "validateBlockedAnchoring": "Corrigez ou supprimez les affirmations non ancrées avant de valider.",
+      "validateError": "La validation a échoué. Réessayez.",
+      "readonlyExported": "Document exporté — lecture seule."
+    },
+    "export": {
+      "title": "Exporter",
+      "blocked": "Relisez et validez ce document pour pouvoir l'exporter.",
+      "copy": "Copier le texte",
+      "copied": "Texte copié dans le presse-papier.",
+      "downloadText": "Télécharger en texte (.txt)",
+      "downloaded": "Fichier texte téléchargé.",
+      "pdf": "Télécharger en PDF",
+      "docx": "Télécharger en DOCX",
+      "notValidated": "Ce document doit être relu et validé avant export.",
+      "error": "L'export a échoué. Réessayez.",
+      "m5Note": "Export PDF et DOCX disponibles au jalon M5.",
+      "noSend": "Boussole n'envoie rien à votre place : c'est vous qui transmettez ce document.",
+      "trackCta": "Créer le suivi de cette candidature ?",
+      "trackLink": "Suivre cette candidature"
+    },
+    "diff": {
+      "title": "Modifications proposées",
+      "note": "Votre profil d'origine n'est pas modifié.",
+      "emphasized": "Mis en avant",
+      "reworded": "Reformulé",
+      "removed": "Retiré de la variante",
+      "before": "Texte d'origine",
+      "after": "Texte proposé",
+      "nearIdentical": "Votre CV actuel couvre déjà bien cette offre — peu de modifications proposées."
+    },
+    "list": {
+      "title": "Mes documents",
+      "intro": "Tous vos contenus générés — lettres, e-mails et variantes de CV. Chaque document doit être relu et validé avant export.",
+      "typeFilterLabel": "Type de document",
+      "allTypes": "Tous les types",
+      "statusFilterLabel": "Statut",
+      "allStatuses": "Tous les statuts",
+      "resultsCount": "{count, plural, =0 {Aucun document affiché} one {# document affiché} other {# documents affichés}}",
+      "loading": "Chargement des documents…",
+      "errorTitle": "Impossible de charger vos documents.",
+      "retry": "Réessayer",
+      "emptyTitle": "Aucun document généré pour le moment.",
+      "emptyDescription": "Lancez une génération depuis le détail d'une offre (« Rédiger une lettre », « Rédiger un e-mail », « Adapter mon CV ») ou depuis votre profil (« Optimiser mon CV »).",
+      "loadMore": "Charger plus de documents",
+      "createdOn": "Créé le {date}"
+    }
+  },
+  "applications": {
+    "title": "Candidatures",
+    "intro": "Suivez vos candidatures, internes ou externes. L'état « envoyée » est toujours déclaré par vous : Boussole n'envoie jamais de candidature à votre place.",
+    "documentsLink": "Mes documents",
+    "add": "Ajouter une candidature",
+    "loading": "Chargement des candidatures…",
+    "errorTitle": "Impossible de charger vos candidatures.",
+    "retry": "Réessayer",
+    "loadMore": "Charger plus de candidatures",
+    "emptyTitle": "Aucune candidature suivie pour le moment.",
+    "emptyDescription": "Créez un suivi depuis une offre (« Suivre ma candidature ») ou ajoutez une candidature externe.",
+    "sectionCount": "{count, plural, one {# candidature} other {# candidatures}}",
+    "status": {
+      "draft": "Brouillon",
+      "to_apply": "À envoyer",
+      "applied": "Envoyée",
+      "interviewing": "Entretiens",
+      "offer": "Offre reçue",
+      "rejected": "Refusée",
+      "withdrawn": "Retirée"
+    },
+    "card": {
+      "linkedJob": "Offre liée",
+      "viewJob": "Voir l'offre",
+      "viewExternal": "Voir l'annonce (lien externe)",
+      "lastEvent": "Dernier événement : {date}",
+      "statusLabel": "Statut de la candidature {name}",
+      "statusUpdated": "Statut mis à jour : {status}",
+      "transitionRejected": "Ce changement de statut n'est pas permis depuis “{status}”.",
+      "actionError": "L'action n'a pas pu être enregistrée. Réessayez.",
+      "detailsToggle": "Historique et notes",
+      "withdrawnLocked": "Une candidature retirée ne peut plus changer de statut."
+    },
+    "timeline": {
+      "title": "Historique des statuts",
+      "empty": "Aucun événement pour le moment.",
+      "transition": "{from} → {to}",
+      "initial": "Créée avec le statut {to}"
+    },
+    "notes": {
+      "label": "Notes",
+      "empty": "Aucune note.",
+      "edit": "Modifier les notes",
+      "save": "Enregistrer les notes",
+      "cancel": "Annuler",
+      "saved": "Notes enregistrées.",
+      "error": "L'enregistrement des notes a échoué. Réessayez."
+    },
+    "delete": {
+      "cta": "Supprimer ce suivi",
+      "confirmBody": "Supprimer ce suivi ? L'historique de cette candidature sera définitivement effacé. Les documents générés associés ne seront pas supprimés.",
+      "confirm": "Supprimer définitivement",
+      "cancel": "Annuler",
+      "deleted": "Suivi de candidature supprimé.",
+      "error": "La suppression a échoué. Réessayez."
+    },
+    "form": {
+      "title": "Ajouter une candidature externe",
+      "titleTracked": "Suivre ma candidature",
+      "linkedJobNote": "Cette candidature sera liée à l'offre : {title}",
+      "linkedJobNoteNoTitle": "Cette candidature sera liée à l'offre sélectionnée.",
+      "externalTitleLabel": "Intitulé du poste",
+      "externalCompanyLabel": "Entreprise",
+      "externalUrlLabel": "URL de l'annonce (optionnel)",
+      "notesLabel": "Notes (optionnel)",
+      "statusLabel": "Statut initial",
+      "submit": "Créer le suivi",
+      "cancel": "Annuler",
+      "duplicate": "Vous suivez déjà une candidature pour cette offre.",
+      "created": "Candidature ajoutée au suivi.",
+      "error": "La création a échoué. Réessayez.",
+      "urlInvalid": "Saisissez une URL valide (https://…)."
+    }
+  },
   "dashboard": {
+    "applications": {
+      "title": "Candidatures en cours",
+      "loading": "Chargement de vos candidatures…",
+      "errorTitle": "Impossible de charger vos candidatures.",
+      "retry": "Réessayer",
+      "empty": "Aucune candidature suivie pour le moment.",
+      "seeAll": "Voir toutes mes candidatures"
+    },
+    "cv": {
+      "title": "Mon CV",
+      "loading": "Vérification de votre CV…",
+      "errorTitle": "Impossible de vérifier l'état de votre CV.",
+      "retry": "Réessayer",
+      "imported": "CV importé — votre profil s'appuie sur ses informations extraites.",
+      "notImported": "Aucun CV importé pour le moment. Importez-le pour pré-remplir votre profil.",
+      "importLink": "Importer mon CV",
+      "reimportLink": "Réimporter un CV"
+    },
     "topMatches": {
       "title": "Meilleures correspondances",
       "loading": "Chargement de vos correspondances…",
@@ -400,11 +690,59 @@
       "seeAll": "Voir toutes les offres triées par compatibilité"
     }
   },
+  "settings": {
+    "title": "Paramètres",
+    "data": {
+      "title": "Mes données",
+      "archiveNote": "L'archive contient toutes vos données au format JSON : profil, CV importés, préférences, candidatures et documents générés.",
+      "exportCta": "Exporter mes données",
+      "preparing": "Export en préparation… Cette page se met à jour automatiquement.",
+      "readyTitle": "Votre export est prêt",
+      "downloadCta": "Télécharger mon export (JSON)",
+      "validity": "Lien de téléchargement valable {days} jours.",
+      "expiredTitle": "Lien d'export expiré",
+      "expiredBody": "Le lien de téléchargement a expiré (7 jours). Vous pouvez demander un nouvel export.",
+      "requestAgainCta": "Demander un nouvel export",
+      "quotaReached": "Limite de {limit} exports par jour atteinte. Réessayez à partir de {time}."
+    },
+    "sources": {
+      "title": "Sources et transparence",
+      "reminder": "Boussole interroge {count, plural, one {# source} other {# sources}} d'offres identifiées — pas “tout le web”. Chaque offre conserve le lien vers son annonce d'origine.",
+      "kind": {
+        "public_api": "API publique",
+        "ats_feed": "Flux ATS",
+        "partner": "Partenaire"
+      },
+      "lastSync": "dernière synchronisation {date}",
+      "lastSyncUnknown": "dernière synchronisation inconnue",
+      "loadError": "Impossible de charger la liste des sources. Réessayez.",
+      "policyLink": "Politique de confidentialité"
+    },
+    "danger": {
+      "title": "Zone dangereuse",
+      "description": "La suppression désactive votre compte immédiatement et efface définitivement vos données — profil, CV importés, préférences, candidatures et historique, documents générés et sauvegardes — sous 30 jours.",
+      "exportFirst": "Avant de partir, vous pouvez télécharger une copie de vos données.",
+      "deleteCta": "Supprimer mon compte",
+      "modal": {
+        "title": "Supprimer définitivement votre compte ?",
+        "body1": "Votre compte sera désactivé immédiatement. Toutes vos données — profil, CV importés, préférences, candidatures et documents générés — seront définitivement effacées sous 30 jours, conformément à notre engagement RGPD. Cette action est irréversible.",
+        "body2": "Astuce : vous pouvez d'abord télécharger une copie de vos données depuis “Confidentialité & données”.",
+        "body3": "Pour confirmer, saisissez votre mot de passe.",
+        "passwordLabel": "Mot de passe",
+        "pendingExportWarning": "Votre export en cours sera perdu si vous supprimez le compte maintenant.",
+        "confirm": "Supprimer mon compte",
+        "cancel": "Annuler",
+        "success": "Votre compte a été supprimé. Vos données seront définitivement effacées sous 30 jours.",
+        "errors": {
+          "invalidPassword": "Mot de passe incorrect — la suppression n'a pas été effectuée.",
+          "rateLimited": "Trop de tentatives. Réessayez dans {seconds} secondes."
+        }
+      }
+    }
+  },
   "pages": {
     "dashboard": {
       "title": "Tableau de bord",
-      "emptyTitle": "Votre tableau de bord arrive bientôt",
-      "emptyDescription": "Vos meilleures offres du moment, vos candidatures à relancer et l'avancement de votre profil s'afficheront ici.",
       "exploreJobsTitle": "Explorer les offres",
       "exploreJobsDescription": "Recherchez parmi les offres agrégées, filtrez par contrat, télétravail ou salaire, et sauvegardez celles à examiner."
     },
@@ -412,16 +750,6 @@
       "title": "Offres",
       "emptyTitle": "La recherche d'offres arrive bientôt",
       "emptyDescription": "Recherche, filtres et scores de compatibilité s'afficheront ici. Chaque offre conservera le lien vers son annonce d'origine."
-    },
-    "applications": {
-      "title": "Candidatures",
-      "emptyTitle": "Le suivi des candidatures arrive bientôt",
-      "emptyDescription": "Vos candidatures, internes ou externes, seront suivies ici par statut, avec historique et notes."
-    },
-    "settings": {
-      "title": "Paramètres",
-      "emptyTitle": "Les paramètres arrivent bientôt",
-      "emptyDescription": "Compte et sécurité, confidentialité et données (export RGPD, suppression), sources des offres et méthode de calcul du score."
     }
   }
 }

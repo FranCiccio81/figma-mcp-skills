@@ -1,13 +1,15 @@
-// SCR-10 — M3 (partiel)
+// SCR-10 — M4 (partiel)
 // Coquille livrée en M1 (E2) ; M3 : carte « Meilleures correspondances »
-// (GET /matches, TopMatchesCard). Reste à venir : checklist d'onboarding,
-// candidatures à relancer, rappel des sources.
+// (GET /matches, TopMatchesCard) ; M4 : carte candidatures en cours (compte
+// par statut) et carte CV importé/non (lien vers l'import du profil).
+// Reste à venir (M5) : candidatures à relancer (J+10), rappel des sources.
 
-import { ArrowRight, Briefcase, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { ApplicationsSummaryCard } from "@/components/dashboard/applications-summary-card";
+import { CvStatusCard } from "@/components/dashboard/cv-status-card";
 import { TopMatchesCard } from "@/components/match/top-matches-card";
-import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function DashboardPage() {
   const t = await getTranslations();
@@ -39,15 +41,12 @@ export default async function DashboardPage() {
       {/* M3 : meilleures correspondances (GET /matches, 5 premiers résultats). */}
       <TopMatchesCard />
 
-      <EmptyState
-        icon={LayoutDashboard}
-        title={t("pages.dashboard.emptyTitle")}
-        description={t("pages.dashboard.emptyDescription")}
-      >
-        <p className="text-sm font-medium text-content-secondary">
-          {t("placeholder.availableAt", { milestone: "M3" })}
-        </p>
-      </EmptyState>
+      {/* M4 : candidatures par statut + état d'import du CV (blocs
+          indépendants — l'erreur d'un bloc ne bloque pas les autres, 03). */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ApplicationsSummaryCard />
+        <CvStatusCard />
+      </div>
     </section>
   );
 }

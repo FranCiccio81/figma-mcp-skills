@@ -68,6 +68,11 @@ export interface ApiFetchOptions {
   method?: HttpMethod;
   /** Sérialisé en JSON. Omis pour les requêtes sans corps. */
   body?: unknown;
+  /**
+   * Corps `multipart/form-data` (upload CV, 12 §5) — exclusif de `body`.
+   * Le `Content-Type` est posé par le navigateur (boundary inclus).
+   */
+  formData?: FormData;
   headers?: Record<string, string>;
   signal?: AbortSignal;
   /** En-tête `Idempotency-Key` pour les créations à effet (12 §1). */
@@ -86,7 +91,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
-  if (options.body !== undefined) headers.set("Content-Type", "application/json");
+  if (options.body !== undefined && options.formData === undefined) {
+    headers.set("Content-Type", "application/json");
+  }
   if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
   if (MUTATING_METHODS.has(method)) {
     const csrfToken = readCookie(CSRF_COOKIE_NAME);
@@ -97,7 +104,12 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     method,
     headers,
     credentials: "include",
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body:
+      options.formData !== undefined
+        ? options.formData
+        : options.body !== undefined
+          ? JSON.stringify(options.body)
+          : undefined,
     signal: options.signal,
   });
 

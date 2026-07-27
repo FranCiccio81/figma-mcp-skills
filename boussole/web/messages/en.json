@@ -20,6 +20,7 @@
     "dashboard": "Dashboard",
     "jobs": "Jobs",
     "applications": "Applications",
+    "documents": "My documents",
     "profile": "Profile",
     "preferences": "Preferences",
     "settings": "Settings",
@@ -37,7 +38,8 @@
       "errors": {
         "invalidCredentials": "Incorrect credentials.",
         "rateLimited": "Too many attempts. Try again in {seconds} seconds."
-      }
+      },
+      "accountDeleted": "Your account has been deleted. Your data will be permanently erased within 30 days."
     },
     "register": {
       "title": "Sign up",
@@ -388,7 +390,295 @@
       "removeAria": "Remove the keyword {label}"
     }
   },
+  "cvImport": {
+    "title": "Import my CV",
+    "intro": "Import your CV (we extract its information), then review every item before it joins your profile.",
+    "constraints": "Accepted formats: PDF and DOCX — 10 MB maximum, 5 imports per day.",
+    "fileLabel": "CV file (PDF or DOCX)",
+    "chooseAnotherFile": "Choose another file",
+    "retry": "Try again",
+    "uploading": "Uploading the file…",
+    "steps": {
+      "reading": "Reading the document",
+      "extracting": "Extracting the information",
+      "preparing": "Preparing your profile"
+    },
+    "stepAnnounce": "CV import — current step: {step}",
+    "errors": {
+      "unreadable": "We could not read this file. Check that it opens correctly, or try a recent PDF export.",
+      "imageOnlyPdf": "This PDF only contains images, with no extractable text. Export your CV as a PDF from your word processor, or import the original DOCX file.",
+      "tooLarge": "File too large (max 10 MB).",
+      "unsupportedFormat": "Accepted formats: PDF and DOCX.",
+      "extractionFailed": "The extraction failed on our side. Try again; if the problem persists, you can fill in your profile manually.",
+      "quota": "Limit of 5 imports per day reached. Try again tomorrow — your latest import remains available.",
+      "pollFailed": "Unable to track the import progress. Try again.",
+      "generic": "The import failed. Try again."
+    },
+    "manualEntryHint": "You can also enter this information manually in the profile sections below.",
+    "traceToggle": "Technical details",
+    "traceId": "Trace identifier: {traceId}",
+    "review": {
+      "title": "Review the extracted information",
+      "intro": "Tick the items to add to your profile. Low-confidence items (below 50%) are unticked by default: check them before applying.",
+      "noOverwrite": "Information you have already entered or confirmed is never overwritten.",
+      "partialWarnings": "Some sections could not be fully extracted: {list}. The affected fields are marked “To check”.",
+      "toVerify": "To check",
+      "confidence": "Extracted from your CV — confidence {percent}%",
+      "evidenceLabel": "Quote from your CV:",
+      "noEvidence": "No quote available for this item.",
+      "present": "today",
+      "empty": "No usable information could be extracted from this CV. You can fill in your profile manually.",
+      "selectedCount": "{count, plural, =0 {No items selected} one {# item selected} other {# items selected}}",
+      "apply": "Apply to my profile",
+      "applyError": "Applying to your profile failed. Try again.",
+      "applied": "Profile updated from your CV. Review the fields marked “Extracted from your CV”, then validate your profile.",
+      "kinds": {
+        "headline": "Profile headline",
+        "summary": "Summary",
+        "experience": "Experience",
+        "education": "Education",
+        "skill": "Skills",
+        "language": "Languages"
+      }
+    }
+  },
+  "generation": {
+    "docTypes": {
+      "email": "Application email",
+      "cover_letter": "Cover letter",
+      "cv_variant": "CV tailored to the job",
+      "cv_optimization": "CV optimization"
+    },
+    "status": {
+      "pending": "Generating",
+      "draft": "Draft",
+      "validated": "Validated",
+      "exported": "Exported",
+      "failed": "Failed"
+    },
+    "anchoring": {
+      "title": "Anchoring check",
+      "badgePassed": "Anchoring verified",
+      "badgeFailed": "Anchoring failed",
+      "badgeManual": "Anchoring not re-checked (edited text)",
+      "failedBody": "{count, plural, one {# claim could not be linked to your profile. Remove or correct it before validating.} other {# claims could not be linked to your profile. Remove or correct them before validating.}}",
+      "manualBody": "The text was edited manually: the edited content is your responsibility.",
+      "unanchoredTitle": "Unanchored claims"
+    },
+    "actions": {
+      "sectionTitle": "Apply",
+      "writeLetter": "Write a letter",
+      "writeEmail": "Write an email",
+      "adaptCv": "Tailor my CV",
+      "optimizeCv": "Optimize my CV",
+      "optimizeCvHint": "Generate an optimized version of your CV, without a target job: reordering and rephrasing based only on your validated profile.",
+      "expiredDisabled": "Expired job: generation is disabled. The link to the original posting remains available.",
+      "trackApplication": "Track my application",
+      "noAutoSend": "Boussole never sends an application on your behalf."
+    },
+    "modal": {
+      "title": "Configure the generation",
+      "docTypeLabel": "Document type",
+      "toneLegend": "Tone",
+      "tones": {
+        "sobre": "Sober",
+        "chaleureux": "Warm",
+        "direct": "Direct"
+      },
+      "languageLegend": "Language",
+      "languages": {
+        "fr": "French",
+        "en": "English"
+      },
+      "lengthLegend": "Length",
+      "lengths": {
+        "court": "Short",
+        "standard": "Standard"
+      },
+      "quotaInfo": "Quota: {hourly} generations per hour, {daily} per day.",
+      "warningTitle": "Written solely from your validated profile.",
+      "warningBody": "Boussole will not invent any skill, experience or education. Every claim in the text will be linked to its source in your profile. You will have to review and validate the document before you can export it — nothing is sent on your behalf.",
+      "variantNote": "The variant only reorders and rephrases elements present in your validated profile. Your original profile is not modified.",
+      "submit": "Generate",
+      "cancel": "Cancel",
+      "noAutoSend": "Boussole never sends an application on your behalf.",
+      "errors": {
+        "quota": "Generation limit reached ({hourly} per hour, {daily} per day). Next generation possible at {time}. Your existing drafts remain accessible.",
+        "profileNotValidated": "Validate your profile to generate a document: the writing relies only on your validated profile.",
+        "profileNotValidatedCta": "Complete and validate my profile",
+        "jobExpired": "This job is no longer published: generation is no longer available.",
+        "generic": "The generation could not be started. Try again."
+      }
+    },
+    "document": {
+      "backToList": "Back to my documents",
+      "loading": "Loading the document…",
+      "loadErrorTitle": "Unable to load this document.",
+      "retry": "Try again",
+      "pending": "Writing in progress…",
+      "pendingHint": "You can leave this page: the document will remain available in “My documents”.",
+      "draftReady": "Draft ready to review",
+      "failed": "The writing failed. No content was produced.",
+      "retryGenerate": "Try again",
+      "basedOn": "Based on your profile v{version}",
+      "promptVersion": "Writing model: {version}",
+      "staleProfile": "This document is based on an earlier version of your profile (v{version}).",
+      "viewJob": "View the linked job",
+      "contentTitle": "Document content",
+      "emptyContent": "No content to display.",
+      "edit": "Edit the text",
+      "editLabel": "Document text",
+      "editHint": "Manual editing is your responsibility: the anchoring check no longer applies to the modified text.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveError": "Saving failed. Try again.",
+      "saved": "Changes saved.",
+      "claimsTitle": "Claims and their sources",
+      "claimsIntro": "Every claim in the text is linked to its source in your validated profile.",
+      "claimSourceLink": "See the source in your profile: {claim}",
+      "claimSourceShort": "See the source",
+      "validateCta": "I have reviewed this document, I validate it",
+      "validated": "Document validated.",
+      "validateBlockedAnchoring": "Correct or remove the unanchored claims before validating.",
+      "validateError": "Validation failed. Try again.",
+      "readonlyExported": "Exported document — read-only."
+    },
+    "export": {
+      "title": "Export",
+      "blocked": "Review and validate this document to be able to export it.",
+      "copy": "Copy the text",
+      "copied": "Text copied to the clipboard.",
+      "downloadText": "Download as text (.txt)",
+      "downloaded": "Text file downloaded.",
+      "pdf": "Download as PDF",
+      "docx": "Download as DOCX",
+      "notValidated": "This document must be reviewed and validated before export.",
+      "error": "The export failed. Try again.",
+      "m5Note": "PDF and DOCX export available at milestone M5.",
+      "noSend": "Boussole sends nothing on your behalf: you are the one who delivers this document.",
+      "trackCta": "Create the tracking for this application?",
+      "trackLink": "Track this application"
+    },
+    "diff": {
+      "title": "Proposed changes",
+      "note": "Your original profile is not modified.",
+      "emphasized": "Emphasized",
+      "reworded": "Rephrased",
+      "removed": "Removed from the variant",
+      "before": "Original text",
+      "after": "Proposed text",
+      "nearIdentical": "Your current CV already covers this job well — few changes proposed."
+    },
+    "list": {
+      "title": "My documents",
+      "intro": "All your generated content — letters, emails and CV variants. Every document must be reviewed and validated before export.",
+      "typeFilterLabel": "Document type",
+      "allTypes": "All types",
+      "statusFilterLabel": "Status",
+      "allStatuses": "All statuses",
+      "resultsCount": "{count, plural, =0 {No documents displayed} one {# document displayed} other {# documents displayed}}",
+      "loading": "Loading documents…",
+      "errorTitle": "Unable to load your documents.",
+      "retry": "Try again",
+      "emptyTitle": "No generated documents yet.",
+      "emptyDescription": "Start a generation from a job's detail page (“Write a letter”, “Write an email”, “Tailor my CV”) or from your profile (“Optimize my CV”).",
+      "loadMore": "Load more documents",
+      "createdOn": "Created on {date}"
+    }
+  },
+  "applications": {
+    "title": "Applications",
+    "intro": "Track your applications, internal or external. The “sent” state is always declared by you: Boussole never sends an application on your behalf.",
+    "documentsLink": "My documents",
+    "add": "Add an application",
+    "loading": "Loading applications…",
+    "errorTitle": "Unable to load your applications.",
+    "retry": "Try again",
+    "loadMore": "Load more applications",
+    "emptyTitle": "No tracked applications yet.",
+    "emptyDescription": "Create a tracking from a job (“Track my application”) or add an external application.",
+    "sectionCount": "{count, plural, one {# application} other {# applications}}",
+    "status": {
+      "draft": "Draft",
+      "to_apply": "To send",
+      "applied": "Sent",
+      "interviewing": "Interviewing",
+      "offer": "Offer received",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "card": {
+      "linkedJob": "Linked job",
+      "viewJob": "View the job",
+      "viewExternal": "View the posting (external link)",
+      "lastEvent": "Last event: {date}",
+      "statusLabel": "Status of the application {name}",
+      "statusUpdated": "Status updated: {status}",
+      "transitionRejected": "This status change is not allowed from “{status}”.",
+      "actionError": "The action could not be saved. Try again.",
+      "detailsToggle": "History and notes",
+      "withdrawnLocked": "A withdrawn application can no longer change status."
+    },
+    "timeline": {
+      "title": "Status history",
+      "empty": "No events yet.",
+      "transition": "{from} → {to}",
+      "initial": "Created with status {to}"
+    },
+    "notes": {
+      "label": "Notes",
+      "empty": "No notes.",
+      "edit": "Edit the notes",
+      "save": "Save the notes",
+      "cancel": "Cancel",
+      "saved": "Notes saved.",
+      "error": "Saving the notes failed. Try again."
+    },
+    "delete": {
+      "cta": "Delete this tracking",
+      "confirmBody": "Delete this tracking? The history of this application will be permanently erased. The associated generated documents will not be deleted.",
+      "confirm": "Delete permanently",
+      "cancel": "Cancel",
+      "deleted": "Application tracking deleted.",
+      "error": "The deletion failed. Try again."
+    },
+    "form": {
+      "title": "Add an external application",
+      "titleTracked": "Track my application",
+      "linkedJobNote": "This application will be linked to the job: {title}",
+      "linkedJobNoteNoTitle": "This application will be linked to the selected job.",
+      "externalTitleLabel": "Job title",
+      "externalCompanyLabel": "Company",
+      "externalUrlLabel": "Posting URL (optional)",
+      "notesLabel": "Notes (optional)",
+      "statusLabel": "Initial status",
+      "submit": "Create the tracking",
+      "cancel": "Cancel",
+      "duplicate": "You are already tracking an application for this job.",
+      "created": "Application added to the tracking.",
+      "error": "The creation failed. Try again.",
+      "urlInvalid": "Enter a valid URL (https://…)."
+    }
+  },
   "dashboard": {
+    "applications": {
+      "title": "Applications in progress",
+      "loading": "Loading your applications…",
+      "errorTitle": "Unable to load your applications.",
+      "retry": "Try again",
+      "empty": "No tracked applications yet.",
+      "seeAll": "See all my applications"
+    },
+    "cv": {
+      "title": "My CV",
+      "loading": "Checking your CV…",
+      "errorTitle": "Unable to check the state of your CV.",
+      "retry": "Try again",
+      "imported": "CV imported — your profile relies on its extracted information.",
+      "notImported": "No CV imported yet. Import it to pre-fill your profile.",
+      "importLink": "Import my CV",
+      "reimportLink": "Re-import a CV"
+    },
     "topMatches": {
       "title": "Best matches",
       "loading": "Loading your matches…",
@@ -400,11 +690,59 @@
       "seeAll": "See all jobs sorted by compatibility"
     }
   },
+  "settings": {
+    "title": "Settings",
+    "data": {
+      "title": "My data",
+      "archiveNote": "The archive contains all your data in JSON format: profile, imported CVs, preferences, applications and generated documents.",
+      "exportCta": "Export my data",
+      "preparing": "Export in preparation… This page updates automatically.",
+      "readyTitle": "Your export is ready",
+      "downloadCta": "Download my export (JSON)",
+      "validity": "Download link valid for {days} days.",
+      "expiredTitle": "Export link expired",
+      "expiredBody": "The download link has expired (7 days). You can request a new export.",
+      "requestAgainCta": "Request a new export",
+      "quotaReached": "Limit of {limit} exports per day reached. Try again from {time}."
+    },
+    "sources": {
+      "title": "Sources and transparency",
+      "reminder": "Boussole queries {count, plural, one {# identified job source} other {# identified job sources}} — not “the whole web”. Every job keeps a link to its original posting.",
+      "kind": {
+        "public_api": "Public API",
+        "ats_feed": "ATS feed",
+        "partner": "Partner"
+      },
+      "lastSync": "last synced {date}",
+      "lastSyncUnknown": "last sync unknown",
+      "loadError": "Unable to load the list of sources. Try again.",
+      "policyLink": "Privacy policy"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "Deletion deactivates your account immediately and permanently erases your data — profile, imported CVs, preferences, applications and history, generated documents and saved jobs — within 30 days.",
+      "exportFirst": "Before you go, you can download a copy of your data.",
+      "deleteCta": "Delete my account",
+      "modal": {
+        "title": "Permanently delete your account?",
+        "body1": "Your account will be deactivated immediately. All your data — profile, imported CVs, preferences, applications and generated documents — will be permanently erased within 30 days, in line with our GDPR commitment. This action is irreversible.",
+        "body2": "Tip: you can first download a copy of your data from “Privacy & data”.",
+        "body3": "To confirm, enter your password.",
+        "passwordLabel": "Password",
+        "pendingExportWarning": "Your export in progress will be lost if you delete the account now.",
+        "confirm": "Delete my account",
+        "cancel": "Cancel",
+        "success": "Your account has been deleted. Your data will be permanently erased within 30 days.",
+        "errors": {
+          "invalidPassword": "Incorrect password — the deletion was not performed.",
+          "rateLimited": "Too many attempts. Try again in {seconds} seconds."
+        }
+      }
+    }
+  },
   "pages": {
     "dashboard": {
       "title": "Dashboard",
-      "emptyTitle": "Your dashboard is coming soon",
-      "emptyDescription": "Your current best matches, applications to follow up on, and your profile progress will appear here.",
       "exploreJobsTitle": "Explore jobs",
       "exploreJobsDescription": "Search aggregated jobs, filter by contract, remote work or salary, and save the ones worth reviewing."
     },
@@ -412,16 +750,6 @@
       "title": "Jobs",
       "emptyTitle": "Job search is coming soon",
       "emptyDescription": "Search, filters and compatibility scores will appear here. Every job keeps a link to its original posting."
-    },
-    "applications": {
-      "title": "Applications",
-      "emptyTitle": "Application tracking is coming soon",
-      "emptyDescription": "Your applications, internal or external, will be tracked here by status, with history and notes."
-    },
-    "settings": {
-      "title": "Settings",
-      "emptyTitle": "Settings are coming soon",
-      "emptyDescription": "Account and security, privacy and data (GDPR export, deletion), job sources and score calculation method."
     }
   }
 }

@@ -32,6 +32,16 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/parametres", labelKey: "settings", icon: Settings },
 ];
 
+/**
+ * Sous-entrées de la sidebar desktop (M4) : « Mes documents » vit sous
+ * Candidatures (03 : les documents générés sont rattachés au suivi de
+ * candidature — SCR-41 ; bibliothèque `GET /generations`, 03 §5 Q1).
+ * Sur mobile, la page reste accessible depuis l'écran Candidatures.
+ */
+const NAV_SUB_ITEMS: readonly { parentHref: string; href: string; labelKey: "documents" }[] = [
+  { parentHref: "/candidatures", href: "/candidatures/documents", labelKey: "documents" },
+];
+
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -67,6 +77,7 @@ export function MainNav() {
         <ul className="mt-6 flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
             const active = isActive(pathname, href);
+            const subItems = NAV_SUB_ITEMS.filter((sub) => sub.parentHref === href);
             return (
               <li key={href}>
                 <Link
@@ -83,6 +94,30 @@ export function MainNav() {
                   <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
                   {t(labelKey)}
                 </Link>
+                {subItems.length > 0 ? (
+                  <ul className="mt-0.5 flex flex-col gap-0.5">
+                    {subItems.map((sub) => {
+                      const subActive = isActive(pathname, sub.href);
+                      return (
+                        <li key={sub.href}>
+                          <Link
+                            href={sub.href}
+                            aria-current={subActive ? "page" : undefined}
+                            className={clsx(
+                              "flex min-h-11 items-center rounded-md py-2 pl-11 pr-3 text-sm transition-colors",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                              subActive
+                                ? "bg-surface-muted font-medium text-action-primary"
+                                : "text-content-secondary hover:bg-surface-muted hover:text-content",
+                            )}
+                          >
+                            {t(sub.labelKey)}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </li>
             );
           })}
