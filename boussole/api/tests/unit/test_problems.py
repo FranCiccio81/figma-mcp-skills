@@ -1,6 +1,9 @@
 """Tests du format d'erreur RFC 9457 (application/problem+json)."""
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+from app.core.problems import not_implemented_problem, register_problem_handlers
 
 
 class TestProblemFormat:
@@ -37,10 +40,24 @@ class TestProblemFormat:
         for err in body["errors"]:
             assert set(err) == {"field", "code", "message"}
 
-    def test_stub_module_returns_501_problem(self, client: TestClient) -> None:
-        # Les modules non livrés (ici /generations, prévu M4) répondent un 501
-        # documenté, pas un TODO muet. (/profile est implémenté depuis M3.)
-        response = client.get("/api/v1/generations")
+    def test_stub_feature_returns_501_problem(self) -> None:
+        # Les modules/fonctionnalités non livrés répondent un 501 documenté,
+        # pas un TODO muet. Depuis M4/M5 tous les modules du contrat sont
+        # branchés (le /generations testé ici jusqu'au M3 est implémenté) :
+        # le format du 501 est vérifié via le helper ``not_implemented_problem``
+        # — utilisé par les fonctionnalités restantes (ex. export PDF/DOCX,
+        # M5, couvert par tests/unit/generation).
+        app = FastAPI()
+        register_problem_handlers(app)
+
+        @app.get("/stub")
+        async def stub() -> None:
+            raise not_implemented_problem("demo", "M9")
+
+        with TestClient(app) as stub_client:
+            response = stub_client.get("/stub")
         assert response.status_code == 501
+        assert response.headers["content-type"].startswith("application/problem+json")
         body = response.json()
         assert body["type"] == "https://api.boussole.eu/errors/not_implemented"
+        assert "M9" in body["detail"]

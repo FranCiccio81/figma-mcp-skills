@@ -17,6 +17,16 @@ _DEFAULTS: dict[str, dict[str, Any]] = {
         "languages": [],
         "warnings": ["fake-provider: aucune extraction LLM (M2)"],
     },
+    # « Vide mais valide » : aucun champ extrait — le CV passe à `parsed`
+    # sans proposition (provider réel M5+ 🟡) ; les tests injectent leurs
+    # sorties canned.
+    "extract_cv": {
+        "experiences": [],
+        "educations": [],
+        "skills": [],
+        "languages": [],
+        "warnings": ["fake-provider: aucune extraction LLM (M4)"],
+    },
 }
 
 

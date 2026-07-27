@@ -35,6 +35,10 @@ class ProfilesRepository(Protocol):
         """Persiste les mutations faites sur l'agrégat chargé."""
         ...
 
+    async def delete_by_user(self, user_id: uuid.UUID) -> None:
+        """Supprime le profil et ses sous-ressources (purge RGPD, D21)."""
+        ...
+
 
 class SqlAlchemyProfilesRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -81,6 +85,12 @@ class SqlAlchemyProfilesRepository:
 
     async def commit(self) -> None:
         await self._session.commit()
+
+    async def delete_by_user(self, user_id: uuid.UUID) -> None:
+        profile = await self.get_by_user(user_id)
+        if profile is not None:
+            await self._session.delete(profile)
+            await self._session.commit()
 
 
 async def get_profiles_repository(
