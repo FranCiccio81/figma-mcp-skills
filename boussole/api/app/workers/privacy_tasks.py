@@ -3,17 +3,13 @@
 - ``maintenance.privacy_export(export_id)`` : assemble l'archive RGPD en
   agrégeant les ``export_user()`` du registre déclaratif ;
 - ``maintenance.purge_due_accounts()`` : purge les comptes dont la demande de
-  suppression est échue (``purge_after`` ≤ now) — à planifier QUOTIDIENNE.
+  suppression est échue (``purge_after`` ≤ now) — planifiée QUOTIDIENNE ;
+- ``maintenance.purge_expired_exports()`` : ménage des archives d'export dont
+  le lien signé a expiré (objet + ligne) — planifiée QUOTIDIENNE.
 
-Intégration coordinateur (ce fichier ne modifie PAS ``celery_app.py``) :
-
-1. ajouter ``"app.workers.privacy_tasks"`` aux ``include`` de ``celery_app`` ;
-2. ajouter l'entrée beat (purge quotidienne, D20 : alerte si en retard) ::
-
-       "maintenance-purge-due-accounts": {
-           "task": "maintenance.purge_due_accounts",
-           "schedule": crontab(minute=15, hour=4),
-       },
+Les trois tâches sont enregistrées dans ``celery_app.py`` (``include`` +
+``beat_schedule``) ; l'alerte « purges en retard » (D20) surveille les
+demandes ``pending`` échues.
 
 Boucle d'événements : chaque tâche exécute UNE coroutine via ``asyncio.run``
 sur un moteur dédié ``NullPool`` (:func:`app.core.db.create_worker_engine`),
@@ -32,11 +28,14 @@ from dataclasses import asdict
 from typing import Any
 
 from app.core.db import create_worker_engine, override_engine
+from app.core.storage import get_object_storage
 from app.modules.privacy.export_builder import build_export
 from app.modules.privacy.purge_runner import purge_due_accounts as run_purge_due_accounts
+from app.modules.privacy.purge_runner import (
+    purge_expired_exports as run_purge_expired_exports,
+)
 from app.modules.privacy.registry import DEFAULT_REGISTRY
 from app.modules.privacy.repository import SqlAlchemyPrivacyRepository
-from app.modules.privacy.storage import get_object_storage
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -85,6 +84,24 @@ async def _purge_due_accounts() -> list[dict[str, Any]]:
         await engine.dispose()
 
 
+async def _purge_expired_exports() -> dict[str, Any]:
+    engine = create_worker_engine()
+    try:
+        with override_engine(engine) as factory:
+            async with factory() as session:
+                outcome = await run_purge_expired_exports(
+                    repository=SqlAlchemyPrivacyRepository(session),
+                    storage=get_object_storage(),
+                )
+        return {
+            "deleted_objects": outcome.deleted_objects,
+            "deleted_rows": outcome.deleted_rows,
+            "failed_keys": list(outcome.failed_keys),
+        }
+    finally:
+        await engine.dispose()
+
+
 @celery_app.task(name="maintenance.privacy_export")
 def privacy_export(export_id: str) -> dict[str, Any]:
     """Constitue l'archive d'export RGPD (F-Q, AC-Q-3)."""
@@ -95,3 +112,14 @@ def privacy_export(export_id: str) -> dict[str, Any]:
 def purge_due_accounts() -> list[dict[str, Any]]:
     """Purge les comptes échus (F-Q, AC-Q-2) — idempotente, échec partiel logué."""
     return _run(_purge_due_accounts())
+
+
+@celery_app.task(name="maintenance.purge_expired_exports")
+def purge_expired_exports() -> dict[str, Any]:
+    """Supprime les archives d'export expirées (objet + ligne) — idempotente.
+
+    Le lien signé expire à J+7 mais l'objet, lui, survivait indéfiniment
+    (dump personnel complet conservé sans finalité — D09). Planifiée
+    quotidiennement par beat (``celery_app.beat_schedule``).
+    """
+    return _run(_purge_expired_exports())

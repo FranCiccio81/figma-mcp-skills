@@ -35,6 +35,16 @@ class PrivacyService:
         """
         if user.password_hash is None:
             # Compte OAuth (post-MVP) : pas de mot de passe local — refus.
+            #
+            # TODO(post-MVP, à ne PAS implémenter ici) : un compte sans mot de
+            # passe local est aujourd'hui IMPOSSIBLE à supprimer par son
+            # titulaire — la seule voie de sortie est le support. C'est un
+            # écart RGPD (art. 17) qui devra être fermé EN MÊME TEMPS que
+            # l'ouverture de l'authentification OAuth : réauthentification par
+            # le fournisseur d'identité (ou par e-mail de confirmation signé)
+            # en remplacement de la vérification de mot de passe. Tant qu'aucun
+            # compte OAuth n'existe, la branche est morte — mais elle ne doit
+            # pas être oubliée le jour où OAuth est activé.
             waste_time_like_verify(password)
             return None
         if not verify_password(password, user.password_hash):

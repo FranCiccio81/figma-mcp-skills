@@ -57,6 +57,10 @@ class PrivacyRepository(Protocol):
 
     async def delete_exports_for_user(self, user_id: uuid.UUID) -> None: ...
 
+    async def expired_exports(self, now: datetime) -> list[ExportRecord]: ...
+
+    async def delete_export(self, export_id: uuid.UUID) -> None: ...
+
     # --- suppression de compte ---
     async def execute_account_deletion(
         self, user_id: uuid.UUID, *, now: datetime, purge_after: datetime
@@ -140,6 +144,28 @@ class SqlAlchemyPrivacyRepository:
     async def delete_exports_for_user(self, user_id: uuid.UUID) -> None:
         await self._session.execute(
             delete(PrivacyExport).where(PrivacyExport.user_id == user_id)
+        )
+        await self._session.commit()
+
+    async def expired_exports(self, now: datetime) -> list[ExportRecord]:
+        """Archives dont le lien a expiré (``expires_at`` ≤ now) — M3."""
+        rows = (
+            (
+                await self._session.execute(
+                    select(PrivacyExport).where(
+                        PrivacyExport.expires_at.is_not(None),
+                        PrivacyExport.expires_at <= now,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [_export_record(row) for row in rows]
+
+    async def delete_export(self, export_id: uuid.UUID) -> None:
+        await self._session.execute(
+            delete(PrivacyExport).where(PrivacyExport.id == export_id)
         )
         await self._session.commit()
 

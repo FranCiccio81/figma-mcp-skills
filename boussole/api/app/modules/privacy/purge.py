@@ -11,20 +11,28 @@ import uuid
 from typing import Any
 
 from app.core.db import get_session_factory
+from app.core.storage import get_object_storage
 from app.modules.privacy.repository import SqlAlchemyPrivacyRepository
-from app.modules.privacy.storage import get_object_storage
 
 
 async def purge_user(user_id: uuid.UUID) -> None:
-    """Supprime les archives d'export (objets + lignes) de l'utilisateur."""
+    """Supprime les archives d'export (objets + lignes) de l'utilisateur.
+
+    Les lignes ``privacy_exports`` sont supprimées MÊME si un objet manque au
+    stockage : une archive absente ne doit jamais laisser la trace de l'export
+    survivre à la suppression du compte (``ObjectStorage.delete`` est
+    idempotent par contrat, mais un backend distant peut échouer).
+    """
     factory = get_session_factory()
     async with factory() as session:
         repository = SqlAlchemyPrivacyRepository(session)
         storage = get_object_storage()
-        for export in await repository.list_exports_for_user(user_id):
-            if export.file_key:
-                await storage.delete(export.file_key)
-        await repository.delete_exports_for_user(user_id)
+        try:
+            for export in await repository.list_exports_for_user(user_id):
+                if export.file_key:
+                    storage.delete(export.file_key)
+        finally:
+            await repository.delete_exports_for_user(user_id)
 
 
 async def export_user(user_id: uuid.UUID) -> dict[str, Any]:

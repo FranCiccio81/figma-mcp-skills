@@ -1,9 +1,17 @@
 """Constitution de l'archive d'export RGPD (art. 20) — exécutée par le worker.
 
 Agrège les ``export_user()`` de tous les modules du registre (D21) en UNE
-archive JSON, stockée via ObjectStorage. Un module défaillant (p. ex. encore
-en chantier) est journalisé et listé dans ``incomplete_modules`` — jamais
-d'échec silencieux, jamais d'échec global pour un module manquant.
+archive JSON, stockée via ObjectStorage (contrat SYNCHRONE de
+``app/core/storage.py``). Un module défaillant (p. ex. encore en chantier)
+est journalisé et listé dans ``incomplete_modules`` — jamais d'échec
+silencieux, jamais d'échec global pour un module manquant.
+
+TODO(M5+, arbitrage produit à confirmer) — fichiers CV binaires : l'archive
+ne contient QUE les données structurées extraites des CV (``profiles``), pas
+les fichiers d'origine (PDF/DOCX) stockés en objet. L'art. 20 vise les
+données fournies par la personne : les fichiers déposés en font partie et
+devraient à terme être joints (archive ZIP au lieu d'un JSON). Décision à
+acter avec le produit/DPO avant M5 — l'écart est ici EXPLICITE, pas oublié.
 """
 
 import json
@@ -12,10 +20,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
+from app.core.storage import ObjectStorage
 from app.modules.privacy.registry import PurgeRegistry
 from app.modules.privacy.repository import PrivacyRepository
 from app.modules.privacy.signing import EXPORT_LINK_TTL_DAYS
-from app.modules.privacy.storage import ObjectStorage
 
 logger = logging.getLogger("boussole.privacy")
 
@@ -78,7 +86,8 @@ async def build_export(
         archive["incomplete_modules"] = incomplete
 
     file_key = export_file_key(record.user_id, record.id)
-    await storage.put(file_key, json.dumps(archive, ensure_ascii=False).encode())
+    # ``ObjectStorage`` (app/core/storage.py) est SYNCHRONE : aucun await ici.
+    storage.put(file_key, json.dumps(archive, ensure_ascii=False).encode())
     expires_at = now + timedelta(days=EXPORT_LINK_TTL_DAYS)
     await repository.mark_export_ready(record.id, file_key, expires_at)
     await repository.add_audit(

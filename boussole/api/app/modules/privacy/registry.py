@@ -76,6 +76,13 @@ class PurgeRegistry:
 #: « jobs » inclut les offres sauvegardées (saved_jobs). Le module privacy
 #: lui-même n'y figure pas : ses propres données (privacy_exports) sont
 #: purgées directement par l'orchestrateur (purge_runner).
+#:
+#: TODO(M5+, à ne PAS ajouter avant que la table existe) : ``ai_calls``
+#: (journal des appels LLM — coût, latence, tokens, rattaché à un user_id)
+#: n'est PAS dans ce registre parce que la table n'est pas encore écrite.
+#: Dès que le module IA la crée, elle doit être ajoutée ici ET dans
+#: ``EXPECTED_MODULES`` (tests/unit/privacy/test_registry.py) : sans quoi les
+#: traces d'appels IA d'un utilisateur survivraient à la purge de son compte.
 DATA_MODULE_NAMES: tuple[str, ...] = (
     "auth",
     "profiles",

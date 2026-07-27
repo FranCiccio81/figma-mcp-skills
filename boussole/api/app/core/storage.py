@@ -10,6 +10,16 @@ clé opaque (``cv/{user_id}/{doc_id}/…``). Deux implémentations :
 
 Les clés sont validées contre la traversée de répertoires : une clé est une
 suite de segments ``[A-Za-z0-9._-]`` séparés par ``/`` (jamais ``..``).
+
+⚠️ TODO(M5+) — BLOQUANT DÉPLOIEMENT : tant que :class:`S3ObjectStorage` est
+un stub, le SEUL backend utilisable est :class:`LocalDiskStorage`, dont la
+racine est un répertoire LOCAL au conteneur. En conséquence **F-Q (export
+RGPD) n'est PAS déployable en multi-conteneur** : le worker Celery écrit
+l'archive sur SON disque, l'API la relit depuis le SIEN → tout téléchargement
+répond 404. Le déploiement M5 exige soit un volume partagé entre API et
+workers, soit — cible — :class:`S3ObjectStorage` branché sur le bucket UE
+(SSE, versionnement, D09). Ce n'est pas un détail de confort : c'est la
+condition d'existence de la fonctionnalité en production.
 """
 
 import re
@@ -93,6 +103,10 @@ class S3ObjectStorage:
     versionnement — D09) sera branché au jalon M5 avec un client S3
     (aioboto3/minio 🟡). D'ici là toute utilisation échoue explicitement :
     aucun TODO silencieux.
+
+    Rappel du blocage déploiement décrit en tête de module : sans cette classe
+    (ou un volume partagé), les archives d'export écrites par les workers sont
+    invisibles de l'API. Voir aussi ``app/modules/privacy/export_builder.py``.
     """
 
     def put(self, key: str, data: bytes) -> None:

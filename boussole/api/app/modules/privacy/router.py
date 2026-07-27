@@ -23,6 +23,7 @@ from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import get_redis_cache, get_redis_persistent
 from app.core.security import SessionStore
+from app.core.storage import ObjectNotFoundError, ObjectStorage, get_object_storage
 from app.modules.auth.models import User
 from app.modules.auth.router import get_session_store, require_current_user
 from app.modules.privacy.repository import (
@@ -38,7 +39,6 @@ from app.modules.privacy.schemas import (
 )
 from app.modules.privacy.service import PrivacyService
 from app.modules.privacy.signing import make_download_url, verify_export_signature
-from app.modules.privacy.storage import ObjectStorage, get_object_storage
 
 logger = logging.getLogger("boussole.privacy")
 
@@ -49,6 +49,12 @@ EXPORT_DAILY_LIMIT = 2
 EXPORT_QUOTA_WINDOW_SECONDS = 24 * 3600
 #: TTL du rejeu idempotent (aligné sur la fenêtre de quota).
 IDEMPOTENCY_TTL_SECONDS = 24 * 3600
+
+#: Limite dédiée de DELETE /account (M4) — 5 tentatives/heure par utilisateur.
+#: Le middleware global ne suffit pas : il est contournable et fail-OPEN, ce
+#: qui laissait la route jouer les oracles de mot de passe (401 vs 204).
+ACCOUNT_DELETE_LIMIT = 5
+ACCOUNT_DELETE_WINDOW_SECONDS = 3600
 
 EnqueueExport = Callable[[uuid.UUID], None]
 
@@ -115,13 +121,40 @@ async def request_export(
                     id=record.id, status=_effective_status(record, datetime.now(UTC))
                 )
 
+    # Quota RGPD sur le Redis VOLATILE (allkeys-lru, D17) : sous pression
+    # mémoire, la clé de quota peut être ÉVINCÉE avant la fin des 24 h — le
+    # quota est alors réinitialisé prématurément (risque accepté et documenté,
+    # à déplacer sur le Redis persistant si l'abus devient réel 🟡).
+    #
+    # Choix fail-CLOSED (écart ASSUMÉ à D18, qui prescrit le fail-open pour le
+    # rate limiting best-effort) : ici le compteur n'est pas une protection
+    # anti-abus mais un QUOTA RGPD garantissant qu'un utilisateur ne peut pas
+    # déclencher des dumps personnels complets en boucle. Redis indisponible →
+    # aucun quota vérifiable → on refuse proprement (503, réessayable) plutôt
+    # que d'ouvrir une fabrique d'archives non plafonnée.
     limiter = FixedWindowRateLimiter(cache)
-    result = await limiter.hit(
-        "privacy_export",
-        str(user.id),
-        limit=EXPORT_DAILY_LIMIT,
-        window_seconds=EXPORT_QUOTA_WINDOW_SECONDS,
-    )
+    try:
+        result = await limiter.hit(
+            "privacy_export",
+            str(user.id),
+            limit=EXPORT_DAILY_LIMIT,
+            window_seconds=EXPORT_QUOTA_WINDOW_SECONDS,
+        )
+    except Exception as exc:
+        logger.error(
+            "privacy_export_quota_unavailable",
+            extra={"detail": "Redis volatile indisponible — refus fail-closed"},
+        )
+        raise Problem(
+            status=503,
+            code="service_unavailable",
+            title="Service temporairement indisponible",
+            detail=(
+                "Le quota d'exports ne peut pas être vérifié pour le moment. "
+                "Réessayez dans quelques instants."
+            ),
+            headers={"Retry-After": "60"},
+        ) from exc
     if not result.allowed:
         raise Problem(
             status=429,
@@ -189,9 +222,19 @@ async def download_export(
             title="Lien d'export expiré",
             detail="Le lien de téléchargement a expiré (7 jours). Demandez un nouvel export.",
         )
-    data = await storage.get(record.file_key) if record.file_key else None
-    if data is None:
+    if not record.file_key:
         raise Problem(**_NOT_FOUND)  # type: ignore[arg-type]
+    # ``ObjectStorage`` (app/core/storage.py) est SYNCHRONE et signale l'absence
+    # par ``ObjectNotFoundError`` — jamais par ``None``.
+    try:
+        data = storage.get(record.file_key)
+    except ObjectNotFoundError:
+        # Archive absente (purgée, ou jamais écrite) → 404, sans oracle.
+        logger.warning(
+            "privacy_export_object_missing",
+            extra={"detail": f"export={record.id} key={record.file_key}"},
+        )
+        raise Problem(**_NOT_FOUND) from None  # type: ignore[arg-type]
     await repository.add_audit(
         user.id, "data_export_downloaded", entity="privacy_export", entity_id=record.id
     )
@@ -210,11 +253,64 @@ async def delete_account(
     user: User = Depends(require_current_user),
     repository: PrivacyRepository = Depends(get_privacy_repository),
     sessions: SessionStore = Depends(get_session_store),
+    cache: Redis = Depends(get_redis_cache),
 ) -> Response:
-    """Supprime le compte : soft delete immédiat, purge sous 30 jours (D09)."""
+    """Supprime le compte : soft delete immédiat, purge sous 30 jours (D09).
+
+    Limiteur DÉDIÉ 5/h par ``user_id`` (M4) en **fail-closed** : la route
+    vérifie un mot de passe et distingue 401 / 204, c'est donc un oracle de
+    mot de passe pour quiconque a volé un cookie de session. Le middleware
+    global ne la protège pas (identité contournable, fail-open D18) : si le
+    compteur est indisponible, on REFUSE (503) plutôt que d'ouvrir un oracle
+    non plafonné — écart à D18 assumé, cohérent avec le quota d'export.
+    """
+    limiter = FixedWindowRateLimiter(cache)
+    try:
+        attempt = await limiter.hit(
+            "account_delete",
+            str(user.id),
+            limit=ACCOUNT_DELETE_LIMIT,
+            window_seconds=ACCOUNT_DELETE_WINDOW_SECONDS,
+        )
+    except Exception as exc:
+        logger.error(
+            "account_delete_rate_limit_unavailable",
+            extra={"detail": "Redis volatile indisponible — refus fail-closed"},
+        )
+        raise Problem(
+            status=503,
+            code="service_unavailable",
+            title="Service temporairement indisponible",
+            detail=(
+                "La suppression de compte est momentanément indisponible. "
+                "Réessayez dans quelques instants."
+            ),
+            headers={"Retry-After": "60"},
+        ) from exc
+    if not attempt.allowed:
+        await repository.add_audit(
+            user.id, "account_deletion_rate_limited", entity="user", entity_id=user.id
+        )
+        raise Problem(
+            status=429,
+            code="rate_limited",
+            title="Trop de tentatives",
+            detail="Trop de tentatives de suppression de compte. Réessayez plus tard.",
+            headers={"Retry-After": str(attempt.retry_after)},
+        )
+
     service = PrivacyService(repository, sessions)
     outcome = await service.delete_account(user, payload.password)
     if outcome is None:
+        # Audit de l'ÉCHEC (M4) : un mot de passe erroné sur cette route est un
+        # signal de compromission de session — il doit être traçable (D20).
+        await repository.add_audit(
+            user.id,
+            "account_deletion_failed",
+            entity="user",
+            entity_id=user.id,
+            meta={"reason": "invalid_password"},
+        )
         raise Problem(
             status=401,
             code="invalid_credentials",

@@ -182,3 +182,26 @@ class TestExportStatus:
 
     def test_sans_session_401(self, client: TestClient) -> None:
         assert client.get(f"/api/v1/privacy/exports/{uuid.uuid4()}").status_code == 401
+
+
+class TestQuotaFailClosed:
+    """Le quota d'export est un quota RGPD : il ne s'ouvre PAS en cas de panne."""
+
+    def test_503_si_le_compteur_est_indisponible(
+        self, client: TestClient, privacy_repository: InMemoryPrivacyRepository
+    ) -> None:
+        from app.core.redis import get_redis_cache
+        from tests.unit.privacy.test_delete_account import BrokenRedis
+
+        register(client)
+        client.app.dependency_overrides[get_redis_cache] = lambda: BrokenRedis()
+
+        response = request_export(client)
+
+        # Écart ASSUMÉ à D18 : sans compteur vérifiable, on refuse plutôt que
+        # d'ouvrir une fabrique de dumps personnels non plafonnée.
+        assert response.status_code == 503
+        assert response.json()["type"].endswith("/service_unavailable")
+        assert response.headers["Retry-After"] == "60"
+        # Aucune demande créée, aucune archive à construire.
+        assert privacy_repository.exports == {}

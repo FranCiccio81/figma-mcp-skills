@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.storage import ObjectNotFoundError
 from app.modules.privacy.registry import ModuleEntry, PurgeRegistry
 from app.modules.privacy.repository import (
     DeletionRecord,
@@ -73,6 +74,14 @@ class InMemoryPrivacyRepository:
     async def delete_exports_for_user(self, user_id: uuid.UUID) -> None:
         for export_id in [i for i, r in self.exports.items() if r.user_id == user_id]:
             del self.exports[export_id]
+
+    async def expired_exports(self, now: datetime) -> list[ExportRecord]:
+        return [
+            r for r in self.exports.values() if r.expires_at is not None and r.expires_at <= now
+        ]
+
+    async def delete_export(self, export_id: uuid.UUID) -> None:
+        self.exports.pop(export_id, None)
 
     # --- suppression de compte ---
     async def execute_account_deletion(
@@ -142,18 +151,29 @@ class InMemoryPrivacyRepository:
 
 
 class FakeStorage:
-    """ObjectStorage en mémoire (put/get/delete)."""
+    """ObjectStorage en mémoire — VRAI contrat de ``app/core/storage.py``.
+
+    Ce fake était ASYNC et retournait ``None`` pour un objet absent : il ne
+    ressemblait à aucun stockage réel et masquait le fait que le code de
+    production ``await``ait un stockage synchrone (TypeError systématique en
+    production, invisible en test). Le contrat est donc reproduit à
+    l'identique : méthodes SYNCHRONES, ``get`` lève ``ObjectNotFoundError``,
+    ``delete`` est idempotent.
+    """
 
     def __init__(self) -> None:
         self.objects: dict[str, bytes] = {}
 
-    async def put(self, key: str, data: bytes) -> None:
+    def put(self, key: str, data: bytes) -> None:
         self.objects[key] = data
 
-    async def get(self, key: str) -> bytes | None:
-        return self.objects.get(key)
+    def get(self, key: str) -> bytes:
+        try:
+            return self.objects[key]
+        except KeyError:
+            raise ObjectNotFoundError(key) from None
 
-    async def delete(self, key: str) -> None:
+    def delete(self, key: str) -> None:
         self.objects.pop(key, None)
 
 
