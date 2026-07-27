@@ -155,30 +155,44 @@ class TestRechercheApi:
         assert len(response.json()["items"]) == 1, "radicalisation anglaise attendue"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "🟡 ANOMALIE RÉELLE constatée en intégration : le trigger désaccentue le "
-        "TEXTE INDEXÉ (unaccent()) mais la REQUÊTE ne l'est pas — "
-        "websearch_to_tsquery('french', 'développeur') produit le lexème accentué "
-        "et ne rencontre jamais 'developpeur'. Un utilisateur francophone qui "
-        "tape ses accents (le cas nominal) ne trouve rien. Correctif attendu : "
-        "unaccent() côté requête dans ts_config_for/build_search_statement, ou "
-        "configuration de recherche dédiée intégrant le dictionnaire unaccent. "
-        "Ce test devient VERT dès le correctif — retirer alors le xfail."
-    ),
-)
-async def test_requete_accentuee_devrait_trouver_l_offre(
+async def test_requete_accentuee_trouve_l_offre(
     db_session: AsyncSession,
 ) -> None:
+    """Régression : le trigger désaccentue le TEXTE INDEXÉ, la requête doit
+    l'être aussi.
+
+    Sans ``unaccent`` côté requête, ``websearch_to_tsquery('french',
+    'développeur')`` produit un lexème accentué qui ne rencontre jamais
+    ``developpeur`` : un francophone tapant ses accents — le cas nominal —
+    ne trouvait rien. Anomalie découverte par cette suite d'intégration.
+    """
     await make_posting(db_session, title="Développeur Sénior", description_text="Python.")
 
     trouvee = await db_session.scalar(
         text(
             "SELECT count(*) FROM job_postings "
-            "WHERE tsv @@ websearch_to_tsquery('french', :q)"
+            "WHERE tsv @@ websearch_to_tsquery('french', unaccent(:q))"
         ),
         {"q": "développeur"},
     )
 
     assert trouvee == 1
+
+
+async def test_recherche_api_avec_accents(
+    api_client: httpx.AsyncClient,
+    authenticated_user: uuid.UUID,
+    db_session: AsyncSession,
+) -> None:
+    """Le même scénario à travers l'API réelle (build_search_statement)."""
+    await make_posting(
+        db_session,
+        title="Développeur Sénior",
+        description_text="Python, FastAPI.",
+    )
+    response = await api_client.get("/api/v1/jobs", params={"q": "développeur"})
+    assert response.status_code == 200, response.text
+    titles = [item["title"] for item in response.json()["items"]]
+    assert any("Développeur" in title for title in titles), (
+        "la recherche accentuée doit remonter l'offre — unaccent des deux côtés"
+    )

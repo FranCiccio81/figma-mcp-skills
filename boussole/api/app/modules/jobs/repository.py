@@ -241,7 +241,14 @@ def build_search_statement(
         conditions.append(or_(saved.state.is_(None), saved.state != "hidden"))
 
     if filters.q:
-        tsquery = func.websearch_to_tsquery(ts_config_for(filters.language), filters.q)
+        # ``unaccent`` DES DEUX CÔTÉS : le trigger de la migration 0001
+        # désaccentue le texte indexé (« développeur » → lexème
+        # ``developpeur``). Sans le même traitement sur la requête, un
+        # francophone qui tape ses accents — le cas nominal — ne trouve
+        # rien. Anomalie détectée par la suite d'intégration.
+        tsquery = func.websearch_to_tsquery(
+            ts_config_for(filters.language), func.unaccent(filters.q)
+        )
         conditions.append(JobPosting.tsv.op("@@")(tsquery))
         rank = func.ts_rank_cd(JobPosting.tsv, tsquery)
     else:
