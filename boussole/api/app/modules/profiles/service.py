@@ -14,8 +14,9 @@ Règles portées ici :
 - le re-scoring asynchrone (RM-C-4) se branchera au M4 — non déclenché ici.
 """
 
+import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, date, datetime, timedelta
 from typing import TypeVar, cast
 
@@ -166,9 +167,41 @@ def _not_found(entity: str) -> Problem:
     )
 
 
+#: Signature d'enfilement de ``ai.embeddings.embed_profile`` (injectable).
+EmbedProfileEnqueuer = Callable[[uuid.UUID], None]
+
+_logger = logging.getLogger(__name__)
+
+
+def _default_embed_enqueuer(profile_id: uuid.UUID) -> None:
+    """Enfile le recalcul d'embedding du profil — best-effort.
+
+    Import tardif : le service ne doit pas dépendre de Celery à l'import
+    (tests unitaires, outillage). Toute erreur est journalisée sans jamais
+    faire échouer la validation — le beat quotidien rattrape les profils
+    dont le vecteur manque.
+    """
+    try:
+        from app.workers.celery_app import celery_app
+
+        celery_app.send_task(
+            "ai.embeddings.embed_profile", args=[str(profile_id)], queue="ai"
+        )
+    except Exception:  # pragma: no cover - dépend de l'infra broker
+        _logger.warning("embed_profile_enqueue_failed", extra={"detail": str(profile_id)})
+
+
 class ProfilesService:
-    def __init__(self, repository: ProfilesRepository) -> None:
+    def __init__(
+        self,
+        repository: ProfilesRepository,
+        embed_enqueuer: EmbedProfileEnqueuer | None = None,
+    ) -> None:
         self._repository = repository
+        # Recalcul de l'embedding du profil à la validation (06 §2.3) : sans
+        # lui, ``title_similarity`` reste inconnue jusqu'au rattrapage
+        # nocturne. Injectable pour les tests (aucun Celery requis).
+        self._embed_enqueuer = embed_enqueuer or _default_embed_enqueuer
 
     # ------------------------------------------------------------ racine
 
@@ -245,6 +278,9 @@ class ProfilesService:
         profile.validated_at = datetime.now(UTC)
         self._bump_version(profile)
         await self._repository.commit()
+        # Après commit : un échec d'enfilement ne doit jamais annuler une
+        # validation réussie (le beat quotidien rattrape).
+        self._embed_enqueuer(profile.id)
         return to_profile_out(profile)
 
     # ------------------------------------------------------------ expériences

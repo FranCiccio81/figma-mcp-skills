@@ -256,8 +256,14 @@ class MatchingService:
         skill_ids = [s.skill_id for s in profile.skills if s.skill_id is not None]
         skill_ids += [s.skill_id for s in job.skills if s.skill_id is not None]
         taxonomy = await self._repository.skill_labels(skill_ids)
+        # Crédit « compétence proche » (06 §2.1) : actif dès que les vecteurs
+        # existent, exact-only sinon — aucune régression quand la table
+        # ``skills`` n'est pas encore vectorisée.
+        skill_vectors = await self._repository.skill_embeddings(skill_ids)
 
-        candidate = candidate_input_from(profile, preferences, taxonomy)
+        candidate = candidate_input_from(
+            profile, preferences, taxonomy, skill_embeddings=skill_vectors or None
+        )
         job_input = job_input_from(
             job, job.skills, job.languages, job.locations, skills_taxonomy=taxonomy
         )

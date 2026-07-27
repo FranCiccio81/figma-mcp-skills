@@ -170,6 +170,7 @@ class InMemoryMatchingRepository:
         self.results: dict[tuple[uuid.UUID, uuid.UUID], MatchResultRow] = {}
         self.saved: dict[tuple[uuid.UUID, uuid.UUID], str] = {}
         self.skills: dict[uuid.UUID, str] = {}
+        self.skill_vectors: dict[uuid.UUID, list[float]] = {}
 
     def add(self, job: JobPosting) -> JobPosting:
         self.jobs[job.id] = job
@@ -192,6 +193,13 @@ class InMemoryMatchingRepository:
 
     async def skill_labels(self, skill_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
         return {sid: self.skills[sid] for sid in skill_ids if sid in self.skills}
+
+    async def skill_embeddings(
+        self, skill_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, list[float]]:
+        """Vecteurs de compétences — vide par défaut (exact-only, comme en
+        production tant que la table ``skills`` n'est pas vectorisée)."""
+        return {sid: self.skill_vectors[sid] for sid in skill_ids if sid in self.skill_vectors}
 
     async def get_cached(
         self, profile_id: uuid.UUID, job_id: uuid.UUID

@@ -3,11 +3,28 @@
 Fonctions pures (aucune E/S) : elles reçoivent des instances ORM déjà
 chargées et rendent les dataclasses ``CandidateInput`` / ``JobInput``.
 
+Embeddings (M4) — activation SANS régression :
+
+- ``title_embedding`` (offre) est lu directement sur ``job_postings.embedding``
+  et ``target_titles_embeddings`` (candidat) sur ``profiles.embedding``,
+  complété par les vecteurs d'intitulés cibles (``preference_titles.embedding``)
+  quand l'appelant les fournit via ``title_embeddings``. Les deux colonnes
+  sont peuplées par ``ai.embeddings.*`` (08 §8) ;
+- **quand un vecteur manque d'un côté, le comportement est EXACTEMENT celui
+  d'avant** : ``title_similarity`` reste inconnue (k=0) et le crédit
+  « proche » reste désactivé (match exact uniquement). Aucune offre ni
+  aucun profil ne change de score tant que les vecteurs n'existent pas ;
+- ``skill_embeddings`` (crédit « proche » 0,5, 06 §2.1, seuil 0,75) est
+  alimenté par le paramètre optionnel ``skill_embeddings`` :
+  ``skill_id`` → vecteur (``skills.embedding``). 🟡 Il n'est pas encore
+  passé par ``MatchingService`` : ``MatchingRepository.skill_labels`` ne
+  rend que les libellés, et ni le service ni son repository ne font partie
+  du périmètre autorisé de ce jalon. Le crédit « proche » est donc
+  IMPLÉMENTÉ et testé ici, mais reste inactif en production tant qu'une
+  méthode ``skill_embeddings()`` n'est pas ajoutée au repository (un
+  argument nommé de plus dans ``_compute_and_store``).
+
 Hypothèses M3 🟡 :
-- aucun embedding n'est encore produit (worker M4) → ``skill_embeddings``,
-  ``target_titles_embeddings`` et ``title_embedding`` restent vides : la
-  dimension ``title_similarity`` est inconnue (k=0) et le crédit « proche »
-  des compétences est désactivé (match exact uniquement) ;
 - labels de compétences : canonique de la taxonomie via ``skill_id`` quand le
   rapprochement existe, sinon ``label_raw`` normalisé (trim — le moteur
   casefold lui-même) ;
@@ -35,6 +52,7 @@ from app.matching.models import (
     Confident,
     JobInput,
     RemotePreference,
+    Vector,
 )
 from app.matching.models import JobLanguage as EngineJobLanguage
 from app.matching.models import JobLocation as EngineJobLocation
@@ -52,6 +70,43 @@ _SUPPORTED_SALARY_PERIODS = ("year", "month")
 #: ``preferences.service.default_preferences``).
 _DEFAULT_REMOTE_PREF = "indifferent"
 _DEFAULT_CONTRACT_TYPES = ("permanent",)
+
+
+def _vector(raw: Sequence[float] | None) -> Vector | None:
+    """Colonne pgvector → tuple de flottants ; ``None`` si absente ou vide.
+
+    ``None`` et vecteur vide sont traités pareil : le moteur les lit comme
+    « donnée absente » (k=0), jamais comme un vecteur nul — un vecteur nul
+    donnerait un cosinus de 0,0 présenté comme un FAIT (« métier très
+    éloigné »), alors que la donnée est simplement manquante.
+    """
+    if raw is None:
+        return None
+    vector = tuple(float(value) for value in raw)
+    return vector or None
+
+
+def _skill_vectors(
+    skills: Sequence[tuple[uuid.UUID | None, str]],
+    taxonomy: Mapping[uuid.UUID, str],
+    embeddings: Mapping[uuid.UUID, Sequence[float]] | None,
+) -> dict[str, Vector]:
+    """``label utilisé par le moteur`` → vecteur, pour les compétences résolues.
+
+    Seules les compétences rapprochées de la taxonomie (``skill_id`` non
+    nul) portent un vecteur : ``skills.embedding`` est indexé par
+    compétence canonique, pas par libellé brut.
+    """
+    if not embeddings:
+        return {}
+    vectors: dict[str, Vector] = {}
+    for skill_id, label_raw in skills:
+        if skill_id is None:
+            continue
+        vector = _vector(embeddings.get(skill_id))
+        if vector is not None:
+            vectors[_skill_label(skill_id, label_raw, taxonomy)] = vector
+    return vectors
 
 
 def _skill_label(
@@ -81,11 +136,19 @@ def candidate_input_from(
     profile: Profile,
     preferences: PreferencesData | None,
     skills_taxonomy: Mapping[uuid.UUID, str],
+    *,
+    title_embeddings: Sequence[Sequence[float]] = (),
+    skill_embeddings: Mapping[uuid.UUID, Sequence[float]] | None = None,
 ) -> CandidateInput:
     """Construit l'entrée candidat du moteur depuis le profil validé + préférences.
 
     ``skills_taxonomy`` : ``skill_id`` → label canonique (table ``skills``).
-    Embeddings absents au M3 🟡 (voir docstring du module).
+    ``title_embeddings`` : vecteurs des intitulés cibles
+    (``preference_titles.embedding``) — 06 §2.3 prend le MAX des cosinus, un
+    vecteur par intitulé est donc plus fidèle que le vecteur agrégé du
+    profil ; les deux sont cumulés quand ils existent.
+    ``skill_embeddings`` : ``skill_id`` → ``skills.embedding`` (crédit
+    « proche » 0,5). Omis → match exact uniquement, comme avant.
     """
     skills = _dedupe(
         [
@@ -124,8 +187,24 @@ def candidate_input_from(
         target_companies = frozenset(preferences.target_companies)
         keywords = tuple(preferences.keywords)
 
+    # 06 §2.3 : max des cosinus sur les intitulés du candidat. On cumule les
+    # vecteurs par intitulé cible (les plus fidèles) et le vecteur agrégé du
+    # profil (intitulés cibles + occupés). Vide → k=0, comme avant.
+    candidate_titles = [
+        vector for vector in (_vector(raw) for raw in title_embeddings) if vector is not None
+    ]
+    profile_vector = _vector(profile.embedding)
+    if profile_vector is not None:
+        candidate_titles.append(profile_vector)
+
     return CandidateInput(
         skills=skills,
+        skill_embeddings=_skill_vectors(
+            [(skill.skill_id, skill.label_raw) for skill in profile.skills],
+            skills_taxonomy,
+            skill_embeddings,
+        ),
+        target_titles_embeddings=tuple(candidate_titles),
         seniority=profile.seniority,
         total_experience_years=(
             None
@@ -161,12 +240,18 @@ def job_input_from(
     job_languages: Sequence[JobLanguage],
     job_locations: Sequence[JobLocation],
     skills_taxonomy: Mapping[uuid.UUID, str] | None = None,
+    *,
+    skill_embeddings: Mapping[uuid.UUID, Sequence[float]] | None = None,
 ) -> JobInput:
     """Construit l'entrée offre du moteur — chaque champ extrait porte sa confiance.
 
     Les confiances proviennent des colonnes ``*_conf`` (item par item pour les
     compétences et langues) ; les champs sans colonne de confiance dans le
     schéma valent 1,0 🟡 (voir docstring du module).
+
+    ``title_embedding`` est lu sur ``job_postings.embedding`` (« intitulé +
+    1er paragraphe », 06 §2.3) : absent → ``title_similarity`` inconnue
+    (k=0), exactement comme avant les embeddings.
     """
     taxonomy: Mapping[uuid.UUID, str] = skills_taxonomy or {}
 
@@ -206,6 +291,12 @@ def job_input_from(
     return JobInput(
         skills_required=skills_required,
         skills_nice=skills_nice,
+        skill_embeddings=_skill_vectors(
+            [(skill.skill_id, skill.label_raw) for skill in job_skills],
+            taxonomy,
+            skill_embeddings,
+        ),
+        title_embedding=_vector(job_posting.embedding),
         seniority=_confident(job_posting.seniority, job_posting.seniority_conf),
         experience_min=(
             None if job_posting.experience_min is None else float(job_posting.experience_min)

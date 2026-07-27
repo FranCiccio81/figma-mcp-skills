@@ -42,6 +42,16 @@ class MatchingRepository(Protocol):
         """``skill_id`` → label canonique (table ``skills``)."""
         ...
 
+    async def skill_embeddings(
+        self, skill_ids: Sequence[uuid.UUID]
+    ) -> dict[uuid.UUID, list[float]]:
+        """``skill_id`` → ``skills.embedding`` (crédit « proche » 0,5, 06 §2.1).
+
+        Seules les compétences réellement vectorisées sont retournées : sans
+        vecteur, le moteur retombe sur le match exact (aucune régression).
+        """
+        ...
+
     async def get_cached(
         self, profile_id: uuid.UUID, job_id: uuid.UUID
     ) -> MatchResultRow | None: ...
@@ -114,6 +124,18 @@ class SqlAlchemyMatchingRepository:
             return {}
         stmt = select(Skill.id, Skill.canonical_label).where(Skill.id.in_(list(skill_ids)))
         return {row.id: row.canonical_label for row in await self._session.execute(stmt)}
+
+    async def skill_embeddings(
+        self, skill_ids: Sequence[uuid.UUID]
+    ) -> dict[uuid.UUID, list[float]]:
+        if not skill_ids:
+            return {}
+        stmt = select(Skill.id, Skill.embedding).where(
+            Skill.id.in_(list(skill_ids)), Skill.embedding.is_not(None)
+        )
+        return {
+            row.id: list(row.embedding) for row in await self._session.execute(stmt)
+        }
 
     async def get_cached(
         self, profile_id: uuid.UUID, job_id: uuid.UUID

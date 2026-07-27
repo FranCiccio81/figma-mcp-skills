@@ -6,21 +6,30 @@ Pipeline (décision D07) :
 2. full-text PostgreSQL ``websearch_to_tsquery`` sur ``job_postings.tsv``
    (config 'french' par défaut 🟡, 'english' si l'offre est filtrée en
    anglais) avec classement ``ts_rank_cd`` ;
-3. rerank vectoriel pgvector : STUB au M2 (🟡 voir ``rerank_with_embeddings``) ;
+3. rerank vectoriel : combinaison du rang full-text et du cosinus entre
+   l'embedding de la requête et ``job_postings.embedding``, pondération
+   configurable (🟡 Q41) — voir ``rerank_with_embeddings`` ;
 4. tri final par score de matching : jalon M3 (``sort=match`` retombe sur
    ``relevance`` — documenté dans le service).
 
 Pagination : curseur opaque base64 encodant un tuple keyset
 ``(sort_value, id)`` — jamais d'OFFSET (résultats mouvants, §1 des contrats).
+Le rerank de l'étape 3 est conçu pour ne PAS l'altérer : il réordonne à
+l'intérieur d'une page sans toucher ni à sa composition ni à la borne du
+curseur (démonstration dans ``rerank_with_embeddings``).
 
 Le protocole ``JobsRepository`` permet de substituer une implémentation en
 mémoire dans les tests unitaires (pas de PostgreSQL requis).
 """
 
+import asyncio
 import base64
 import binascii
 import json
+import logging
+import math
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
@@ -43,8 +52,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
+from app.ai.embeddings.base import EmbeddingError, EmbeddingProvider
+from app.ai.embeddings.factory import get_embedding_provider
+from app.core.config import Settings, get_settings
 from app.core.db import get_db_session
 from app.modules.jobs.models import JobLocation, JobPosting, JobSource, SavedJob, Source
+
+logger = logging.getLogger(__name__)
 
 EARTH_RADIUS_KM = 6371.0
 
@@ -281,16 +295,176 @@ def build_search_statement(
     )
 
 
-def rerank_with_embeddings(rows: list[JobSearchRow]) -> list[JobSearchRow]:
-    """Étape 3 du pipeline D07 (rerank vectoriel pgvector) — STUB M2 🟡.
+# ------------------------------------------------------- rerank vectoriel D07
 
-    ``job_postings.embedding`` n'est pas peuplé au M2 (le worker d'embedding
-    arrive avec le module IA, M3) : la fonction retourne les lignes inchangées.
-    Elle matérialise l'étape du pipeline pour que le branchement M3 soit un
-    remplacement local (similarité cosinus sur les ``limit×k`` premiers
-    candidats full-text) sans toucher au service ni au routeur.
+
+@dataclass(frozen=True, slots=True)
+class RerankWeights:
+    """Pondération rang full-text / cosinus — **Q41** 🟡 (« 50/50 normalisé »).
+
+    Les deux poids sont renormalisés à somme 1 : seule leur PROPORTION
+    compte, ce qui rend la calibration en alpha indépendante de l'échelle.
     """
-    return rows
+
+    fulltext: float = 0.5
+    vector: float = 0.5
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "RerankWeights":
+        return cls(
+            fulltext=float(settings.search_rerank_fulltext_weight),
+            vector=float(settings.search_rerank_vector_weight),
+        )
+
+    def normalized(self) -> tuple[float, float]:
+        total = self.fulltext + self.vector
+        if total <= 0:
+            return (1.0, 0.0)  # garde-fou : rerank neutre
+        return (self.fulltext / total, self.vector / total)
+
+
+def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
+    """Cosinus borné [-1, 1] ; 0,0 si dimensions incompatibles ou norme nulle."""
+    if len(a) != len(b) or not a:
+        return 0.0
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def _min_max(values: Sequence[float]) -> list[float]:
+    """Normalise en [0, 1] ; tout à 0,5 si toutes les valeurs sont égales."""
+    if not values:
+        return []
+    low, high = min(values), max(values)
+    if high - low <= 0:
+        return [0.5] * len(values)
+    return [(value - low) / (high - low) for value in values]
+
+
+def rerank_with_embeddings(
+    rows: list[JobSearchRow],
+    *,
+    limit: int | None = None,
+    query_embedding: Sequence[float] | None = None,
+    weights: RerankWeights | None = None,
+) -> list[JobSearchRow]:
+    """Étape 3 du pipeline D07 — re-ranking hybride full-text + cosinus.
+
+    Score combiné, par ligne de la page :
+
+    ``w_ft × rang_fulltext_normalisé + w_vec × cosinus_normalisé``
+
+    où le rang full-text (``ts_rank_cd``, porté par ``sort_value``) et le
+    cosinus (``job_postings.embedding`` vs embedding de la requête) sont
+    tous deux min-max normalisés SUR LA PAGE. Pondération configurable
+    (**Q41** 🟡, 50/50 par défaut).
+
+    **Compatibilité avec la pagination keyset — garantie forte.** Le
+    rerank ne change QUE l'ordre à l'intérieur d'une page ; il ne change
+    jamais quelles lignes composent la page (c'est le SQL, ordonné par
+    ``(ts_rank_cd DESC, id DESC)``, qui en décide) et il ne touche à aucun
+    ``sort_value``. De plus, quand une page suivante existe, la DERNIÈRE
+    ligne servie est ÉPINGLÉE à sa place : c'est elle qui produit le
+    curseur (``encode_cursor(sort, last.sort_value, last.posting.id)`` côté
+    service), et comme le SQL rend les lignes par tuple keyset
+    décroissant, c'est exactement la borne minimale de la page. Le curseur
+    émis est donc bit pour bit celui d'avant le rerank : **ni doublon, ni
+    ligne sautée, ni curseur incohérent**. Quand la page est terminale
+    (aucun curseur émis), toutes les lignes servies sont réordonnées.
+
+    **Limite assumée 🟡** : le rerank est donc LOCAL À LA PAGE — une offre
+    très pertinente au cosinus mais mal classée en full-text ne remonte
+    pas d'une page à l'autre. Un rerank global exigerait de trier
+    entièrement le résultat avant pagination (donc un OFFSET ou un
+    curseur portant le score combiné, recalculé à chaque requête et
+    invalidé au moindre re-embedding) : incompatible avec le keyset des
+    contrats §1. Ce compromis est préférable à une pagination incohérente.
+
+    Neutre (lignes rendues inchangées) si : pas d'embedding de requête,
+    moins de deux lignes réordonnables, ou aucune offre de la page ne
+    porte de vecteur.
+    """
+    if query_embedding is None or len(query_embedding) == 0 or len(rows) < 2:
+        return rows
+    ranks: list[float] = []
+    for row in rows:
+        if isinstance(row.sort_value, datetime):
+            # Tri chronologique explicite : l'utilisateur a demandé un ordre,
+            # on ne le réordonne pas (le rerank D07 ne vaut qu'en pertinence).
+            return rows
+        ranks.append(float(row.sort_value))
+
+    served = len(rows) if limit is None else min(limit, len(rows))
+    has_next_page = limit is not None and len(rows) > limit
+    # Épinglage de la borne keyset : voir docstring.
+    window_end = served - 1 if has_next_page else served
+    window = rows[:window_end]
+    if len(window) < 2:
+        return rows
+
+    cosines = [
+        _cosine(query_embedding, row.posting.embedding)
+        if row.posting.embedding is not None
+        else None
+        for row in window
+    ]
+    observed = [value for value in cosines if value is not None]
+    if not observed:
+        return rows  # aucune offre embarquée : rerank sans objet
+    # « L'inconnu n'est pas un fait négatif » : une offre sans vecteur prend
+    # le cosinus MOYEN de la page — elle n'est ni promue ni reléguée.
+    neutral = sum(observed) / len(observed)
+    filled = [neutral if value is None else value for value in cosines]
+
+    w_fulltext, w_vector = (weights or RerankWeights()).normalized()
+    rank_norm = _min_max(ranks[:window_end])
+    cosine_norm = _min_max(filled)
+    scored = [
+        (w_fulltext * rank + w_vector * cosine, index)
+        for index, (rank, cosine) in enumerate(zip(rank_norm, cosine_norm, strict=True))
+    ]
+    # Tri stable, départage par rang full-text d'origine (index croissant).
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [window[index] for _, index in scored] + rows[window_end:]
+
+
+async def _query_embedding(
+    filters: SearchFilters,
+    settings: Settings,
+    provider: EmbeddingProvider | None = None,
+) -> list[float] | None:
+    """Embedding du texte de recherche — ``None`` = rerank neutre.
+
+    Conditions cumulatives (toute autre situation rend ``None``) :
+
+    - ``SEARCH_RERANK_ENABLED`` (coupe-circuit d'exploitation : la cible
+      p95 < 500 ms de D06 prime sur la pertinence) ;
+    - une requête ``q`` non vide ;
+    - un tri par ``relevance`` — en tri ``date``, l'ordre demandé par
+      l'utilisateur n'est jamais réarrangé.
+
+    L'appel provider passe par ``asyncio.to_thread`` : le provider local
+    est du calcul pur, mais un fournisseur managé (Q11) ferait un appel
+    réseau BLOQUANT dans la boucle d'événements. Toute erreur dégrade
+    silencieusement vers un rerank neutre — jamais une recherche en échec.
+    """
+    if not settings.search_rerank_enabled or not filters.q or filters.sort != "relevance":
+        return None
+    embedder = provider
+    try:
+        if embedder is None:
+            embedder = get_embedding_provider(settings)
+        vectors = await asyncio.to_thread(embedder.embed_texts, [filters.q])
+    except EmbeddingError as exc:
+        logger.warning("search_query_embedding_failed error_code=%s", exc.error_code)
+        return None
+    if not vectors or not any(vectors[0]):
+        return None
+    return list(vectors[0])
 
 
 # ---------------------------------------------------------------- protocole
@@ -342,7 +516,13 @@ class SqlAlchemyJobsRepository:
             JobSearchRow(posting=posting, saved_state=saved_state, sort_value=sort_value)
             for posting, saved_state, sort_value in result.all()
         ]
-        return rerank_with_embeddings(rows)
+        settings = get_settings()
+        return rerank_with_embeddings(
+            rows,
+            limit=limit,
+            query_embedding=await _query_embedding(filters, settings),
+            weights=RerankWeights.from_settings(settings),
+        )
 
     async def get_detail(
         self, job_id: uuid.UUID, user_id: uuid.UUID

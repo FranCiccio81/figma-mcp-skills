@@ -73,6 +73,35 @@ class Settings(BaseSettings):
     embeddings_model: str = "voyage-3-large"  # hypothèse 🟡 Q11
     embeddings_dim: int = 1024
 
+    # --- Embeddings (08 §8, D06) -------------------------------------------
+    # Défaut **hashing** : provider LOCAL, déterministe, sans réseau ni clé
+    # (dev/test/CI). Le provider managé n'est JAMAIS actif implicitement —
+    # le choix du modèle (multilingue FR/EN, dimension, hébergement UE)
+    # relève de **Q11, non tranchée** : voir app/ai/embeddings/managed.py.
+    embeddings_provider: str = "hashing"  # hashing | managed 🟡
+    #: Second provider essayé quand le primaire échoue / circuit ouvert
+    #: (D18). Vide = pas de fallback (dégradation directe).
+    embeddings_fallback_provider: str = ""
+    embeddings_api_key: str = ""  # vault en prod (D23)
+    embeddings_api_base_url: str = ""  # endpoint UE à fixer avec Q11
+    embeddings_timeout_seconds: float = 20.0
+    #: Taille des lots soumis au provider 🟡 (coût au token, R7).
+    embeddings_batch_size: int = 64
+    #: Volume par exécution des tâches de rattrapage ``ai.embeddings.*`` 🟡.
+    embeddings_backfill_batch_size: int = 200
+
+    # --- Seuils dépendants des embeddings (Q12 — à calibrer en alpha) ------
+    #: Dédup étage 2 : fusion si cosinus ≥ seuil (D13, 07 §6.2) 🟡.
+    dedup_stage2_cosine_threshold: float = 0.92
+    #: Rerank vectoriel de la recherche hybride (D07). Désactivable : sans
+    #: embeddings, ou si la latence p95 (< 500 ms, D06) se dégrade.
+    search_rerank_enabled: bool = True
+    #: Pondération rang full-text / cosinus — **Q41 non tranchée**
+    #: (« 50/50 normalisé 🟡, calibré en alpha »). Les deux poids sont
+    #: renormalisés à somme 1 à l'usage.
+    search_rerank_fulltext_weight: float = 0.5
+    search_rerank_vector_weight: float = 0.5
+
     # --- Sélection de provider LLM (D08, D18) -------------------------------
     # Défaut **fake** : le provider réel n'est JAMAIS actif implicitement, et
     # jamais sans clé (voir app/ai/providers/anthropic.py — activation

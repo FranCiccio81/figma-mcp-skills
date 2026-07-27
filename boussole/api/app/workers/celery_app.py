@@ -27,6 +27,7 @@ celery_app = Celery(
         "app.workers.cv_tasks",
         "app.workers.generation_tasks",
         "app.workers.privacy_tasks",
+        "app.workers.embedding_tasks",
     ],
 )
 
@@ -91,6 +92,29 @@ celery_app.conf.update(
         "maintenance-purge-expired-exports": {
             "task": "maintenance.purge_expired_exports",
             "schedule": crontab(minute=45, hour=4),
+        },
+        # Rattrapage quotidien des embeddings manquants (08 §8) : les
+        # vecteurs sont normalement calculés au fil de l'eau (à l'ingestion
+        # d'une offre), ce beat ne rattrape que les trous — offres ingérées
+        # pendant une panne du provider, profils validés, intitulés cibles
+        # et libellés de compétences. Tâches idempotentes (elles ne
+        # traitent que les lignes `embedding IS NULL`), donc sûres à
+        # rejouer. Décalées les unes des autres et placées AVANT le ménage
+        # de 03:45–04:45 pour ne pas concentrer les I/O.
+        # 🟡 Noms préfixés `ai.` : le routage de `task_routes` est par
+        # préfixe de file — c'est ce qui place ces tâches sur la file `ai`
+        # (voir l'en-tête de app/workers/embedding_tasks.py).
+        "embeddings-backfill-jobs": {
+            "task": "ai.embeddings.backfill_jobs",
+            "schedule": crontab(minute=10, hour=2),
+        },
+        "embeddings-backfill-profiles": {
+            "task": "ai.embeddings.backfill_profiles",
+            "schedule": crontab(minute=25, hour=2),
+        },
+        "embeddings-backfill-skills": {
+            "task": "ai.embeddings.backfill_skills",
+            "schedule": crontab(minute=40, hour=2),
         },
     },
 )
