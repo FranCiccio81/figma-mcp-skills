@@ -10,6 +10,7 @@ import uuid
 
 import httpx
 import pytest
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.integration.factories import make_posting
@@ -125,8 +126,6 @@ class TestSalaireAnnualise:
         self, db_session: AsyncSession
     ) -> None:
         """CHECK ``salary_period IN ('year','month','day','hour')`` (migration 0001)."""
-        from sqlalchemy.exc import IntegrityError
-
         with pytest.raises(IntegrityError):
             await make_posting(db_session, title="Période absurde", salary_period="week")
         await db_session.rollback()

@@ -256,4 +256,5 @@ class TestTriRelevance:
         )
 
         assert response.status_code == 422, response.text
-        assert response.json()["code"] == "invalid_cursor"
+        assert response.headers["content-type"].startswith("application/problem+json")
+        assert response.json()["type"].endswith("invalid_cursor")

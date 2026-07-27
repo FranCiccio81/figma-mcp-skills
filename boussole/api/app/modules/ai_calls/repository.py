@@ -41,7 +41,9 @@ class SqlAlchemyAiCallsRepository:
             update(AiCall).where(AiCall.user_id == user_id).values(user_id=None)
         )
         await self._session.commit()
-        return int(result.rowcount or 0)
+        # ``rowcount`` n'existe que sur le ``CursorResult`` d'un DML : accès
+        # défensif (le typage générique de ``execute`` ne l'expose pas).
+        return int(getattr(result, "rowcount", 0) or 0)
 
     async def list_for_user(self, user_id: uuid.UUID) -> Sequence[AiCall]:
         rows = await self._session.execute(

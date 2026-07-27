@@ -6,7 +6,7 @@ API_DIR := api
 PY := .venv/bin/python
 ALEMBIC := .venv/bin/alembic
 
-.PHONY: up down migrate seed seed-demo test lint typecheck api-dev openapi-gen
+.PHONY: up down migrate seed seed-demo test test-integration lint typecheck api-dev openapi-gen
 
 up: ## Démarre postgres, redis ×2, minio, mailpit, api, web
 	$(COMPOSE) up -d --build
@@ -23,8 +23,14 @@ seed: ## Référentiels idempotents (sectors, skills, prompt_versions, sources)
 seed-demo: ## Données de démo (dev/staging uniquement — D22)
 	cd $(API_DIR) && $(PY) -m app.seeds demo
 
-test: ## Tests unitaires (l'intégration testcontainers arrive en M2)
+test: ## Tests unitaires (rapides, sans Docker — l'intégration est exclue par défaut)
 	cd $(API_DIR) && $(PY) -m pytest tests/unit
+
+test-integration: ## Tests d'intégration : PostgreSQL RÉEL (pgvector) + migrations Alembic
+	@echo "PostgreSQL éphémère via testcontainers (image pgvector/pgvector:pg16)."
+	@echo "Sans Docker : BOUSSOLE_TEST_DATABASE_URL=postgresql+asyncpg://… (base JETABLE,"
+	@echo "tronquée entre chaque test). Voir api/tests/integration/README.md."
+	cd $(API_DIR) && $(PY) -m pytest tests/integration -m integration
 
 lint: ## Ruff
 	cd $(API_DIR) && .venv/bin/ruff check .

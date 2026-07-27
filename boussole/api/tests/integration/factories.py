@@ -8,6 +8,7 @@ PostgreSQL créés par les migrations.
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.storage import ObjectStorage
@@ -178,6 +179,9 @@ POPULATED_TABLES: dict[str, tuple[str, ...]] = {
     "explanations": ("match_explanations",),
     "generation": ("generated_documents",),
     "applications": ("applications", "application_events"),
+    # ai_calls est ANONYMISÉ (user_id → NULL), jamais supprimé : la table
+    # reste peuplée après la purge, sans lien avec une personne.
+    "ai_calls": ("ai_calls",),
     "privacy": ("privacy_exports", "audit_log", "deletion_requests"),
 }
 
@@ -378,6 +382,16 @@ async def populate_all_modules(
         processing_status="ready",
     )
     session.add(document)
+
+    # --- ai_calls (journal des appels LLM — SQL brut : la table n'a pas de
+    # modèle ORM stable, seul le lien user_id nous intéresse ici) ---
+    await session.execute(
+        text(
+            "INSERT INTO ai_calls (task, prompt_version, model, user_id, status) "
+            "VALUES ('extract_cv', 'extract_cv@1', 'fake-model', :user_id, 'success')"
+        ),
+        {"user_id": user_id},
+    )
 
     # --- privacy (archive d'export + audit) ---
     export = PrivacyExport(

@@ -56,8 +56,8 @@ class TestTriggerTsv:
         tsv = await db_session.scalar(
             select(JobPosting.tsv).where(JobPosting.id == posting.id)
         )
-        assert "'engineer':2A" in tsv
-        assert "developpeur" not in tsv
+        assert "'engine':2A" in tsv, "nouveau titre indexé, radicalisé et pondéré A"
+        assert "developpeur" not in tsv, "l'ancien titre ne doit plus être trouvable"
 
     async def test_recherche_full_text_remonte_l_offre(
         self, db_session: AsyncSession

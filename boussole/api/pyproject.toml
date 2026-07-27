@@ -85,6 +85,15 @@ strict_equality = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Les tests d'intégration (PostgreSQL réel via testcontainers) sont EXCLUS par
+# défaut : `pytest` et `make test` restent rapides et sans Docker. On les
+# lance explicitement — `make test-integration` ou
+# `pytest tests/integration -m integration` (le -m de la ligne de commande
+# remplace celui-ci). Voir tests/integration/README.md.
+addopts = '-m "not integration"'
+markers = [
+    "integration: exige un PostgreSQL réel (Docker/testcontainers) — hors run par défaut",
+]
 filterwarnings = [
     "ignore::DeprecationWarning:celery.*",
 ]

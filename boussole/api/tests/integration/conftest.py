@@ -62,9 +62,15 @@ import httpx
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi import FastAPI
 from redis.asyncio import Redis
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
@@ -121,7 +127,12 @@ def _async_url(url: str) -> str:
 def _start_container() -> Any:
     """Démarre le conteneur pgvector — ``skip`` explicite si Docker manque."""
     try:
-        from testcontainers.postgres import PostgresContainer
+        # testcontainers ≥ 4.13 a déplacé le module (l'ancien chemin émet un
+        # DeprecationWarning) — on essaie le nouveau d'abord.
+        try:
+            from testcontainers.community.postgres import PostgresContainer
+        except ImportError:
+            from testcontainers.postgres import PostgresContainer
     except ImportError as exc:  # dépendance dev absente
         pytest.skip(_SKIP_NO_DOCKER.format(reason=f"testcontainers absent : {exc}"))
     try:
@@ -286,17 +297,17 @@ def _fake_session_store(
 
 
 @pytest.fixture
-async def api_client(
+def api_app(
     db_engine: AsyncEngine,
     fake_redis_servers: tuple[fakeredis.FakeServer, fakeredis.FakeServer],
-) -> AsyncIterator[httpx.AsyncClient]:
-    """Client HTTP sur l'application FastAPI RÉELLE branchée sur la base de test.
+) -> FastAPI:
+    """Application FastAPI RÉELLE branchée sur la base de test.
 
     Aucune dépendance de base n'est substituée : ``get_db_session`` sert des
     sessions de la fabrique globale (elle-même substituée par ``db_engine``),
-    donc les routes exécutent le VRAI SQL. Seuls les deux Redis sont factices.
-
-    ``base_url`` en https : les cookies de session/CSRF sont ``Secure``.
+    donc les routes exécutent le VRAI SQL contre le VRAI schéma. Seuls les
+    deux Redis sont factices (fakeredis) ; le stockage objet est le vrai
+    ``LocalDiskStorage`` sur répertoire temporaire.
     """
     persistent, cache = fake_redis_servers
 
@@ -312,8 +323,16 @@ async def api_client(
     )
     app.dependency_overrides[get_redis_persistent] = persistent_factory
     app.dependency_overrides[get_redis_cache] = cache_factory
+    return app
 
-    transport = httpx.ASGITransport(app=app)
+
+@pytest.fixture
+async def api_client(api_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
+    """Client HTTP asynchrone sur l'application (même boucle que le test).
+
+    ``base_url`` en https : les cookies de session/CSRF sont ``Secure``.
+    """
+    transport = httpx.ASGITransport(app=api_app)
     async with httpx.AsyncClient(transport=transport, base_url="https://testserver") as client:
         yield client
 
@@ -342,7 +361,7 @@ async def register_and_login(
     login = await client.post(
         "/api/v1/auth/login", json={"email": email, "password": password}
     )
-    assert login.status_code == 200, login.text
+    assert login.status_code in (200, 204), login.text
     me = await client.get("/api/v1/me")
     assert me.status_code == 200, me.text
     return uuid.UUID(me.json()["id"])

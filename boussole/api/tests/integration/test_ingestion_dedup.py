@@ -149,10 +149,45 @@ class TestDedupEtage1:
     ) -> None:
         """Un item en erreur DB est annulé SEUL : le reste du batch est écrit.
 
-        Deux items du même batch portent le même ``external_ref`` : le second
-        viole ``(source_id, external_ref)`` au flush. Sans SAVEPOINT, la
-        transaction entière serait invalidée et TOUT le batch perdu — un
-        comportement qu'aucun store en mémoire ne reproduit.
+        L'item du milieu porte ``salary_period='week'``, hors du CHECK SQL
+        ``salary_period IN ('year','month','day','hour')`` : son INSERT échoue
+        au flush. Sans SAVEPOINT par item, la transaction entière serait
+        invalidée et TOUT le batch perdu — comportement qu'aucun store en
+        mémoire ne reproduit (le contrôle n'existe qu'en base).
+        """
+        await make_source(db_session, slug="france-travail")
+        store = SqlAlchemyJobStore(db_session)
+        empoisonne = _raw("ft-2", title="Analyste", url="https://ft.example.eu/2")
+        empoisonne.salary_min = 1000
+        empoisonne.salary_max = 1200
+        empoisonne.salary_period = "week"  # hors CHECK SQL
+
+        report = await ingest_batch(
+            "france-travail",
+            [
+                _raw("ft-1", title="Data Engineer", url="https://ft.example.eu/1"),
+                empoisonne,
+                _raw("ft-3", title="Développeur Python", url="https://ft.example.eu/3"),
+            ],
+            store,
+            now=NOW,
+        )
+        await db_session.commit()
+
+        assert report.seen == 3
+        assert report.errors == 1, "l'item hors CHECK doit être compté en erreur"
+        assert report.created == 2, "les deux autres items doivent être écrits"
+        assert await db_session.scalar(select(func.count()).select_from(JobPosting)) == 2
+
+    async def test_meme_external_ref_deux_fois_dans_un_batch(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Doublon d'``external_ref`` DANS un batch : traité en mise à jour, pas en erreur.
+
+        Le premier item est flushé avant le second : celui-ci retrouve la
+        ``job_source`` par ``(source_id, external_ref)`` et suit le chemin
+        d'idempotence. La contrainte UNIQUE n'est donc jamais violée — c'est
+        le comportement RÉEL, que seule une base peut confirmer.
         """
         await make_source(db_session, slug="france-travail")
         store = SqlAlchemyJobStore(db_session)
@@ -162,17 +197,16 @@ class TestDedupEtage1:
             [
                 _raw("ft-1", title="Data Engineer", url="https://ft.example.eu/1"),
                 _raw("ft-1", title="Data Engineer", url="https://ft.example.eu/1-bis"),
-                _raw("ft-2", title="Développeur Python", url="https://ft.example.eu/2"),
             ],
             store,
             now=NOW,
         )
         await db_session.commit()
 
-        assert report.seen == 3
-        assert report.errors == 1, "le doublon d'external_ref doit être compté en erreur"
-        assert report.created == 2
-        assert await db_session.scalar(select(func.count()).select_from(JobPosting)) == 2
+        assert (report.errors, report.updated) == (0, 1)
+        assert await db_session.scalar(select(func.count()).select_from(JobSource)) == 1
+        url = await db_session.scalar(select(JobSource.original_url))
+        assert url == "https://ft.example.eu/1-bis", "la dernière vue de la source gagne"
 
 
 class TestContraintesDedup:

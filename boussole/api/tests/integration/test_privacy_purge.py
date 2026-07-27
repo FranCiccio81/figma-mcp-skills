@@ -13,8 +13,6 @@ ligne de l'utilisateur purgé. Une future table personnelle oubliée dans le
 registre fait tomber ce test le jour de sa migration.
 """
 
-import uuid
-
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -23,6 +21,7 @@ from app.core.storage import LocalDiskStorage, ObjectNotFoundError
 from app.modules.privacy.purge_runner import purge_due_accounts
 from app.modules.privacy.registry import DATA_MODULE_NAMES, DEFAULT_REGISTRY
 from app.modules.privacy.repository import SqlAlchemyPrivacyRepository
+from tests.integration.conftest import DEFAULT_PASSWORD, register_and_login
 from tests.integration.factories import (
     POPULATED_TABLES,
     make_due_deletion_request,
@@ -287,33 +286,23 @@ class TestPurgeDeBoutEnBout:
         assert statut == 1
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "TODO(M5+) assumé dans app/modules/privacy/registry.py : la table "
-        "``ai_calls`` (journal des appels LLM rattaché à un user_id) n'est PAS "
-        "dans le registre — ses lignes survivent donc à la purge du compte, "
-        "avec un user_id mis à NULL par la seule FK ON DELETE SET NULL… qui ne "
-        "se déclenche jamais puisque la ligne users n'est pas supprimée. Ce "
-        "test devient VERT le jour où ai_calls rejoint le registre : retirer "
-        "alors le xfail."
-    ),
-)
-async def test_ai_calls_devrait_aussi_etre_purge(
+async def test_ai_calls_anonymise_sans_perdre_les_metriques(
     db_engine: AsyncEngine,
     db_session: AsyncSession,
     object_storage: LocalDiskStorage,
     compte_complet: dict[str, object],
 ) -> None:
+    """``ai_calls`` : anonymisation (``user_id → NULL``), pas suppression.
+
+    Choix documenté (``app/modules/ai_calls/purge.py``) : la ligne ne porte
+    aucune donnée personnelle hors ce lien, et les métriques agrégées (coût,
+    latence, taux d'échec) restent nécessaires à l'exploitation. Le test
+    vérifie donc les DEUX moitiés : plus aucun lien vers la personne, et la
+    ligne toujours là.
+    """
     user_id = compte_complet["user_id"]
-    async with db_engine.begin() as conn:
-        await conn.execute(
-            text(
-                "INSERT INTO ai_calls (task, prompt_version, model, user_id, status) "
-                "VALUES ('extract_cv', 'extract_cv@1', 'fake-model', :user_id, 'success')"
-            ),
-            {"user_id": user_id},
-        )
+    avant = await _count(db_engine, "SELECT count(*) FROM ai_calls")
+    assert avant == 1
 
     await purge_due_accounts(
         repository=SqlAlchemyPrivacyRepository(db_session),
@@ -321,10 +310,15 @@ async def test_ai_calls_devrait_aussi_etre_purge(
         registry=DEFAULT_REGISTRY,
     )
 
-    restantes = await _count(
-        db_engine, "SELECT count(*) FROM ai_calls WHERE user_id = :user_id", user_id=user_id
+    assert (
+        await _count(
+            db_engine,
+            "SELECT count(*) FROM ai_calls WHERE user_id = :user_id",
+            user_id=user_id,
+        )
+        == 0
     )
-    assert restantes == 0
+    assert await _count(db_engine, "SELECT count(*) FROM ai_calls") == 1
 
 
 class TestSuppressionDeCompteViaApi:
@@ -333,8 +327,6 @@ class TestSuppressionDeCompteViaApi:
     async def test_delete_account_cree_une_demande_pending(
         self, api_client, db_engine: AsyncEngine
     ) -> None:
-        from tests.integration.conftest import DEFAULT_PASSWORD, register_and_login
-
         user_id = await register_and_login(api_client)
         headers = {"X-CSRF-Token": api_client.cookies["boussole_csrf"]}
 

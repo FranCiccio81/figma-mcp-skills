@@ -142,7 +142,7 @@ class CallJournal(Protocol):
 class NullJournal:
     """Journal inerte — provider factice, tests, et environnements sans base."""
 
-    def record(self, record: AiCallRecord) -> None:  # noqa: D102 - contrat du Protocol
+    def record(self, record: AiCallRecord) -> None:
         return None
 
 

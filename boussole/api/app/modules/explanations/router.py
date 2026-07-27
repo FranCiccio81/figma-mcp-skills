@@ -12,7 +12,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.ai.providers.base import LLMProvider
+from app.ai.providers.factory import get_llm_provider as provider_factory
 from app.ai.providers.fake import FakeProvider
+from app.core.config import get_settings
 from app.modules.auth.models import User
 from app.modules.auth.router import require_current_user
 from app.modules.explanations.repository import (
@@ -28,12 +30,16 @@ router = APIRouter(prefix="/jobs", tags=["explanations"])
 
 
 def get_llm_provider() -> LLMProvider:
-    """Provider LLM — :class:`FakeProvider` déterministe au M3 🟡 (D08, D22).
+    """Provider LLM — sélectionné par configuration (D08).
 
-    La sortie canned ne contient aucun chiffre : elle passe le contrôle
-    numérique quels que soient les facts. Provider réel branché en M4.
+    ``AI_PROVIDER=fake`` (défaut) : sortie canned sans aucun chiffre, qui
+    passe donc le contrôle numérique quels que soient les facts. Sinon la
+    fabrique (primaire + fallback + breaker) ; activation d'un provider réel
+    conditionnée à Q4/Q38.
     """
-    return FakeProvider(canned={"match_explanation": dict(FAKE_EXPLANATION)})
+    if get_settings().ai_provider == "fake":
+        return FakeProvider(canned={"match_explanation": dict(FAKE_EXPLANATION)})
+    return provider_factory("explain_match")
 
 
 def get_explanations_service(
