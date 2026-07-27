@@ -77,12 +77,13 @@ class PurgeRegistry:
 #: lui-même n'y figure pas : ses propres données (privacy_exports) sont
 #: purgées directement par l'orchestrateur (purge_runner).
 #:
-#: TODO(M5+, à ne PAS ajouter avant que la table existe) : ``ai_calls``
-#: (journal des appels LLM — coût, latence, tokens, rattaché à un user_id)
-#: n'est PAS dans ce registre parce que la table n'est pas encore écrite.
-#: Dès que le module IA la crée, elle doit être ajoutée ici ET dans
-#: ``EXPECTED_MODULES`` (tests/unit/privacy/test_registry.py) : sans quoi les
-#: traces d'appels IA d'un utilisateur survivraient à la purge de son compte.
+#: ``ai_calls`` (journal des appels LLM — coût, latence, tokens, rattaché à
+#: un ``user_id``) N'EST PAS un module métier : la table est transversale et
+#: alimentée par la couche provider. Elle figure ici parce qu'elle porte un
+#: ``user_id`` — sans quoi les traces d'appels IA d'un utilisateur
+#: survivraient à la purge de son compte (RM-Q-2). Sa purge est une
+#: **anonymisation** (``user_id → NULL``), pas une suppression : les
+#: métadonnées agrégées restent exploitables (11 §2, comme ``audit_log``).
 DATA_MODULE_NAMES: tuple[str, ...] = (
     "auth",
     "profiles",
@@ -92,6 +93,7 @@ DATA_MODULE_NAMES: tuple[str, ...] = (
     "explanations",
     "generation",
     "applications",
+    "ai_calls",
 )
 
 DEFAULT_REGISTRY = PurgeRegistry(

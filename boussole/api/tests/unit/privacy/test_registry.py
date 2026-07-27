@@ -42,6 +42,7 @@ EXPECTED_MODULES = (
     "explanations",
     "generation",
     "applications",
+    "ai_calls",  # journal LLM — purge = anonymisation (user_id → NULL), RM-Q-2
 )
 
 
