@@ -7,6 +7,7 @@
 - /healthz (liveness) et /readyz (readiness : DB + deux Redis).
 """
 
+import hashlib
 import json
 import logging
 import sys
@@ -21,6 +22,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import get_settings
 from app.core.db import check_database
 from app.core.problems import problem_response, register_problem_handlers
+from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
 from app.core.security import csrf_tokens_match
 from app.modules.applications.router import router as applications_router
@@ -32,6 +34,7 @@ from app.modules.jobs.router import router as jobs_router
 from app.modules.matching.router import router as matching_router
 from app.modules.preferences.router import router as preferences_router
 from app.modules.privacy.router import router as privacy_router
+from app.modules.profiles.cv.router import router as cv_documents_router
 from app.modules.profiles.router import router as profiles_router
 
 logger = logging.getLogger("boussole.http")
@@ -125,6 +128,64 @@ class CsrfMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Limites contractuelles 12 §1 : global 60 req/min, recherche 30/min.
+
+    Identité : hash du cookie de session si présent, sinon IP cliente.
+    Best-effort assumé (fail-open D18) : Redis volatile indisponible →
+    la requête passe et l'incident est logué — le rate limiting est une
+    protection, jamais un point de panne. Les sondes /healthz|/readyz et
+    les fichiers statiques ne sont pas comptés.
+    """
+
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        settings = get_settings()
+        path = request.url.path
+        if not path.startswith(settings.api_prefix):
+            return await call_next(request)
+        session_token = request.cookies.get(settings.session_cookie_name)
+        if session_token:
+            identity = hashlib.sha256(session_token.encode()).hexdigest()[:32]
+        else:
+            identity = request.client.host if request.client else "unknown"
+        try:
+            limiter = FixedWindowRateLimiter(get_redis_cache())
+            result = await limiter.hit("global", identity, limit=60, window_seconds=60)
+            if result.allowed and request.method == "GET" and path == f"{settings.api_prefix}/jobs":
+                result = await limiter.hit("search", identity, limit=30, window_seconds=60)
+        except Exception:  # fail-open volontaire (D18)
+            logger.warning("rate_limit_unavailable", extra={"path": path})
+            return await call_next(request)
+        if not result.allowed:
+            response = problem_response(
+                request,
+                status=429,
+                code="rate_limited",
+                title="Trop de requêtes",
+                detail="Limite de requêtes atteinte. Réessayez dans un instant.",
+            )
+            response.headers["Retry-After"] = str(result.retry_after)
+            return response
+        return await call_next(request)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """En-têtes de sécurité de base côté API (le front/edge pose CSP/HSTS —
+    12 §5) : anti-sniffing, anti-framing, référeur minimal."""
+
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Cache-Control", "no-store")
+        return response
+
+
 def create_app() -> FastAPI:
     configure_logging()
     settings = get_settings()
@@ -137,13 +198,17 @@ def create_app() -> FastAPI:
     )
 
     register_problem_handlers(app)
-    # add_middleware empile : CSRF d'abord (interne), trace ensuite (externe)
+    # add_middleware empile : CSRF d'abord (interne), puis rate limit,
+    # en-têtes de sécurité, et trace en dernier (externe)
     # → le trace_id existe quand le CSRF répond 403.
     app.add_middleware(CsrfMiddleware)
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(TraceMiddleware)
 
     api = APIRouter(prefix=settings.api_prefix)
     api.include_router(auth_router)
+    api.include_router(cv_documents_router)
     api.include_router(profiles_router)
     api.include_router(preferences_router)
     # jobs avant ingestion : GET /sources (M2, module jobs, domaine Meta du

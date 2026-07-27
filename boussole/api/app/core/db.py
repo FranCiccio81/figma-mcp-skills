@@ -4,7 +4,8 @@ Le moteur est créé paresseusement : l'import du module ne tente aucune
 connexion (les tests unitaires substituent les dépendances).
 """
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from typing import ClassVar
 
@@ -67,6 +68,34 @@ def create_worker_engine() -> AsyncEngine:
     """
     settings = get_settings()
     return create_async_engine(settings.database_url, echo=settings.debug, poolclass=NullPool)
+
+
+@contextmanager
+def override_engine(engine: AsyncEngine) -> Iterator[async_sessionmaker[AsyncSession]]:
+    """Substitue temporairement le moteur/la fabrique GLOBAUX par ``engine``.
+
+    Usage workers Celery : le code des modules (``purge_user``/``export_user``
+    du registre privacy notamment) ouvre ses sessions via
+    :func:`get_session_factory` ; dans une coroutine lancée par
+    ``asyncio.run``, la fabrique globale poolée lierait ses connexions à une
+    boucle éphémère. En enveloppant la coroutine de la tâche::
+
+        engine = create_worker_engine()
+        with override_engine(engine):
+            ...  # tout get_session_factory() utilise le moteur NullPool
+        await engine.dispose()
+
+    l'état global est restauré quoi qu'il arrive. Non réentrant, à n'utiliser
+    que dans les workers (une tâche à la fois par processus).
+    """
+    global _engine, _session_factory
+    previous = (_engine, _session_factory)
+    _engine = engine
+    _session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        yield _session_factory
+    finally:
+        _engine, _session_factory = previous
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
