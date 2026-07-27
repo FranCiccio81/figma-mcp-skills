@@ -1,8 +1,10 @@
 """Tests du contrôle d'ancrage (RM-L-2, 08 §5.2) et de la minimisation (D09)."""
 
+import logging
 import uuid
-from typing import Any
+from typing import Any, ClassVar
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.ai.providers.fake import FakeProvider
@@ -73,7 +75,7 @@ class TestClaimsAnchoring:
         assert body["anchoring_check"]["unanchored_claims"] == []
         assert len(body["content"]["claims"]) == 3
 
-    def test_unanchored_claim_fails_and_blocks_validation(
+    def test_unanchored_claim_is_retried_then_fails_cleanly(
         self,
         client: TestClient,
         auth_repository: InMemoryAuthRepository,
@@ -82,7 +84,9 @@ class TestClaimsAnchoring:
         llm_provider: FakeProvider,
         canned_outputs: dict[str, dict[str, Any]],
     ) -> None:
-        """AC-L-2 : un claim inventé (« expert Kubernetes ») ne passe jamais."""
+        """AC-L-2 / M6 : un claim inventé (« expert Kubernetes ») déclenche
+        un retry puis un échec propre — le contenu inventé n'est jamais
+        servi au client, la trace du rejet reste auditable."""
         setup_validated_user(client, auth_repository, profiles_repository)
         canned_outputs["generate_email"] = {
             "subject": "Candidature",
@@ -95,19 +99,25 @@ class TestClaimsAnchoring:
         report = run_generation(
             document_id, generation_repository, profiles_repository, llm_provider
         )
-        assert report == {"status": "draft", "anchoring": "failed"}
-        body = client.get(f"{GENERATIONS_URL}/{document_id}").json()
-        assert body["status"] == "draft"
-        assert body["anchoring_check"]["status"] == "failed"
-        assert "expert Kubernetes" in body["anchoring_check"]["unanchored_claims"][0]
+        assert report == {"status": "failed", "error_code": "grounding_error"}
+        assert len(llm_provider.calls) == 2  # 1 appel + 1 retry avec l'erreur
+        assert "NON ANCRÉES" in llm_provider.calls[1][1]
 
-        # Jamais présenté comme prêt : validation bloquée…
+        body = client.get(f"{GENERATIONS_URL}/{document_id}").json()
+        assert body["status"] == "failed"
+        assert body["error_code"] == "grounding_error"
+        assert body["content"] is None  # jamais le corps inventé
+        assert body["anchoring_check"]["status"] == "failed"
+        assert any(
+            "Kubernetes" in item for item in body["anchoring_check"]["unanchored_claims"]
+        )
+
+        # Jamais présenté comme prêt : validation impossible…
         validate = client.post(
             f"{GENERATIONS_URL}/{document_id}/validate", headers=csrf_headers(client)
         )
         assert validate.status_code == 409
-        assert validate.json()["type"].endswith("generation_not_anchored")
-        # … donc export impossible aussi (jamais exporté tant que failed).
+        # … donc export impossible aussi.
         export = client.post(
             f"{GENERATIONS_URL}/{document_id}/export",
             json={"format": "text"},
@@ -137,30 +147,182 @@ class TestClaimsAnchoring:
         report = run_generation(
             document_id, generation_repository, profiles_repository, llm_provider
         )
-        assert report["anchoring"] == "failed"
+        assert report == {"status": "failed", "error_code": "grounding_error"}
 
 
-class TestManualEditLiftsAnchoring:
-    def test_patch_clears_check_and_allows_validation(
+class TestBodyGrounding:
+    """C2 / 08 §5.2.2 : le CORPS est contrôlé pour lui-même — une sortie
+    sans aucune claim mais au corps inventé ne doit plus passer."""
+
+    def test_empty_claims_with_invented_body_is_rejected(
         self,
         client: TestClient,
         auth_repository: InMemoryAuthRepository,
         profiles_repository: InMemoryProfilesRepository,
         generation_repository: InMemoryGenerationRepository,
         llm_provider: FakeProvider,
-        canned_outputs: dict[str, dict[str, Any]],
+        canned_outputs: dict[str, Any],
     ) -> None:
         setup_validated_user(client, auth_repository, profiles_repository)
         canned_outputs["generate_email"] = {
             "subject": "Candidature",
-            "body": "Je suis expert Kubernetes.",
+            "body": (
+                "Je suis expert Kubernetes depuis 15 ans et ancien CTO de Google."
+            ),
+            "claims": [],  # « aucune affirmation » : le corps dit le contraire
+        }
+        document_id = start_generation(client, generation_repository)
+        report = run_generation(
+            document_id, generation_repository, profiles_repository, llm_provider
+        )
+        assert report == {"status": "failed", "error_code": "grounding_error"}
+
+        body = client.get(f"{GENERATIONS_URL}/{document_id}").json()
+        assert body["content"] is None
+        detected = " ".join(body["anchoring_check"]["unanchored_claims"])
+        assert "15 ans" in detected  # durée d'expérience inventée
+        assert "Kubernetes" in detected  # technologie absente du profil
+        assert "Google" in detected  # entité absente du profil
+        assert "expert" in detected  # rôle revendiqué
+
+    def test_body_grounded_on_the_profile_passes(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, Any],
+    ) -> None:
+        """Contre-épreuve : un corps qui ne cite que des faits du profil
+        passe (le détecteur n'est pas un refus systématique)."""
+        _, profile = setup_validated_user(client, auth_repository, profiles_repository)
+        canned_outputs["generate_email"] = {
+            "subject": "Candidature au poste proposé",
+            "body": "Mon expérience chez Acme m'a permis de pratiquer Python.",
             "claims": [
-                {"claim": "expert Kubernetes", "profile_ref": f"skill:{uuid.uuid4()}"},
+                {"claim": "pratique de Python", "profile_ref": skill_ref(profile, "Python")}
             ],
         }
         document_id = start_generation(client, generation_repository)
-        run_generation(document_id, generation_repository, profiles_repository, llm_provider)
+        report = run_generation(
+            document_id, generation_repository, profiles_repository, llm_provider
+        )
+        assert report == {"status": "draft", "anchoring": "passed"}
 
+    def test_claim_with_real_ref_but_false_text_is_rejected(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, Any],
+    ) -> None:
+        """M3 : un ``profile_ref`` réel ne blanchit pas un texte mensonger —
+        les entités de la claim sont comparées au CONTENU de l'élément."""
+        _, profile = setup_validated_user(client, auth_repository, profiles_repository)
+        canned_outputs["generate_email"] = {
+            "subject": "Candidature",
+            "body": "Bonjour, voici ma candidature.",
+            "claims": [
+                {
+                    "claim": "15 ans d'expérience chez Google",
+                    "profile_ref": experience_ref(profile),  # ref RÉEL
+                }
+            ],
+        }
+        document_id = start_generation(client, generation_repository)
+        report = run_generation(
+            document_id, generation_repository, profiles_repository, llm_provider
+        )
+        assert report == {"status": "failed", "error_code": "grounding_error"}
+        body = client.get(f"{GENERATIONS_URL}/{document_id}").json()
+        (detected,) = body["anchoring_check"]["unanchored_claims"]
+        assert "contredit l'élément" in detected
+        assert experience_ref(profile) in detected
+
+
+class TestManualEditAndAnchoringTrace:
+    """M4 : l'édition manuelle lève le BLOCAGE de validation (Q6 🟡) — mais
+    un PATCH no-op ne lève rien, et le verdict d'ancrage n'est jamais
+    détruit (sans lui, plus aucune trace des affirmations non ancrées)."""
+
+    ORIGINAL: ClassVar[dict[str, Any]] = {
+        "subject": "Candidature",
+        "body": "Bonjour, voici ma candidature.",
+    }
+    VERDICT: ClassVar[dict[str, Any]] = {
+        "status": "failed",
+        "unanchored_claims": ["expert Kubernetes (profile_ref inconnu : skill:xxx)"],
+    }
+
+    def _draft_with_failed_verdict(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, Any],
+    ) -> uuid.UUID:
+        setup_validated_user(client, auth_repository, profiles_repository)
+        canned_outputs["generate_email"] = {**self.ORIGINAL, "claims": []}
+        document_id = start_generation(client, generation_repository)
+        run_generation(document_id, generation_repository, profiles_repository, llm_provider)
+        document = generation_repository.docs[document_id]
+        assert document.status == "draft"
+        # Brouillon porteur d'un verdict d'ancrage négatif (rejet partiel).
+        document.anchoring_check = dict(self.VERDICT)
+        return document_id
+
+    def test_noop_patch_does_not_lift_anchoring(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, Any],
+    ) -> None:
+        """Renvoyer le contenu À L'IDENTIQUE n'est pas une édition : ni
+        levée du blocage, ni effacement de la liste des non-ancrées."""
+        document_id = self._draft_with_failed_verdict(
+            client, auth_repository, profiles_repository,
+            generation_repository, llm_provider, canned_outputs,
+        )
+        # Le client renvoie EXACTEMENT le contenu servi par l'API (relecture
+        # sans modification) — le cas de contournement observé en revue.
+        current = client.get(f"{GENERATIONS_URL}/{document_id}").json()["content"]
+        patched = client.patch(
+            f"{GENERATIONS_URL}/{document_id}",
+            json={"content": current},
+            headers=csrf_headers(client),
+        )
+        assert patched.status_code == 200
+        body = patched.json()
+        assert body["manually_edited"] is False
+        assert body["anchoring_check"] == self.VERDICT
+
+        validate = client.post(
+            f"{GENERATIONS_URL}/{document_id}/validate", headers=csrf_headers(client)
+        )
+        assert validate.status_code == 409
+        assert validate.json()["type"].endswith("generation_not_anchored")
+
+    def test_real_edit_lifts_blocking_but_keeps_the_verdict(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, Any],
+    ) -> None:
+        document_id = self._draft_with_failed_verdict(
+            client, auth_repository, profiles_repository,
+            generation_repository, llm_provider, canned_outputs,
+        )
         patched = client.patch(
             f"{GENERATIONS_URL}/{document_id}",
             json={"content": {"subject": "Candidature", "body": "Texte repris à la main."}},
@@ -168,11 +330,19 @@ class TestManualEditLiftsAnchoring:
         )
         assert patched.status_code == 200
         body = patched.json()
-        # Q6 🟡 : l'édition manuelle lève le contrôle — check null + note.
-        assert body["anchoring_check"] is None
         assert body["manually_edited"] is True
         assert body["anchoring_note"]
+        # Le verdict d'origine reste LISIBLE (audit) — il n'est pas effacé.
+        assert body["anchoring_check"]["status"] == "failed"
+        assert body["anchoring_check"]["unanchored_claims"] == (
+            self.VERDICT["unanchored_claims"]
+        )
+        stored = generation_repository.docs[document_id].anchoring_check
+        assert stored is not None
+        assert stored["lifted_by_manual_edit"] is True
+        assert stored["pre_edit"] == self.VERDICT
 
+        # Le blocage de validation, lui, est bien levé (responsabilité assumée).
         validate = client.post(
             f"{GENERATIONS_URL}/{document_id}/validate", headers=csrf_headers(client)
         )
@@ -208,7 +378,7 @@ class TestCvTailoring:
                 {
                     "kind": "rephrase",
                     "target_ref": experience_ref(profile),
-                    "new_text": "Développement d'API backend.",
+                    "new_text": "Poste 0 chez Acme : développement backend.",
                     "rationale": "Aligne le vocabulaire sur l'annonce.",
                 },
             ]
@@ -293,6 +463,47 @@ class TestCvTailoring:
         # le rejet reste visible (unanchored_claims).
         assert len(body["content"]["changes"]) == 1
         assert len(body["anchoring_check"]["unanchored_claims"]) == 1
+
+    def test_rephrase_inventing_facts_is_rejected(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        canned_outputs: dict[str, dict[str, Any]],
+    ) -> None:
+        """M7 / RM-O-4 : une reformulation ne crée aucun fait — le change
+        est retiré du contenu et le contrôle passe à ``failed`` (validation
+        bloquée), au lieu du ``passed`` observé en revue."""
+        _, profile = setup_validated_user(client, auth_repository, profiles_repository)
+        canned_outputs["tailor_cv"] = {
+            "changes": [
+                {
+                    "kind": "rephrase",
+                    "target_ref": experience_ref(profile),
+                    "new_text": "Lead technique chez Google, 15 ans sur Kubernetes.",
+                    "rationale": "Reformulation « valorisante » qui invente.",
+                }
+            ]
+        }
+        document_id = start_generation(
+            client, generation_repository, doc_type="cv_variant"
+        )
+        report = run_generation(
+            document_id, generation_repository, profiles_repository, llm_provider
+        )
+        assert report == {"status": "draft", "anchoring": "failed"}
+        body = client.get(f"{GENERATIONS_URL}/{document_id}").json()
+        assert body["content"]["changes"] == []  # le fait neuf n'est pas servi
+        (rejected,) = body["anchoring_check"]["unanchored_claims"]
+        assert "fait neuf" in rejected
+
+        validate = client.post(
+            f"{GENERATIONS_URL}/{document_id}/validate", headers=csrf_headers(client)
+        )
+        assert validate.status_code == 409
+        assert validate.json()["type"].endswith("generation_not_anchored")
 
     def test_rephrase_without_new_text_is_schema_error(
         self,
@@ -431,6 +642,28 @@ class TestCvOptimization:
 
 
 class TestMinimisation:
+    #: Coordonnées PLANTÉES dans des champs texte légitimes du profil :
+    #: ``extra='forbid'`` ne les empêche pas d'y arriver (elles peuvent
+    #: venir d'une extraction CV ou d'une saisie du candidat).
+    PLANTED: ClassVar[tuple[str, ...]] = (
+        "camille.martin@example.eu",
+        "06 12 34 56 78",
+        "14/03/1990",
+        "rue des Lilas",
+        "75011 Paris",
+    )
+
+    @staticmethod
+    def _plant_pii(profile: Profile) -> None:
+        profile.headline = "Ingénieure backend — camille.martin@example.eu"
+        profile.summary = (
+            "Née le 14/03/1990, mariée, 2 enfants. Joignable au 06 12 34 56 78 "
+            "ou à camille.martin@example.eu — 12 rue des Lilas, 75011 Paris."
+        )
+        profile.experiences[0].description = (
+            "Référence : camille.martin@example.eu — tél. 06 12 34 56 78."
+        )
+
     def test_prompt_never_contains_identity(
         self,
         client: TestClient,
@@ -439,22 +672,60 @@ class TestMinimisation:
         generation_repository: InMemoryGenerationRepository,
         llm_provider: FakeProvider,
     ) -> None:
-        """D09/RM-T-7 : jamais nom, e-mail ou téléphone du candidat au prompt."""
+        """D09/RM-T-7 : aucune coordonnée dans AUCUN des quatre prompts —
+        ni l'e-mail de connexion, ni les PII plantées dans headline /
+        summary / description."""
         user_id, profile = setup_validated_user(
             client, auth_repository, profiles_repository
         )
-        document_id = start_generation(client, generation_repository)
-        run_generation(document_id, generation_repository, profiles_repository, llm_provider)
+        self._plant_pii(profile)
 
-        assert llm_provider.calls, "le provider doit avoir été appelé"
-        task, prompt = llm_provider.calls[0]
-        assert task == "generate_email"
+        for doc_type in ("email", "cover_letter", "cv_variant", "cv_optimization"):
+            document_id = start_generation(
+                client, generation_repository, doc_type=doc_type
+            )
+            run_generation(
+                document_id, generation_repository, profiles_repository, llm_provider
+            )
+
+        tasks = [task for task, _ in llm_provider.calls]
+        assert set(tasks) == {
+            "generate_email", "generate_letter", "tailor_cv", "optimize_cv"
+        }
         user = auth_repository.users_by_id[user_id]
-        assert user.email not in prompt
-        assert "camille" not in prompt.lower()  # partie locale de l'e-mail
-        # Le prompt reste ancré : blocs délimités + refs réelles du profil.
-        assert "<profile>" in prompt and "<job>" in prompt
-        assert f"experience:{profile.experiences[0].id}" in prompt
+        for task, prompt in llm_provider.calls:
+            assert user.email not in prompt, task
+            assert "camille" not in prompt.lower(), task
+            for planted in self.PLANTED:
+                assert planted not in prompt, f"{task} : {planted}"
+            # La minimisation laisse une trace explicite dans le prompt…
+            assert "RETIRÉ" in prompt, task
+            # … et ne mutile pas les références d'ancrage (UUID préservés).
+            assert f"experience:{profile.experiences[0].id}" in prompt, task
+        # Le prompt reste ancré : blocs délimités.
+        _, email_prompt = llm_provider.calls[0]
+        assert "<profile>" in email_prompt and "<job>" in email_prompt
+
+    def test_scrubbing_is_reported_as_a_warning(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+        llm_provider: FakeProvider,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        _, profile = setup_validated_user(client, auth_repository, profiles_repository)
+        self._plant_pii(profile)
+        document_id = start_generation(client, generation_repository)
+        with caplog.at_level(logging.WARNING):
+            run_generation(
+                document_id, generation_repository, profiles_repository, llm_provider
+            )
+        messages = [record.getMessage() for record in caplog.records]
+        assert any("generation_profile_scrubbed" in message for message in messages)
+        # Le journal nomme les CATÉGORIES, jamais les valeurs (D09).
+        assert not any("camille.martin@example.eu" in message for message in messages)
 
     def test_unconfirmed_extraction_fields_are_excluded(
         self,

@@ -7,11 +7,17 @@ proposition avec provenance ``cv_extraction`` (RM-B-1).
 
 import json
 import uuid
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
 from app.modules.profiles.cv.models import CvDocument, ExtractionRun
-from app.modules.profiles.cv.service import DOCX_MIME, MAX_UPLOAD_BYTES, PDF_MIME
+from app.modules.profiles.cv.service import (
+    DOCX_MIME,
+    MAX_UPLOAD_BYTES,
+    PDF_MIME,
+    failure_trace_id,
+)
 from tests.unit.conftest import InMemoryAuthRepository
 from tests.unit.cv.conftest import (
     InMemoryCvRepository,
@@ -278,3 +284,143 @@ class TestGetCvDocument:
             "evidence_quote": None,  # langue sans evidence (schéma) → None
             "provenance": {"source": "cv_extraction", "confidence": 0.6},
         }
+
+
+class TestTraceId:
+    """Champ additif ``trace_id`` — bloc « détails techniques » (04 Flux 1).
+
+    🟡 Aucune colonne de corrélation n'existe en base : l'``id`` du dernier
+    ``extraction_run`` en échec fait office de trace_id (voir
+    :func:`app.modules.profiles.cv.service.failure_trace_id`).
+    """
+
+    def _uploaded_document(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> CvDocument:
+        response = upload(client, make_pdf_bytes())
+        assert response.status_code == 202
+        return cv_repository.documents[uuid.UUID(response.json()["id"])]
+
+    @staticmethod
+    def _add_run(
+        cv_repository: InMemoryCvRepository,
+        document: CvDocument,
+        *,
+        status: str,
+        created_at: datetime,
+    ) -> ExtractionRun:
+        run = ExtractionRun(
+            id=uuid.uuid4(),
+            cv_document_id=document.id,
+            prompt_version="extract_cv/1.0.0",
+            model="claude-sonnet-5",
+            status=status,
+            output_key=None,
+            created_at=created_at,
+        )
+        cv_repository.runs.append(run)
+        return run
+
+    def test_extraction_failed_exposes_the_failed_run_id(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> None:
+        register(client)
+        document = self._uploaded_document(client, cv_repository)
+        run = self._add_run(
+            cv_repository,
+            document,
+            status="schema_error",
+            created_at=datetime(2026, 7, 1, 10, 0, tzinfo=UTC),
+        )
+        document.status = "failed"
+        document.error_code = "extraction_failed"
+
+        body = client.get(f"{CV_URL}/{document.id}").json()
+        assert body["error_code"] == "extraction_failed"
+        assert body["trace_id"] == str(run.id)
+
+    def test_trace_id_is_the_latest_failed_run(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> None:
+        register(client)
+        document = self._uploaded_document(client, cv_repository)
+        self._add_run(
+            cv_repository,
+            document,
+            status="schema_error",
+            created_at=datetime(2026, 7, 1, 10, 0, tzinfo=UTC),
+        )
+        latest = self._add_run(
+            cv_repository,
+            document,
+            status="failed",
+            created_at=datetime(2026, 7, 2, 10, 0, tzinfo=UTC),
+        )
+        document.status = "failed"
+        document.error_code = "extraction_failed"
+
+        assert client.get(f"{CV_URL}/{document.id}").json()["trace_id"] == str(latest.id)
+
+    def test_failure_before_any_llm_call_has_no_trace_id(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> None:
+        """``image_only_pdf`` échoue AVANT l'appel LLM : aucun run, rien à corréler."""
+        register(client)
+        document = self._uploaded_document(client, cv_repository)
+        document.status = "failed"
+        document.error_code = "image_only_pdf"
+
+        body = client.get(f"{CV_URL}/{document.id}").json()
+        assert body["error_code"] == "image_only_pdf"
+        assert body["trace_id"] is None
+
+    def test_uploaded_document_has_no_trace_id(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> None:
+        register(client)
+        document = self._uploaded_document(client, cv_repository)
+        assert client.get(f"{CV_URL}/{document.id}").json()["trace_id"] is None
+
+    def test_successful_run_is_never_a_trace_id(
+        self, client: TestClient, cv_repository: InMemoryCvRepository
+    ) -> None:
+        """Un run en succès n'est pas un échec : ``trace_id`` reste ``null``."""
+        register(client)
+        document = self._uploaded_document(client, cv_repository)
+        self._add_run(
+            cv_repository,
+            document,
+            status="success",
+            created_at=datetime(2026, 7, 1, 10, 0, tzinfo=UTC),
+        )
+        document.status = "failed"
+        document.error_code = "unreadable"
+
+        assert client.get(f"{CV_URL}/{document.id}").json()["trace_id"] is None
+
+    def test_failure_trace_id_is_pure_and_stable(self) -> None:
+        """Fonction pure : deux lectures du même run donnent le même trace_id."""
+        document_id = uuid.uuid4()
+        runs = [
+            ExtractionRun(
+                id=uuid.uuid4(),
+                cv_document_id=document_id,
+                prompt_version="extract_cv/1.0.0",
+                model="claude-sonnet-5",
+                status="success",
+                output_key="k",
+                created_at=datetime(2026, 7, 1, 9, 0, tzinfo=UTC),
+            ),
+            ExtractionRun(
+                id=uuid.uuid4(),
+                cv_document_id=document_id,
+                prompt_version="extract_cv/1.0.0",
+                model="claude-sonnet-5",
+                status="failed",
+                output_key=None,
+                created_at=datetime(2026, 7, 1, 11, 0, tzinfo=UTC),
+            ),
+        ]
+        assert failure_trace_id(runs) == str(runs[1].id)
+        assert failure_trace_id(runs) == failure_trace_id(runs)
+        assert failure_trace_id([]) is None

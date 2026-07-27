@@ -1,12 +1,17 @@
 """Schémas Pydantic du sous-package CV — conformes à openapi.yaml#CvDocument.
 
 ``CvDocumentOut`` reprend le schéma ``CvDocument`` du contrat (id, filename,
-status, error_code, extraction_warnings) et lui ajoute le champ ADDITIF
-``proposal`` (autorisé par le versionnement §1 des contrats) : la sortie
-d'extraction transformée en PROPOSITION de profil — chaque champ porte une
-provenance ``cv_extraction`` + ``confidence`` (D05) et n'est JAMAIS écrit
-dans le profil avant l'action explicite ``POST /cv-documents/{id}/apply`` 🟡
-(endpoint absent d'openapi.yaml — écart documenté dans le router).
+status, error_code, extraction_warnings) et lui ajoute deux champs ADDITIFS
+(autorisés par le versionnement §1 des contrats) :
+
+- ``proposal`` : la sortie d'extraction transformée en PROPOSITION de profil
+  — chaque champ porte une provenance ``cv_extraction`` + ``confidence``
+  (D05) et n'est JAMAIS écrit dans le profil avant l'action explicite
+  ``POST /cv-documents/{id}/apply`` 🟡 (endpoint absent d'openapi.yaml —
+  écart documenté dans le router) ;
+- ``trace_id`` : identifiant de corrélation de l'échec d'extraction, exigé
+  par 04 Flux 1 pour le bloc repliable « détails techniques » affiché sur
+  ``error_code = extraction_failed``.
 """
 
 import uuid
@@ -104,7 +109,7 @@ class ApplyInput(BaseModel):
 
 
 class CvDocumentOut(BaseModel):
-    """Schéma ``CvDocument`` d'openapi.yaml + champ additif ``proposal``."""
+    """Schéma ``CvDocument`` d'openapi.yaml + additifs ``proposal``/``trace_id``."""
 
     id: uuid.UUID
     filename: str
@@ -112,3 +117,9 @@ class CvDocumentOut(BaseModel):
     error_code: CvErrorCode | None = None
     extraction_warnings: list[str] = Field(default_factory=list)
     proposal: CvProposal | None = None
+    trace_id: str | None = Field(
+        default=None,
+        description="Champ additif : identifiant de corrélation de l'échec "
+        "d'extraction (04 Flux 1, bloc « détails techniques » repliable). "
+        "``null`` tant que le document n'a pas échoué sur un appel LLM.",
+    )

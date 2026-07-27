@@ -91,7 +91,10 @@ async def create_generation(
 @router.get(
     "",
     response_model=GenerationPage,
-    summary="Bibliothèque des contenus générés (filtres doc_type/status/job_id)",
+    summary=(
+        "Bibliothèque des contenus générés "
+        "(filtres doc_type/status/job_id/application_id)"
+    ),
 )
 async def list_generations(
     user: CurrentUser,
@@ -99,12 +102,31 @@ async def list_generations(
     doc_type: Annotated[DocType | None, Query()] = None,
     status: Annotated[DocStatus | None, Query()] = None,
     job_id: Annotated[uuid.UUID | None, Query()] = None,
+    application_id: Annotated[
+        uuid.UUID | None,
+        Query(
+            description="Filtre additif (12 §1) : documents rattachés à cette "
+            "candidature (SCR-41, 04 Flux 7 §3) — pendant de "
+            "``GenerationCreate.application_id``.",
+        ),
+    ] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: Annotated[str | None, Query()] = None,
 ) -> GenerationPage:
-    """Liste scopée utilisateur, tri création décroissante, curseur keyset."""
+    """Liste scopée utilisateur, tri création décroissante, curseur keyset.
+
+    Les filtres se cumulent (ET) et restent scopés à l'utilisateur : un
+    ``application_id`` appartenant à autrui ne remonte simplement aucun
+    document (page vide, jamais 403/404 — anti-énumération).
+    """
     return await service.list(
-        user.id, doc_type=doc_type, status=status, job_id=job_id, limit=limit, cursor=cursor
+        user.id,
+        doc_type=doc_type,
+        status=status,
+        job_id=job_id,
+        application_id=application_id,
+        limit=limit,
+        cursor=cursor,
     )
 
 

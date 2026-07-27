@@ -75,6 +75,9 @@ class GeneratedDocumentOut(BaseModel):
     anchoring_note: str | None = None
     manually_edited: bool = False
     error_code: str | None = None
+    #: Options retenues à la création — permet au client de rejouer une
+    #: génération échouée avec les mêmes choix (ton, langue, longueur).
+    options: GenerationOptions | None = None
     created_at: datetime
     validated_at: datetime | None = None
 

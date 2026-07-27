@@ -44,11 +44,16 @@ class GenerationRepository(Protocol):
         doc_type: str | None,
         status: str | None,
         job_id: uuid.UUID | None,
+        application_id: uuid.UUID | None = None,
         before: tuple[datetime, uuid.UUID] | None,
         limit: int,
     ) -> list[GeneratedDocument]:
         """Page keyset (created_at DESC, id DESC) ; ``status`` est l'état
-        CONTRACTUEL (pending/draft/validated/exported/failed)."""
+        CONTRACTUEL (pending/draft/validated/exported/failed).
+
+        ``application_id`` : même patron que ``job_id`` — égalité stricte sur
+        la colonne, cumulée au scope utilisateur (index
+        ``generated_documents(user_id, created_at)``)."""
         ...
 
     async def get_job(self, job_id: uuid.UUID) -> JobPosting | None:
@@ -107,6 +112,7 @@ class SqlAlchemyGenerationRepository:
         doc_type: str | None,
         status: str | None,
         job_id: uuid.UUID | None,
+        application_id: uuid.UUID | None = None,
         before: tuple[datetime, uuid.UUID] | None,
         limit: int,
     ) -> list[GeneratedDocument]:
@@ -117,6 +123,8 @@ class SqlAlchemyGenerationRepository:
             conditions.extend(_status_conditions(status))
         if job_id is not None:
             conditions.append(GeneratedDocument.job_posting_id == job_id)
+        if application_id is not None:
+            conditions.append(GeneratedDocument.application_id == application_id)
         if before is not None:
             before_at, before_id = before
             conditions.append(

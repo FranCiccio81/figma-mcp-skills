@@ -12,9 +12,10 @@ Règles portées ici :
   lisible → 409 ``job_expired`` (RM-L-6) ; quotas 10/h et 40/j (RM-L-4,
   429 + ``Retry-After``) → ligne ``pending`` + tâche ``ai.generate`` en file ;
 - ``PATCH`` : brouillon uniquement (409 ``generation_not_editable`` 🟡
-  sinon) ; l'édition manuelle LÈVE le contrôle d'ancrage (Q6 🟡) :
-  ``manually_edited = true``, ``anchoring_check`` → null + note de
-  responsabilité dans la réponse ;
+  sinon) ; une édition RÉELLE lève le BLOCAGE d'ancrage (Q6 🟡) :
+  ``manually_edited = true`` + note de responsabilité dans la réponse — le
+  verdict d'ancrage d'origine est CONSERVÉ (``pre_edit``, audit) et un
+  PATCH no-op (contenu identique) ne lève rien du tout ;
 - ``validate`` : draft → validated (D10) ; un contrôle d'ancrage ``failed``
   non levé par une édition manuelle bloque la validation (409
   ``generation_not_anchored`` 🟡 — « jamais présenté comme prêt ») ;
@@ -38,6 +39,7 @@ import json
 import logging
 import uuid
 from collections.abc import Callable
+from copy import deepcopy
 from datetime import UTC, datetime
 from typing import Any
 
@@ -60,6 +62,7 @@ from app.modules.generation.schemas import (
     ExportOut,
     GeneratedDocumentOut,
     GenerationCreate,
+    GenerationOptions,
     GenerationPage,
     GenerationPatch,
 )
@@ -85,6 +88,24 @@ MANUAL_EDIT_NOTE = (
     "Contenu édité manuellement : le contrôle d'ancrage automatique est levé — "
     "le texte est sous votre responsabilité, relisez-le avant validation."
 )
+
+
+def _lift_anchoring(check: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Lève le BLOCAGE d'ancrage sans DÉTRUIRE le verdict (Q6 🟡, audit).
+
+    L'édition manuelle débloque la validation (le blocage est porté par
+    ``manually_edited``, pas par l'effacement du verdict) ; le verdict
+    d'origine — dont la liste des affirmations non ancrées — reste lisible
+    dans le jsonb sous ``pre_edit`` et continue d'être servi par l'API :
+    effacer cette trace supprimerait la seule preuve que le contenu généré
+    n'était pas ancré.
+    """
+    if not isinstance(check, dict):
+        return check
+    lifted = dict(check)
+    lifted["lifted_by_manual_edit"] = True
+    lifted.setdefault("pre_edit", deepcopy(check))
+    return lifted
 
 #: Fabrique d'enfilement de la tâche ``ai.generate`` — injectable (tests).
 Enqueuer = Callable[[uuid.UUID], None]
@@ -465,10 +486,16 @@ class GenerationService:
         doc_type: str | None,
         status: str | None,
         job_id: uuid.UUID | None,
+        application_id: uuid.UUID | None = None,
         limit: int,
         cursor: str | None,
     ) -> GenerationPage:
-        """GET /generations — bibliothèque paginée par curseur keyset."""
+        """GET /generations — bibliothèque paginée par curseur keyset.
+
+        ``application_id`` (filtre additif, 12 §1) restreint aux documents
+        rattachés à une candidature (SCR-41, 04 Flux 7 §3) ; comme les autres
+        filtres il s'applique DANS le scope utilisateur.
+        """
         before: tuple[datetime, uuid.UUID] | None = None
         if cursor is not None:
             before = _decode_generation_cursor(cursor)
@@ -478,6 +505,7 @@ class GenerationService:
             doc_type=doc_type,
             status=status,
             job_id=job_id,
+            application_id=application_id,
             before=before,
             limit=limit + 1,
         )
@@ -498,9 +526,12 @@ class GenerationService:
     ) -> GeneratedDocumentOut:
         """PATCH /generations/{id} — édition manuelle du brouillon (Q6 🟡).
 
-        Brouillon uniquement (409 sinon) ; lève le contrôle d'ancrage :
-        ``anchoring_check`` → null, ``manually_edited`` → true, note de
-        responsabilité dans la réponse — le document reste en relecture.
+        Brouillon uniquement (409 sinon). Une édition RÉELLE (contenu
+        différent) lève le blocage d'ancrage : ``manually_edited`` → true +
+        note de responsabilité, le verdict d'origine restant conservé pour
+        l'audit (:func:`_lift_anchoring`). Un PATCH no-op (contenu
+        identique) ne lève RIEN : il ne peut pas servir de contournement du
+        contrôle d'ancrage.
         """
         document = await self._require_document(user_id, document_id)
         if api_status(document) != "draft":
@@ -510,9 +541,16 @@ class GenerationService:
                 title="Document non éditable",
                 detail="Seul un brouillon (status=draft) peut être édité manuellement.",
             )
+        if payload.content == document.content:
+            # PATCH no-op : aucune édition réelle → aucune levée du contrôle
+            # d'ancrage. Un renvoi à l'identique du contenu ne peut pas
+            # servir de contournement (« j'ai relu » ≠ « j'ai corrigé »).
+            logger.info("generation_patch_noop id=%s", document_id)
+            return self._to_out(document)
+
         document.content = payload.content
         document.manually_edited = True
-        document.anchoring_check = None
+        document.anchoring_check = _lift_anchoring(document.anchoring_check)
         await self._repository.commit()
         return self._to_out(document)
 
@@ -609,6 +647,11 @@ class GenerationService:
             application_id=document.application_id,
             based_on_profile_version=document.based_on_profile_version,
             prompt_version=document.prompt_version,
+            options=(
+                GenerationOptions.model_validate(document.options)
+                if isinstance(document.options, dict)
+                else None
+            ),
             content=content,
             anchoring_check=anchoring,
             anchoring_note=MANUAL_EDIT_NOTE if document.manually_edited else None,
@@ -702,6 +745,14 @@ async def execute_generation(
     except GenerationTaskError as exc:
         document.processing_status = "failed"
         document.error_code = exc.error_code
+        if exc.unanchored_claims:
+            # Échec d'ancrage (M6) : le contenu inventé n'est JAMAIS servi
+            # (status failed ⇒ content null), mais le verdict reste
+            # persisté — sans lui, l'échec ne serait pas auditable.
+            document.anchoring_check = {
+                "status": "failed",
+                "unanchored_claims": list(exc.unanchored_claims),
+            }
         await repository.commit()
         logger.warning(
             "generation_failed id=%s error_code=%s detail=%s",
@@ -726,6 +777,8 @@ async def execute_generation(
     document.status = "draft"
     document.error_code = None
     await repository.commit()
+    for warning in outcome.warnings:
+        logger.warning("generation_warning id=%s message=%s", document_id, warning)
     if outcome.anchoring_status == "failed":
         # Avertissement journalisé (AC-L-2) : jamais présenté comme prêt.
         logger.warning(

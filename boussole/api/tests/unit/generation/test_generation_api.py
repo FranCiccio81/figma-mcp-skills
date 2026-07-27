@@ -324,6 +324,94 @@ class TestList:
         drafts = client.get(GENERATIONS_URL, params={"status": "draft"}).json()
         assert drafts["items"] == []
 
+    def test_filter_by_application_id(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+    ) -> None:
+        """Filtre additif (SCR-41, 04 Flux 7 §3) : documents d'une candidature."""
+        setup_validated_user(client, auth_repository, profiles_repository)
+        job = generation_repository.add_job(make_posting())
+        application_id = uuid.uuid4()
+        other_application_id = uuid.uuid4()
+
+        linked = [
+            post_generation(
+                client, doc_type="email", job_id=job.id, application_id=application_id
+            ).json()["id"],
+            post_generation(
+                client,
+                doc_type="cover_letter",
+                job_id=job.id,
+                application_id=application_id,
+            ).json()["id"],
+        ]
+        other = post_generation(
+            client, doc_type="email", job_id=job.id, application_id=other_application_id
+        ).json()["id"]
+        unlinked = post_generation(client, doc_type="email", job_id=job.id).json()["id"]
+
+        body = client.get(
+            GENERATIONS_URL, params={"application_id": str(application_id)}
+        ).json()
+        assert {item["id"] for item in body["items"]} == set(linked)
+        assert other not in {item["id"] for item in body["items"]}
+        assert unlinked not in {item["id"] for item in body["items"]}
+        # Le champ reste exposé sur chaque document (contrat GeneratedDocument).
+        assert all(item["application_id"] == str(application_id) for item in body["items"])
+
+    def test_application_id_filter_combines_with_doc_type(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+    ) -> None:
+        setup_validated_user(client, auth_repository, profiles_repository)
+        job = generation_repository.add_job(make_posting())
+        application_id = uuid.uuid4()
+        email_id = post_generation(
+            client, doc_type="email", job_id=job.id, application_id=application_id
+        ).json()["id"]
+        post_generation(
+            client, doc_type="cover_letter", job_id=job.id, application_id=application_id
+        )
+
+        body = client.get(
+            GENERATIONS_URL,
+            params={"application_id": str(application_id), "doc_type": "email"},
+        ).json()
+        assert [item["id"] for item in body["items"]] == [email_id]
+
+    def test_unknown_application_id_returns_an_empty_page(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        generation_repository: InMemoryGenerationRepository,
+    ) -> None:
+        """Candidature inconnue OU d'autrui : page vide, jamais 403/404."""
+        setup_validated_user(client, auth_repository, profiles_repository)
+        self._create_documents(client, generation_repository)
+
+        response = client.get(
+            GENERATIONS_URL, params={"application_id": str(uuid.uuid4())}
+        )
+        assert response.status_code == 200
+        assert response.json()["items"] == []
+
+    def test_non_uuid_application_id_is_rejected(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+    ) -> None:
+        setup_validated_user(client, auth_repository, profiles_repository)
+        response = client.get(GENERATIONS_URL, params={"application_id": "pas-un-uuid"})
+        assert response.status_code == 422
+
     def test_cursor_pagination(
         self,
         client: TestClient,

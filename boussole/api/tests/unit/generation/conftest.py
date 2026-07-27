@@ -93,6 +93,7 @@ class InMemoryGenerationRepository:
         doc_type: str | None,
         status: str | None,
         job_id: uuid.UUID | None,
+        application_id: uuid.UUID | None = None,
         before: tuple[Any, uuid.UUID] | None,
         limit: int,
     ) -> list[GeneratedDocument]:
@@ -103,6 +104,8 @@ class InMemoryGenerationRepository:
             rows = [d for d in rows if api_status(d) == status]
         if job_id is not None:
             rows = [d for d in rows if d.job_posting_id == job_id]
+        if application_id is not None:
+            rows = [d for d in rows if d.application_id == application_id]
         rows.sort(key=lambda d: (d.created_at, d.id.int), reverse=True)
         if before is not None:
             before_at, before_id = before
@@ -171,6 +174,7 @@ def post_generation(
     *,
     doc_type: str = "email",
     job_id: uuid.UUID | None = None,
+    application_id: uuid.UUID | None = None,
     key: uuid.UUID | str | None = "auto",
     options: dict[str, Any] | None = None,
 ) -> Any:
@@ -183,6 +187,8 @@ def post_generation(
     body: dict[str, Any] = {"doc_type": doc_type}
     if job_id is not None:
         body["job_id"] = str(job_id)
+    if application_id is not None:
+        body["application_id"] = str(application_id)
     if options is not None:
         body["options"] = options
     return client.post(GENERATIONS_URL, json=body, headers=headers)

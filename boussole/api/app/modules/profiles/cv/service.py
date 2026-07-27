@@ -13,7 +13,10 @@ Règles portées ici :
   champ) — RIEN n'est écrit dans le profil (RM-B-1) ;
 - apply 🟡 : fusion explicite dans le profil — les champs existants
   ``user_input``/``user_confirmed`` ne sont JAMAIS écrasés (F-B alt. 7),
-  les ajouts portent ``source='cv_extraction'``, ``version``++.
+  les ajouts portent ``source='cv_extraction'``, ``version``++ ;
+- ``trace_id`` (champ additif, 04 Flux 1) : identifiant de corrélation
+  renvoyé sur un échec d'extraction, pour le bloc repliable « détails
+  techniques » de l'écran d'import — voir :func:`failure_trace_id`.
 
 Hypothèses 🟡 : ordre de validation taille → magic bytes → quota (un
 fichier invalide ne consomme pas le quota) ; un upload dont l'extraction
@@ -34,8 +37,9 @@ from app.ai.tasks.extract_cv import CvExtraction
 from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.storage import ObjectNotFoundError, ObjectStorage
-from app.modules.profiles.cv.models import CvDocument
+from app.modules.profiles.cv.models import CvDocument, ExtractionRun
 from app.modules.profiles.cv.repository import CvDocumentsRepository
+from app.modules.profiles.cv.safety import UnsafeDocumentError, assert_archive_safe
 from app.modules.profiles.cv.schemas import (
     ApplyInput,
     CvDocumentOut,
@@ -88,6 +92,10 @@ def sniff_mime(data: bytes) -> str | None:
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 if "word/document.xml" in archive.namelist():
+                    # Bombe de décompression : refusée DÈS L'UPLOAD (415) plutôt
+                    # que d'accepter un 202 puis de mettre le worker à terre.
+                    # Le contrôle ne lit que le catalogue, jamais les données.
+                    assert_archive_safe(data)
                     return DOCX_MIME
         except zipfile.BadZipFile:
             return None
@@ -110,6 +118,38 @@ def _partial_date(value: str) -> date:
     year = int(parts[0])
     month = int(parts[1]) if len(parts) > 1 else 1
     return date(year, month, 1)
+
+
+#: Statuts d'``extraction_runs`` traduisant un échec d'appel LLM (RM-B-3) —
+#: le succès est ``success``, les autres valeurs sont des échecs.
+FAILED_RUN_STATUSES = ("schema_error", "failed")
+
+
+def failure_trace_id(runs: list[ExtractionRun]) -> str | None:
+    """Identifiant de corrélation du dernier échec d'extraction (04 Flux 1).
+
+    Fonction pure. 🟡 HYPOTHÈSE DOCUMENTÉE : aucune colonne de corrélation
+    n'existe aujourd'hui (``cv_documents`` porte ``error_code``, pas de
+    ``trace_id``) et le correctif ne crée PAS de migration. L'``id`` du
+    dernier ``extraction_run`` en échec fait donc office de trace_id : il est
+    stable, unique, déjà persisté, et corrèle la réponse API aux journaux du
+    worker (qui logguent l'exception au moment du run). À remplacer par le
+    ``trace_id`` de la requête (D20) le jour où une colonne dédiée est
+    ajoutée à ``extraction_runs``.
+
+    ``None`` s'il n'y a aucun run en échec : les autres ``error_code``
+    (``unreadable``, ``image_only_pdf``, …) échouent AVANT tout appel LLM et
+    ne créent donc pas de run — il n'y a rien à corréler.
+    """
+    failures = [run for run in runs if run.status in FAILED_RUN_STATUSES]
+    if not failures:
+        return None
+    # ``created_at`` est posé par PostgreSQL (``server_default now()``) : il
+    # n'est absent que sur une instance jamais persistée — on retombe alors
+    # sur l'ordre de lecture plutôt que de lever une comparaison impossible.
+    dated = [run for run in failures if run.created_at is not None]
+    latest = max(dated, key=lambda run: run.created_at) if dated else failures[-1]
+    return str(latest.id)
 
 
 def build_proposal(extraction: CvExtraction) -> CvProposal:
@@ -335,7 +375,18 @@ class CvService:
                 title="Fichier trop volumineux",
                 detail="Le fichier dépasse la taille maximale de 10 Mo.",
             )
-        mime = sniff_mime(data)
+        try:
+            mime = sniff_mime(data)
+        except UnsafeDocumentError as exc:
+            raise Problem(
+                status=415,
+                code="unsupported_format",
+                title="Document refusé",
+                detail=(
+                    "Ce document ne peut pas être traité en toute sécurité "
+                    "(archive anormalement compressée)."
+                ),
+            ) from exc
         if mime is None:
             raise Problem(
                 status=415,
@@ -385,14 +436,21 @@ class CvService:
     # ------------------------------------------------------------ lecture
 
     async def get(self, user_id: uuid.UUID, document_id: uuid.UUID) -> CvDocumentOut:
-        """GET /cv-documents/{id} : statut + proposition si ``parsed`` (RM-B-1)."""
+        """GET /cv-documents/{id} : statut + proposition si ``parsed`` (RM-B-1).
+
+        Sur un document ``failed``, ``trace_id`` porte l'identifiant de
+        corrélation de l'échec d'extraction (04 Flux 1) — ``null`` sinon.
+        """
         document = await self._repository.get_for_user(user_id, document_id)
         if document is None:
             raise _not_found()
         extraction = await self._load_extraction(document)
         proposal = build_proposal(extraction) if extraction is not None else None
         warnings = list(extraction.warnings) if extraction is not None else []
-        return self._to_out(document, proposal=proposal, warnings=warnings)
+        trace_id = await self._failure_trace_id(document)
+        return self._to_out(
+            document, proposal=proposal, warnings=warnings, trace_id=trace_id
+        )
 
     # ------------------------------------------------------------ apply 🟡
 
@@ -439,6 +497,12 @@ class CvService:
 
     # ------------------------------------------------------------ interne
 
+    async def _failure_trace_id(self, document: CvDocument) -> str | None:
+        """trace_id de l'échec d'extraction — aucune requête si non ``failed``."""
+        if document.status != "failed":
+            return None
+        return failure_trace_id(await self._repository.runs_for_document(document.id))
+
     async def _load_extraction(self, document: CvDocument) -> CvExtraction | None:
         """Sortie validée du dernier run en succès — None si indisponible."""
         if document.status != "parsed":
@@ -455,7 +519,11 @@ class CvService:
 
     @staticmethod
     def _to_out(
-        document: CvDocument, *, proposal: CvProposal | None, warnings: list[str]
+        document: CvDocument,
+        *,
+        proposal: CvProposal | None,
+        warnings: list[str],
+        trace_id: str | None = None,
     ) -> CvDocumentOut:
         return CvDocumentOut(
             id=document.id,
@@ -464,4 +532,5 @@ class CvService:
             error_code=cast(CvErrorCode | None, document.error_code),
             extraction_warnings=warnings,
             proposal=proposal,
+            trace_id=trace_id,
         )

@@ -23,13 +23,17 @@ from tests.unit.cv.conftest import (
     make_pdf_bytes,
 )
 
+#: Le texte par défaut de ``make_pdf_bytes`` sert de citation d'ancrage :
+#: la citation doit être exacte, ≥ MIN_QUOTE_CHARS et porter le libellé.
+PDF_TEXT = "Developpeuse Python chez Acme depuis 2020"
+
 VALID_OUTPUT: dict[str, Any] = {
     "headline": None,
     "summary": None,
     "experiences": [],
     "educations": [],
     "skills": [
-        {"label": "Python", "confidence": 0.8, "evidence": {"quote": "Python"}}
+        {"label": "Python", "confidence": 0.8, "evidence": {"quote": PDF_TEXT}}
     ],
     "languages": [],
     "warnings": [],
@@ -76,7 +80,7 @@ class TestRunCvExtraction:
     def test_success_returns_parsed_with_extraction_and_raw_text(self) -> None:
         provider = FakeProvider(canned={"extract_cv": VALID_OUTPUT})
         outcome = cv_tasks.run_cv_extraction(
-            make_pdf_bytes("Python partout"), PDF_MIME, provider
+            make_pdf_bytes(PDF_TEXT), PDF_MIME, provider
         )
         assert outcome.document_status == "parsed"
         assert outcome.error_code is None
@@ -176,7 +180,7 @@ class TestParseCvCycle:
             size_bytes=1000,
             status="uploaded",
         )
-        storage.put(document.file_key, make_pdf_bytes("Python partout"))
+        storage.put(document.file_key, make_pdf_bytes(PDF_TEXT))
         session = FakeSession(document)
         engine = self._patch_db(monkeypatch, session)
 
