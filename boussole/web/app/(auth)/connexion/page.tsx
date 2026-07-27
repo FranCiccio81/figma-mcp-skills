@@ -76,9 +76,19 @@ function LoginForm() {
     }
   });
 
+  // Message de confirmation après suppression de compte (SCR-72 → SCR-01,
+  // M5 « Après succès » — redirection avec `?notice=account-deleted`).
+  const accountDeleted = searchParams.get("notice") === "account-deleted";
+
   return (
     <>
       <h1 className="text-xl font-semibold text-content">{t("auth.login.title")}</h1>
+
+      {accountDeleted ? (
+        <Alert variant="success" className="mt-4">
+          {t("auth.login.accountDeleted")}
+        </Alert>
+      ) : null}
 
       {serverError ? (
         <Alert ref={serverErrorRef} tabIndex={-1} variant="error" className="mt-4">

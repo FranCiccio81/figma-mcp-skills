@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "i18n:check": "node scripts/check-i18n-parity.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

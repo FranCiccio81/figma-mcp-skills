@@ -24,6 +24,8 @@ import {
 } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { GenerateModal } from "@/components/generation/generate-modal";
+import { CvImport } from "@/components/profile/cv-import";
 import { ProvenanceBadge } from "@/components/profile/provenance-badge";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -1061,6 +1063,38 @@ function LanguagesSection({
 }
 
 /* ------------------------------------------------------------------ */
+/* Optimiser mon CV (SCR-50 → SCR-30, feature N) — M4                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Encart « Optimiser mon CV » (03 SCR-50) : génération `cv_optimization`
+ * sans `job_id`, via la modale SCR-30 (avertissement anti-invention inclus).
+ */
+function OptimizeCvSection() {
+  const t = useTranslations("generation.actions");
+  const baseId = useId();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section
+      aria-labelledby={`${baseId}-title`}
+      className="space-y-3 rounded-lg border border-border bg-surface p-4"
+    >
+      <h2 id={`${baseId}-title`} className="text-lg font-semibold text-content">
+        {t("optimizeCv")}
+      </h2>
+      <p className="max-w-prose text-sm text-content-secondary">{t("optimizeCvHint")}</p>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {t("optimizeCv")}
+      </Button>
+      {open ? (
+        <GenerateModal docType="cv_optimization" onClose={() => setOpen(false)} />
+      ) : null}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
@@ -1174,11 +1208,17 @@ export default function ProfilePage() {
         </Alert>
       ) : null}
 
+      {/* Import CV (SCR-05/06 — M4) : upload, parsing, revue, application. */}
+      <CvImport />
+
       <RootInfoSection profile={profile} onChanged={handleChanged} />
       <ExperiencesSection profile={profile} onChanged={handleChanged} />
       <EducationsSection profile={profile} onChanged={handleChanged} />
       <SkillsSection profile={profile} onChanged={handleChanged} />
       <LanguagesSection profile={profile} onChanged={handleChanged} />
+
+      {/* Optimisation générale du CV (feature N — cv_optimization sans job_id). */}
+      <OptimizeCvSection />
 
       {/* CTA de validation (Flux 1 §6) — actif si ≥ 3 compétences ET ≥ 1
           expérience ou formation ; sinon bouton désactivé + explication. */}

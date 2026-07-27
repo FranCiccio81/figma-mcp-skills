@@ -88,6 +88,12 @@ services:
       S3_ACCESS_KEY: boussole-dev
       S3_SECRET_KEY: boussole-dev-secret
       SESSION_TTL_DAYS: "30"
+      # Proxies de confiance pour X-Forwarded-For (uvicorn --forwarded-allow-ips
+      # ET app/main.py::trusted_proxies). Le SEUL front légitime est le
+      # conteneur « web » (Next.js), épinglé sur une adresse fixe du réseau
+      # ci-dessous — d'où une liste explicite plutôt que "*", qui rendrait
+      # l'identité de rate limiting falsifiable par n'importe quel client.
+      FORWARDED_ALLOW_IPS: "172.28.0.20"
     ports:
       - "8000:8000"
     depends_on:
@@ -111,9 +117,25 @@ services:
       API_INTERNAL_URL: http://api:8000
     ports:
       - "3000:3000"
+    # Adresse fixe : c'est CETTE adresse que l'API accepte comme proxy de
+    # confiance (FORWARDED_ALLOW_IPS du service api). Sans épinglage, Docker
+    # attribue une IP variable et la liste de confiance serait ingérable.
+    networks:
+      default:
+        ipv4_address: 172.28.0.20
     depends_on:
       api:
         condition: service_healthy
+
+# Réseau par défaut du projet, avec un sous-réseau FIXE : indispensable pour
+# épingler l'adresse du front et n'accorder la confiance XFF qu'à lui.
+networks:
+  default:
+    name: boussole-dev
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
 volumes:
   postgres-data:

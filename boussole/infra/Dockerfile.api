@@ -36,4 +36,21 @@ USER boussole
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# L'API tourne DERRIÈRE le proxy Next.js : sans --proxy-headers, uvicorn voit
+# l'IP du proxy pour TOUTES les requêtes et le rate limiting anonyme partage
+# un unique seau de 60 req/min (auto-DoS trivial).
+#
+# --forwarded-allow-ips est volontairement RESTREINT (jamais "*") : uvicorn
+# n'honore X-Forwarded-For / X-Forwarded-Proto que si le pair immédiat figure
+# dans cette liste. La même liste est relue par l'application
+# (FORWARDED_ALLOW_IPS, cf. app/main.py::trusted_proxies) qui retient le
+# dernier saut de confiance de la chaîne XFF.
+#
+# Réglage par déploiement, via la variable d'environnement du conteneur :
+#   FORWARDED_ALLOW_IPS="10.0.3.7"            un proxy connu
+#   FORWARDED_ALLOW_IPS="10.0.3.7,10.0.3.8"   plusieurs (liste, pas de CIDR)
+# Défaut sûr : 127.0.0.1 — aucun en-tête distant n'est cru.
+ENV FORWARDED_ALLOW_IPS=127.0.0.1
+
+# Forme shell : nécessaire pour l'expansion de ${FORWARDED_ALLOW_IPS}.
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"$FORWARDED_ALLOW_IPS\""]

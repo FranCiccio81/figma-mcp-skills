@@ -24,6 +24,7 @@ celery_app = Celery(
         "app.workers.ingestion_tasks",
         "app.workers.cv_tasks",
         "app.workers.generation_tasks",
+        "app.workers.privacy_tasks",
     ],
 )
 
@@ -77,6 +78,17 @@ celery_app.conf.update(
         "maintenance-expire-jobs": {
             "task": "maintenance.expire_jobs",
             "schedule": crontab(minute=45, hour=3),
+        },
+        "maintenance-purge-due-accounts": {
+            "task": "maintenance.purge_due_accounts",
+            "schedule": crontab(minute=15, hour=4),
+        },
+        # Ménage des archives d'export expirées (M3) : le lien signé meurt à
+        # J+7, l'objet stocké doit mourir avec lui (minimisation, D09).
+        # Décalée de la purge de comptes pour ne pas concentrer les I/O objet.
+        "maintenance-purge-expired-exports": {
+            "task": "maintenance.purge_expired_exports",
+            "schedule": crontab(minute=45, hour=4),
         },
     },
 )

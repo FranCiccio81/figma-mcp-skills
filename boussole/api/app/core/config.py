@@ -27,11 +27,17 @@ class Settings(BaseSettings):
     redis_cache_url: str = "redis://localhost:6380/0"
 
     # Stockage objet UE (D09) — MinIO en dev.
+    # 🟡 M4 : implémentation locale disque (dev/tests) — répertoire racine ;
+    # le backend S3 (clés ci-dessous) est branché au M5 (TODO(M5), storage.py).
+    storage_local_path: str = ".storage"
     s3_endpoint: str = "http://localhost:9000"
     s3_bucket: str = "boussole-dev"
     s3_region: str = "eu-west-1"
     s3_access_key: str = "boussole-dev"
     s3_secret_key: str = "boussole-dev-secret"  # dev uniquement — vault en prod (D23)
+    # Clé HMAC des liens signés d'export RGPD — dédiée (rotation indépendante
+    # du stockage), vault en prod (D23).
+    privacy_signing_key: str = "boussole-dev-privacy-signing"
 
     # Sessions opaques en Redis persistant, TTL glissant.
     session_ttl_days: int = 30

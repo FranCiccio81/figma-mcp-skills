@@ -4,7 +4,8 @@ Le moteur est créé paresseusement : l'import du module ne tente aucune
 connexion (les tests unitaires substituent les dépendances).
 """
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from typing import ClassVar
 
@@ -35,6 +36,16 @@ class Base(DeclarativeBase):
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
+
+#: Garde de réentrance de :func:`override_engine` — le contexte substitue des
+#: globales et restaure « l'état précédent » : deux substitutions imbriquées
+#: (ou concurrentes dans le même processus) restaureraient un moteur déjà
+#: disposé. Le viol est signalé BRUYAMMENT plutôt que corrompu en silence.
+_override_active = False
+
+
+class EngineOverrideError(RuntimeError):
+    """``override_engine`` réentrant : substitution déjà active dans ce processus."""
 
 
 def get_engine() -> AsyncEngine:
@@ -67,6 +78,47 @@ def create_worker_engine() -> AsyncEngine:
     """
     settings = get_settings()
     return create_async_engine(settings.database_url, echo=settings.debug, poolclass=NullPool)
+
+
+@contextmanager
+def override_engine(engine: AsyncEngine) -> Iterator[async_sessionmaker[AsyncSession]]:
+    """Substitue temporairement le moteur/la fabrique GLOBAUX par ``engine``.
+
+    Usage workers Celery : le code des modules (``purge_user``/``export_user``
+    du registre privacy notamment) ouvre ses sessions via
+    :func:`get_session_factory` ; dans une coroutine lancée par
+    ``asyncio.run``, la fabrique globale poolée lierait ses connexions à une
+    boucle éphémère. En enveloppant la coroutine de la tâche::
+
+        engine = create_worker_engine()
+        with override_engine(engine):
+            ...  # tout get_session_factory() utilise le moteur NullPool
+        await engine.dispose()
+
+    l'état global est restauré quoi qu'il arrive.
+
+    NON RÉENTRANT — et la garde est désormais EXPLICITE : une seconde entrée
+    alors qu'une substitution est déjà active lève :class:`EngineOverrideError`
+    au lieu de laisser la sortie du contexte interne restaurer un moteur
+    intermédiaire (et la sortie externe, un moteur déjà disposé — sessions
+    liées à une boucle morte, diagnostic impossible). À n'utiliser que dans
+    les workers, une tâche à la fois par processus.
+    """
+    global _engine, _session_factory, _override_active
+    if _override_active:
+        raise EngineOverrideError(
+            "override_engine est déjà actif dans ce processus : la substitution "
+            "du moteur global n'est pas réentrante (une tâche Celery à la fois)."
+        )
+    previous = (_engine, _session_factory)
+    _engine = engine
+    _session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    _override_active = True
+    try:
+        yield _session_factory
+    finally:
+        _override_active = False
+        _engine, _session_factory = previous
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:

@@ -119,6 +119,9 @@ class InMemoryProfilesRepository:
     async def commit(self) -> None:  # aucune persistance : mutations en place
         return None
 
+    async def delete_by_user(self, user_id: uuid.UUID) -> None:
+        self.profiles_by_user.pop(user_id, None)
+
 
 @pytest.fixture
 def profiles_repository() -> InMemoryProfilesRepository:
