@@ -8,6 +8,7 @@ d'événements sont reproduits en Python (patterns du module jobs).
 
 import itertools
 import uuid
+from collections.abc import Iterable
 from datetime import UTC, datetime
 
 import pytest
@@ -16,6 +17,7 @@ from fastapi.testclient import TestClient
 from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.repository import (
     ApplicationCursor,
+    JobRef,
     get_applications_repository,
 )
 
@@ -56,12 +58,27 @@ class InMemoryApplicationsRepository:
 
     def __init__(self) -> None:
         self.applications: dict[uuid.UUID, Application] = {}
-        self.job_ids: set[uuid.UUID] = set()
+        self.jobs: dict[uuid.UUID, JobRef] = {}
+        #: Nombre de REQUÊTES de résolution des libellés d'offre — permet aux
+        #: tests d'affirmer l'absence de N+1 (une seule requête par page).
+        #: Compté comme en SQL : un lot vide ne déclenche aucune requête.
+        self.job_ref_calls = 0
         self._event_seq = itertools.count(1)
 
     def add(self, application: Application) -> Application:
         self.applications[application.id] = application
         return application
+
+    def add_job(
+        self,
+        job_posting_id: uuid.UUID,
+        *,
+        title: str = "Développeuse backend",
+        company: str = "ACME",
+    ) -> uuid.UUID:
+        """Enregistre une offre interne connue (title / company_name)."""
+        self.jobs[job_posting_id] = JobRef(title=title, company=company)
+        return job_posting_id
 
     async def list_for_user(
         self,
@@ -94,8 +111,18 @@ class InMemoryApplicationsRepository:
             return None
         return application
 
-    async def job_exists(self, job_posting_id: uuid.UUID) -> bool:
-        return job_posting_id in self.job_ids
+    async def get_job_ref(self, job_posting_id: uuid.UUID) -> JobRef | None:
+        self.job_ref_calls += 1
+        return self.jobs.get(job_posting_id)
+
+    async def job_refs(
+        self, job_posting_ids: Iterable[uuid.UUID]
+    ) -> dict[uuid.UUID, JobRef]:
+        wanted = list(dict.fromkeys(job_posting_ids))
+        if not wanted:
+            return {}  # comme en SQL : aucune requête pour un lot vide
+        self.job_ref_calls += 1
+        return {job_id: self.jobs[job_id] for job_id in wanted if job_id in self.jobs}
 
     async def create(self, application: Application) -> Application:
         return self.add(application)

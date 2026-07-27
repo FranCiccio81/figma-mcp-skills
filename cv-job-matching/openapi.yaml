@@ -581,6 +581,7 @@ components:
         filename: { type: string }
         status: { type: string, enum: [uploaded, parsing, parsed, failed] }
         error_code: { type: [string, "null"], enum: [unreadable, image_only_pdf, too_large, unsupported_format, extraction_failed, null] }
+        trace_id: { type: [string, "null"], description: identifiant de corrélation d'un échec d'extraction (bloc « détails techniques ») }
         extraction_warnings: { type: array, items: { type: string } }
     Experience:
       allOf:
@@ -748,6 +749,15 @@ components:
           properties:
             status: { type: string, enum: [passed, failed] }
             unanchored_claims: { type: array, items: { type: string } }
+        error_code: { type: [string, "null"], description: "ex. grounding_error — échec du contrôle d'ancrage après retry" }
+        manually_edited: { type: boolean, default: false }
+        options:
+          type: [object, "null"]
+          description: options retenues à la création (rejeu d'une génération échouée)
+          properties:
+            tone: { type: string, enum: [sobre, chaleureux, direct] }
+            language: { type: [string, "null"], enum: [fr, en, null] }
+            length: { type: string, enum: [court, standard] }
     ApplicationInput:
       type: object
       properties:

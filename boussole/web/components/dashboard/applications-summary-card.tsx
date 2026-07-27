@@ -24,7 +24,9 @@ export function ApplicationsSummaryCard() {
   const tStatus = useTranslations("applications.status");
 
   const applicationsQuery = useQuery({
-    queryKey: applicationKeys.list({ limit: SUMMARY_LIMIT }),
+    // Clé « summary » distincte de l'infinite query de SCR-40 : même endpoint,
+    // structures de cache incompatibles (voir applicationKeys).
+    queryKey: applicationKeys.summary({ limit: SUMMARY_LIMIT }),
     queryFn: ({ signal }) => listApplications({ limit: SUMMARY_LIMIT }, null, signal),
   });
 

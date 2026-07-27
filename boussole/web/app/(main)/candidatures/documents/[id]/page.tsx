@@ -176,6 +176,8 @@ export default function GenerationDocumentPage() {
   });
 
   // « Réessayer » après échec : nouvelle génération, nouvelle Idempotency-Key.
+  // Les options d'origine (ton / langue / longueur) sont rejouées si l'API les
+  // expose — sinon le ré-essai retomberait silencieusement sur les défauts.
   const retryMutation = useMutation({
     mutationFn: () =>
       createGeneration(
@@ -183,6 +185,7 @@ export default function GenerationDocumentPage() {
           doc_type: doc?.doc_type ?? "cover_letter",
           job_id: doc?.job_id ?? null,
           application_id: doc?.application_id ?? null,
+          options: doc?.options ?? undefined,
         },
         crypto.randomUUID(),
       ),
@@ -306,7 +309,15 @@ export default function GenerationDocumentPage() {
       {/* --- Échec de génération ------------------------------------------ */}
       {isFailed ? (
         <div className="space-y-3">
-          <Alert variant="error">{t("document.failed")}</Alert>
+          <Alert variant="error">
+            <p>{t("document.failed")}</p>
+            {documentData.error_code ? (
+              // Code d'échec exposé par l'API — utile au support (SCR-31).
+              <p className="mt-1">
+                {t("document.failedCode", { code: documentData.error_code })}
+              </p>
+            ) : null}
+          </Alert>
           <Button
             onClick={() => retryMutation.mutate()}
             disabled={retryMutation.isPending}
@@ -529,11 +540,14 @@ export default function GenerationDocumentPage() {
             {exportedOnce ? (
               <div className="space-y-1 border-t border-border pt-3">
                 <p className="text-sm text-content">{t("export.trackCta")}</p>
+                {/* `origine=export` : le document vient d'être EXPORTÉ, pas
+                    envoyé — SCR-40 pré-sélectionne alors le statut initial
+                    `to_apply` au lieu de `applied` (SCR-32). */}
                 <Link
                   href={
                     documentData.job_id
-                      ? `/candidatures?suivre=${encodeURIComponent(documentData.job_id)}`
-                      : "/candidatures"
+                      ? `/candidatures?suivre=${encodeURIComponent(documentData.job_id)}&origine=export`
+                      : "/candidatures?origine=export"
                   }
                   className="inline-flex min-h-11 items-center text-sm font-medium text-action-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >

@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
+import { safeHttpUrl } from "@/lib/url";
 import type { JobSourceLink } from "@/lib/api/types";
 
 export interface SourceListProps {
@@ -16,16 +17,6 @@ export interface SourceListProps {
  * (`rel="noopener noreferrer"`, icône lien externe, mention « nouvelle
  * fenêtre » pour les lecteurs d'écran), date de publication si connue.
  */
-/** N'autorise que http(s) — une source compromise ne doit pas injecter `javascript:`. */
-function safeHttpUrl(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
-  } catch {
-    return null;
-  }
-}
-
 export function SourceList({ sources }: SourceListProps) {
   const t = useTranslations("jobs.detail");
   const locale = useLocale();

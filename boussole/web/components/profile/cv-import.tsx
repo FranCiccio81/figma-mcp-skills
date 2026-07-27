@@ -94,9 +94,14 @@ function languageLabel(item: CvProposedLanguage, locale: string): string {
 const PARSING_STEPS = ["reading", "extracting", "preparing"] as const;
 type ParsingStep = (typeof PARSING_STEPS)[number];
 
-/** Étape courante selon le statut du document (uploaded → lecture, parsing → extraction). */
+/**
+ * Étape courante selon le statut du document : `uploaded` → lecture,
+ * `parsing` → extraction, `parsed` → préparation du profil (la proposition est
+ * reçue, la sélection par défaut de la revue n'est pas encore calculée).
+ */
 function currentStep(document: CvDocument | undefined): ParsingStep {
   if (!document || document.status === "uploaded") return "reading";
+  if (document.status === "parsed") return "preparing";
   return "extracting";
 }
 
@@ -188,9 +193,12 @@ function ReviewItem({
               ) : null}
               {confidence !== undefined ? (
                 <p className="flex flex-wrap items-center gap-2 text-xs">
+                  {/* Microcopie M3-d complète : le pourcentage NE suffit pas,
+                      la conséquence (< 50 % = non utilisé pour les scores)
+                      fait partie du libellé (04 §M3-d). */}
                   <span
                     className={clsx(
-                      "rounded-md px-2 py-0.5 font-medium",
+                      "rounded-md px-2 py-1 font-medium",
                       lowConfidence
                         ? "bg-feedback-warning-surface text-feedback-warning"
                         : "bg-feedback-info-surface text-feedback-info",
@@ -276,6 +284,15 @@ export function CvImport() {
   // ne sont plus affichés — seul l'état d'envoi reste visible.
   const isFailed = document?.status === "failed" && !uploadMutation.isPending;
   const isParsed = document?.status === "parsed" && !uploadMutation.isPending;
+  /**
+   * 3e étape « Préparation de votre profil » : le document est `parsed` mais la
+   * sélection par défaut de la revue (`checkedIds`) n'est pas encore calculée —
+   * la revue n'est donc pas montée. Sans cet état, l'étape ne serait jamais
+   * atteinte (puce et annonce ARIA mortes).
+   */
+  const isPreparingReview = isParsed && checkedIds === null;
+  /** La revue n'est montée qu'une fois la sélection par défaut établie. */
+  const showReview = isParsed && checkedIds !== null;
 
   // Sélection par défaut à l'arrivée du résultat : tout coché sauf confiance
   // < 0,5 (prompt SCR-06) ; headline/summary cochés s'ils sont proposés —
@@ -450,7 +467,7 @@ export function CvImport() {
       ) : null}
 
       {/* --- État parsing en cours (polling 2 s ×1,5, étapes annoncées) ----- */}
-      {isParsing && !uploadMutation.isPending ? (
+      {(isParsing || isPreparingReview) && !uploadMutation.isPending ? (
         <div role="status" aria-live="polite" className="space-y-3">
           {/* Une annonce par étape (jamais à chaque poll — Flux 1 a11y). */}
           <p className="sr-only">{t("stepAnnounce", { step: t(`steps.${step}`) })}</p>
@@ -528,7 +545,7 @@ export function CvImport() {
       ) : null}
 
       {/* --- Écran de revue (SCR-06 : confiance + evidence + cases) --------- */}
-      {isParsed && !applied ? (
+      {showReview && !applied ? (
         <div className="space-y-4">
           <h3
             ref={reviewTitleRef}
@@ -638,7 +655,7 @@ export function CvImport() {
       ) : null}
 
       {/* Après application : possibilité de réimporter un autre CV (SCR-51). */}
-      {isParsed && applied ? (
+      {showReview && applied ? (
         <Button variant="secondary" onClick={resetToUpload}>
           {t("chooseAnotherFile")}
         </Button>

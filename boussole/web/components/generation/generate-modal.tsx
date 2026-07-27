@@ -52,6 +52,28 @@ export interface GenerateModalProps {
   onClose: () => void;
 }
 
+/** Sélecteur des éléments potentiellement focusables du piège de focus. */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Un élément est-il réellement atteignable au Tab ?
+ *
+ * Dans un groupe de radios de même `name`, le navigateur n'expose au Tab que
+ * le radio COCHÉ (ou le premier du groupe si aucun ne l'est) : les autres sont
+ * atteints par les flèches. Les collecter dans le piège de focus fausse les
+ * bornes `first`/`last` — dès qu'un ton autre que « sobre » est sélectionné,
+ * `first` désigne un radio non focusable et Maj+Tab s'échappe de la modale.
+ */
+function isTabbable(element: HTMLElement, radios: readonly HTMLInputElement[]): boolean {
+  if (!(element instanceof HTMLInputElement) || element.type !== "radio") return true;
+  if (element.checked) return true;
+  // Radio hors groupe nommé : atteignable individuellement.
+  if (element.name === "") return true;
+  const group = radios.filter((radio) => radio.name === element.name);
+  return !group.some((radio) => radio.checked) && group[0] === element;
+}
+
 /** Sélecteur radio accessible d'une option de génération (fieldset/legend). */
 function OptionGroup<T extends string>({
   legend,
@@ -146,14 +168,17 @@ export function GenerateModal({
       return;
     }
     if (event.key !== "Tab" || !dialogRef.current) return;
-    const focusables = [
-      ...dialogRef.current.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ),
+    const radios = [
+      ...dialogRef.current.querySelectorAll<HTMLInputElement>('input[type="radio"]'),
     ];
-    if (focusables.length === 0) return;
+    const focusables = [
+      ...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+    ].filter((element) => isTabbable(element, radios));
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
+    // Gardes explicites : `noUncheckedIndexedAccess` type ces accès en
+    // `T | undefined` — sans elles, tsc échoue et un tableau vide planterait.
+    if (!first || !last) return;
     if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
       last.focus();

@@ -43,9 +43,12 @@ function DocumentRow({ document }: { document: GeneratedDocument }) {
   return (
     <li className="space-y-2 rounded-lg border border-border bg-surface p-4">
       <div className="flex flex-wrap items-center gap-2">
+        {/* `inline-flex items-center` : sans display flex, `min-h-11` ne
+            s'applique pas à un élément inline et la cible tactile retombe
+            à ~24 px (WCAG 2.5.5 / conventions du repo). */}
         <Link
           href={`/candidatures/documents/${document.id}`}
-          className="min-h-11 rounded-sm text-base font-semibold text-content underline-offset-4 hover:text-action-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="inline-flex min-h-11 items-center rounded-sm text-base font-semibold text-content underline-offset-4 hover:text-action-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {t(`docTypes.${document.doc_type}`)}
         </Link>

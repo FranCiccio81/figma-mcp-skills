@@ -567,6 +567,18 @@ export interface GeneratedDocument {
   application_id?: string | null;
   /** 🟡 Date de création (affichage bibliothèque) — non listée dans le schéma. */
   created_at?: string | null;
+  /**
+   * 🟡 Options de rédaction retenues à la création (ton / langue / longueur).
+   * Portées par la table `generations` côté API mais PAS encore par
+   * `GeneratedDocumentOut` : traitées comme optionnelles — « Réessayer » les
+   * rejoue si elles arrivent, et retombe sinon sur les défauts serveur.
+   */
+  options?: GenerationOptions | null;
+  /**
+   * Code d'échec de la génération (`status = failed`) — champ additif exposé
+   * par `GeneratedDocumentOut`, affiché dans le message d'échec (SCR-31).
+   */
+  error_code?: string | null;
 }
 
 /** Corps de `POST /generations` (Idempotency-Key requis, 12 §1). */

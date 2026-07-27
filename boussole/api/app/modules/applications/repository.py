@@ -8,18 +8,29 @@ patterns du module jobs).
 
 Le repository ne porte aucune règle métier : le service construit et mute les
 instances ``Application`` / ``ApplicationEvent`` ; le repository persiste.
+
+Libellés de l'offre interne (``JobRef``) : ``ApplicationOut`` expose
+``job_title``/``job_company`` (champs additifs, 12 §1) pour que le front
+puisse nommer l'« offre liée » — et pour que l'aria-label des contrôles
+diffère d'une candidature à l'autre. Ces libellés vivent dans
+``job_postings`` : ils sont résolus par :meth:`job_refs` en UNE requête pour
+TOUTE la page (anti N+1), jamais offre par offre. ``Application`` ne porte
+volontairement pas de ``relationship`` vers ``JobPosting`` : sous
+``AsyncSession`` un chargement paresseux involontaire lève ``MissingGreenlet``
+— la résolution explicite ci-dessous rend le coût en requêtes lisible.
 """
 
 import base64
 import binascii
 import json
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
 from fastapi import Depends
-from sqlalchemy import delete, exists, select, tuple_
+from sqlalchemy import delete, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -65,6 +76,21 @@ def decode_cursor(raw: str) -> ApplicationCursor:
     return ApplicationCursor(created_at=created_at, last_id=last_id)
 
 
+# ---------------------------------------------------------------- libellés offre
+
+
+@dataclass(frozen=True, slots=True)
+class JobRef:
+    """Libellés de l'offre interne référencée par une candidature.
+
+    Projection minimale de ``job_postings`` (``title``, ``company_name``) —
+    l'entité complète n'est jamais chargée pour un simple affichage.
+    """
+
+    title: str
+    company: str
+
+
 # ---------------------------------------------------------------- protocole
 
 
@@ -88,9 +114,23 @@ class ApplicationsRepository(Protocol):
         événements chargés en ordre chronologique."""
         ...
 
-    async def job_exists(self, job_posting_id: uuid.UUID) -> bool:
-        """L'offre existe-t-elle ? (Q26 : le suivi reste autorisé sur une
-        offre expirée — seule l'existence est vérifiée)."""
+    async def get_job_ref(self, job_posting_id: uuid.UUID) -> JobRef | None:
+        """Libellés de l'offre, ``None`` si elle n'existe pas.
+
+        Sert à la fois le contrôle d'existence de la création (Q26 : le suivi
+        reste autorisé sur une offre expirée — seule l'existence compte) et
+        les champs ``job_title``/``job_company`` de la réponse : UNE requête
+        pour les deux besoins."""
+        ...
+
+    async def job_refs(
+        self, job_posting_ids: Iterable[uuid.UUID]
+    ) -> dict[uuid.UUID, JobRef]:
+        """Libellés de PLUSIEURS offres en UNE requête (anti N+1).
+
+        Les identifiants absents de ``job_postings`` (offre purgée depuis, la
+        FK est ``ON DELETE SET NULL`` mais la course existe) sont simplement
+        absents du dictionnaire → ``job_title``/``job_company`` à ``None``."""
         ...
 
     async def create(self, application: Application) -> Application:
@@ -164,9 +204,26 @@ class SqlAlchemyApplicationsRepository:
         )
         return (await self._session.execute(stmt)).scalar_one_or_none()
 
-    async def job_exists(self, job_posting_id: uuid.UUID) -> bool:
-        stmt = select(exists().where(JobPosting.id == job_posting_id))
-        return bool((await self._session.execute(stmt)).scalar())
+    async def get_job_ref(self, job_posting_id: uuid.UUID) -> JobRef | None:
+        stmt = select(JobPosting.title, JobPosting.company_name).where(
+            JobPosting.id == job_posting_id
+        )
+        row = (await self._session.execute(stmt)).first()
+        return None if row is None else JobRef(title=row[0], company=row[1])
+
+    async def job_refs(
+        self, job_posting_ids: Iterable[uuid.UUID]
+    ) -> dict[uuid.UUID, JobRef]:
+        # dict.fromkeys : dédoublonne en conservant l'ordre (plusieurs
+        # candidatures peuvent viser la même offre).
+        wanted = list(dict.fromkeys(job_posting_ids))
+        if not wanted:
+            return {}  # aucune candidature interne dans la page : zéro requête
+        stmt = select(JobPosting.id, JobPosting.title, JobPosting.company_name).where(
+            JobPosting.id.in_(wanted)
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return {row[0]: JobRef(title=row[1], company=row[2]) for row in rows}
 
     async def create(self, application: Application) -> Application:
         self._session.add(application)

@@ -38,6 +38,7 @@ import {
 import { getNextCursor, isApiProblem } from "@/lib/api/client";
 import type { Application, ApplicationStatus, Page } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { safeHttpUrl } from "@/lib/url";
 
 const PAGE_SIZE = 100;
 
@@ -178,6 +179,9 @@ function ApplicationCard({
   const detailsId = `${baseId}-details`;
   const statusSelectId = `${baseId}-status`;
   const notesId = `${baseId}-notes`;
+  // `external_url` est saisi à la main : même liste blanche de schéma que les
+  // sources d'offres (jamais de `javascript:` / `data:` dans un href).
+  const externalHref = safeHttpUrl(application.external_url);
   // Hypothèse Q7 🟡 : toutes les transitions sont permises sauf depuis `withdrawn`.
   const statusLocked = application.status === "withdrawn";
 
@@ -237,15 +241,20 @@ function ApplicationCard({
             {t("card.viewJob")}
           </Link>
         ) : null}
-        {application.external_url ? (
+        {externalHref ? (
           <a
-            href={application.external_url}
+            href={externalHref}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-11 items-center text-sm font-medium text-action-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("card.viewExternal")}
           </a>
+        ) : application.external_url ? (
+          // Schéma non autorisé : l'information reste visible, sans lien.
+          <span className="inline-flex min-h-11 items-center break-all text-sm text-content-secondary">
+            {application.external_url}
+          </span>
         ) : null}
         <button
           type="button"
@@ -351,6 +360,7 @@ function CreateApplicationForm({
   linkedJobId,
   linkedJobTitle,
   linkedJobCompany,
+  defaultStatus,
   existingJobIds,
   onCreated,
   onCancel,
@@ -359,6 +369,13 @@ function CreateApplicationForm({
   linkedJobId: string | null;
   linkedJobTitle: string | null;
   linkedJobCompany: string | null;
+  /**
+   * Statut initial pré-sélectionné (Flux 7 §1) : `applied` depuis « J'ai
+   * postulé » sur une offre, `to_apply` pour une saisie externe ET au retour
+   * d'un export SCR-32 (`?origine=export` — le document vient d'être produit,
+   * il n'a pas encore été envoyé).
+   */
+  defaultStatus: ApplicationStatus;
   /** Ids d'offres déjà suivies — détection de doublon côté client (Q7). */
   existingJobIds: ReadonlySet<string>;
   onCreated: (application: Application) => void;
@@ -404,8 +421,7 @@ function CreateApplicationForm({
       external_company: "",
       external_url: "",
       notes: "",
-      // Depuis une offre : « J'ai postulé » → `applied` ; externe : `to_apply` 🟡.
-      status: isLinked ? "applied" : "to_apply",
+      status: defaultStatus,
     },
   });
 
@@ -591,12 +607,20 @@ function ApplicationsScreen() {
   const linkedJobId = searchParams.get("suivre");
   const linkedJobTitle = searchParams.get("titre");
   const linkedJobCompany = searchParams.get("entreprise");
+  /** Arrivée depuis l'export d'un document (SCR-32) : rien n'a encore été envoyé. */
+  const fromExport = searchParams.get("origine") === "export";
+  const defaultStatus: ApplicationStatus =
+    !fromExport && linkedJobId !== null ? "applied" : "to_apply";
 
-  const [creating, setCreating] = useState(linkedJobId !== null);
+  // Le formulaire s'ouvre d'emblée quand on arrive d'un CTA de suivi (SCR-21
+  // « Suivre ma candidature », SCR-32 « Suivre cette candidature »).
+  const [creating, setCreating] = useState(linkedJobId !== null || fromExport);
   const [announcement, setAnnouncement] = useState<string | null>(null);
 
   const applicationsQuery = useInfiniteQuery({
-    queryKey: applicationKeys.list({ limit: PAGE_SIZE }),
+    // Clé « infinite » distincte de la carte du tableau de bord (SCR-10) :
+    // même endpoint, structures de cache incompatibles (voir applicationKeys).
+    queryKey: applicationKeys.infinite({ limit: PAGE_SIZE }),
     queryFn: ({ pageParam, signal }) => listApplications({ limit: PAGE_SIZE }, pageParam, signal),
     initialPageParam: null as string | null,
     getNextPageParam: (page: Page<Application>) => getNextCursor(page) ?? null,
@@ -631,13 +655,13 @@ function ApplicationsScreen() {
     void queryClient.invalidateQueries({ queryKey: applicationKeys.all });
     setAnnouncement(t("form.created"));
     // Nettoie les paramètres de pré-remplissage après création.
-    if (linkedJobId) router.replace(pathname, { scroll: false });
+    if (linkedJobId || fromExport) router.replace(pathname, { scroll: false });
     void application;
   };
 
   const closeForm = () => {
     setCreating(false);
-    if (linkedJobId) router.replace(pathname, { scroll: false });
+    if (linkedJobId || fromExport) router.replace(pathname, { scroll: false });
   };
 
   return (
@@ -676,6 +700,7 @@ function ApplicationsScreen() {
           linkedJobId={linkedJobId}
           linkedJobTitle={linkedJobTitle}
           linkedJobCompany={linkedJobCompany}
+          defaultStatus={defaultStatus}
           existingJobIds={existingJobIds}
           onCreated={handleCreated}
           onCancel={closeForm}

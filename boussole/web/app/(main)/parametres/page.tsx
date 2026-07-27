@@ -120,9 +120,11 @@ function DeleteAccountModal({
         'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
       ),
     ];
-    if (focusables.length === 0) return;
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
+    // Gardes explicites : `noUncheckedIndexedAccess` type ces accès en
+    // `T | undefined` — sans elles, tsc échoue et un tableau vide planterait.
+    if (!first || !last) return;
     if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
       last.focus();
@@ -238,20 +240,26 @@ export default function SettingsPage() {
   const [exportId, setExportId] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  // Idempotency-Key UUID conservée tant que la demande n'a pas abouti : un
-  // ré-essai après erreur réseau rejoue la même clé (Idempotent-Replay, 12 §1
-  // — le rejeu ne consomme pas le quota). Régénérée pour un NOUVEL export
-  // (sinon le rejeu renverrait l'export expiré).
+  // Idempotency-Key UUID d'une demande d'export.
+  //
+  // Contrat 12 §1 : rejouer la MÊME clé rejoue la réponse d'origine sans
+  // consommer le quota. Elle n'est donc conservée que pour un ré-essai du même
+  // envoi (erreur réseau) — la mutationFn réutilise la clé courante. Tout
+  // déclenchement VOLONTAIRE (clic sur « Demander un export », « Demander un
+  // nouvel export ») en régénère une : sinon le 2e export d'une journée
+  // rejouerait silencieusement le premier (archive périmée, aucun message).
   const idempotencyKeyRef = useRef<string | null>(null);
 
   const exportMutation = useMutation({
     mutationFn: () => {
+      // Ré-essai du même envoi : la clé courante est réutilisée telle quelle.
       idempotencyKeyRef.current ??= crypto.randomUUID();
       return requestPrivacyExport(idempotencyKeyRef.current);
     },
     onSuccess: (requested) => setExportId(requested.id),
   });
 
+  /** Nouvelle demande volontaire : nouvelle clé, donc jamais un rejeu. */
   const startNewExport = () => {
     idempotencyKeyRef.current = crypto.randomUUID();
     exportMutation.mutate();
@@ -313,7 +321,7 @@ export default function SettingsPage() {
         <p className="text-sm text-content-secondary">{t("data.archiveNote")}</p>
 
         <Button
-          onClick={() => exportMutation.mutate()}
+          onClick={startNewExport}
           disabled={exportMutation.isPending || isPreparing}
           aria-busy={exportMutation.isPending}
         >

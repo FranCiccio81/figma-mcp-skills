@@ -2,7 +2,8 @@
 
 Champs additifs autorisés par le versionnement §1 des contrats :
 ``created_at`` / ``updated_at`` (tri du tableau de bord, « date de dernière
-action » F-P) sur ``ApplicationOut``.
+action » F-P) et ``job_title`` / ``job_company`` (libellés de l'offre liée)
+sur ``ApplicationOut``.
 """
 
 import uuid
@@ -67,6 +68,16 @@ class ApplicationOut(BaseModel):
 
     id: uuid.UUID
     job_posting_id: uuid.UUID | None = None
+    job_title: str | None = Field(
+        default=None,
+        description="Champ additif : intitulé de l'offre liée "
+        "(``job_postings.title``) — ``null`` pour une candidature externe.",
+    )
+    job_company: str | None = Field(
+        default=None,
+        description="Champ additif : entreprise de l'offre liée "
+        "(``job_postings.company_name``) — ``null`` pour une candidature externe.",
+    )
     external_title: str | None = None
     external_company: str | None = None
     external_url: str | None = None

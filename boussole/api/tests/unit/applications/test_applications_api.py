@@ -71,7 +71,7 @@ class TestCreate:
         self, client: TestClient, applications_repository: InMemoryApplicationsRepository
     ) -> None:
         job_id = uuid.uuid4()
-        applications_repository.job_ids.add(job_id)
+        applications_repository.add_job(job_id)
         register(client)
 
         response = client.post(
@@ -285,7 +285,7 @@ class TestPatch:
         self, client: TestClient, applications_repository: InMemoryApplicationsRepository
     ) -> None:
         job_id = uuid.uuid4()
-        applications_repository.job_ids.add(job_id)
+        applications_repository.add_job(job_id)
         register(client)
         created = client.post(
             APPS_URL,
@@ -448,3 +448,146 @@ class TestStatusTransitions:
             headers=csrf_headers(client),
         )
         assert response.status_code == 404
+
+
+class TestJobLabels:
+    """Champs additifs ``job_title`` / ``job_company`` — libellés de l'offre liée.
+
+    Sans eux le front affiche « Offre liée » sans intitulé ni entreprise pour
+    TOUTES les candidatures internes, et l'aria-label des contrôles devient
+    identique d'une ligne à l'autre (candidatures indistinguables au lecteur
+    d'écran).
+    """
+
+    def _create_internal(
+        self,
+        client: TestClient,
+        applications_repository: InMemoryApplicationsRepository,
+        *,
+        title: str,
+        company: str,
+    ) -> dict:
+        job_id = applications_repository.add_job(
+            uuid.uuid4(), title=title, company=company
+        )
+        response = client.post(
+            APPS_URL,
+            json={"job_posting_id": str(job_id)},
+            headers=csrf_headers(client),
+        )
+        assert response.status_code == 201
+        return response.json()
+
+    def test_internal_application_exposes_title_and_company(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        register(client)
+        created = self._create_internal(
+            client, applications_repository, title="Data engineer", company="Beta SAS"
+        )
+        assert created["job_title"] == "Data engineer"
+        assert created["job_company"] == "Beta SAS"
+
+        detail = client.get(f"{APPS_URL}/{created['id']}").json()
+        assert (detail["job_title"], detail["job_company"]) == ("Data engineer", "Beta SAS")
+
+        listed = client.get(APPS_URL).json()["items"][0]
+        assert (listed["job_title"], listed["job_company"]) == ("Data engineer", "Beta SAS")
+
+    def test_external_application_has_null_labels(self, client: TestClient) -> None:
+        register(client)
+        created = create_external(client, title="Dev externe", company="Externe SARL")
+        assert created["job_title"] is None
+        assert created["job_company"] is None
+        # Les champs externes restent la seule source d'affichage pour ce cas.
+        assert created["external_title"] == "Dev externe"
+
+        listed = client.get(APPS_URL).json()["items"][0]
+        assert listed["job_title"] is None
+        assert listed["job_company"] is None
+
+    def test_labels_distinguish_two_internal_applications_of_a_page(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        """Deux candidatures internes ne doivent plus être indistinguables."""
+        register(client)
+        self._create_internal(
+            client, applications_repository, title="Data engineer", company="Beta SAS"
+        )
+        self._create_internal(
+            client, applications_repository, title="Dev backend", company="Gamma"
+        )
+
+        items = client.get(APPS_URL).json()["items"]
+        labels = {(item["job_title"], item["job_company"]) for item in items}
+        assert labels == {("Data engineer", "Beta SAS"), ("Dev backend", "Gamma")}
+
+    def test_status_change_and_patch_keep_the_labels(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        register(client)
+        created = self._create_internal(
+            client, applications_repository, title="Data engineer", company="Beta SAS"
+        )
+
+        changed = client.post(
+            f"{APPS_URL}/{created['id']}/status",
+            json={"to_status": "applied"},
+            headers=csrf_headers(client),
+        ).json()
+        assert changed["job_title"] == "Data engineer"
+        assert changed["job_company"] == "Beta SAS"
+
+        patched = client.patch(
+            f"{APPS_URL}/{created['id']}",
+            json={"notes": "Relance prévue"},
+            headers=csrf_headers(client),
+        ).json()
+        assert patched["job_title"] == "Data engineer"
+        assert patched["job_company"] == "Beta SAS"
+
+    def test_vanished_job_degrades_to_null_without_error(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        """Offre purgée après coup (FK ON DELETE SET NULL) : pas de 500."""
+        register(client)
+        created = self._create_internal(
+            client, applications_repository, title="Data engineer", company="Beta SAS"
+        )
+        applications_repository.jobs.clear()
+
+        detail = client.get(f"{APPS_URL}/{created['id']}")
+        assert detail.status_code == 200
+        assert detail.json()["job_title"] is None
+        assert detail.json()["job_company"] is None
+
+    def test_paginated_list_resolves_labels_in_a_single_call(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        """Absence de N+1 : une seule résolution des libellés pour la page."""
+        register(client)
+        for index in range(3):
+            self._create_internal(
+                client,
+                applications_repository,
+                title=f"Poste {index}",
+                company=f"Entreprise {index}",
+            )
+
+        applications_repository.job_ref_calls = 0
+        body = client.get(APPS_URL).json()
+        assert len(body["items"]) == 3
+        assert all(item["job_title"] is not None for item in body["items"])
+        # 1 (et non 3) : les libellés sont résolus en lot, pas ligne par ligne.
+        assert applications_repository.job_ref_calls == 1
+
+    def test_external_only_page_resolves_no_label(
+        self, client: TestClient, applications_repository: InMemoryApplicationsRepository
+    ) -> None:
+        register(client)
+        create_external(client, title="A")
+        create_external(client, title="B")
+
+        applications_repository.job_ref_calls = 0
+        assert len(client.get(APPS_URL).json()["items"]) == 2
+        assert applications_repository.job_ref_calls == 0

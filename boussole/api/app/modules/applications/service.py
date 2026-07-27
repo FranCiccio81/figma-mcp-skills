@@ -15,6 +15,10 @@ Règles portées ici (le repository ne fait que persister) :
 - ``updated_at`` maintenu à chaque mutation (PATCH, transition) ;
 - scoping utilisateur : la candidature d'autrui est introuvable → 404 ;
 - curseur corrompu → 422 problem+json ``invalid_cursor`` ;
+- ``job_title``/``job_company`` (champs additifs) : libellés de l'offre
+  interne liée, résolus en UNE requête pour toute la page (:meth:`job_refs`,
+  pas de N+1) ; ``None`` sur une candidature externe, et ``None`` aussi si
+  l'offre a disparu entre-temps (dégradation silencieuse, pas d'erreur) ;
 - Idempotency-Key 🟡 simple : cache en mémoire de processus (clé → id de
   candidature) ; ignorée si non fournie, best-effort mono-processus — une
   table dédiée arrive avec le module privacy/infra si besoin.
@@ -29,6 +33,7 @@ from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.repository import (
     ApplicationsRepository,
     InvalidCursorError,
+    JobRef,
     decode_cursor,
     encode_cursor,
 )
@@ -82,9 +87,24 @@ def _missing_reference_problem(payload: ApplicationInput) -> Problem:
     )
 
 
+def _ref_of(
+    application: Application, refs: dict[uuid.UUID, JobRef]
+) -> JobRef | None:
+    """Libellés de l'offre liée dans un lot déjà résolu — ``None`` si externe."""
+    if application.job_posting_id is None:
+        return None
+    return refs.get(application.job_posting_id)
+
+
 class ApplicationsService:
     def __init__(self, repository: ApplicationsRepository) -> None:
         self._repository = repository
+
+    async def _job_ref(self, application: Application) -> JobRef | None:
+        """Libellés de l'offre d'UNE candidature (aucune requête si externe)."""
+        if application.job_posting_id is None:
+            return None
+        return await self._repository.get_job_ref(application.job_posting_id)
 
     # ------------------------------------------------------------ liste
 
@@ -118,8 +138,16 @@ class ApplicationsService:
         if has_more and page_rows:
             last = page_rows[-1]
             next_cursor = encode_cursor(last.created_at, last.id)
+        # UNE seule résolution des libellés pour toute la page (anti N+1) —
+        # zéro requête si la page ne contient que des candidatures externes.
+        refs = await self._repository.job_refs(
+            row.job_posting_id for row in page_rows if row.job_posting_id is not None
+        )
         return ApplicationPage(
-            items=[self._to_out(row) for row in page_rows], next_cursor=next_cursor
+            items=[
+                self._to_out(row, _ref_of(row, refs)) for row in page_rows
+            ],
+            next_cursor=next_cursor,
         )
 
     # ------------------------------------------------------------ création
@@ -142,21 +170,23 @@ class ApplicationsService:
             if cached_id is not None:
                 existing = await self._repository.get_for_user(cached_id, user_id)
                 if existing is not None:
-                    return self._to_out(existing)
+                    return self._to_out(existing, await self._job_ref(existing))
 
         if payload.job_posting_id is None and (
             payload.external_title is None or payload.external_company is None
         ):
             raise _missing_reference_problem(payload)
-        if payload.job_posting_id is not None and not await self._repository.job_exists(
-            payload.job_posting_id
-        ):
-            raise Problem(
-                status=404,
-                code="not_found",
-                title="Ressource introuvable",
-                detail="Offre introuvable.",
-            )
+        # Contrôle d'existence ET libellés en une seule requête.
+        job_ref: JobRef | None = None
+        if payload.job_posting_id is not None:
+            job_ref = await self._repository.get_job_ref(payload.job_posting_id)
+            if job_ref is None:
+                raise Problem(
+                    status=404,
+                    code="not_found",
+                    title="Ressource introuvable",
+                    detail="Offre introuvable.",
+                )
 
         now = datetime.now(UTC)
         application = Application(
@@ -176,7 +206,7 @@ class ApplicationsService:
         created = await self._repository.create(application)
         if idempotency_key is not None:
             _IDEMPOTENCY_CACHE[(user_id, idempotency_key)] = created.id
-        return self._to_out(created)
+        return self._to_out(created, job_ref)
 
     # ------------------------------------------------------------ détail
 
@@ -184,7 +214,7 @@ class ApplicationsService:
         application = await self._repository.get_for_user(application_id, user_id)
         if application is None:
             raise _not_found()
-        return self._to_out(application)
+        return self._to_out(application, await self._job_ref(application))
 
     # ------------------------------------------------------------ édition
 
@@ -201,7 +231,7 @@ class ApplicationsService:
             raise _not_found()
         updates = payload.model_dump(exclude_unset=True)
         if not updates:
-            return self._to_out(application)
+            return self._to_out(application, await self._job_ref(application))
 
         new_title = updates.get("external_title", application.external_title)
         new_company = updates.get("external_company", application.external_company)
@@ -229,7 +259,7 @@ class ApplicationsService:
             setattr(application, field, value)
         application.updated_at = datetime.now(UTC)
         await self._repository.save(application)
-        return self._to_out(application)
+        return self._to_out(application, await self._job_ref(application))
 
     # ------------------------------------------------------------ suppression
 
@@ -267,16 +297,18 @@ class ApplicationsService:
             application.applied_at = now
         application.updated_at = now
         await self._repository.add_event(application, event)
-        return self._to_out(application)
+        return self._to_out(application, await self._job_ref(application))
 
     # ------------------------------------------------------------ mapping
 
     @staticmethod
-    def _to_out(application: Application) -> ApplicationOut:
+    def _to_out(application: Application, job_ref: JobRef | None) -> ApplicationOut:
         # Les casts vers les Literal sont sûrs : colonnes ENUM PostgreSQL.
         return ApplicationOut(
             id=application.id,
             job_posting_id=application.job_posting_id,
+            job_title=job_ref.title if job_ref is not None else None,
+            job_company=job_ref.company if job_ref is not None else None,
             external_title=application.external_title,
             external_company=application.external_company,
             external_url=application.external_url,
