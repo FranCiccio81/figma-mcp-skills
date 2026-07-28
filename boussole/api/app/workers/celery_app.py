@@ -13,6 +13,7 @@ from celery.schedules import crontab
 from kombu import Queue
 
 from app.core.config import get_settings
+from app.core.secrets import check_secrets_configuration
 from app.core.storage import check_storage_configuration
 
 settings = get_settings()
@@ -32,6 +33,7 @@ settings = get_settings()
 # app.workers.celery_app worker` s'arrête, bruyamment, avant d'avoir accepté
 # la moindre tâche.
 check_storage_configuration(settings)
+check_secrets_configuration(settings)
 
 celery_app = Celery(
     "boussole",

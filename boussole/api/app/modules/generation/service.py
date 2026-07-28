@@ -716,11 +716,38 @@ def _assemble_text(document: GeneratedDocument) -> str:
 # ---------------------------------------------------------------- worker
 
 
+async def _refund_quota(
+    limiter: FixedWindowRateLimiter | None, user_id: uuid.UUID
+) -> None:
+    """Rend les jetons horaire et journalier d'une génération échouée (Q28).
+
+    Le quota est prélevé au ``POST`` (avant l'enfilement) : sans ce
+    remboursement, un échec de NOTRE fait — panne provider, contrôle
+    d'ancrage — décompterait l'utilisateur. Best-effort : une panne du
+    compteur ne doit jamais empêcher la persistance de l'échec.
+    """
+    if limiter is None:
+        return
+    try:
+        hour = await limiter.refund("generations:hour", str(user_id), window_seconds=3600)
+        day = await limiter.refund("generations:day", str(user_id), window_seconds=86400)
+        if not (hour and day):
+            # Bascule de fenêtre entre le prélèvement et l'échec : le jeton
+            # n'est pas rendu (voir la limite documentée du limiteur).
+            logger.info(
+                "generation_quota_refund_partial user=%s hour=%s day=%s",
+                user_id, hour, day,
+            )
+    except Exception:  # pragma: no cover - dépend de l'infra Redis
+        logger.warning("generation_quota_refund_failed user=%s", user_id)
+
+
 async def execute_generation(
     document_id: uuid.UUID,
     repository: GenerationRepository,
     profiles: ProfilesRepository,
     provider: LLMProvider,
+    limiter: FixedWindowRateLimiter | None = None,
 ) -> dict[str, Any]:
     """Orchestration d'une génération (tâche ``ai.generate``).
 
@@ -728,6 +755,9 @@ async def execute_generation(
     (+ ``error_code``). Idempotente sur re-livraison (acks_late D16) : un
     document déjà traité est ignoré. Exécutée par la tâche Celery (repos SQL)
     et par les tests (fakes en mémoire) avec la même sémantique.
+
+    ``limiter`` : passé par la tâche Celery pour rembourser le quota sur
+    échec (Q28 — un échec de notre fait ne décompte pas l'utilisateur).
     """
     document = await repository.get_by_id(document_id)
     if document is None:
@@ -758,6 +788,7 @@ async def execute_generation(
             "generation_failed id=%s error_code=%s detail=%s",
             document_id, exc.error_code, exc.detail,
         )
+        await _refund_quota(limiter, document.user_id)
         return {"status": "failed", "error_code": exc.error_code}
     except Exception:
         # Échec inattendu → échec propre persisté (jamais de document bloqué
@@ -766,6 +797,7 @@ async def execute_generation(
         document.error_code = "provider_error"
         await repository.commit()
         logger.exception("generation_unexpected_error id=%s", document_id)
+        await _refund_quota(limiter, document.user_id)
         return {"status": "failed", "error_code": "provider_error"}
 
     document.content = outcome.content

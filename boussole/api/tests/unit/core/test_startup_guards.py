@@ -79,9 +79,26 @@ class TestRefusDeDemarrageDuWorker:
         assert result.returncode != 0
         assert "StorageConfigurationError" in result.stderr
 
-    def test_le_worker_demarre_avec_une_configuration_valide(self) -> None:
+    def test_le_worker_refuse_un_secret_de_developpement(self) -> None:
+        """Le stockage peut être irréprochable : un secret par défaut suffit à
+        rendre forgeables les liens d'export RGPD (D23)."""
         result = _boot_worker(
             ENV="production", STORAGE_BACKEND="s3", S3_BUCKET="b", S3_SSE="AES256"
+        )
+
+        assert result.returncode != 0
+        assert "SecretConfigurationError" in result.stderr
+        assert "PRIVACY_SIGNING_KEY" in result.stderr
+
+    def test_le_worker_demarre_avec_une_configuration_valide(self) -> None:
+        """« Valide » inclut les secrets : stockage chiffré ET secrets fournis."""
+        result = _boot_worker(
+            ENV="production",
+            STORAGE_BACKEND="s3",
+            S3_BUCKET="b",
+            S3_SSE="AES256",
+            PRIVACY_SIGNING_KEY="cle-issue-du-vault",
+            S3_SECRET_KEY="secret-s3-issu-du-vault",
         )
 
         assert result.returncode == 0, result.stderr

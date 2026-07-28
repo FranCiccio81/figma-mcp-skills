@@ -1,18 +1,22 @@
-"""Routes du module ingestion — stub M1.
+"""Routes du module ingestion — volontairement AUCUNE.
 
-Module ingestion : connecteurs de sources et normalisation (E5, D04).
-Implémentation prévue au jalon M2 ; en attendant, la route racine
-répond 501 (problem+json) — aucun TODO silencieux.
+L'ingestion n'expose pas d'API publique : elle est pilotée par les tâches
+Celery ``ingestion.sync_source`` / ``ingestion.reconcile`` et par la
+planification beat (D04, D16). Le registre des sources visible par
+l'utilisateur (``GET /sources``, transparence produit) est servi par le
+module ``jobs``, qui possède déjà la lecture des offres et de leurs sources.
+
+Ce fichier ne déclare donc qu'un routeur vide. Il en portait auparavant un
+stub ``GET /sources`` répondant 501 : comme le routeur ``jobs`` est monté en
+premier et déclare la même route, ce stub était **inatteignable** — un
+faux témoin, qui laissait croire à une fonctionnalité non livrée alors
+qu'elle l'était ailleurs. Un routeur vide dit la vérité.
 """
 
 from fastapi import APIRouter
 
-from app.core.problems import not_implemented_problem
-
-router = APIRouter(prefix="/sources", tags=["ingestion"])
-
-
-@router.get("", status_code=501, summary="Registre des sources (E5) — prévu M2+")
-async def not_implemented_stub() -> None:
-    """Stub M1 — voir 15-delivery-roadmap.md (jalon M2)."""
-    raise not_implemented_problem("ingestion", "M2")
+#: Routeur sans route : conservé pour que le montage dans ``app/main.py``
+#: reste explicite et que l'ajout d'une éventuelle route d'administration
+#: (déclenchement manuel d'une synchronisation, par exemple) ait un point
+#: d'ancrage évident.
+router = APIRouter(tags=["ingestion"])

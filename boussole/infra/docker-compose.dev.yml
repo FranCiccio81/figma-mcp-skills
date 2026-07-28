@@ -177,6 +177,40 @@ services:
       minio-init:
         condition: service_completed_successfully
 
+  # ⚠️ SERVICE INDISPENSABLE — pas un confort de développement.
+  #
+  # Celery beat est le SEUL déclencheur des tâches planifiées. Sans lui, le
+  # worker ci-dessus tourne sans rien recevoir : aucune ingestion, aucune
+  # expiration d'offre, aucun rattrapage d'embeddings, et surtout AUCUNE
+  # PURGE RGPD. `DELETE /account` répondrait 204, la demande serait
+  # enregistrée avec son échéance à J+30… et personne ne viendrait jamais
+  # l'exécuter. L'engagement « suppression effective sous 30 jours » (D09)
+  # serait rompu en silence, sans la moindre erreur dans les journaux.
+  #
+  # Il était absent de ce fichier : un déploiement calqué dessus héritait du
+  # défaut. Une seule instance doit tourner (beat n'est pas concurrent).
+  beat:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    command:
+      - celery
+      - -A
+      - app.workers.celery_app
+      - beat
+      - --loglevel=info
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-persistent:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
   web:
     build:
       context: ..

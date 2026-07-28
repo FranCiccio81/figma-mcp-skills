@@ -89,6 +89,11 @@ DATA_MODULE_NAMES: tuple[str, ...] = (
     "profiles",
     "preferences",
     "jobs",
+    # Aucune donnée personnelle (offres publiques + état des connecteurs),
+    # mais ENREGISTRÉ : un module absent du registre est silencieusement
+    # exclu de l'orchestration et invisible pour le test d'exhaustivité.
+    # Le no-op documenté rend l'exclusion explicite et vérifiable.
+    "ingestion",
     "matching",
     "explanations",
     "generation",

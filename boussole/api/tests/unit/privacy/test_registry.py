@@ -38,6 +38,7 @@ EXPECTED_MODULES = (
     "profiles",  # inclut les CV
     "preferences",
     "jobs",  # inclut saved_jobs
+    "ingestion",  # no-op documenté : offres publiques, aucune donnée personnelle
     "matching",
     "explanations",
     "generation",

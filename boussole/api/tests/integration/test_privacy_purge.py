@@ -135,12 +135,33 @@ async def compte_complet(
     return {"user_id": user.id, "posting_id": posting.id, **identifiants}
 
 
+#: Modules du registre qui, par conception, ne détiennent aucune donnée
+#: personnelle à purger. Toute addition ici doit être justifiée : c'est la
+#: seule porte de sortie du contrôle de couverture ci-dessous.
+MODULES_SANS_DONNEES_PERSONNELLES = {
+    "privacy",   # orchestrateur ; ses archives sont vérifiées séparément
+    "ingestion", # offres publiques + état des connecteurs (aucun user_id)
+}
+
+
 class TestInventaireDeDepart:
     """Sans données de départ, le test de purge ne prouverait rien."""
 
     def test_le_jeu_de_donnees_couvre_tout_le_registre(self) -> None:
-        couverts = set(POPULATED_TABLES) - {"privacy"}
-        assert couverts == set(DATA_MODULE_NAMES), (
+        """Chaque module du registre doit avoir des données AVANT la purge —
+        sinon la purge « réussit » sur du vide et ne prouve rien.
+
+        Deux modules font exception, et l'exception est nommée ici pour
+        qu'elle reste un choix conscient plutôt qu'un oubli : ``privacy``
+        orchestre la purge (ses archives d'export sont vérifiées à part), et
+        ``ingestion`` ne détient aucune donnée personnelle — offres publiques
+        mutualisées et état des connecteurs. Ce dernier est tout de même
+        ENREGISTRÉ au registre : un module absent en serait silencieusement
+        exclu, et le test d'exhaustivité ne pourrait rien détecter.
+        """
+        couverts = set(POPULATED_TABLES) - MODULES_SANS_DONNEES_PERSONNELLES
+        attendus = set(DATA_MODULE_NAMES) - MODULES_SANS_DONNEES_PERSONNELLES
+        assert couverts == attendus, (
             "chaque module du registre doit avoir des données avant la purge — "
             "sinon la purge « réussit » sur du vide"
         )

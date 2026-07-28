@@ -53,6 +53,7 @@ deux dépendances ne portent aucune des régressions visées ici.
 import os
 import uuid
 from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -287,10 +288,15 @@ def _fake_session_store(
     """
     persistent, _cache = fake_redis_servers
 
-    def factory() -> Redis:
-        return fakeredis.aioredis.FakeRedis(server=persistent, decode_responses=True)
+    @asynccontextmanager
+    async def factory() -> AsyncIterator[Redis]:
+        client = fakeredis.aioredis.FakeRedis(server=persistent, decode_responses=True)
+        try:
+            yield client
+        finally:
+            await client.aclose()
 
-    monkeypatch.setattr("app.modules.auth.purge.get_redis_persistent", factory)
+    monkeypatch.setattr("app.modules.auth.purge.worker_redis_persistent", factory)
 
 
 # ------------------------------------------------------------------- API

@@ -33,6 +33,8 @@ from app.ai.providers.fake import FakeProvider
 from app.ai.tasks.generate import FAKE_GENERATION_OUTPUTS
 from app.core.config import get_settings
 from app.core.db import create_worker_engine
+from app.core.ratelimit import FixedWindowRateLimiter
+from app.core.redis import worker_redis_cache
 from app.modules.generation.repository import SqlAlchemyGenerationRepository
 from app.modules.generation.service import execute_generation
 from app.modules.profiles.repository import SqlAlchemyProfilesRepository
@@ -64,11 +66,23 @@ async def _generate_cycle(document_id: uuid.UUID) -> dict[str, Any]:
     engine = create_worker_engine()
     try:
         factory = async_sessionmaker(engine, expire_on_commit=False)
-        async with factory() as session:
+        # Client Redis dédié au cycle, comme le moteur : le singleton
+        # ``get_redis_cache`` garde des connexions liées à la boucle qui les a
+        # ouvertes, et chaque tâche a la sienne (``asyncio.run``). Le
+        # remboursement de quota tombait donc une fois sur deux — silencieusement,
+        # puisque ``_refund_quota`` est best-effort.
+        async with worker_redis_cache() as cache, factory() as session:
             repository = SqlAlchemyGenerationRepository(session)
             profiles = SqlAlchemyProfilesRepository(session)
+            # Limiteur passé pour rembourser le quota si la génération
+            # échoue de notre fait (Q28) — le prélèvement a eu lieu au POST.
+            limiter = FixedWindowRateLimiter(cache)
             return await execute_generation(
-                document_id, repository, profiles, get_generation_provider()
+                document_id,
+                repository,
+                profiles,
+                get_generation_provider(),
+                limiter=limiter,
             )
     finally:
         await engine.dispose()
