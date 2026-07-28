@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.db import get_session_factory
-from app.core.redis import get_redis_persistent
+from app.core.redis import worker_redis_persistent
 from app.core.security import SessionStore
 from app.modules.auth.models import Consent, User
 
@@ -32,8 +32,15 @@ async def purge_user(user_id: uuid.UUID) -> None:
             user.deleted_at = datetime.now(UTC)
             await session.commit()
 
-    sessions = SessionStore(get_redis_persistent(), get_settings().session_ttl_seconds)
-    await sessions.delete_all_for_user(user_id)
+    # Client dédié, refermé au retour : cette fonction s'exécute dans le
+    # worker de purge (``maintenance.purge_due_accounts``), donc dans une
+    # boucle d'événements neuve à chaque tâche. Le singleton Redis y rend des
+    # connexions liées à une boucle fermée — la révocation échouait une fois
+    # sur deux et le module était rapporté en ``failed_modules`` : les
+    # sessions d'un compte supprimé survivaient à sa purge.
+    async with worker_redis_persistent() as client:
+        sessions = SessionStore(client, get_settings().session_ttl_seconds)
+        await sessions.delete_all_for_user(user_id)
 
 
 async def export_user(user_id: uuid.UUID) -> dict[str, Any]:
