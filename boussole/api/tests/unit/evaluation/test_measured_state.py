@@ -1,13 +1,16 @@
 """État MESURÉ du moteur — ce que le harnais trouve aujourd'hui.
 
 Ce fichier ne dit pas ce que le moteur *devrait* faire : il fige ce qu'il
-fait, pour que tout changement de ce constat soit visible et discuté. Deux
-constats y sont épinglés, tous deux découverts en faisant tourner le harnais
-pour la première fois, tous deux consignés en questions ouvertes.
+fait, pour que tout changement de ce constat soit visible et discuté. Les
+deux constats épinglés ici ont été découverts en faisant tourner le harnais
+pour la première fois. N14 est depuis **corrigée** — les chiffres avant/après
+sont conservés dans la docstring correspondante, ils sont la mesure de ce que
+valait le défaut. N15 reste ouverte.
 
 ⚠️ Un test qui échoue ici n'est pas forcément une régression — ce peut être
 la bonne nouvelle qu'on attend (le provider d'embeddings sémantique arrive,
-Q11). Il force simplement à revenir sur ces pages.
+Q11, et les seuils sont enfin calibrés). Il force simplement à revenir sur
+ces pages.
 """
 
 import pytest
@@ -64,33 +67,64 @@ class TestBloquants:
         assert report.blocking.false_negatives == 0
 
 
-class TestConstatUnTitleSimilarityInerte:
-    """15 % du poids, sous-score 0,00 sur les 36 paires, et compté « connu ».
+class TestConstatUnTitleSimilarityNestPlusInventee:
+    """N14, corrigée. Avant : sous-score 0,00 sur les 36 paires, **connu**.
 
-    Le provider par défaut est lexical (`HashingEmbeddingProvider`, D27) ;
-    les seuils `zero_below=0.55` / `one_above=0.80` ont été posés pour des
-    vecteurs sémantiques. Résultat : la dimension ne discrimine rien ET pèse
-    uniformément sur tous les scores.
+    Le provider par défaut est lexical (D27) et les seuils 0,55 / 0,80 ont été
+    écrits pour des vecteurs sémantiques : la dimension ne discriminait rien,
+    abaissait uniformément tous les scores, et — le plus grave — l'indice de
+    confiance comptait comme acquise une dimension qui ne mesurait rien.
 
-    Le plus gênant n'est pas le score, c'est la CONFIANCE : un sous-score de
-    0,00 est publié comme un fait connu, donc l'indice de confiance intègre
-    une dimension qui ne mesure rien. Voir 17-open-questions.md N14.
+    Depuis, le moteur rapproche le modèle qui a produit le vecteur du
+    ``calibrated_for_model`` de la dimension et rend la dimension INCONNUE en
+    cas de discordance. Effet mesuré sur les 36 paires :
+
+    ===============  =======  =======
+    Grandeur         avant    après
+    ===============  =======  =======
+    score moyen         49,1     58,2
+    confiance moyenne   97,2     82,2
+    confiance max         98       83
+    ===============  =======  =======
+
+    Les 15 points de confiance sont l'essentiel : ils étaient revendiqués à
+    tort. Aucune paire ne bascule en ``low_data`` — 85 % du poids reste connu,
+    bien au-dessus du seuil de 40 %.
     """
 
-    def test_la_dimension_vaut_zero_sur_toutes_les_paires(self, dataset) -> None:
-        sous_scores = set()
+    def test_la_dimension_est_inconnue_sur_toutes_les_paires(self, dataset) -> None:
+        etats = set()
         for case in dataset.cases:
             for annotation in case.annotations:
                 resultat = compute_match(case.candidate, dataset.jobs[annotation.job_ref])
                 dimension = next(
                     d for d in resultat.dimension_scores if d.dimension == "title_similarity"
                 )
-                sous_scores.add((dimension.known, dimension.subscore))
-        assert sous_scores == {(True, 0.0)}, (
-            "title_similarity n'est plus uniformément nulle — si un provider "
-            "sémantique a été branché (Q11), c'est la bonne nouvelle : "
-            "recalibrer les seuils (Q12/Q41) et rouvrir N14."
+                etats.add((dimension.known, dimension.subscore))
+        assert etats == {(False, None)}, (
+            "title_similarity n'est plus uniformément inconnue — si les seuils "
+            "ont été calibrés contre un modèle (Q11/Q12), c'est la bonne "
+            "nouvelle : mettre ce test à jour avec les nouveaux chiffres."
         )
+
+    def test_la_raison_ne_met_en_cause_ni_le_profil_ni_loffre(self, dataset) -> None:
+        """C'est NOTRE limite. La replier sur « extraction incertaine »
+        accuserait l'offre d'un défaut qu'elle n'a pas."""
+        case = dataset.cases[0]
+        resultat = compute_match(case.candidate, dataset.jobs[case.annotations[0].job_ref])
+        inconnue = next(
+            u for u in resultat.unknown_dimensions if u.dimension == "title_similarity"
+        )
+        assert inconnue.reason == "uncalibrated_embeddings"
+
+    def test_la_confiance_ne_revendique_plus_les_quinze_points(self, dataset) -> None:
+        """Avant la correction, la confiance montait à 98 sur ce jeu."""
+        confiances = [
+            compute_match(case.candidate, dataset.jobs[a.job_ref]).confidence
+            for case in dataset.cases
+            for a in case.annotations
+        ]
+        assert max(confiances) <= 85
 
 
 class TestConstatDeuxUneOffreMaigreScoreHaut:
@@ -102,8 +136,13 @@ class TestConstatDeuxUneOffreMaigreScoreHaut:
     pertinente mais listant cinq exigences dont le candidat en a quatre
     plafonne à 0,80.
 
-    Conséquence mesurable : Spearman tombe à 0,570 sur ce profil, sous la
-    porte de 0,60. Voir 17-open-questions.md N15.
+    Conséquence mesurable : Spearman tombe à **0,526** sur ce profil, sous la
+    porte de 0,60. (0,570 avant la correction de N14 : retirer une dimension
+    constante n'est pas une transformation uniforme, puisque la
+    renormalisation dépend de l'ensemble des dimensions connues, qui varie
+    d'une paire à l'autre. La correction n'a pas dégradé le moteur — elle a
+    retiré une compression accidentelle qui flattait légèrement le
+    classement.) Voir 17-open-questions.md N15.
     """
 
     def test_une_offre_a_une_seule_exigence_sature_la_dimension(self, dataset) -> None:
@@ -126,7 +165,7 @@ class TestConstatDeuxUneOffreMaigreScoreHaut:
 
         Ne PAS faire passer ce test en retouchant les annotations ou les
         poids — un jeu recalé sur la sortie du moteur ne mesure plus rien.
-        Il passera le jour où N14/N15 seront traitées.
+        Il passera le jour où N15 sera traitée.
         """
         porte = next(g for g in report.gates if g.name == "spearman_min")
         assert not porte.passed

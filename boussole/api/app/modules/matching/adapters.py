@@ -245,6 +245,7 @@ def job_input_from(
     skills_taxonomy: Mapping[uuid.UUID, str] | None = None,
     *,
     skill_embeddings: Mapping[uuid.UUID, Sequence[float]] | None = None,
+    embedding_model: str | None = None,
 ) -> JobInput:
     """Construit l'entrée offre du moteur — chaque champ extrait porte sa confiance.
 
@@ -255,6 +256,19 @@ def job_input_from(
     ``title_embedding`` est lu sur ``job_postings.embedding`` (« intitulé +
     1er paragraphe », 06 §2.3) : absent → ``title_similarity`` inconnue
     (k=0), exactement comme avant les embeddings.
+
+    ``embedding_model`` : identifiant du modèle qui a produit ce vecteur. Le
+    moteur le rapproche du ``calibrated_for_model`` de la dimension et rend la
+    dimension INCONNUE en cas de discordance — un cosinus lu avec les seuils
+    d'un autre modèle est une mesure fausse, pas imprécise (N14).
+
+    🟡 **Approximation assumée** : la valeur passée est celle du provider
+    ACTIF, pas celle qui a réellement produit la ligne. `job_postings` ne
+    porte pas encore de colonne `embedding_model_version` (§8.2 item 12) ;
+    tant qu'elle n'existe pas, un vecteur calculé par un modèle précédent est
+    indiscernable d'un vecteur à jour. Le rapprochement reste utile — il
+    attrape le cas courant, celui où la configuration n'a jamais été calibrée
+    — mais il ne remplace pas cette colonne.
     """
     taxonomy: Mapping[uuid.UUID, str] = skills_taxonomy or {}
 
@@ -300,6 +314,7 @@ def job_input_from(
             skill_embeddings,
         ),
         title_embedding=_vector(job_posting.embedding),
+        title_embedding_model=embedding_model,
         seniority=_confident(job_posting.seniority, job_posting.seniority_conf),
         experience_min=(
             None if job_posting.experience_min is None else float(job_posting.experience_min)

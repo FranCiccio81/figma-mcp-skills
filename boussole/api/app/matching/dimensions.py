@@ -22,6 +22,7 @@ __all__ = [
     "DIMENSION_LABELS",
     "JOB_MISSING",
     "LOW_CONFIDENCE",
+    "UNCALIBRATED",
     "UNCONVERTIBLE",
     "UNKNOWN_REASON_LABELS",
     "DimensionOutcome",
@@ -33,12 +34,14 @@ JOB_MISSING = "job_missing"
 CANDIDATE_MISSING = "candidate_missing"
 LOW_CONFIDENCE = "low_confidence"
 UNCONVERTIBLE = "unconvertible_value"
+UNCALIBRATED = "uncalibrated_embeddings"
 
 UNKNOWN_REASON_LABELS: Mapping[str, str] = {
     JOB_MISSING: "non précisé dans l'offre",
     CANDIDATE_MISSING: "absent de votre profil",
     LOW_CONFIDENCE: "extraction trop incertaine pour être utilisée",
     UNCONVERTIBLE: "valeur non convertible (devise non supportée)",
+    UNCALIBRATED: "comparaison indisponible (outil non calibré)",
 }
 
 DIMENSION_LABELS: Mapping[str, str] = {
@@ -200,12 +203,39 @@ def _coverage(
 def _embedding_piecewise(
     dim: DimensionConfig, config: ScoringConfig, candidate: CandidateInput, job: JobInput
 ) -> DimensionOutcome:
-    """Similarité métier : max des cosinus + mapping affine par morceaux (06 §2.3)."""
+    """Similarité métier : max des cosinus + mapping affine par morceaux (06 §2.3).
+
+    ⚠️ **Un cosinus n'a de sens qu'avec les seuils calibrés pour le modèle qui
+    l'a produit.** ``zero_below`` / ``one_above`` découpent une échelle qui
+    dépend entièrement de la famille de vecteurs : les valeurs d'un modèle
+    sémantique et celles d'un condensat lexical ne vivent pas dans le même
+    intervalle. Appliquer les unes aux autres ne produit pas une mesure
+    imprécise — ça produit une mesure fausse, présentée comme un fait.
+
+    Mesuré avant ce garde-fou : avec le provider par défaut (lexical, D27) et
+    les seuils écrits pour des vecteurs sémantiques, le sous-score valait
+    **0,00 sur 100 % des paires**, et était publié comme **connu**. 15 % du
+    poids ne discriminaient rien, abaissaient uniformément tous les scores, et
+    — le plus grave — gonflaient l'indice de confiance d'une dimension qui ne
+    mesurait rien (17-open-questions.md N14).
+
+    D'où le rapprochement de modèles ci-dessous. Il protège aussi le cas
+    inverse, qui viendra : brancher un provider sémantique (Q11) sans
+    recalibrer produirait des sous-scores plausibles ET faux — beaucoup plus
+    difficiles à repérer qu'un zéro constant.
+    """
     if job.title_embedding is None:
         return _unknown(JOB_MISSING)
     if not candidate.target_titles_embeddings:
         # Sans embeddings d'intitulés (cibles ou derniers postes) → k=0.
         return _unknown(CANDIDATE_MISSING)
+    # Contrôle de calibration APRÈS les vecteurs : quand il n'y en a pas,
+    # « absent » renseigne mieux que « non calibré ».
+    calibre = dim.params.get("calibrated_for_model")
+    if not isinstance(calibre, str) or calibre != job.title_embedding_model:
+        return _unknown(
+            UNCALIBRATED, calibrated_for=calibre, embedding_model=job.title_embedding_model
+        )
 
     similarity = max(
         cosine_similarity(vector, job.title_embedding)

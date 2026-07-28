@@ -191,7 +191,8 @@
       "note": "Une donnée inconnue n'est jamais remplacée par une estimation : elle abaisse l'indice de confiance, pas le score.",
       "jobFallback": "{label} : non précisé dans l'offre",
       "profileFallback": "{label} : absent de votre profil — complétez votre profil pour évaluer ce critère.",
-      "uncertainFallback": "{label} : information extraite de l'offre incertaine — vérifiez l'annonce d'origine."
+      "uncertainFallback": "{label} : information extraite de l'offre incertaine — vérifiez l'annonce d'origine.",
+      "unavailableFallback": "{label} : nous ne savons pas encore évaluer ce critère de façon fiable — il n'est pas compté dans le score."
     },
     "dimensions": {
       "title": "Détail par critère",

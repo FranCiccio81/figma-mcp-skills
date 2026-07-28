@@ -66,6 +66,8 @@ function unknownLabel(t: Translator, unknown: UnknownDimension): string {
   if (unknown.reason === "low_extraction_confidence") {
     return t("unknown.uncertainFallback", { label });
   }
+  // Ni le profil ni l'offre ne sont en cause : ne rien leur reprocher.
+  if (unknown.reason === "unavailable") return t("unknown.unavailableFallback", { label });
   return t("unknown.jobFallback", { label });
 }
 

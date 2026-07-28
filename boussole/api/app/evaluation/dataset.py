@@ -96,9 +96,13 @@ def load_dataset(
 
     textes_intitules = [f"{item['title']}. {item['description'][:400]}" for item in corpus["jobs"]]
     vecteurs = _embed(embedder, textes_intitules)
+    # Le modèle est transmis au moteur, qui le rapproche du
+    # ``calibrated_for_model`` de la dimension : le harnais mesure donc le
+    # MÊME chemin que la production, garde-fou de calibration compris (N14).
+    modele = getattr(embedder, "model", None) if embedder is not None else None
 
     jobs = {
-        str(item["external_ref"]): _to_job_input(item, vecteurs[index])
+        str(item["external_ref"]): _to_job_input(item, vecteurs[index], modele)
         for index, item in enumerate(corpus["jobs"])
     }
 
@@ -122,7 +126,9 @@ def _embed(embedder: Any | None, textes: list[str]) -> list[Vector | None]:
     return [tuple(vecteur) for vecteur in embedder.embed_texts(textes)]
 
 
-def _to_job_input(item: dict[str, Any], title_embedding: Vector | None) -> JobInput:
+def _to_job_input(
+    item: dict[str, Any], title_embedding: Vector | None, embedding_model: str | None = None
+) -> JobInput:
     locations = tuple(
         JobLocation(lat=float(loc["lat"]), lon=float(loc["lon"]))
         for loc in item.get("locations", [])
@@ -132,6 +138,7 @@ def _to_job_input(item: dict[str, Any], title_embedding: Vector | None) -> JobIn
         skills_required=tuple(JobSkill(label=s) for s in item.get("skills_required", [])),
         skills_nice=tuple(JobSkill(label=s) for s in item.get("skills_nice", [])),
         title_embedding=title_embedding,
+        title_embedding_model=embedding_model,
         seniority=_confident(item.get("seniority")),
         experience_min=item.get("experience_min"),
         experience_max=item.get("experience_max"),

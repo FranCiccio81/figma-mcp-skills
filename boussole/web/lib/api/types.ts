@@ -315,7 +315,9 @@ export interface BlockingCriterion {
 export type UnknownDimensionReason =
   | "job_not_provided"
   | "profile_not_provided"
-  | "low_extraction_confidence";
+  | "low_extraction_confidence"
+  /** Limite de l'outil, pas des données : le critère n'a pas pu être évalué. */
+  | "unavailable";
 
 /** Dimension non évaluable, listée sous « Non précisé » (M3-a/M3-b — jamais estimée). */
 export interface UnknownDimension {

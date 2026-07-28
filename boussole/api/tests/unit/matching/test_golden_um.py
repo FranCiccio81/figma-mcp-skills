@@ -29,6 +29,7 @@ from tests.unit.matching.factories import (
     PARIS_LAT,
     PARIS_LON,
     dim,
+    job_with_title_cosine,
     lat_offset_deg,
     perfect_candidate,
     perfect_job,
@@ -119,11 +120,11 @@ def test_um06_skill_coverage_via_engine() -> None:
 def test_um07_title_affine() -> None:
     """UM-07 : sim 0,675 → 0,5 ; bornes 0,55 → 0 et 0,80 → 1."""
     candidate = CandidateInput(target_titles_embeddings=(E1,))
-    mid = compute_match(candidate, JobInput(title_embedding=vector_with_cosine(0.675)))
+    mid = compute_match(candidate, job_with_title_cosine(0.675))
     assert dim(mid, "title_similarity").subscore == pytest.approx(0.5, abs=1e-6)
-    low = compute_match(candidate, JobInput(title_embedding=vector_with_cosine(0.55)))
+    low = compute_match(candidate, job_with_title_cosine(0.55))
     assert dim(low, "title_similarity").subscore == pytest.approx(0.0, abs=1e-6)
-    high = compute_match(candidate, JobInput(title_embedding=vector_with_cosine(0.80)))
+    high = compute_match(candidate, job_with_title_cosine(0.80))
     assert dim(high, "title_similarity").subscore == pytest.approx(1.0, abs=1e-6)
 
 
@@ -261,5 +262,5 @@ def test_um18_scoring_version_stamped() -> None:
         compute_match(perfect_candidate(), perfect_job()),
         compute_match(CandidateInput(), JobInput()),
     ):
-        assert result.scoring_version == "1.0.0"
+        assert result.scoring_version == "1.1.0"
         assert result.scoring_version == get_config().scoring_version

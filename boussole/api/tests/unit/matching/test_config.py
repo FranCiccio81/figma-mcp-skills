@@ -10,7 +10,7 @@ from app.matching import ConfigError, get_config
 
 
 def test_version_stamped() -> None:
-    assert get_config().scoring_version == "1.0.0"
+    assert get_config().scoring_version == "1.1.0"
 
 
 def test_weights_sum_to_100() -> None:

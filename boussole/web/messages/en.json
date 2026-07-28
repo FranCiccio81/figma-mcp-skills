@@ -191,7 +191,8 @@
       "note": "Unknown data is never replaced by an estimate: it lowers the confidence index, not the score.",
       "jobFallback": "{label}: not specified in the job",
       "profileFallback": "{label}: missing from your profile — complete your profile to evaluate this criterion.",
-      "uncertainFallback": "{label}: information extracted from the job is uncertain — check the original posting."
+      "uncertainFallback": "{label}: information extracted from the job is uncertain — check the original posting.",
+      "unavailableFallback": "{label}: we cannot yet assess this criterion reliably — it is not counted in the score."
     },
     "dimensions": {
       "title": "Detail by criterion",

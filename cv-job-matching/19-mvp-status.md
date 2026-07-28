@@ -4,7 +4,7 @@
 >
 > **Méthode** : tout ce qui suit a été vérifié dans le code de `boussole/`, et les chiffres proviennent d'exécutions réelles des suites de tests. Ce document ne recopie pas les intentions des spécifications : quand le code et la spec divergent, c'est le code qui est rapporté, et la divergence est signalée. Les incertitudes portent 🟡. Aucune question juridique n'est tranchée ici.
 >
-> **État de référence** : lot post-M6 n° 2 — **1241 tests unitaires + 66 tests d'intégration**, `ruff` et `mypy` verts (146 fichiers). La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
+> **État de référence** : lot post-M6 n° 2 — **1255 tests unitaires + 66 tests d'intégration**, `ruff` et `mypy` verts (146 fichiers). La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
 
 ---
 
@@ -12,7 +12,7 @@
 
 Six jalons ont été livrés et mergés : M1 (fondations + auth), M2 (ingestion + recherche), M3 (matching + explications), M4 (CV + générations + candidatures), M5 (privacy + durcissement), M6 (mise en service).
 
-**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1241 tests unitaires + 66 tests d’intégration PostgreSQL, lint et types verts) et un front Next.js.
+**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1255 tests unitaires + 66 tests d’intégration PostgreSQL, lint et types verts) et un front Next.js.
 
 **Ce qui manque pour que ce soit un produit** : trois choses de nature différente.
 
@@ -38,7 +38,7 @@ Statuts : ✅ implémenté et couvert · 🟡 implémenté avec une limite docum
 | **F — Normalisation & dédup** | 🟡 | Normalisation complète, taxonomie de compétences avec alias, géocodage, **dédup étage 1** (hash exact) avec contraintes SQL `dedup_hash` UNIQUE et `(source_id, external_ref)` UNIQUE, SAVEPOINT par item | 🟡 **Dédup étage 2 neutralisée** tant que le provider d'embeddings est lexical (§3) |
 | **G — Recherche & filtres** | ✅ | `GET /jobs` : recherche full-text `tsvector` pondérée A/B/C avec `unaccent` **des deux côtés**, filtres, pagination keyset `(last_seen_at, id)`, tris `date`/`relevance`, rerank vectoriel. Pages `/offres` et `/offres/[id]` | Rerank **local à la page** 🟡. `sort=match` retombe sur `relevance` |
 | **H — Matching** | ✅ | Moteur déterministe `app/matching` : 12 dimensions, configuration versionnée (`scoring-config.json`), renormalisation, bloquants, `GET /jobs/{id}/match` et `GET /matches` avec cache `match_results` et invalidation par version de profil / de scoring. 166 tests dont les cas de référence UM-01…UM-18 | `GET /matches` score **paresseusement** les 200 offres actives les plus récentes 🟡 ; pas de re-scoring asynchrone complet. Pré-filtre pays inapplicable (`preference_locations` ne porte pas de code pays) 🟡 |
-| **I — Indice de confiance** | 🟡 | Calculé par le moteur, distinct du score, `unknown_dimensions` exposées | 🔴 **Surévalué** : `title_similarity` (15 % du poids) est publiée comme « connue » avec un sous-score de 0,00 sur 100 % des paires mesurées — N14. Calibration sur jeu annoté toujours non faite (N16) |
+| **I — Indice de confiance** | ✅ | Calculé par le moteur, distinct du score, `unknown_dimensions` exposées. **Ne revendique plus les 15 % de `title_similarity`** : une dimension dont les seuils ne sont pas calibrés pour le modèle de vecteurs est déclarée inconnue, pas notée 0 (D36). Mesuré : confiance moyenne 97,2 → 82,2 | Calibration de la formule elle-même sur jeu annoté toujours non faite (N16) |
 | **J — Explication** | ✅ | Deux couches : `explanation_facts` déterministes émis par le moteur, puis reformulation LLM dont l'entrée est **exclusivement** les facts. Sortie validée contre le schéma, **puis** contrôlée : aucun nombre absent des facts. Échec → 502 propre, jamais de contenu divergent. Cache `match_explanations`. Panneau front | Sortie « canned » sans aucun chiffre tant que `AI_PROVIDER=fake` |
 | **K — Sauvegarde & masquage** | ✅ | `PUT/DELETE /jobs/{id}/saved-state`, filtre `saved_only`, purge RGPD des `saved_jobs` (le trou trouvé en revue M5) | — |
 | **L — Génération e-mails** | ✅ | `POST /generations` (`email`), cycle `pending → processing → ready`, puis `draft → validated → exported`. Quotas 10/h et 40/j. Contrôle d'ancrage. Page `/candidatures/documents` | Provider réel inactif par défaut (§3) |
@@ -228,11 +228,11 @@ Mesurées sur le commit `811d4d1`, `boussole/api`.
 
 | Suite | Volume | État | Commande |
 |---|---|---|---|
-| Unitaires | **1241** tests | ✅ tous verts (118 s) | `make test` |
+| Unitaires | **1255** tests | ✅ tous verts (82 s) | `make test` |
 | Intégration PostgreSQL | **66** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
 | Front | **0** | 🔴 aucun runner de test dans `web/package.json` | — |
 
-Répartition des 1241 unitaires (48 nouveaux : `evaluation`) :
+Répartition des 1255 unitaires (50 en `evaluation`, 12 sur le garde-fou de calibration) :
 
 | Domaine | Tests | | Domaine | Tests |
 |---|---|---|---|---|
@@ -266,26 +266,26 @@ Le fichier a passé six jalons dans `infra/github-workflows/` avec un README dem
 
 | Porte | Seuil | Mesuré | |
 |---|---|---|---|
-| `spearman_min` | ≥ 0,60 | **0,570** (pire profil : `cand-devops`) | ❌ |
+| `spearman_min` | ≥ 0,60 | **0,526** (pire profil : `cand-devops`) | ❌ |
 | `ndcg_at_10_min` | ≥ 0,75 | 0,913 (pire profil) | ✅ |
 | `blocking_precision_min` | ≥ 0,95 | 1,000 — 0 rédhibitoire annoncé à tort | ✅ |
 | `blocking_recall_min` | ≥ 0,85 | 1,000 — 0 rédhibitoire manqué | ✅ |
 
-Par profil : `cand-backend-senior` ρ = 0,832 / NDCG 0,944 · `cand-devops` ρ = 0,570 / NDCG 0,913 · `cand-junior` ρ = 0,710 / NDCG 0,991.
+Par profil : `cand-backend-senior` ρ = 0,832 / NDCG 0,944 · `cand-devops` ρ = 0,526 / NDCG 0,907 · `cand-junior` ρ = 0,710 / NDCG 0,991.
 
 **Ce que ça vaut.** Le jeu est fait de **cas de référence construits**, pas d'annotations humaines d'offres réelles (N16) : le rapport dit si le moteur se comporte comme spécifié sur des situations choisies, pas si le matching est bon pour de vrais candidats. Cette question-là reste entière et reste le chemin critique le plus long.
 
 **Ce que la première exécution a trouvé**, en revanche, est solide et chiffré :
 
-- **N14 — `title_similarity` est inerte et compte comme un fait connu.** Sous-score 0,00 sur les **36 paires**, statut « connu ». 15 % du poids qui ne discriminent rien et abaissent uniformément tous les scores. Pire : l'indice de confiance intègre cette dimension comme connue, il est donc **surévalué**. C'est la première mesure chiffrée de l'impact de N1 (provider lexical).
+- ~~**N14 — `title_similarity` est inerte et compte comme un fait connu.**~~ ✅ **corrigée** (D36). Sous-score 0,00 sur les **36 paires** avec le statut « connu » : 15 % du poids qui ne discriminaient rien et gonflaient l'indice de confiance. Le moteur rapproche désormais le modèle qui a produit le vecteur des seuils calibrés pour lui, et déclare la dimension **inconnue** en cas de discordance. Effet mesuré : confiance moyenne **97,2 → 82,2** (max 98 → 83), score moyen 49,1 → 58,2, aucune paire en `low_data`. Spearman passe de 0,570 à 0,526 — non pas une dégradation, mais la disparition d'une compression accidentelle qui flattait le classement (la renormalisation dépend de l'ensemble des dimensions connues, qui varie d'une paire à l'autre).
 - **N15 — la couverture des compétences favorise les offres maigres.** Une offre à une seule exigence satisfaite obtient 1,00 sur la dimension à 25 %. Mesuré : un poste « Développeur Python Junior » sur site atteint 60 pour un profil DevOps senior exigeant le full remote. C'est ce qui fait tomber Spearman sous la porte.
 - **N13 — « full remote requis » ne bloque pas un poste hybride.** Le moteur suit la spec ; c'est la spec qui mérite discussion — un niveau nommé « requis » qui ne bloque pas est difficile à défendre.
 
-Les deux premières sont **épinglées par test de caractérisation et délibérément non corrigées** : un jeu recalé sur la sortie du moteur ne mesure plus rien.
+N15 reste **épinglée par test de caractérisation et délibérément non corrigée** : un jeu recalé sur la sortie du moteur ne mesure plus rien. C'est aujourd'hui la seule cause connue de l'échec de la porte Spearman.
 
 ### Ce qui n'est pas mesuré
 
-- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1241 tests sont un volume, pas une couverture.
+- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1255 tests sont un volume, pas une couverture.
 - **Performance** : la cible « recherche p95 < 500 ms » n'a jamais été mesurée sur un corpus réel — il n'y a pas eu de corpus réel, les connecteurs étant désactivés.
 - **Prompts** : les tests de prompts en CI et le jeu adversarial prévus par la stratégie de test n'existent pas.
 
@@ -325,7 +325,7 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 **Élevé — pour que l'alpha produise des enseignements exploitables**
 
 6. **Constituer le jeu annoté** — l'instrument est livré, il attend son jeu. `make evaluate` mesure Spearman, NDCG@10 et les bloquants contre les `evaluation_gates` (D35), sur un corpus de démonstration fictif (D34) et des **cas de référence construits**. Ce qui manque est ce qui coûte : des annotateurs humains sur des offres réelles (Q19/Q20/Q47 — et donc Q2/Q3). **Toujours le point n° 1 restant, mais la moitié technique est faite.**
-7. **Traiter N14 avant l'alpha, sans attendre Q11.** La mesure a montré que `title_similarity` vaut 0,00 sur 100 % des paires **et** est comptée comme connue : 15 % du poids qui ne discriminent rien et qui gonflent l'indice de confiance. La marquer inconnue quand le provider est lexical est une correction courte, honnête, et indépendante du choix de modèle. La recalibration complète des seuils (0,75 « proche », 0,92 dédup, pondération de rerank — Q12/Q41) reste, elle, suspendue à Q11.
+7. ~~**Traiter N14**~~ — ✅ **fait** (lot n° 2, D36). La dimension est déclarée inconnue tant que ses seuils ne sont pas calibrés pour le modèle de vecteurs employé, au lieu d'être notée 0. L'indice de confiance a perdu les 15 points qu'il revendiquait à tort. La recalibration complète des seuils (0,75 « proche », 0,92 dédup, pondération de rerank — Q12/Q41) reste suspendue à Q11 ; renseigner `calibrated_for_model` est le geste qui réactivera la dimension.
 7 bis. **Instruire N15** — la couverture des compétences requises favorise les offres peu exigeantes, et c'est ce qui fait tomber la porte Spearman. Aucune piste ne doit être retenue sans la mesurer : c'est exactement l'usage du harnais.
 8. **Brancher une observabilité qui existe.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet ; les logs stdout sont le seul signal disponible. C'est aussi ce qui manque pour que l'alerte du point 2 atteigne quelqu'un : elle est aujourd'hui une ligne ERROR que personne ne lit.
 9. ~~**Purge par âge de `ai_calls`** (13 mois)~~ — ✅ **fait** (lot n° 1). `maintenance.purge_ai_calls` à 05:30, suppression par lots de 5 000 bornés à 20 lots par exécution (un `DELETE` global verrouillerait la table, donc les appels IA en cours). Borne calculée en **mois calendaires** : `13 × 30 jours` supprimerait cinq jours trop tôt, c'est-à-dire des lignes encore sous engagement de conservation. Vérifié contre un vrai PostgreSQL — `DELETE` n'accepte pas de `LIMIT`, la requête bornée est inhabituelle et méritait autre chose qu'un fake.

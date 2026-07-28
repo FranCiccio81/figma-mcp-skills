@@ -714,7 +714,7 @@ components:
             type: object
             properties:
               dimension: { type: string }
-              reason: { type: string, enum: [job_not_provided, profile_not_provided, low_extraction_confidence] }
+              reason: { type: string, enum: [job_not_provided, profile_not_provided, low_extraction_confidence, unavailable] }
               label: { type: string }
         dimensions:
           type: array
