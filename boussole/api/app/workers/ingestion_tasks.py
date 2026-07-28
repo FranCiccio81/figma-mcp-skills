@@ -32,6 +32,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from app.core.config import get_settings
 from app.core.db import create_worker_engine
 from app.modules.ingestion.connectors.base import Connector, RawJob
+from app.modules.ingestion.connectors.demo_corpus import SLUG as DEMO_SLUG
+from app.modules.ingestion.connectors.demo_corpus import build_demo_connector
 from app.modules.ingestion.connectors.france_travail import FranceTravailConnector
 from app.modules.ingestion.connectors.greenhouse import GreenhouseConnector
 from app.modules.ingestion.connectors.lever import LeverConnector
@@ -58,6 +60,7 @@ def _feature_enabled(slug: str) -> bool:
         "france-travail": settings.feature_source_france_travail,
         "greenhouse": settings.feature_source_greenhouse,
         "lever": settings.feature_source_lever,
+        DEMO_SLUG: settings.feature_source_demo,
     }.get(slug, False)
 
 
@@ -72,6 +75,10 @@ def _build_connector(slug: str) -> Connector:
         return GreenhouseConnector(boards=ingestion_settings.greenhouse_board_list)
     if slug == "lever":
         return LeverConnector(sites=ingestion_settings.lever_site_list)
+    if slug == DEMO_SLUG:
+        # Deuxième barrière, après le feature flag : le corpus est FICTIF et
+        # ``build_demo_connector`` refuse de le construire hors développement.
+        return build_demo_connector()
     raise ValueError(f"connecteur inconnu : {slug!r}")
 
 

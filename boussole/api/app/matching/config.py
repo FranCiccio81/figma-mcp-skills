@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
@@ -81,6 +81,11 @@ class ScoringConfig:
     blocking_labels: Mapping[str, str]
     explanation: ExplanationThresholds
     total_weight: float
+    #: Seuils de qualité du matching (Spearman, NDCG@10, bloquants), exploités
+    #: par :mod:`app.evaluation`. Portés ici pour qu'il n'existe qu'UNE source
+    #: de vérité : des seuils recopiés dans le harnais continueraient de
+    #: passer sur les anciennes valeurs le jour où on les resserre.
+    evaluation_gates: Mapping[str, float] = field(default_factory=dict)
 
     def dimension(self, name: str) -> DimensionConfig:
         """Configuration d'une dimension par nom (erreur si absente)."""
@@ -149,7 +154,23 @@ def _parse(raw: Mapping[str, object], path: Path) -> ScoringConfig:
         blocking_labels=blocking_labels,
         explanation=explanation,
         total_weight=sum(dim.weight for dim in dimensions),
+        evaluation_gates=_parse_gates(raw.get("evaluation_gates")),
     )
+
+
+def _parse_gates(raw: object) -> Mapping[str, float]:
+    """Seuils d'évaluation — absents = dictionnaire vide, jamais une erreur.
+
+    Le moteur doit tourner sans eux : ils ne servent qu'au harnais de mesure
+    (:mod:`app.evaluation`), c'est lui qui refuse de mesurer sans seuil.
+    """
+    if not isinstance(raw, Mapping):
+        return {}
+    return {
+        str(key): float(value)
+        for key, value in raw.items()
+        if not isinstance(value, bool) and isinstance(value, int | float)
+    }
 
 
 @lru_cache(maxsize=8)

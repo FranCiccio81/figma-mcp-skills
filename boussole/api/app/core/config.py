@@ -162,6 +162,11 @@ class Settings(BaseSettings):
     feature_source_france_travail: bool = False
     feature_source_greenhouse: bool = False
     feature_source_lever: bool = False
+    #: Corpus de démonstration — offres FICTIVES, pour exercer la chaîne et
+    #: mesurer le matching tant que les sources réelles attendent Q2/Q3.
+    #: Refusé hors développement par ``build_demo_connector`` : le flag seul
+    #: ne suffit pas à l'activer en staging ou en production.
+    feature_source_demo: bool = False
 
     # Observabilité (D20).
     sentry_dsn: str = ""
