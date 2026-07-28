@@ -110,6 +110,21 @@ celery_app.conf.update(
             "task": "maintenance.purge_expired_exports",
             "schedule": crontab(minute=45, hour=4),
         },
+        # Surveillance de l'engagement des 30 jours (D20). Placée APRÈS la
+        # purge de 04:15 : ce qu'elle trouve encore `pending` est ce que la
+        # purge n'a pas su traiter. Une heure d'écart laisse le temps à une
+        # purge lente de finir avant qu'on la déclare en retard.
+        "maintenance-check-purge-backlog": {
+            "task": "maintenance.check_purge_backlog",
+            "schedule": crontab(minute=15, hour=5),
+        },
+        # Rétention 13 mois du journal des appels IA (11 §3). Après le reste
+        # du ménage : c'est la tâche la plus longue (suppression par lots sur
+        # la plus grosse table) et la moins urgente des trois.
+        "maintenance-purge-ai-calls": {
+            "task": "maintenance.purge_ai_calls",
+            "schedule": crontab(minute=30, hour=5),
+        },
         # Rattrapage quotidien des embeddings manquants (08 §8) : les
         # vecteurs sont normalement calculés au fil de l'eau (à l'ingestion
         # d'une offre), ce beat ne rattrape que les trous — offres ingérées

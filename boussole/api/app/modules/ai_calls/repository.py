@@ -6,9 +6,10 @@ SQLAlchemy, même patron que les autres modules de données.
 
 import uuid
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.calls import AiCall
@@ -27,6 +28,15 @@ class AiCallsRepository(Protocol):
 
     async def list_for_user(self, user_id: uuid.UUID) -> Sequence[AiCall]:
         """Lignes encore rattachées à l'utilisateur (ordre chronologique)."""
+        ...
+
+    async def delete_older_than(self, cutoff: datetime, *, batch: int) -> int:
+        """Supprime au plus ``batch`` lignes antérieures à ``cutoff``.
+
+        Retourne le nombre de lignes réellement supprimées. Bornée par
+        conception : l'appelant boucle, ce qui garde chaque transaction
+        courte sur la plus grosse table du système.
+        """
         ...
 
 
@@ -50,3 +60,19 @@ class SqlAlchemyAiCallsRepository:
             select(AiCall).where(AiCall.user_id == user_id).order_by(AiCall.created_at)
         )
         return rows.scalars().all()
+
+    async def delete_older_than(self, cutoff: datetime, *, batch: int) -> int:
+        # DELETE … WHERE id IN (SELECT id … LIMIT n) : ``DELETE`` ne prend pas
+        # de LIMIT en PostgreSQL. Le tri par ``id`` fait partir les plus
+        # anciennes d'abord (identité croissante) et rend la boucle de
+        # l'appelant monotone.
+        doomed = (
+            select(AiCall.id)
+            .where(AiCall.created_at < cutoff)
+            .order_by(AiCall.id)
+            .limit(batch)
+            .scalar_subquery()
+        )
+        result = await self._session.execute(delete(AiCall).where(AiCall.id.in_(doomed)))
+        await self._session.commit()
+        return int(getattr(result, "rowcount", 0) or 0)

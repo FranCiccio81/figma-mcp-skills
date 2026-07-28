@@ -5,11 +5,14 @@
 - ``maintenance.purge_due_accounts()`` : purge les comptes dont la demande de
   suppression est échue (``purge_after`` ≤ now) — planifiée QUOTIDIENNE ;
 - ``maintenance.purge_expired_exports()`` : ménage des archives d'export dont
-  le lien signé a expiré (objet + ligne) — planifiée QUOTIDIENNE.
+  le lien signé a expiré (objet + ligne) — planifiée QUOTIDIENNE ;
+- ``maintenance.check_purge_backlog()`` : surveillance de l'engagement des
+  30 jours (D20) — planifiée APRÈS la purge, dont elle vérifie l'effet ;
+- ``maintenance.purge_ai_calls()`` : rétention 13 mois du journal des appels
+  IA (11 §3) — planifiée QUOTIDIENNE.
 
-Les trois tâches sont enregistrées dans ``celery_app.py`` (``include`` +
-``beat_schedule``) ; l'alerte « purges en retard » (D20) surveille les
-demandes ``pending`` échues.
+Les tâches sont enregistrées dans ``celery_app.py`` (``include`` +
+``beat_schedule``).
 
 Boucle d'événements : chaque tâche exécute UNE coroutine via ``asyncio.run``
 sur un moteur dédié ``NullPool`` (:func:`app.core.db.create_worker_engine`),
@@ -29,7 +32,9 @@ from typing import Any
 
 from app.core.db import create_worker_engine, override_engine
 from app.core.storage import get_object_storage
+from app.modules.ai_calls.retention import enforce_retention
 from app.modules.privacy.export_builder import build_export
+from app.modules.privacy.purge_runner import check_purge_backlog as run_check_purge_backlog
 from app.modules.privacy.purge_runner import purge_due_accounts as run_purge_due_accounts
 from app.modules.privacy.purge_runner import (
     purge_expired_exports as run_purge_expired_exports,
@@ -102,6 +107,39 @@ async def _purge_expired_exports() -> dict[str, Any]:
         await engine.dispose()
 
 
+async def _check_purge_backlog() -> dict[str, Any]:
+    engine = create_worker_engine()
+    try:
+        with override_engine(engine) as factory:
+            async with factory() as session:
+                backlog = await run_check_purge_backlog(
+                    repository=SqlAlchemyPrivacyRepository(session)
+                )
+        return {
+            "overdue": backlog.overdue,
+            "oldest_age_hours": backlog.oldest_age_hours,
+            "deletion_ids": [str(identifier) for identifier in backlog.deletion_ids],
+        }
+    finally:
+        await engine.dispose()
+
+
+async def _purge_ai_calls() -> dict[str, Any]:
+    engine = create_worker_engine()
+    try:
+        # ``enforce_retention`` ouvre sa session via la fabrique globale
+        # (même patron que les purges de module) : d'où ``override_engine``.
+        with override_engine(engine):
+            outcome = await enforce_retention()
+        return {
+            "deleted": outcome.deleted,
+            "cutoff": outcome.cutoff.isoformat() if outcome.cutoff else None,
+            "truncated": outcome.truncated,
+        }
+    finally:
+        await engine.dispose()
+
+
 @celery_app.task(name="maintenance.privacy_export")
 def privacy_export(export_id: str) -> dict[str, Any]:
     """Constitue l'archive d'export RGPD (F-Q, AC-Q-3)."""
@@ -123,3 +161,26 @@ def purge_expired_exports() -> dict[str, Any]:
     quotidiennement par beat (``celery_app.beat_schedule``).
     """
     return _run(_purge_expired_exports())
+
+
+@celery_app.task(name="maintenance.check_purge_backlog")
+def check_purge_backlog() -> dict[str, Any]:
+    """Surveille l'engagement des 30 jours (D20) — journalise, ne corrige pas.
+
+    Planifiée APRÈS ``purge_due_accounts`` : ce qu'elle trouve encore
+    ``pending`` est ce que la purge n'a pas su traiter. Voir la limite
+    documentée dans :func:`app.modules.privacy.purge_runner.check_purge_backlog`
+    — un ordonnanceur mort ne se détecte que de l'extérieur, par l'absence
+    du battement ``purge_backlog_ok``.
+    """
+    return _run(_check_purge_backlog())
+
+
+@celery_app.task(name="maintenance.purge_ai_calls")
+def purge_ai_calls() -> dict[str, Any]:
+    """Applique la rétention 13 mois du journal ``ai_calls`` (11 §3).
+
+    Suppression par lots bornés — la table la plus volumineuse du système ne
+    doit pas être verrouillée d'un seul ``DELETE``.
+    """
+    return _run(_purge_ai_calls())

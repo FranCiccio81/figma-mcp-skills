@@ -1,8 +1,11 @@
 # CI Boussole — lint (ruff + mypy), tests unitaires et tests d'intégration
 # (PostgreSQL réel) sur PR touchant boussole/.
-# Voir README.md de ce dossier : à déplacer vers .github/workflows/ à la racine
-# du repo (les permissions de l'app GitHub ne permettent pas toujours de
-# pousser des workflows directement).
+#
+# Ce fichier a vécu six jalons dans `boussole/infra/github-workflows/`, avec
+# une note disant de le déplacer ici : personne ne l'a fait, donc AUCUNE
+# vérification automatique n'a tourné sur les PR de tout le projet. Les
+# revues manuelles ont trouvé ce qu'elles ont trouvé ; ce n'est pas une
+# raison de se passer du filet mécanique.
 
 name: boussole-ci
 

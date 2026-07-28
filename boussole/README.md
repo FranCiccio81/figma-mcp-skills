@@ -46,8 +46,8 @@ boussole/
 │   ├── alembic/versions/         # 0001 → 0006 (voir runbook §4.1)
 │   ├── config/scoring-config.json
 │   └── tests/
-│       ├── unit/                 # 1130 tests — sans Docker (repos en mémoire + fakeredis)
-│       └── integration/          # 61 tests — PostgreSQL 16 + pgvector RÉEL
+│       ├── unit/                 # 1193 tests — sans Docker (repos en mémoire + fakeredis)
+│       └── integration/          # 66 tests — PostgreSQL 16 + pgvector RÉEL
 ├── web/                          # Next.js 15 (App Router), TypeScript, Tailwind
 │   ├── app/(auth)/               # inscription, connexion
 │   ├── app/(main)/               # tableau-de-bord, offres, profil, preferences,
@@ -121,7 +121,7 @@ base, deux Redis, **et** joignabilité du stockage objet par `HeadBucket`).
 
 Deux suites, volontairement séparées.
 
-### Suite unitaire — 1130 tests, rapide, sans Docker
+### Suite unitaire — 1193 tests, rapide, sans Docker
 
 ```bash
 make test                     # depuis boussole/
@@ -215,14 +215,13 @@ Justification détaillée de chaque refus : [runbook §3](../cv-job-matching/18-
 
 ## CI
 
-[`infra/github-workflows/boussole-ci.yml`](infra/github-workflows/boussole-ci.yml) définit
-quatre jobs sur PR touchant `boussole/` : **lint** (ruff + mypy), **tests unitaires**,
-détection de changement `api/`, et **tests d'intégration** sur un service
+✅ **Active.** [`.github/workflows/boussole-ci.yml`](../.github/workflows/boussole-ci.yml)
+définit quatre jobs sur PR touchant `boussole/` : **lint** (ruff + mypy), **tests
+unitaires**, détection de changement `api/`, et **tests d'intégration** sur un service
 `pgvector/pgvector:pg16`.
 
-🔴 **Il n'est pas actif** : le fichier doit être déplacé vers `.github/workflows/` à la
-racine du repo (voir le README de ce dossier). En l'état, aucune vérification automatique
-ne tourne sur les PR.
+Le fichier a passé six jalons dans `infra/github-workflows/` avec une note demandant de
+le déplacer : aucune vérification automatique n'a tourné sur les PR de tout le projet.
 
 ## Spécifications
 

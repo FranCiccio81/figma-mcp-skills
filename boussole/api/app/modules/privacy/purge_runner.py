@@ -15,13 +15,15 @@ Idempotente : les demandes déjà ``purged`` ne sont pas resélectionnées et
 les purges de modules sont des suppressions idempotentes.
 
 Ce module porte aussi :func:`purge_expired_exports` (M3) — ménage quotidien
-des archives dont le lien signé a expiré (objet + ligne).
+des archives dont le lien signé a expiré (objet + ligne) — et
+:func:`check_purge_backlog`, la surveillance de l'engagement des 30 jours
+(D20).
 """
 
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from app.core.storage import ObjectStorage
 from app.modules.privacy.registry import PurgeRegistry
@@ -46,6 +48,84 @@ class PurgeOutcome:
     user_id: uuid.UUID
     purged: bool
     failed_modules: tuple[str, ...] = ()
+
+
+#: Marge au-delà de l'échéance avant de crier au retard.
+#:
+#: La purge tourne UNE fois par jour (beat 04:15) : une demande dont
+#: l'échéance tombe à 04:16 attend légitimement ~24 h avant d'être traitée.
+#: 26 h = un cycle complet + 2 h pour une purge longue ou décalée.
+#:
+#: ⚠️ Conséquence à assumer : puisque ``purge_after`` EST le trentième jour,
+#: cette marge signifie qu'une purge peut légitimement s'exécuter au 31e jour.
+#: L'engagement « suppression sous 30 jours » est donc tenu à un cycle près,
+#: par construction — ce n'est pas cette surveillance qui le corrige. Le fond
+#: se règle en posant ``purge_after`` à J+29 (ou en purgeant plus souvent) ;
+#: c'est une modification de D09, hors périmètre de la surveillance.
+BACKLOG_GRACE = timedelta(hours=26)
+
+
+@dataclass(frozen=True, slots=True)
+class PurgeBacklog:
+    """Compte-rendu de la surveillance des purges en retard (D20)."""
+
+    overdue: int = 0
+    oldest_age_hours: float = 0.0
+    deletion_ids: tuple[uuid.UUID, ...] = ()
+
+    @property
+    def healthy(self) -> bool:
+        return self.overdue == 0
+
+
+async def check_purge_backlog(
+    *,
+    repository: PrivacyRepository,
+    now: datetime | None = None,
+    grace: timedelta = BACKLOG_GRACE,
+) -> PurgeBacklog:
+    """Signale les demandes de suppression échues **et toujours pending**.
+
+    Ce que ça attrape : une purge qui échoue en boucle. Un module du registre
+    qui lève à chaque passage laisse la demande ``pending`` — elle est
+    retentée indéfiniment, chaque tentative journalise
+    ``account_purge_partial``, et **rien ne remontait au-dessus du niveau de
+    la ligne de log**. Un compte pouvait rester non purgé des semaines sans
+    qu'aucun signal agrégé n'existe.
+
+    ⚠️ **Ce que ça n'attrape pas** : un beat arrêté. Cette vérification est
+    elle-même une tâche beat — si l'ordonnanceur est mort, ni la purge ni sa
+    surveillance ne tournent, et le silence est total. C'est pourquoi le cas
+    sain journalise quand même une ligne ``purge_backlog_ok`` : elle sert de
+    **battement de cœur**, et c'est son ABSENCE que la supervision externe
+    doit alerter (runbook §7.3). Une alerte sur l'absence d'un signal est le
+    seul moyen de détecter un ordonnanceur mort depuis l'intérieur.
+    """
+    now = now or datetime.now(UTC)
+    # ``due_deletion_requests`` sélectionne « pending ET purge_after ≤ borne » :
+    # en lui passant ``now - grace``, on obtient exactement les demandes que la
+    # purge aurait dû traiter au moins une fois.
+    overdue = await repository.due_deletion_requests(now - grace)
+    if not overdue:
+        logger.info("purge_backlog_ok", extra={"detail": "overdue=0"})
+        return PurgeBacklog()
+
+    oldest = min(request.purge_after for request in overdue)
+    age_hours = round((now - oldest).total_seconds() / 3600, 1)
+    logger.error(
+        "purge_backlog_detected",
+        extra={
+            "detail": (
+                f"overdue={len(overdue)} plus_ancienne={age_hours}h "
+                f"deletions={[str(r.id) for r in overdue]}"
+            )
+        },
+    )
+    return PurgeBacklog(
+        overdue=len(overdue),
+        oldest_age_hours=age_hours,
+        deletion_ids=tuple(request.id for request in overdue),
+    )
 
 
 async def purge_due_accounts(

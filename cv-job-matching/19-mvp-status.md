@@ -2,7 +2,9 @@
 
 > **À qui ce document s'adresse** : à quelqu'un qui doit décider s'il ouvre une alpha, ce qu'il promet aux premiers utilisateurs, et où il met le prochain euro d'effort.
 >
-> **Méthode** : tout ce qui suit a été vérifié dans le code de `boussole/` au commit `811d4d1` (merge M6), et les chiffres proviennent d'exécutions réelles des suites de tests. Ce document ne recopie pas les intentions des spécifications : quand le code et la spec divergent, c'est le code qui est rapporté, et la divergence est signalée. Les incertitudes portent 🟡. Aucune question juridique n'est tranchée ici.
+> **Méthode** : tout ce qui suit a été vérifié dans le code de `boussole/`, et les chiffres proviennent d'exécutions réelles des suites de tests. Ce document ne recopie pas les intentions des spécifications : quand le code et la spec divergent, c'est le code qui est rapporté, et la divergence est signalée. Les incertitudes portent 🟡. Aucune question juridique n'est tranchée ici.
+>
+> **État de référence** : lot post-M6 n° 1 — **1193 tests unitaires + 66 tests d'intégration**, `ruff` et `mypy` verts (140 fichiers). La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour deux fois depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
 
 ---
 
@@ -10,13 +12,13 @@
 
 Six jalons ont été livrés et mergés : M1 (fondations + auth), M2 (ingestion + recherche), M3 (matching + explications), M4 (CV + générations + candidatures), M5 (privacy + durcissement), M6 (mise en service).
 
-**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1130 tests unitaires + 61 tests d'intégration PostgreSQL, lint et types verts) et un front Next.js.
+**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1193 tests unitaires + 66 tests d’intégration PostgreSQL, lint et types verts) et un front Next.js.
 
 **Ce qui manque pour que ce soit un produit** : trois choses de nature différente.
 
 1. **Des décisions juridiques, pas du code.** Les connecteurs d'offres sont écrits mais désactivés en attendant Q2/Q3. Le provider LLM réel est écrit mais inactif en attendant Q4/Q38. Sans offres, le produit n'a rien à matcher ; c'est aujourd'hui le blocage n°1 et il ne se lève pas en écrivant du code.
-2. **Un peu d'exploitation.** Pas de processus `beat` dans l'infrastructure fournie — donc, en l'état d'un déploiement calqué sur le compose, **aucune purge RGPD ne s'exécuterait**. Pas d'e-mail transactionnel, pas d'antivirus, pas d'export d'observabilité.
-3. **Des fonctionnalités assumées comme absentes** : export PDF/DOCX, digest e-mail, OAuth, multi-CV, purge par âge du journal des appels IA.
+2. **Un peu d'exploitation.** Pas d'e-mail transactionnel, pas d'antivirus, et surtout **aucun export d'observabilité** : `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet, les logs stdout sont le seul signal. Conséquence directe : les alertes de conformité que le système émet désormais (§5.6) n'atteignent personne.
+3. **Des fonctionnalités assumées comme absentes** : export PDF/DOCX, digest e-mail, OAuth, multi-CV.
 
 **Sur le niveau de maturité** : les revues de code ont trouvé, à chaque jalon, des défauts sérieux dans du code dont la suite de tests était verte — six sur M4/M5, et quatre garde-fous sur cinq qui ne tenaient pas à l'exécution sur M6. Tous ont été corrigés avec un test de régression vérifié par réintroduction du bug. Ce qu'il faut en retenir n'est pas « le code est mauvais » : c'est que **la suite de tests seule n'a jamais suffi à valider ce système**, et que le budget de revue doit rester dans le plan de charge.
 
@@ -165,7 +167,14 @@ Ce qui est solide : `PURGE_DELAY_DAYS = 30`, registre déclaratif dont l'exhaust
 
 Le test d'intégration `test_privacy_purge.py` (12 tests) est le plus exigeant de la base : il inventorie les tables réelles via `information_schema`, **suit les clés étrangères transitivement**, et échoue si la moindre ligne du compte purgé survit. Aucune liste en dur : une future table personnelle oubliée dans le registre fera tomber ce test le jour de sa migration. C'est ce test qui aurait attrapé le purgeur `jobs` resté à l'état de stub — trouvé en revue M5, où des `saved_jobs` survivaient indéfiniment à l'effacement.
 
-🔴 **Ce qui ne l'est pas** : la purge n'est déclenchée que par la tâche beat `maintenance.purge_due_accounts` (04:15 UTC). Rien d'autre ne la lance — ni l'API, ni un trigger, ni une cascade. Et **le `docker-compose.dev.yml` ne contient aucun service beat**. Un déploiement calqué dessus rendrait 204 sur `DELETE /account` sans jamais rien supprimer, et **aucune alerte n'existe pour le signaler**. C'est le seul invariant produit dont la tenue dépend aujourd'hui d'un geste d'exploitation non outillé.
+**Ce qui l'est devenu** : la purge n'est déclenchée que par la tâche beat `maintenance.purge_due_accounts` (04:15 UTC) — rien d'autre ne la lance, ni l'API, ni un trigger, ni une cascade. Le service `beat` manquait du `docker-compose.dev.yml` : un déploiement calqué dessus rendait 204 sur `DELETE /account` sans jamais rien supprimer. Il y est depuis la finalisation, avec un commentaire qui dit pourquoi il n'est pas optionnel.
+
+La surveillance manquait aussi ; elle existe depuis le lot post-M6 n° 1 : `maintenance.check_purge_backlog` (05:15 UTC, une heure après la purge) journalise en **ERROR** toute demande échue depuis plus de 26 heures et toujours `pending` — le symptôme d'une purge qui échoue en boucle, jusqu'ici invisible au-dessus du niveau de la ligne de log.
+
+🟡 **Deux limites à connaître, l'une et l'autre assumées.**
+
+1. **Un ordonnanceur mort reste indétectable de l'intérieur** : la surveillance est elle-même une tâche beat. Si beat s'arrête, ni la purge ni son contrôle ne tournent, et le silence est complet. C'est pourquoi le cas sain journalise quand même `purge_backlog_ok` : c'est un **battement de cœur**, et c'est son absence que la supervision externe doit alerter (runbook §7.3).
+2. **La marge de 26 heures signifie qu'une purge peut légitimement s'exécuter au 31ᵉ jour.** `purge_after` est posé à J+30 et la purge tourne une fois par jour : l'engagement est tenu à un cycle près, par construction. La surveillance rend ce dépassement visible, elle ne le supprime pas. Le fond se règle en posant `purge_after` à J+29 ou en purgeant plus souvent — c'est une modification de D09, pas de la surveillance, et elle n'est pas faite.
 
 ---
 
@@ -219,41 +228,41 @@ Mesurées sur le commit `811d4d1`, `boussole/api`.
 
 | Suite | Volume | État | Commande |
 |---|---|---|---|
-| Unitaires | **1130** tests | ✅ tous verts (85,6 s) | `make test` |
-| Intégration PostgreSQL | **61** tests | ✅ collectés ; exécution exigeant Docker ou `BOUSSOLE_TEST_DATABASE_URL` | `make test-integration` |
+| Unitaires | **1193** tests | ✅ tous verts (129 s) | `make test` |
+| Intégration PostgreSQL | **66** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
 | Front | **0** | 🔴 aucun runner de test dans `web/package.json` | — |
 
-Répartition des 1130 unitaires :
+Répartition des 1193 unitaires :
 
 | Domaine | Tests | | Domaine | Tests |
 |---|---|---|---|---|
-| matching (moteur) | 166 | | cv | 82 |
-| ingestion | 156 | | jobs | 80 |
-| ai (providers, journal) | 121 | | privacy | 73 |
-| core (config, stockage, gardes) | 118 | | generation | 69 |
-| embeddings | 66 | | matching_api | 60 |
+| matching (moteur) | 166 | | privacy | 84 |
+| ingestion | 156 | | cv | 82 |
+| core (config, stockage, gardes) | 147 | | jobs | 80 |
+| ai (providers, journal, rétention) | 133 | | generation | 76 |
+| embeddings | 70 | | matching_api | 60 |
 | applications | 47 | | auth/sécurité/erreurs (racine) | 45 |
 | profiles | 32 | | preferences | 15 |
 
-Répartition des 61 tests d'intégration : contraintes SQL 15, purge RGPD 12, dédup 8, trigger full-text 8, pagination keyset 8, export RGPD 5, filtre salaire 5.
+Répartition des 66 tests d'intégration : contraintes SQL 15, purge RGPD 12, dédup 8, trigger full-text 8, pagination keyset 8, rétention `ai_calls` 5, export RGPD 5, filtre salaire 5.
 
 ### Lint et types
 
 | Outil | Périmètre | Résultat |
 |---|---|---|
 | `ruff` | `api/` — règles E, F, W, I, UP, B, SIM, RUF | ✅ **All checks passed** |
-| `mypy` | `app` (138 fichiers), **strict** sur `app.core.*` et `app.matching.*` | ✅ **no issues found** |
+| `mypy` | `app` (140 fichiers), **strict** sur `app.core.*` et `app.matching.*` | ✅ **no issues found** |
 | `next lint` / `tsc --noEmit` | `web/` | Non exécuté ici (dépendances npm non installées) 🟡 |
 
 ### CI
 
-Le workflow `infra/github-workflows/boussole-ci.yml` définit quatre jobs sur PR touchant `boussole/` : lint (ruff + mypy), tests unitaires, détection de changement `boussole/api/**`, et tests d'intégration sur un service PostgreSQL `pgvector/pgvector:pg16`.
+✅ **Active** depuis le lot post-M6 n° 1. `.github/workflows/boussole-ci.yml` définit quatre jobs sur toute PR touchant `boussole/` : lint (ruff + mypy), tests unitaires, détection de changement `boussole/api/**`, et tests d'intégration sur un service PostgreSQL `pgvector/pgvector:pg16`.
 
-🟡 **Il n'est pas actif** : le fichier vit dans `infra/github-workflows/` et son README indique qu'il doit être déplacé vers `.github/workflows/` à la racine. **Aucune vérification automatique ne tourne donc sur les PR à ce jour.**
+Le fichier a passé six jalons dans `infra/github-workflows/` avec un README demandant de le déplacer : **aucune vérification automatique n'a tourné sur les PR de tout le projet**, y compris celles où les revues manuelles ont trouvé des défauts critiques.
 
 ### Ce qui n'est pas mesuré
 
-- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1130 tests sont un volume, pas une couverture.
+- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1193 tests sont un volume, pas une couverture.
 - **Qualité du matching** : `scoring-config.json` porte des `evaluation_gates` (Spearman ≥ 0,6, NDCG@10 ≥ 0,75, précision bloquants 0,95/0,85). **Aucun jeu annoté n'existe, aucune mesure n'a été faite.** Les gates sont déclaratifs.
 - **Performance** : la cible « recherche p95 < 500 ms » n'a jamais été mesurée sur un corpus réel — il n'y a pas eu de corpus réel, les connecteurs étant désactivés.
 - **Prompts** : les tests de prompts en CI et le jeu adversarial prévus par la stratégie de test n'existent pas.
@@ -281,20 +290,22 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 
 ### 8.2 Blocages **techniques** — faisables, ordonnés
 
+> **Mise à jour** — cette liste comptait 15 entrées dont 5 critiques à sa rédaction. Sept sont fermées : trois par la finalisation, quatre par le lot post-M6 n° 1. **Aucun blocage critique ne subsiste.** Les points fermés restent listés, barrés, avec ce qui les a réglés : une liste de blocages qui perd ses lignes sans laisser de trace ne se relit pas.
+
 **Critique — sans quoi une alpha ne doit pas ouvrir**
 
-1. 🔴 **Provisionner un processus `celery beat`** (exactement un) et l'ajouter à l'infrastructure. Sans lui, **aucune purge RGPD ne s'exécute** : `DELETE /account` répond 204 et ne supprime rien. C'est le manque le plus grave du système, et c'est une ligne de configuration.
-2. 🔴 **Mettre en place la surveillance des purges en retard** (requête sur `deletion_requests` échues, runbook §7.3). Aujourd'hui, rien ne signale la rupture de l'engagement des 30 jours.
-3. 🔴 **Remplacer `PRIVACY_SIGNING_KEY`** et vérifier ce remplacement à chaque déploiement. Le défaut est public, aucun garde-fou ne le contrôle, et cette clé signe seule l'accès à l'archive complète des données personnelles d'un compte.
-4. 🔴 **Exécuter le backfill forcé des embeddings** après le changement de tokenisation M6, en tenant compte du fait que `force=True` **ne progresse pas** entre exécutions (runbook §5.1). À défaut, deux générations de vecteurs incomparables coexistent.
-5. 🔴 **Activer la CI** : déplacer `boussole-ci.yml` vers `.github/workflows/`. Aucune vérification automatique ne tourne sur les PR aujourd'hui — dans un projet où les revues manuelles ont trouvé ce qu'elles ont trouvé, c'est un écart de processus, pas de code.
+1. ~~🔴 **Provisionner un processus `celery beat`**~~ — ✅ **fait** (finalisation). Service `beat` dans `docker-compose.dev.yml`, avec le commentaire qui dit qu'il n'est pas optionnel : sans lui, `DELETE /account` répond 204 et ne supprime rien. Une seule instance doit tourner.
+2. ~~🔴 **Surveillance des purges en retard**~~ — ✅ **fait** (lot n° 1). `maintenance.check_purge_backlog` à 05:15, une heure après la purge : ERROR sur toute demande échue depuis plus de 26 h et toujours `pending`, battement `purge_backlog_ok` sinon. Limites en §5.6.
+3. ~~🔴 **Remplacer `PRIVACY_SIGNING_KEY`**~~ — ✅ **outillé** (finalisation). `app/core/secrets.py` refuse le démarrage hors développement tant que la valeur du dépôt n'est pas remplacée, côté API **et** côté workers. Le remplacement lui-même reste un geste de déploiement — mais il ne peut plus être oublié en silence.
+4. ~~🔴 **Backfill forcé des embeddings**~~ — ✅ **débloqué** (finalisation). `force=True` parcourt désormais par keyset et renvoie `next_after_id` ; l'exécution reste à faire le jour où un corpus réel existe.
+5. ~~🔴 **Activer la CI**~~ — ✅ **fait** (lot n° 1). `boussole-ci.yml` vit à `.github/workflows/` : lint, tests unitaires et tests d'intégration PostgreSQL tournent sur toute PR touchant `boussole/`. Le fichier a passé six jalons dans `infra/` avec une note demandant de le déplacer.
 
 **Élevé — pour que l'alpha produise des enseignements exploitables**
 
-6. **Constituer le jeu annoté** et faire tourner les `evaluation_gates`. Sans mesure, on ne saura pas si le matching est bon — c'est pourtant l'unique hypothèse que l'alpha doit tester. Chemin critique long (annotateurs, budget — Q19/Q20/Q47).
+6. **Constituer le jeu annoté** et faire tourner les `evaluation_gates`. Sans mesure, on ne saura pas si le matching est bon — c'est pourtant l'unique hypothèse que l'alpha doit tester. Chemin critique long (annotateurs, budget — Q19/Q20/Q47). **C'est le point n° 1 restant.**
 7. **Recalibrer les seuils** avec le provider d'embeddings réellement retenu (0,75 « proche », 0,92 dédup, pondération de rerank — Q12/Q41). Les valeurs actuelles ont été fixées pour des vecteurs sémantiques et sont exercées par un provider lexical.
-8. **Brancher une observabilité qui existe.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet ; les logs stdout sont le seul signal disponible.
-9. **Purge par âge de `ai_calls`** (13 mois) : une tâche beat de suppression. Traiter à la fois l'engagement de rétention et la croissance non bornée de la plus grosse table du système.
+8. **Brancher une observabilité qui existe.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet ; les logs stdout sont le seul signal disponible. C'est aussi ce qui manque pour que l'alerte du point 2 atteigne quelqu'un : elle est aujourd'hui une ligne ERROR que personne ne lit.
+9. ~~**Purge par âge de `ai_calls`** (13 mois)~~ — ✅ **fait** (lot n° 1). `maintenance.purge_ai_calls` à 05:30, suppression par lots de 5 000 bornés à 20 lots par exécution (un `DELETE` global verrouillerait la table, donc les appels IA en cours). Borne calculée en **mois calendaires** : `13 × 30 jours` supprimerait cinq jours trop tôt, c'est-à-dire des lignes encore sous engagement de conservation. Vérifié contre un vrai PostgreSQL — `DELETE` n'accepte pas de `LIMIT`, la requête bornée est inhabituelle et méritait autre chose qu'un fake.
 
 **Moyen — dette assumée à ne pas laisser filer**
 
@@ -303,7 +314,11 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 12. **Colonnes `embedding_source_hash` / `embedding_model_version`** : sans elles, aucun changement de modèle n'est détectable automatiquement, et le rattrapage reste une opération manuelle risquée.
 13. **Amorcer une suite de tests front** : `web/` n'a aujourd'hui aucun test.
 14. **Décider du sort des e-mails transactionnels** : la confirmation de suppression avec lien d'annulation (Q30) suppose un fournisseur (Q15) qui n'a pas été choisi.
-15. **Rafraîchir la documentation résiduelle** : le README de `tests/integration/` décrit encore un `xfail(strict=True)` sur la recherche accentuée — le bug a été corrigé et le `xfail` retiré ; le README annonce aussi « ~750 tests » unitaires alors qu'il y en a 1130.
+15. **Rafraîchir la documentation résiduelle** : le README de `tests/integration/` décrit encore un `xfail(strict=True)` sur la recherche accentuée — le bug a été corrigé et le `xfail` retiré ; le README annonce aussi « ~750 tests » unitaires alors qu'il y en a 1193.
+
+**Nouveau — soulevé par le lot n° 1**
+
+16. **L'engagement des 30 jours est tenu à un cycle près** : `purge_after` est posé à J+30 et la purge tourne une fois par jour, donc une purge peut légitimement s'exécuter au 31ᵉ jour. La surveillance rend le dépassement visible, elle ne le supprime pas. Se règle en posant `purge_after` à J+29 — c'est une modification de D09, à arbitrer.
 
 **Non bloquant — assumé pour le MVP**
 
