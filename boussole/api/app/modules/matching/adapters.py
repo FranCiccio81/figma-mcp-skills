@@ -8,21 +8,24 @@ Embeddings (M4) — activation SANS régression :
 - ``title_embedding`` (offre) est lu directement sur ``job_postings.embedding``
   et ``target_titles_embeddings`` (candidat) sur ``profiles.embedding``,
   complété par les vecteurs d'intitulés cibles (``preference_titles.embedding``)
-  quand l'appelant les fournit via ``title_embeddings``. Les deux colonnes
-  sont peuplées par ``ai.embeddings.*`` (08 §8) ;
+  fournis via ``title_embeddings`` — ``MatchingService._load_context`` les lit
+  par ``MatchingRepository.preference_title_embeddings``. Ce complément n'est
+  pas cosmétique : 06 §2.3 prend le MAX des cosinus, et le vecteur agrégé du
+  profil (tous les intitulés fondus en un) écrase l'intitulé le mieux ciblé.
+  Toutes ces colonnes sont peuplées par ``ai.embeddings.*`` (08 §8) ;
 - **quand un vecteur manque d'un côté, le comportement est EXACTEMENT celui
   d'avant** : ``title_similarity`` reste inconnue (k=0) et le crédit
   « proche » reste désactivé (match exact uniquement). Aucune offre ni
   aucun profil ne change de score tant que les vecteurs n'existent pas ;
 - ``skill_embeddings`` (crédit « proche » 0,5, 06 §2.1, seuil 0,75) est
   alimenté par le paramètre optionnel ``skill_embeddings`` :
-  ``skill_id`` → vecteur (``skills.embedding``). 🟡 Il n'est pas encore
-  passé par ``MatchingService`` : ``MatchingRepository.skill_labels`` ne
-  rend que les libellés, et ni le service ni son repository ne font partie
-  du périmètre autorisé de ce jalon. Le crédit « proche » est donc
-  IMPLÉMENTÉ et testé ici, mais reste inactif en production tant qu'une
-  méthode ``skill_embeddings()`` n'est pas ajoutée au repository (un
-  argument nommé de plus dans ``_compute_and_store``).
+  ``skill_id`` → vecteur (``skills.embedding``). Il est branché en
+  production : ``MatchingService._load_context`` lit
+  ``MatchingRepository.skill_embeddings`` et passe le MÊME dictionnaire aux
+  DEUX côtés (candidat *et* offre). Les deux sont nécessaires :
+  ``matching/dimensions.py`` n'accorde le crédit « proche » que si le libellé
+  exigé par l'offre porte lui aussi un vecteur — n'en fournir qu'un seul côté
+  laisse le crédit définitivement mort.
 
 Hypothèses M3 🟡 :
 - labels de compétences : canonique de la taxonomie via ``skill_id`` quand le

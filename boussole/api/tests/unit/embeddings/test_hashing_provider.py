@@ -6,6 +6,7 @@ un vecteur non normalisé fausserait TOUS les seuils de cosinus du produit
 (0,75 crédit « proche », 0,55–0,80 similarité métier, 0,92 dédup).
 """
 
+import hashlib
 import math
 import subprocess
 import sys
@@ -13,9 +14,11 @@ from pathlib import Path
 
 import pytest
 
-from app.ai.embeddings.hashing import HashingEmbeddingProvider
+from app.ai.embeddings.hashing import HASHING_MODEL_VERSION, HashingEmbeddingProvider
 
 DIM = 256
+#: Seuil produit du crédit « compétence proche » (06 §2.1).
+SEUIL_PROCHE = 0.75
 #: Racine du paquet ``app`` — le sous-processus doit pouvoir l'importer.
 API_ROOT = Path(__file__).resolve().parents[3]
 
@@ -122,3 +125,81 @@ class TestSimilariteLexicale:
     def test_texte_identique_cosinus_un(self, provider: HashingEmbeddingProvider) -> None:
         vector = provider.embed("Data engineer")
         assert cosine(vector, vector) == pytest.approx(1.0)
+
+
+class TestSymbolesDesTechnologies:
+    """Le symbole fait partie du NOM : ``C``, ``C++`` et ``C#`` sont des
+    langages DIFFÉRENTS, ``.NET`` n'est pas ``NET``.
+
+    Régression visée : une tokenisation ``[0-9a-z]+`` les rend strictement
+    indiscernables (cosinus 1,0). Une offre exigeant C++ créditerait alors
+    « proche » (seuil 0,75, 06 §2.1) un candidat ne connaissant que C —
+    un faux positif que le candidat lit comme une compétence couverte.
+    """
+
+    @pytest.mark.parametrize(
+        ("gauche", "droite"),
+        [("C", "C++"), ("C", "C#"), ("C++", "C#"), (".NET", "NET")],
+    )
+    def test_deux_technologies_distinctes_ne_sont_pas_confondues(
+        self, provider: HashingEmbeddingProvider, gauche: str, droite: str
+    ) -> None:
+        similarite = cosine(provider.embed(gauche), provider.embed(droite))
+        assert similarite < SEUIL_PROCHE, (
+            f"{gauche!r} et {droite!r} sont crédités « proches » (cos "
+            f"{similarite:.4f} ≥ {SEUIL_PROCHE})"
+        )
+
+    def test_les_symboles_survivent_au_repli(
+        self, provider: HashingEmbeddingProvider
+    ) -> None:
+        """Casse et accents restent ignorés — seuls ``+``, ``#`` et le point
+        de tête sont désormais porteurs de sens."""
+        assert provider.embed("C++") == provider.embed("c++")
+        assert provider.embed(".NET") == provider.embed(".net")
+
+    def test_ponctuation_de_fin_de_phrase_toujours_ignoree(
+        self, provider: HashingEmbeddingProvider
+    ) -> None:
+        """Le point n'est capturé qu'en TÊTE : sans cela, tout texte finissant
+        par un point dériverait d'un texte par ailleurs identique."""
+        assert provider.embed("Développeur Python") == provider.embed(
+            "Développeur Python."
+        )
+
+    @pytest.mark.parametrize(
+        ("gauche", "droite", "attendu"),
+        [
+            ("Java", "JavaScript", 0.4045),
+            ("Scala", "Scalabilité", 0.4714),
+            ("Agile", "Fragile", 0.5774),
+        ],
+    )
+    def test_non_regression_des_cas_sans_symbole(
+        self, provider: HashingEmbeddingProvider, gauche: str, droite: str, attendu: float
+    ) -> None:
+        """Les libellés sans symbole doivent garder EXACTEMENT leur cosinus :
+        la correction ne devait rien changer d'autre."""
+        assert cosine(provider.embed(gauche), provider.embed(droite)) == pytest.approx(
+            attendu, abs=1e-4
+        )
+
+
+def test_le_changement_d_algorithme_impose_d_incrementer_la_version() -> None:
+    """08 §8 : les vecteurs en base ne sont comparables qu'à modèle constant.
+
+    Empreinte d'un texte de référence, appariée à ``HASHING_MODEL_VERSION``.
+    Toucher à la tokenisation ou à la projection sans incrémenter la version
+    fait tomber ce test — c'est précisément le rappel qui manquait : les
+    vecteurs déjà écrits deviennent obsolètes et doivent être recalculés
+    (``backfill_* force=True``).
+    """
+    vecteur = HashingEmbeddingProvider(dimension=DIM).embed("Développeur C++ / .NET")
+    empreinte = hashlib.sha256(
+        ";".join(f"{value:.12f}" for value in vecteur).encode()
+    ).hexdigest()[:16]
+
+    assert (HASHING_MODEL_VERSION, empreinte) == (
+        "hashing-ngram-v2",
+        "8ba9c887bc1980d1",
+    )

@@ -7,7 +7,9 @@ Principe — *hashing trick* signé sur des n-grammes :
    marqueurs de bord ``^``/``$``) — le mélange mots/n-grammes rapproche
    les variantes orthographiques (« back-end » ≈ « backend ») et les
    flexions, ce qui est exactement ce que demandent les usages FR/EN de
-   06 §2.1 et §2.3 ;
+   06 §2.1 et §2.3. Les symboles qui font partie du NOM d'une technologie
+   (``C++``, ``C#``, ``.NET``) sont CONSERVÉS dans le jeton — voir
+   :data:`_WORD_RE` ;
 2. chaque jeton est projeté par ``blake2b`` sur un indice de la dimension
    configurée, avec un signe tiré du même condensat (projection signée :
    les collisions s'annulent en espérance au lieu de s'additionner) ;
@@ -40,9 +42,18 @@ __all__ = ["HASHING_MODEL_VERSION", "HashingEmbeddingProvider"]
 #: Version du « modèle » local — journalisée comme ``embedding_model_version``
 #: (08 §8). Tout changement d'algorithme DOIT l'incrémenter : les vecteurs
 #: déjà en base ne seraient plus comparables.
-HASHING_MODEL_VERSION = "hashing-ngram-v1"
+HASHING_MODEL_VERSION = "hashing-ngram-v2"
 
-_WORD_RE = re.compile(r"[0-9a-z]+")
+#: Jeton = mot alphanumérique, AVEC le point de tête et les suffixes ``+``/``#``
+#: qui font partie du NOM de la technologie. Sans eux, ``C``, ``C++`` et ``C#``
+#: (comme ``.NET`` et ``NET``) produisent des jetons IDENTIQUES, donc un cosinus
+#: de 1,0 : une offre exigeant C++ créditerait « proche » (06 §2.1, seuil 0,75)
+#: un candidat ne connaissant que C.
+#:
+#: Le point n'est capturé qu'en TÊTE : un point final de phrase (« … en
+#: Python. ») reste hors du jeton, sinon toute la ponctuation ferait diverger
+#: les vecteurs de textes par ailleurs identiques.
+_WORD_RE = re.compile(r"\.?[0-9a-z]+[+#]*")
 
 
 def fold(text: str) -> str:

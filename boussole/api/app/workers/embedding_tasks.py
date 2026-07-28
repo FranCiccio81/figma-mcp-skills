@@ -25,19 +25,33 @@ Tâches exposées (noms préfixés ``ai.`` pour être routées sur la file
   cibles (``preference_titles``) sans vecteur ;
 - ``ai.embeddings.backfill_skills`` — libellés de compétences de la
   taxonomie sans vecteur (crédit « proche », 06 §2.1) ;
-- ``ai.embeddings.embed_profile`` — recalcul ciblé d'UN profil, prévu
-  pour être enfilé à la validation du profil.
+- ``ai.embeddings.embed_profile`` — recalcul ciblé d'UN profil, enfilé
+  à la validation du profil.
 
 Boucle d'événements : même contrat que :mod:`app.workers.ingestion_tasks`
 — UNE coroutine par tâche via ``asyncio.run`` sur un moteur dédié
 ``NullPool`` disposé en fin de coroutine.
 
-🟡 **Non branché faute de périmètre** : l'appel de
-``ai.embeddings.embed_profile`` depuis la validation de profil
-(``app/modules/profiles/service.py``) — fichier hors du périmètre
-autorisé de ce jalon. En attendant, les profils validés sont rattrapés
-par le beat quotidien (au plus 24 h de latence ; ``title_similarity``
-reste simplement inconnue, k=0, jusque-là — aucune régression).
+``ai.embeddings.embed_profile`` EST enfilé à la validation du profil
+(``app/modules/profiles/service.py``, via ``asyncio.to_thread`` pour ne pas
+bloquer la boucle d'événements) ; le beat quotidien reste le filet de
+sécurité en cas de broker indisponible (l'enfilement est best-effort).
+
+🟡 **Trou connu — préférences modifiées sans re-validation du profil.**
+``profiles.embedding`` agrège les intitulés CIBLES (``preference_titles``)
+et les derniers postes occupés. Un ``PUT /preferences`` qui change les
+intitulés cibles ne re-valide pas le profil, donc n'enfile rien, et
+``_profile_targets`` ne rattrape (``force=False``) que les lignes
+``embedding IS NULL`` : le vecteur agrégé reste PÉRIMÉ indéfiniment.
+Atténuation en place : ``PUT /preferences`` remplace les
+``preference_titles`` en bloc, les nouvelles lignes naissent donc avec
+``embedding NULL`` et sont rattrapées sous 24 h par
+``backfill_profiles`` — et c'est ce vecteur PAR intitulé que
+``MatchingService`` passe en ``title_embeddings`` (max des cosinus,
+06 §2.3), la dimension métier converge donc même avec un agrégé périmé.
+Correctif complet (non fait ici) : enfiler ``embed_profile`` depuis le hook
+« preferences_changed » de ``app/modules/preferences/service.py`` — fichier
+hors du périmètre autorisé de ce jalon.
 """
 
 import asyncio
@@ -356,7 +370,7 @@ def backfill_skills(batch: int | None = None, force: bool = False) -> dict[str, 
 
 @celery_app.task(name="ai.embeddings.embed_profile")
 def embed_profile(profile_id: str) -> dict[str, int]:
-    """Recalcul ciblé du vecteur d'UN profil (à enfiler à sa validation).
+    """Recalcul ciblé du vecteur d'UN profil (enfilé à sa validation).
 
     ``force=True`` : à la validation, le profil a changé — son vecteur
     existant est périmé et doit être remplacé.

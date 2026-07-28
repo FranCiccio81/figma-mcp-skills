@@ -6,11 +6,21 @@ APPELÉ ; aucun ne vérifiait l'EFFET. Un compte supprimé conservait donc ses
 ``saved_jobs`` — une donnée personnelle survivant à l'exercice du droit à
 l'effacement (art. 17), invisible pour toute la suite unitaire.
 
-La vérification ici ne fait AUCUNE liste en dur : l'inventaire des tables est
-lu dans ``information_schema`` sur le schéma réellement migré, et le test
-échoue dès qu'une table portant une colonne ``user_id`` conserve la moindre
-ligne de l'utilisateur purgé. Une future table personnelle oubliée dans le
-registre fait tomber ce test le jour de sa migration.
+La vérification ici ne fait AUCUNE liste en dur. L'inventaire est lu dans
+``information_schema`` sur le schéma réellement migré et suit les CLÉS
+ÉTRANGÈRES : toute table qui référence ``users``, directement ou
+TRANSITIVEMENT (``profile_skills`` → ``profiles`` → ``users``), doit être
+vidée. Une future table personnelle oubliée dans le registre fait donc tomber
+ce test le jour de sa migration, qu'elle porte une colonne ``user_id`` ou
+qu'elle soit rattachée par ``profile_id``, ``application_id``…
+
+🟡 Périmètre de l'inventaire : les tables SANS chemin de FK vers ``users``
+(offres, référentiels, ``prompt_versions``…) en sont exclues — ce sont les
+données mutualisées, que la purge ne doit précisément pas toucher
+(``test_les_donnees_mutualisees_survivent``). Une table personnelle rattachée
+à l'utilisateur sans contrainte de FK resterait invisible ici : c'est le prix
+de l'inventaire automatique, et la raison pour laquelle toute nouvelle table
+personnelle doit porter sa FK.
 """
 
 import pytest
@@ -45,8 +55,10 @@ TABLES_CONSERVEES: dict[str, str] = {
 }
 
 #: Tables personnelles SANS colonne ``user_id`` (rattachées par profile_id,
-#: application_id, cv_document_id…) — invisibles de l'inventaire automatique,
-#: donc vérifiées nommément.
+#: application_id, cv_document_id…). Cette liste ne PILOTE plus rien : elle
+#: sert de garde-fou à l'inventaire automatique, qui doit toutes les trouver
+#: (et en trouver d'autres). Un inventaire qui régresserait vers « seules les
+#: tables portant ``user_id`` » échouerait ici.
 TABLES_ENFANTS = (
     "profile_experiences",
     "profile_educations",
@@ -58,18 +70,49 @@ TABLES_ENFANTS = (
     "match_explanations",
 )
 
+#: Arêtes enfant → parent du graphe des clés étrangères du schéma migré.
+_FK_SQL = """
+SELECT tc.table_name AS enfant, ccu.table_name AS parent
+FROM information_schema.table_constraints tc
+JOIN information_schema.constraint_column_usage ccu
+  ON ccu.constraint_name = tc.constraint_name
+ AND ccu.constraint_schema = tc.constraint_schema
+WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'
+"""
 
-async def _tables_avec_user_id(engine: AsyncEngine) -> tuple[str, ...]:
-    """Inventaire RÉEL : toute table du schéma portant une colonne ``user_id``."""
+_COLONNES_SQL = """
+SELECT table_name, column_name FROM information_schema.columns
+WHERE table_schema = 'public' AND column_name = 'user_id'
+"""
+
+
+async def _inventaire_personnel(engine: AsyncEngine) -> dict[str, bool]:
+    """Tables référençant ``users`` TRANSITIVEMENT → porte-t-elle ``user_id`` ?
+
+    Parcours en largeur du graphe des FK depuis ``users`` : on récupère aussi
+    bien les tables directement rattachées (``saved_jobs``) que les
+    sous-ressources en cascade (``match_explanations`` → ``match_results`` →
+    ``profiles`` → ``users``). ``users`` elle-même est exclue : elle survit
+    anonymisée (RM-Q-2).
+    """
     async with engine.connect() as conn:
-        rows = await conn.execute(
-            text(
-                "SELECT table_name FROM information_schema.columns "
-                "WHERE table_schema = 'public' AND column_name = 'user_id' "
-                "ORDER BY table_name"
-            )
-        )
-        return tuple(row[0] for row in rows)
+        aretes = {
+            (row.enfant, row.parent) for row in await conn.execute(text(_FK_SQL))
+        }
+        avec_user_id = {row.table_name for row in await conn.execute(text(_COLONNES_SQL))}
+
+    enfants_de: dict[str, set[str]] = {}
+    for enfant, parent in aretes:
+        enfants_de.setdefault(parent, set()).add(enfant)
+
+    atteintes: set[str] = set()
+    a_visiter = ["users"]
+    while a_visiter:
+        for enfant in enfants_de.get(a_visiter.pop(), ()):
+            if enfant != "users" and enfant not in atteintes:
+                atteintes.add(enfant)
+                a_visiter.append(enfant)
+    return {table: table in avec_user_id for table in sorted(atteintes)}
 
 
 async def _count(engine: AsyncEngine, sql: str, **params: object) -> int:
@@ -101,6 +144,62 @@ class TestInventaireDeDepart:
             "chaque module du registre doit avoir des données avant la purge — "
             "sinon la purge « réussit » sur du vide"
         )
+
+    async def test_l_inventaire_suit_les_fk_au_dela_de_user_id(
+        self, db_engine: AsyncEngine
+    ) -> None:
+        """Régression : l'inventaire ne détectait QUE les tables portant
+        ``user_id``. Une table enfant (``profile_skills``…) passait donc
+        inaperçue et n'était couverte que par une liste en dur — la docstring
+        du module promettait plus que le test ne faisait."""
+        inventaire = await _inventaire_personnel(db_engine)
+
+        manquantes = set(TABLES_ENFANTS) - set(inventaire)
+        assert not manquantes, (
+            "l'inventaire doit trouver les sous-ressources par parcours des FK, "
+            f"pas seulement les tables à ``user_id`` : {sorted(manquantes)}"
+        )
+        assert all(inventaire[table] is False for table in TABLES_ENFANTS), (
+            "ces tables sont justement celles SANS ``user_id`` — si elles en "
+            "portent une désormais, le garde-fou n'a plus de sens"
+        )
+
+    async def test_une_future_table_enfant_entre_seule_dans_l_inventaire(
+        self, db_engine: AsyncEngine
+    ) -> None:
+        """La promesse du module : une table personnelle ajoutée demain est
+        couverte sans toucher au test. Une table sans lien vers ``users``
+        (donnée mutualisée) ne l'est pas."""
+        async with db_engine.begin() as conn:
+            await conn.execute(
+                text(
+                    "CREATE TABLE zz_future_enfant ("
+                    "  id uuid PRIMARY KEY,"
+                    "  profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE)"
+                )
+            )
+            await conn.execute(
+                text("CREATE TABLE zz_future_mutualisee (id uuid PRIMARY KEY)")
+            )
+        try:
+            inventaire = await _inventaire_personnel(db_engine)
+        finally:
+            async with db_engine.begin() as conn:
+                await conn.execute(text("DROP TABLE zz_future_enfant"))
+                await conn.execute(text("DROP TABLE zz_future_mutualisee"))
+
+        assert inventaire.get("zz_future_enfant") is False  # présente, sans user_id
+        assert "zz_future_mutualisee" not in inventaire
+
+    async def test_l_inventaire_epargne_les_donnees_mutualisees(
+        self, db_engine: AsyncEngine
+    ) -> None:
+        """Le parcours part de ``users`` et ne descend que vers ses enfants :
+        offres et référentiels (partagés) n'entrent jamais dans l'inventaire."""
+        inventaire = await _inventaire_personnel(db_engine)
+
+        assert not {"job_postings", "skills", "sectors", "sources"} & set(inventaire)
+        assert "users" not in inventaire, "``users`` survit anonymisée (RM-Q-2)"
 
     async def test_les_tables_personnelles_sont_bien_peuplees(
         self, db_engine: AsyncEngine, compte_complet: dict[str, object]
@@ -135,43 +234,27 @@ class TestPurgeDeBoutEnBout:
         assert outcomes[0].purged is True
 
         restantes: dict[str, int] = {}
-        for table in await _tables_avec_user_id(db_engine):
+        for table, porte_user_id in (await _inventaire_personnel(db_engine)).items():
             if table in TABLES_CONSERVEES:
                 continue
-            restantes[table] = await _count(
-                db_engine,
-                f'SELECT count(*) FROM "{table}" WHERE user_id = :user_id',
-                user_id=user_id,
-            )
+            if porte_user_id:
+                restantes[table] = await _count(
+                    db_engine,
+                    f'SELECT count(*) FROM "{table}" WHERE user_id = :user_id',
+                    user_id=user_id,
+                )
+            else:
+                # Sous-ressource (profile_id, application_id, cv_document_id…) :
+                # le seul compte du jeu de données est celui qu'on vient de
+                # purger, toute ligne restante est donc une fuite.
+                restantes[table] = await _count(
+                    db_engine, f'SELECT count(*) FROM "{table}"'
+                )
 
         assert restantes, "l'inventaire information_schema ne doit pas être vide"
         assert all(total == 0 for total in restantes.values()), (
             "des données personnelles survivent à la purge : "
             f"{ {table: n for table, n in restantes.items() if n} }"
-        )
-
-    async def test_les_tables_enfants_sont_vides(
-        self,
-        db_engine: AsyncEngine,
-        db_session: AsyncSession,
-        object_storage: LocalDiskStorage,
-        compte_complet: dict[str, object],
-    ) -> None:
-        """Sous-ressources rattachées par profile_id/application_id/cv_document_id."""
-        await purge_due_accounts(
-            repository=SqlAlchemyPrivacyRepository(db_session),
-            storage=object_storage,
-            registry=DEFAULT_REGISTRY,
-        )
-
-        restantes = {
-            table: await _count(db_engine, f'SELECT count(*) FROM "{table}"')
-            for table in TABLES_ENFANTS
-        }
-
-        assert all(total == 0 for total in restantes.values()), (
-            f"sous-ressources personnelles restantes : "
-            f"{ {t: n for t, n in restantes.items() if n} }"
         )
 
     async def test_la_ligne_users_est_anonymisee_et_l_audit_delie(

@@ -28,7 +28,7 @@ Règles portées ici :
 """
 
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -149,6 +149,16 @@ class MatchData:
     explanation_facts: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class _ScoringContext:
+    """Données partagées par toutes les offres d'un même appel (voir
+    ``MatchingService._load_context``)."""
+
+    taxonomy: dict[uuid.UUID, str]
+    skill_vectors: dict[uuid.UUID, list[float]]
+    title_vectors: list[list[float]]
+
+
 def _earliest_posted_at(posting: JobPosting) -> datetime | None:
     dates = [js.posted_at for js in posting.job_sources if js.posted_at is not None]
     return min(dates) if dates else None
@@ -214,7 +224,8 @@ class MatchingService:
         if cached is not None:
             return cached
         preferences = await self._preferences.get(user_id)
-        return await self._compute_and_store(profile, preferences, job)
+        context = await self._load_context(profile, [job])
+        return await self._compute_and_store(profile, preferences, job, context)
 
     # ------------------------------------------------------------ cache
 
@@ -249,23 +260,69 @@ class MatchingService:
             explanation_facts=facts,
         )
 
+    async def _load_context(
+        self, profile: Profile, jobs: Sequence[JobPosting]
+    ) -> _ScoringContext:
+        """Charge EN UNE FOIS tout ce que le moteur consomme hors ORM.
+
+        Perf : ces trois lectures étaient faites par offre dans la boucle de
+        ``list_matches`` (jusqu'à ``MAX_LAZY_SCORED_JOBS`` offres), soit autant
+        de requêtes ramenant des ``vector(1024)``. Elles sont ici groupées pour
+        toute la page.
+        """
+        skill_ids = list(
+            dict.fromkeys(
+                [s.skill_id for s in profile.skills if s.skill_id is not None]
+                + [
+                    s.skill_id
+                    for job in jobs
+                    for s in job.skills
+                    if s.skill_id is not None
+                ]
+            )
+        )
+        return _ScoringContext(
+            taxonomy=await self._repository.skill_labels(skill_ids),
+            # Crédit « compétence proche » (06 §2.1) : actif dès que les
+            # vecteurs existent, exact-only sinon — aucune régression quand la
+            # table ``skills`` n'est pas encore vectorisée.
+            skill_vectors=await self._repository.skill_embeddings(skill_ids),
+            # 06 §2.3 : un vecteur PAR intitulé cible (max des cosinus) — le
+            # vecteur agrégé ``profiles.embedding`` seul noierait l'intitulé le
+            # mieux ciblé dans la moyenne.
+            title_vectors=await self._repository.preference_title_embeddings(
+                profile.user_id
+            ),
+        )
+
     async def _compute_and_store(
-        self, profile: Profile, preferences: PreferencesData | None, job: JobPosting
+        self,
+        profile: Profile,
+        preferences: PreferencesData | None,
+        job: JobPosting,
+        context: _ScoringContext,
     ) -> MatchData:
         """Calcul synchrone (aucun réseau) + upsert dans ``match_results``."""
-        skill_ids = [s.skill_id for s in profile.skills if s.skill_id is not None]
-        skill_ids += [s.skill_id for s in job.skills if s.skill_id is not None]
-        taxonomy = await self._repository.skill_labels(skill_ids)
-        # Crédit « compétence proche » (06 §2.1) : actif dès que les vecteurs
-        # existent, exact-only sinon — aucune régression quand la table
-        # ``skills`` n'est pas encore vectorisée.
-        skill_vectors = await self._repository.skill_embeddings(skill_ids)
+        taxonomy = context.taxonomy
+        skill_vectors = context.skill_vectors
 
         candidate = candidate_input_from(
-            profile, preferences, taxonomy, skill_embeddings=skill_vectors or None
+            profile,
+            preferences,
+            taxonomy,
+            title_embeddings=context.title_vectors,
+            skill_embeddings=skill_vectors or None,
         )
         job_input = job_input_from(
-            job, job.skills, job.languages, job.locations, skills_taxonomy=taxonomy
+            job,
+            job.skills,
+            job.languages,
+            job.locations,
+            skills_taxonomy=taxonomy,
+            # Le crédit « proche » exige un vecteur des DEUX côtés
+            # (``matching/dimensions.py``) : sans celui-ci, le dictionnaire
+            # d'embeddings de l'offre reste vide et le crédit ne tombe jamais.
+            skill_embeddings=skill_vectors or None,
         )
         result = self._engine(candidate, job_input)
         data = self._serialize(result, profile, job)
@@ -365,10 +422,15 @@ class MatchingService:
         cached = await self._repository.get_cached_many(profile.id, [job.id for job in jobs])
 
         entries: list[tuple[JobPosting, MatchData]] = []
+        context: _ScoringContext | None = None
         for job in jobs:
             data = self._from_valid_cache(cached.get(job.id), profile)
             if data is None:
-                data = await self._compute_and_store(profile, preferences, job)
+                # Chargé au plus une fois par page, et seulement si au moins
+                # une offre doit réellement être (re)calculée.
+                if context is None:
+                    context = await self._load_context(profile, jobs)
+                data = await self._compute_and_store(profile, preferences, job, context)
             entries.append((job, data))
 
         if min_score is not None:

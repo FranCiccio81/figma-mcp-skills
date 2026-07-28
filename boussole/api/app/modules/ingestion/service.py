@@ -27,6 +27,7 @@ SQLAlchemy pour la prod, fake en mémoire dans les tests unitaires.
 """
 
 import logging
+import math
 import uuid
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
@@ -40,6 +41,7 @@ from app.ai.embeddings.base import EmbeddingError, EmbeddingProvider
 from app.ai.embeddings.factory import get_embedding_provider
 from app.ai.embeddings.text import job_embedding_text
 from app.ai.providers.base import LLMProvider
+from app.ai.providers.factory import get_llm_provider
 from app.ai.providers.fake import FakeProvider
 from app.ai.tasks.extract_job import JobExtractionError, extract_job
 from app.core.config import get_settings
@@ -181,6 +183,25 @@ class NormalizedJob:
     withdrawn: bool = False
 
 
+def get_extraction_provider() -> LLMProvider:
+    """Provider LLM de l'extraction d'offres — sélectionné par configuration.
+
+    Même patron que ``app/workers/cv_tasks.py`` et
+    ``app/modules/explanations/router.py`` : ``AI_PROVIDER=fake`` (défaut)
+    conserve le provider déterministe, toute autre valeur passe par la
+    fabrique (primaire + fallback + circuit breaker D18).
+
+    ⚠️ Ce point d'appel construisait un ``FakeProvider()`` EN DUR, sans jamais
+    consulter ``AI_PROVIDER`` : ``extract_job`` — le plus gros volume du
+    système (≤ 10 k appels/jour, 08 §2.2) — n'atteignait jamais la fabrique.
+    Aucune configuration ne pouvait l'activer, et le secours LLM de 07 §5.2
+    retournait systématiquement une extraction vide (M8).
+    """
+    if get_settings().ai_provider == "fake":
+        return FakeProvider()
+    return get_llm_provider("extract_job")
+
+
 def normalize_raw(
     raw: RawJob,
     *,
@@ -192,13 +213,14 @@ def normalize_raw(
     """Normalise une offre brute : étage 0 → source → règles → LLM secours.
 
     Priorités (07 §5.2) : champ structuré source (conf 1.0 ou conf du
-    mapping) > règles déterministes > LLM de secours (FakeProvider par
-    défaut au M2 🟡 — retourne une extraction vide, l'offre est publiée
-    avec les seuls attributs déterministes).
+    mapping) > règles déterministes > LLM de secours. Ce dernier vient de
+    :func:`get_extraction_provider` (donc de ``AI_PROVIDER``) : ``fake`` par
+    défaut 🟡 — extraction vide, l'offre est publiée avec les seuls attributs
+    déterministes.
     """
     geocoder = geocoder or StaticGeocoder()
     resolver = resolver or SkillResolver()
-    provider = provider or FakeProvider()
+    provider = provider if provider is not None else get_extraction_provider()
 
     description = strip_html(raw.description)
     rule_text = f"{raw.title}\n{description}"
@@ -596,9 +618,79 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
+#: Providers dont les vecteurs portent assez de sémantique pour décider
+#: d'une fusion. ``hashing`` (lexical) en est volontairement exclu.
+SEMANTIC_EMBEDDING_PROVIDERS = frozenset({"managed"})
+
+#: Seuil rendu inatteignable : aucun cosinus ne dépasse 1,0.
+STAGE2_DISABLED_THRESHOLD = 1.5
+
+#: Distance maximale entre deux offres réputées identiques (07 §6.2.2).
+STAGE2_MAX_DISTANCE_KM = 50.0
+
+
+def _distance_km(
+    lat1: float, lon1: float, lat2: float, lon2: float
+) -> float:
+    """Distance haversine en kilomètres entre deux points géocodés."""
+    radius = 6371.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
+    return 2 * radius * math.asin(min(1.0, math.sqrt(a)))
+
+
+def _too_far_apart(candidate: JobPosting, incoming: "NormalizedJob") -> bool:
+    """Deux offres géocodées trop éloignées pour être le même poste.
+
+    Conservateur : si l'un des deux côtés n'est pas géocodé, on ne conclut
+    pas (le biais de D13 va vers le faux négatif). La comparaison retient la
+    distance MINIMALE entre les lieux, une offre pouvant en porter plusieurs.
+    """
+    candidate_points = [
+        (loc.lat, loc.lon)
+        for loc in candidate.locations
+        if loc.lat is not None and loc.lon is not None
+    ]
+    incoming_points = [
+        (loc.lat, loc.lon)
+        for loc in incoming.locations
+        if loc.lat is not None and loc.lon is not None
+    ]
+    if not candidate_points or not incoming_points:
+        return False
+    closest = min(
+        _distance_km(c_lat, c_lon, i_lat, i_lon)
+        for c_lat, c_lon in candidate_points
+        for i_lat, i_lon in incoming_points
+    )
+    return closest > STAGE2_MAX_DISTANCE_KM
+
+
 def _stage2_threshold() -> float:
-    """Seuil cosinus effectif de l'étage 2 (configuration, D13 / 🟡 Q12)."""
-    return float(get_settings().dedup_stage2_cosine_threshold)
+    """Seuil cosinus effectif de l'étage 2 (configuration, D13 / 🟡 Q12).
+
+    GARDE DE CALIBRATION : le seuil 0,92 de D13 a été fixé pour des vecteurs
+    SÉMANTIQUES. Le provider ``hashing`` (défaut tant que Q11 n'est pas
+    tranchée) produit des vecteurs LEXICAUX, sur lesquels ce seuil fusionne
+    des offres réellement distinctes — mesuré en revue : « Développeur
+    Backend Python » et « … Java » de la même entreprise à 0,955, et deux
+    offres au même titre et même premier paragraphe à 1,0000. La fusion
+    étant irréversible pour l'utilisateur (l'offre absorbée disparaît),
+    l'étage 2 est NEUTRALISÉ hors provider sémantique : le seuil devient
+    inatteignable et seul l'étage 1 (hash exact) déduplique.
+
+    À réactiver avec le provider managé, après calibration sur données
+    réelles (Q12) — et non l'inverse.
+    """
+    settings = get_settings()
+    if settings.embeddings_provider not in SEMANTIC_EMBEDDING_PROVIDERS:
+        return STAGE2_DISABLED_THRESHOLD
+    return float(settings.dedup_stage2_cosine_threshold)
 
 
 def _embed_job(
@@ -694,8 +786,13 @@ async def _stage2_match(
             and candidate.contract != incoming.contract
         ):
             continue
-        # NOTE 🟡 : distance ≤ 50 km si les deux lieux sont géocodés —
-        # implémentée en intégration (requête PostGIS/haversine SQL).
+        # Filtre géographique dur (07 §6.2.2) : deux offres géocodées à
+        # plus de STAGE2_MAX_DISTANCE_KM ne sont JAMAIS le même poste. Sans
+        # ce filtre, un titre et un premier paragraphe identiques suffisaient
+        # à fusionner une offre parisienne et une offre lyonnaise (cosinus
+        # 1,0000 mesuré en revue) — perte irréversible pour l'utilisateur.
+        if _too_far_apart(candidate, incoming):
+            continue
         if embedding is None or candidate.embedding is None:
             continue  # pas de décision sans embeddings (faux négatif préféré)
         candidate_vector = list(candidate.embedding)

@@ -2,7 +2,8 @@
 
 Le protocole ``MatchingRepository`` couvre : chargement d'une offre avec ses
 relations (compétences, langues, lieux, sources), pré-filtre du calcul
-paresseux de ``GET /matches``, labels canoniques de la taxonomie, cache
+paresseux de ``GET /matches``, labels canoniques de la taxonomie, vecteurs
+alimentant le moteur (compétences et intitulés cibles, 06 §2.1/§2.3), cache
 ``match_results`` (upsert) et invalidation par utilisateur (hook
 « preferences_changed », purge D21). Les tests unitaires substituent une
 implémentation en mémoire (patterns du module jobs).
@@ -21,6 +22,7 @@ from sqlalchemy.orm import selectinload
 from app.core.db import get_db_session
 from app.modules.jobs.models import JobPosting, SavedJob
 from app.modules.matching.models import MatchExplanationRow, MatchResultRow
+from app.modules.preferences.models import PreferenceTitle
 from app.modules.profiles.models import Profile
 from app.modules.referentials.models import Skill
 
@@ -49,6 +51,17 @@ class MatchingRepository(Protocol):
 
         Seules les compétences réellement vectorisées sont retournées : sans
         vecteur, le moteur retombe sur le match exact (aucune régression).
+        """
+        ...
+
+    async def preference_title_embeddings(self, user_id: uuid.UUID) -> list[list[float]]:
+        """Vecteurs des intitulés cibles (``preference_titles.embedding``).
+
+        06 §2.3 prend le MAX des cosinus sur les intitulés du candidat : un
+        vecteur PAR intitulé est donc la forme exacte de la règle. Le vecteur
+        agrégé ``profiles.embedding`` (tous les intitulés fondus en un) écrase
+        au contraire l'intitulé le mieux ciblé dans la moyenne. Liste vide →
+        seul l'agrégé est utilisé (comportement antérieur).
         """
         ...
 
@@ -136,6 +149,17 @@ class SqlAlchemyMatchingRepository:
         return {
             row.id: list(row.embedding) for row in await self._session.execute(stmt)
         }
+
+    async def preference_title_embeddings(self, user_id: uuid.UUID) -> list[list[float]]:
+        stmt = (
+            select(PreferenceTitle.embedding)
+            .where(
+                PreferenceTitle.user_id == user_id,
+                PreferenceTitle.embedding.is_not(None),
+            )
+            .order_by(PreferenceTitle.title)
+        )
+        return [list(row[0]) for row in await self._session.execute(stmt)]
 
     async def get_cached(
         self, profile_id: uuid.UUID, job_id: uuid.UUID
