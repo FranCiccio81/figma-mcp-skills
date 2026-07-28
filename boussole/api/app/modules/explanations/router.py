@@ -11,8 +11,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.ai.providers.base import LLMProvider
+from app.ai.providers.base import LLMProvider, ProviderUnavailableError
+from app.ai.providers.factory import get_llm_provider as provider_factory
 from app.ai.providers.fake import FakeProvider
+from app.core.config import get_settings
+from app.core.problems import Problem
 from app.modules.auth.models import User
 from app.modules.auth.router import require_current_user
 from app.modules.explanations.repository import (
@@ -20,7 +23,7 @@ from app.modules.explanations.repository import (
     get_explanations_repository,
 )
 from app.modules.explanations.schemas import MatchExplanationOut
-from app.modules.explanations.service import FAKE_EXPLANATION, ExplanationsService
+from app.modules.explanations.service import FAKE_EXPLANATION, TASK, ExplanationsService
 from app.modules.matching.router import get_matching_service
 from app.modules.matching.service import MatchingService
 
@@ -28,12 +31,35 @@ router = APIRouter(prefix="/jobs", tags=["explanations"])
 
 
 def get_llm_provider() -> LLMProvider:
-    """Provider LLM — :class:`FakeProvider` déterministe au M3 🟡 (D08, D22).
+    """Provider LLM — sélectionné par configuration (D08).
 
-    La sortie canned ne contient aucun chiffre : elle passe le contrôle
-    numérique quels que soient les facts. Provider réel branché en M4.
+    ``AI_PROVIDER=fake`` (défaut) : sortie canned sans aucun chiffre, qui
+    passe donc le contrôle numérique quels que soient les facts. Sinon la
+    fabrique (primaire + fallback + breaker) ; activation d'un provider réel
+    conditionnée à Q4/Q38.
     """
-    return FakeProvider(canned={"match_explanation": dict(FAKE_EXPLANATION)})
+    # La sortie canned est indexée sur le nom de TÂCHE (``explain_match``),
+    # celui que le service passe à ``complete_json`` — pas sur le nom du
+    # schéma de sortie (``match_explanation``), qui n'a jamais été un nom de
+    # tâche valide (M6).
+    if get_settings().ai_provider == "fake":
+        return FakeProvider(canned={TASK: dict(FAKE_EXPLANATION)})
+    try:
+        return provider_factory(TASK)
+    except ProviderUnavailableError as exc:
+        # La fabrique ne retombe plus sur le factice (C3) : la fonction est
+        # SUSPENDUE avec un message explicite (D18), jamais servie avec une
+        # explication vide qui passerait pour un résultat. Le reste de
+        # l'application (recherche, scores, facts déterministes) fonctionne.
+        raise Problem(
+            status=503,
+            code="ai_provider_unavailable",
+            title="Explication temporairement indisponible",
+            detail=(
+                "Le service de reformulation est momentanément indisponible. "
+                "Le score et les critères détaillés restent accessibles."
+            ),
+        ) from exc
 
 
 def get_explanations_service(

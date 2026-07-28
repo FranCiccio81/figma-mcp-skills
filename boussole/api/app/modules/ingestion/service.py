@@ -1,17 +1,33 @@
 """Orchestration de l'ingestion : normalisation, dédup, fusion, expiration.
 
 Implémente 07 §4–§6 : idempotence par ``(source_id, external_ref)``,
-déduplication étage 1 (``dedup_hash``) et étage 2 (STUB 🟡 — candidats
-trigram + décision cosinus, requêtes écrites dans
-:class:`SqlAlchemyJobStore` mais non testées unitairement, à valider en
-intégration M2), fusion « la donnée la plus riche et la plus récente
-gagne » (07 §6.3), expiration selon les 3 mécanismes de 07 §4.6.
+déduplication étage 1 (``dedup_hash``) et étage 2 (candidats trigram +
+décision cosinus ≥ ``DEDUP_STAGE2_COSINE_THRESHOLD``, D13), fusion « la
+donnée la plus riche et la plus récente gagne » (07 §6.3), expiration
+selon les 3 mécanismes de 07 §4.6.
+
+**Embeddings (M4)** — l'étage 2 était écrit mais inopérant faute de
+vecteurs. Le pipeline calcule désormais l'embedding « intitulé + 1er
+paragraphe » (06 §2.3, 07 §5.6) de chaque offre entrante et l'écrit sur
+``job_postings.embedding`` :
+
+- la décision cosinus de l'étage 2 devient effective (seuil 0,92 depuis
+  la configuration — 🟡 **Q12**, à calibrer en alpha) ;
+- l'embedding est RECALCULÉ quand la fusion change l'intitulé ou la
+  description : la fraîcheur est portée par le point d'écriture, pas par
+  le batch (aucune colonne du schéma ne porte le condensat du texte
+  source — voir :mod:`app.ai.embeddings.backfill`) ;
+- toute panne du fournisseur est absorbée : sans vecteur, l'étage 2 ne
+  décide rien (biais assumé vers les faux négatifs, D13) et l'ingestion
+  se poursuit. Le beat quotidien ``ai.embeddings.backfill_jobs``
+  rattrape les offres restées sans vecteur.
 
 La persistance passe par le protocole :class:`JobStore` : implémentation
 SQLAlchemy pour la prod, fake en mémoire dans les tests unitaires.
 """
 
 import logging
+import math
 import uuid
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
@@ -21,9 +37,14 @@ from typing import Protocol
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.embeddings.base import EmbeddingError, EmbeddingProvider
+from app.ai.embeddings.factory import get_embedding_provider
+from app.ai.embeddings.text import job_embedding_text
 from app.ai.providers.base import LLMProvider
+from app.ai.providers.factory import get_llm_provider
 from app.ai.providers.fake import FakeProvider
 from app.ai.tasks.extract_job import JobExtractionError, extract_job
+from app.core.config import get_settings
 from app.modules.ingestion import extract_rules
 from app.modules.ingestion.connectors.base import RawJob
 from app.modules.ingestion.geocode import Geocoder, StaticGeocoder
@@ -50,6 +71,9 @@ logger = logging.getLogger(__name__)
 # Seuils étage 2 (07 §6.2) — 🟡 à calibrer en alpha (Q5).
 STAGE2_COMPANY_SIMILARITY = 0.55
 STAGE2_TITLE_SIMILARITY = 0.45
+#: Seuil cosinus par DÉFAUT (D13) — la valeur effective vient de la
+#: configuration (``DEDUP_STAGE2_COSINE_THRESHOLD``), calibrable sans
+#: redéploiement en alpha (🟡 Q12).
 STAGE2_COSINE_THRESHOLD = 0.92
 STAGE2_CANDIDATE_LIMIT = 50
 # Absence de 2 réconciliations complètes consécutives avant extinction 🟡.
@@ -159,6 +183,25 @@ class NormalizedJob:
     withdrawn: bool = False
 
 
+def get_extraction_provider() -> LLMProvider:
+    """Provider LLM de l'extraction d'offres — sélectionné par configuration.
+
+    Même patron que ``app/workers/cv_tasks.py`` et
+    ``app/modules/explanations/router.py`` : ``AI_PROVIDER=fake`` (défaut)
+    conserve le provider déterministe, toute autre valeur passe par la
+    fabrique (primaire + fallback + circuit breaker D18).
+
+    ⚠️ Ce point d'appel construisait un ``FakeProvider()`` EN DUR, sans jamais
+    consulter ``AI_PROVIDER`` : ``extract_job`` — le plus gros volume du
+    système (≤ 10 k appels/jour, 08 §2.2) — n'atteignait jamais la fabrique.
+    Aucune configuration ne pouvait l'activer, et le secours LLM de 07 §5.2
+    retournait systématiquement une extraction vide (M8).
+    """
+    if get_settings().ai_provider == "fake":
+        return FakeProvider()
+    return get_llm_provider("extract_job")
+
+
 def normalize_raw(
     raw: RawJob,
     *,
@@ -170,13 +213,14 @@ def normalize_raw(
     """Normalise une offre brute : étage 0 → source → règles → LLM secours.
 
     Priorités (07 §5.2) : champ structuré source (conf 1.0 ou conf du
-    mapping) > règles déterministes > LLM de secours (FakeProvider par
-    défaut au M2 🟡 — retourne une extraction vide, l'offre est publiée
-    avec les seuls attributs déterministes).
+    mapping) > règles déterministes > LLM de secours. Ce dernier vient de
+    :func:`get_extraction_provider` (donc de ``AI_PROVIDER``) : ``fake`` par
+    défaut 🟡 — extraction vide, l'offre est publiée avec les seuls attributs
+    déterministes.
     """
     geocoder = geocoder or StaticGeocoder()
     resolver = resolver or SkillResolver()
-    provider = provider or FakeProvider()
+    provider = provider if provider is not None else get_extraction_provider()
 
     description = strip_html(raw.description)
     rule_text = f"{raw.title}\n{description}"
@@ -574,16 +618,156 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
-async def _stage2_match(
-    store: JobStore, incoming: NormalizedJob, embedding: list[float] | None
-) -> JobPosting | None:
-    """Étage 2 (07 §6.2) — STUB 🟡, à valider en intégration M2.
+#: Providers dont les vecteurs portent assez de sémantique pour décider
+#: d'une fusion. ``hashing`` (lexical) en est volontairement exclu.
+SEMANTIC_EMBEDDING_PROVIDERS = frozenset({"managed"})
 
-    Candidats trigram (requête écrite dans :class:`SqlAlchemyJobStore`),
-    filtre de compatibilité dure, décision cosinus ≥ 0,92. Sans embeddings
-    (calculés en M3, 07 §5.6), aucune fusion n'est décidée : biais assumé
-    vers les faux négatifs (D13).
+#: Seuil rendu inatteignable : aucun cosinus ne dépasse 1,0.
+STAGE2_DISABLED_THRESHOLD = 1.5
+
+#: Distance maximale entre deux offres réputées identiques (07 §6.2.2).
+STAGE2_MAX_DISTANCE_KM = 50.0
+
+
+def _distance_km(
+    lat1: float, lon1: float, lat2: float, lon2: float
+) -> float:
+    """Distance haversine en kilomètres entre deux points géocodés."""
+    radius = 6371.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
+    return 2 * radius * math.asin(min(1.0, math.sqrt(a)))
+
+
+def _too_far_apart(candidate: JobPosting, incoming: "NormalizedJob") -> bool:
+    """Deux offres géocodées trop éloignées pour être le même poste.
+
+    Conservateur : si l'un des deux côtés n'est pas géocodé, on ne conclut
+    pas (le biais de D13 va vers le faux négatif). La comparaison retient la
+    distance MINIMALE entre les lieux, une offre pouvant en porter plusieurs.
     """
+    candidate_points = [
+        (loc.lat, loc.lon)
+        for loc in candidate.locations
+        if loc.lat is not None and loc.lon is not None
+    ]
+    incoming_points = [
+        (loc.lat, loc.lon)
+        for loc in incoming.locations
+        if loc.lat is not None and loc.lon is not None
+    ]
+    if not candidate_points or not incoming_points:
+        return False
+    closest = min(
+        _distance_km(c_lat, c_lon, i_lat, i_lon)
+        for c_lat, c_lon in candidate_points
+        for i_lat, i_lon in incoming_points
+    )
+    return closest > STAGE2_MAX_DISTANCE_KM
+
+
+def _stage2_threshold() -> float:
+    """Seuil cosinus effectif de l'étage 2 (configuration, D13 / 🟡 Q12).
+
+    GARDE DE CALIBRATION : le seuil 0,92 de D13 a été fixé pour des vecteurs
+    SÉMANTIQUES. Le provider ``hashing`` (défaut tant que Q11 n'est pas
+    tranchée) produit des vecteurs LEXICAUX, sur lesquels ce seuil fusionne
+    des offres réellement distinctes — mesuré en revue : « Développeur
+    Backend Python » et « … Java » de la même entreprise à 0,955, et deux
+    offres au même titre et même premier paragraphe à 1,0000. La fusion
+    étant irréversible pour l'utilisateur (l'offre absorbée disparaît),
+    l'étage 2 est NEUTRALISÉ hors provider sémantique : le seuil devient
+    inatteignable et seul l'étage 1 (hash exact) déduplique.
+
+    À réactiver avec le provider managé, après calibration sur données
+    réelles (Q12) — et non l'inverse.
+    """
+    settings = get_settings()
+    if settings.embeddings_provider not in SEMANTIC_EMBEDDING_PROVIDERS:
+        return STAGE2_DISABLED_THRESHOLD
+    return float(settings.dedup_stage2_cosine_threshold)
+
+
+def _embed_job(
+    embedder: EmbeddingProvider | None, title: str, description: str
+) -> list[float] | None:
+    """Embedding « intitulé + 1er paragraphe » d'une offre (06 §2.3, 07 §5.6).
+
+    Jamais bloquant : toute erreur du fournisseur est journalisée et rend
+    ``None`` — l'offre est ingérée sans vecteur (étage 2 sans décision,
+    ``title_similarity`` inconnue), et le beat quotidien la rattrape.
+    """
+    if embedder is None:
+        return None
+    text = job_embedding_text(title, description)
+    if not text:
+        return None
+    try:
+        vectors = embedder.embed_texts([text])
+    except EmbeddingError as exc:
+        logger.warning("job_embedding_failed error_code=%s", exc.error_code)
+        return None
+    if not vectors or not any(vectors[0]):
+        return None
+    return list(vectors[0])
+
+
+def _refresh_embedding(
+    posting: JobPosting,
+    incoming: NormalizedJob,
+    incoming_embedding: list[float] | None,
+    embedder: EmbeddingProvider | None,
+) -> None:
+    """Garde ``job_postings.embedding`` cohérent avec le texte APRÈS fusion.
+
+    Le vecteur d'une offre doit décrire le texte réellement stocké. Or la
+    fusion (07 §6.3) peut conserver la description existante (« la plus
+    longue gagne ») ou en adopter une nouvelle : on compare donc le texte
+    final au texte entrant.
+
+    - texte final == texte entrant → on réutilise le vecteur déjà calculé
+      (aucun appel supplémentaire, donc aucun coût provider) ;
+    - texte final différent → recalcul depuis le posting fusionné ;
+    - recalcul impossible (provider en panne) → l'ancien vecteur est
+      CONSERVÉ plutôt qu'effacé : un vecteur légèrement périmé vaut mieux
+      qu'une dimension redevenue inconnue (k=0).
+
+    🟡 C'est ce point d'écriture — et non le backfill — qui porte la
+    détection « le texte source a changé » : aucune colonne du schéma ne
+    stocke le condensat du texte ayant produit le vecteur
+    (:func:`app.ai.embeddings.text.source_text_hash`).
+    """
+    if (posting.title, posting.description_text) == (incoming.title, incoming.description):
+        if incoming_embedding is not None:
+            posting.embedding = incoming_embedding
+        return
+    refreshed = _embed_job(embedder, posting.title, posting.description_text)
+    if refreshed is not None:
+        posting.embedding = refreshed
+
+
+async def _stage2_match(
+    store: JobStore,
+    incoming: NormalizedJob,
+    embedding: list[float] | None,
+    threshold: float | None = None,
+) -> JobPosting | None:
+    """Étage 2 (07 §6.2, D13) — candidats trigram puis décision cosinus.
+
+    Candidats trigram (requête de :class:`SqlAlchemyJobStore`), filtre de
+    compatibilité dure, puis fusion avec le MEILLEUR candidat dont le
+    cosinus atteint le seuil (0,92 🟡 par défaut, configurable — Q12).
+
+    Sans embedding d'un côté ou de l'autre, aucune fusion n'est décidée :
+    biais assumé vers les faux négatifs (D13 — « doublons non fusionnés
+    préférés aux faux positifs »).
+    """
+    cosine_threshold = _stage2_threshold() if threshold is None else threshold
     candidates = await store.stage2_candidates(incoming.company, incoming.title)
     best: tuple[float, JobPosting] | None = None
     for candidate in candidates:
@@ -602,13 +786,33 @@ async def _stage2_match(
             and candidate.contract != incoming.contract
         ):
             continue
-        # NOTE 🟡 : distance ≤ 50 km si les deux lieux sont géocodés —
-        # implémentée en intégration (requête PostGIS/haversine SQL).
+        # Filtre géographique dur (07 §6.2.2) : deux offres géocodées à
+        # plus de STAGE2_MAX_DISTANCE_KM ne sont JAMAIS le même poste. Sans
+        # ce filtre, un titre et un premier paragraphe identiques suffisaient
+        # à fusionner une offre parisienne et une offre lyonnaise (cosinus
+        # 1,0000 mesuré en revue) — perte irréversible pour l'utilisateur.
+        if _too_far_apart(candidate, incoming):
+            continue
         if embedding is None or candidate.embedding is None:
             continue  # pas de décision sans embeddings (faux négatif préféré)
-        score = _cosine(list(candidate.embedding), embedding)
-        if score >= STAGE2_COSINE_THRESHOLD and (best is None or score > best[0]):
+        candidate_vector = list(candidate.embedding)
+        if len(candidate_vector) != len(embedding):
+            # Dimensions hétérogènes = vecteurs issus de deux modèles
+            # différents : la comparaison n'a aucun sens (08 §8 impose un
+            # re-embedding complet à tout changement de modèle).
+            logger.error(
+                "dedup_stage2_dimension_mismatch posting=%s stored=%d incoming=%d",
+                candidate.id, len(candidate_vector), len(embedding),
+            )
+            continue
+        score = _cosine(candidate_vector, embedding)
+        if score >= cosine_threshold and (best is None or score > best[0]):
             best = (score, candidate)
+    if best is not None:
+        logger.info(
+            "dedup_stage2_hit posting=%s cosine=%.4f threshold=%.2f",
+            best[1].id, best[0], cosine_threshold,
+        )
     return best[1] if best else None
 
 
@@ -632,6 +836,7 @@ async def ingest_batch(
     *,
     geocoder: Geocoder | None = None,
     provider: LLMProvider | None = None,
+    embedder: EmbeddingProvider | None = None,
     now: datetime | None = None,
 ) -> IngestReport:
     """Ingestion d'un batch d'offres brutes d'une source (07 §4.4, §6).
@@ -639,11 +844,26 @@ async def ingest_batch(
     Idempotente : rejouer le même batch ne crée ni doublon ni effet de
     bord. Une erreur sur un item n'arrête pas le batch (07 §4.5, classe
     « permanente requête »).
+
+    ``embedder`` : fournisseur d'embeddings ; résolu par la fabrique quand
+    il n'est pas passé (défaut local et déterministe, sans réseau — voir
+    :mod:`app.ai.embeddings`). Un fournisseur inutilisable ne fait PAS
+    échouer l'ingestion : les offres sont créées sans vecteur.
     """
     now = now or datetime.now(UTC)
     source = await store.get_source_by_slug(source_slug)
     if source is None:
         raise ValueError(f"source inconnue ou inactive : {source_slug!r}")
+
+    if embedder is None:
+        try:
+            embedder = get_embedding_provider()
+        except EmbeddingError:
+            # Dimension incompatible ou aucun provider : l'ingestion reste
+            # prioritaire sur les embeddings (D18) — trace bruyante, pas
+            # d'interruption.
+            logger.exception("embedding_provider_unavailable_for_ingestion")
+            embedder = None
 
     aliases, canonicals = await store.skill_lookup()
     resolver = SkillResolver(aliases, canonicals)
@@ -661,7 +881,8 @@ async def ingest_batch(
             async with store.savepoint():
                 await _ingest_one(
                     store, source, raw, report,
-                    geocoder=geocoder, resolver=resolver, provider=provider, now=now,
+                    geocoder=geocoder, resolver=resolver, provider=provider,
+                    embedder=embedder, now=now,
                 )
                 await store.flush()
         except Exception:
@@ -687,11 +908,17 @@ async def _ingest_one(
     resolver: SkillResolver,
     provider: LLMProvider | None,
     now: datetime,
+    #: ``None`` = offre ingérée sans vecteur (étage 2 sans décision) —
+    #: défaut explicite pour rester appelable sans embeddings.
+    embedder: EmbeddingProvider | None = None,
 ) -> None:
     normalized = normalize_raw(
         raw, source_slug=source.slug, geocoder=geocoder,
         resolver=resolver, provider=provider,
     )
+    # Vecteur de l'offre ENTRANTE : il sert à la décision de l'étage 2 puis
+    # à peupler ``job_postings.embedding`` (07 §5.6).
+    embedding = _embed_job(embedder, normalized.title, normalized.description)
 
     # Idempotence (source_id, external_ref) — 07 §4.4 : mise à jour par la
     # MÊME source → re-normalisation directe (same_source=True), l'arbitrage
@@ -708,6 +935,7 @@ async def _ingest_one(
         if raw.posted_at is not None:
             existing_source.posted_at = raw.posted_at
         await _merge_posting(store, posting, normalized, now, same_source=True)
+        _refresh_embedding(posting, normalized, embedding, embedder)
         report.updated += 1
         return
 
@@ -715,12 +943,14 @@ async def _ingest_one(
     posting = await store.get_posting_by_dedup_hash(normalized.dedup_hash)
     stage = 1
     if posting is None:
-        # Étage 2 : similarité — STUB 🟡 (embeddings M3).
-        posting = await _stage2_match(store, normalized, embedding=None)
+        # Étage 2 : candidats trigram + décision cosinus (D13) — opérant
+        # dès que les deux offres portent un vecteur.
+        posting = await _stage2_match(store, normalized, embedding)
         stage = 2
 
     if posting is not None:
         await _merge_posting(store, posting, normalized, now)
+        _refresh_embedding(posting, normalized, embedding, embedder)
         if stage == 1:
             report.attached_stage1 += 1
         else:
@@ -750,6 +980,7 @@ async def _ingest_one(
             first_seen_at=normalized.posted_at or now,
             last_seen_at=now,
             expires_at=normalized.expires_at,
+            embedding=embedding,
         )
         await store.add(posting)
         for loc in normalized.locations:

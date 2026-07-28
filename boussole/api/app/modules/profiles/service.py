@@ -14,8 +14,10 @@ Règles portées ici :
 - le re-scoring asynchrone (RM-C-4) se branchera au M4 — non déclenché ici.
 """
 
+import asyncio
+import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import UTC, date, datetime, timedelta
 from typing import TypeVar, cast
 
@@ -166,9 +168,78 @@ def _not_found(entity: str) -> Problem:
     )
 
 
+#: Signature d'enfilement de ``ai.embeddings.embed_profile`` (injectable).
+#: **Coroutine** : l'enfilement est une E/S réseau (broker), elle ne peut pas
+#: être appelée en synchrone depuis une route ``async`` — voir
+#: :func:`_default_embed_enqueuer`.
+EmbedProfileEnqueuer = Callable[[uuid.UUID], Awaitable[None]]
+
+_logger = logging.getLogger(__name__)
+
+
+def _send_embed_profile_task(profile_id: uuid.UUID) -> None:
+    """Publication Celery BLOQUANTE — à n'appeler que hors boucle d'événements.
+
+    Import tardif : le service ne doit pas dépendre de Celery à l'import
+    (tests unitaires, outillage). Toute erreur est journalisée sans jamais
+    faire échouer la validation — le beat quotidien rattrape les profils
+    dont le vecteur manque.
+    """
+    try:
+        from app.workers.celery_app import celery_app
+
+        # Broker injoignable : échouer TOUT DE SUITE (best-effort — le beat
+        # quotidien rattrape) plutôt que d'occuper un thread 19 s. Mesuré, sur
+        # un broker refusant la connexion :
+        # - tel quel .................................... 19,11 s
+        # - ``ignore_result=True`` .......................  6,06 s : l'essentiel
+        #   du délai n'est PAS le broker mais le RESULT BACKEND
+        #   (``backend.on_task_call`` abonne un consommateur de résultat et
+        #   retente jusqu'à « Retry limit exceeded »). Or personne ne lit le
+        #   résultat de cette tâche : l'abonnement est du pur gaspillage ;
+        # - + connexion à ``max_retries=0`` ..............  0,002 s : coupe la
+        #   boucle de reconnexion de ``Connection.default_channel``.
+        # ``retry=False`` ne couvre QUE la republication, pas ces deux
+        # boucles — d'où les trois options ensemble.
+        with celery_app.connection_for_write(
+            transport_options={"max_retries": 0}
+        ) as connection:
+            celery_app.send_task(
+                "ai.embeddings.embed_profile",
+                args=[str(profile_id)],
+                queue="ai",
+                connection=connection,
+                retry=False,
+                ignore_result=True,
+            )
+    except Exception:  # pragma: no cover - dépend de l'infra broker
+        _logger.warning("embed_profile_enqueue_failed", extra={"detail": str(profile_id)})
+
+
+async def _default_embed_enqueuer(profile_id: uuid.UUID) -> None:
+    """Enfile le recalcul d'embedding du profil — best-effort, NON bloquant.
+
+    ``celery_app.send_task`` ouvre une connexion AMQP/Redis synchrone : appelé
+    directement depuis ``async def validate_profile``, un broker injoignable
+    gèle la boucle d'événements du worker ASGI (donc TOUTES les requêtes en
+    cours) le temps du timeout TCP — mesuré à 19,18 s. Le travail est donc
+    déporté sur le pool de threads (patron déjà utilisé par
+    ``jobs/repository.py`` et ``workers/ingestion_tasks.py``).
+    """
+    await asyncio.to_thread(_send_embed_profile_task, profile_id)
+
+
 class ProfilesService:
-    def __init__(self, repository: ProfilesRepository) -> None:
+    def __init__(
+        self,
+        repository: ProfilesRepository,
+        embed_enqueuer: EmbedProfileEnqueuer | None = None,
+    ) -> None:
         self._repository = repository
+        # Recalcul de l'embedding du profil à la validation (06 §2.3) : sans
+        # lui, ``title_similarity`` reste inconnue jusqu'au rattrapage
+        # nocturne. Injectable pour les tests (aucun Celery requis).
+        self._embed_enqueuer = embed_enqueuer or _default_embed_enqueuer
 
     # ------------------------------------------------------------ racine
 
@@ -245,6 +316,9 @@ class ProfilesService:
         profile.validated_at = datetime.now(UTC)
         self._bump_version(profile)
         await self._repository.commit()
+        # Après commit : un échec d'enfilement ne doit jamais annuler une
+        # validation réussie (le beat quotidien rattrape).
+        await self._embed_enqueuer(profile.id)
         return to_profile_out(profile)
 
     # ------------------------------------------------------------ expériences

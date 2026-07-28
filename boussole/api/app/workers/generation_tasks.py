@@ -28,8 +28,10 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.ai.providers.base import LLMProvider
+from app.ai.providers.factory import get_llm_provider
 from app.ai.providers.fake import FakeProvider
 from app.ai.tasks.generate import FAKE_GENERATION_OUTPUTS
+from app.core.config import get_settings
 from app.core.db import create_worker_engine
 from app.modules.generation.repository import SqlAlchemyGenerationRepository
 from app.modules.generation.service import execute_generation
@@ -45,8 +47,16 @@ def _run[T](coro: Awaitable[T]) -> T:
 
 
 def get_generation_provider() -> LLMProvider:
-    """Provider LLM du worker — FakeProvider déterministe au M4 🟡 (D08, D22)."""
-    return FakeProvider(canned=deepcopy(FAKE_GENERATION_OUTPUTS))
+    """Provider LLM du worker — sélectionné par configuration (D08).
+
+    ``AI_PROVIDER=fake`` (défaut) rend le provider déterministe historique,
+    sorties canned comprises ; toute autre valeur passe par la fabrique
+    (primaire + fallback + circuit breaker). L'activation d'un provider réel
+    reste conditionnée à Q4/Q38 — voir ``app/ai/providers/anthropic.py``.
+    """
+    if get_settings().ai_provider == "fake":
+        return FakeProvider(canned=deepcopy(FAKE_GENERATION_OUTPUTS))
+    return get_llm_provider("generate")
 
 
 async def _generate_cycle(document_id: uuid.UUID) -> dict[str, Any]:

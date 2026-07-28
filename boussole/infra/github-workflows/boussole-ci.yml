@@ -1,4 +1,5 @@
-# CI Boussole — lint (ruff + mypy) et tests unitaires sur PR touchant boussole/.
+# CI Boussole — lint (ruff + mypy), tests unitaires et tests d'intégration
+# (PostgreSQL réel) sur PR touchant boussole/.
 # Voir README.md de ce dossier : à déplacer vers .github/workflows/ à la racine
 # du repo (les permissions de l'app GitHub ne permettent pas toujours de
 # pousser des workflows directement).
@@ -44,3 +45,66 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Pytest
         run: pytest tests/unit -q
+
+  # GitHub Actions ne sait pas filtrer les chemins PAR JOB : ce job calcule le
+  # filtre lui-même (git diff contre la base de la PR), sans action tierce.
+  changes:
+    name: Détection des changements API
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        name: La PR touche-t-elle boussole/api/** ?
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch --no-tags --depth=0 origin "${{ github.base_ref }}"
+          if git diff --name-only "$base"...HEAD | grep -q '^boussole/api/'; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  integration:
+    name: Tests d'intégration (PostgreSQL réel)
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    # Service PostgreSQL + pgvector : même image que testcontainers en local.
+    # On la fournit ici en `services` plutôt que de laisser testcontainers la
+    # démarrer — un conteneur de moins à ordonnancer, et la base est prête
+    # avant le premier test (BOUSSOLE_TEST_DATABASE_URL court-circuite
+    # testcontainers : voir api/tests/integration/conftest.py).
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: boussole
+          POSTGRES_PASSWORD: boussole
+          POSTGRES_DB: boussole_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U boussole -d boussole_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Base JETABLE : la suite la tronque entre chaque test.
+      BOUSSOLE_TEST_DATABASE_URL: postgresql+asyncpg://boussole:boussole@localhost:5432/boussole_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Pytest (intégration)
+        # Le -m de la ligne de commande remplace le `-m "not integration"`
+        # d'addopts (pyproject.toml) : ces tests ne tournent QUE ici et via
+        # `make test-integration`. Le schéma vient des migrations Alembic.
+        run: pytest tests/integration -m integration -q

@@ -13,8 +13,25 @@ from celery.schedules import crontab
 from kombu import Queue
 
 from app.core.config import get_settings
+from app.core.storage import check_storage_configuration
 
 settings = get_settings()
+
+# Refus de démarrer un worker mal configuré — MÊME GARDE QUE L'API, au même
+# endroit qu'elle : à l'import.
+#
+# ⚠️ Ne PAS revenir à un receveur ``@worker_ready.connect`` : ce garde-fou-là
+# était un no-op vérifié. ``celery.utils.dispatch.Signal.send`` attrape toute
+# exception levée par un receveur, la journalise et poursuit ; et
+# ``worker_ready`` est de surcroît émis APRÈS le début de la consommation de
+# la file. Un worker en ``ENV=production`` + ``STORAGE_BACKEND=local``
+# démarrait donc normalement et écrivait archives d'export et CV sur SON
+# disque, que l'API ne relit jamais (revue M5, puis C2).
+#
+# Au niveau module, l'exception remonte à l'import : `celery -A
+# app.workers.celery_app worker` s'arrête, bruyamment, avant d'avoir accepté
+# la moindre tâche.
+check_storage_configuration(settings)
 
 celery_app = Celery(
     "boussole",
@@ -25,6 +42,7 @@ celery_app = Celery(
         "app.workers.cv_tasks",
         "app.workers.generation_tasks",
         "app.workers.privacy_tasks",
+        "app.workers.embedding_tasks",
     ],
 )
 
@@ -89,6 +107,29 @@ celery_app.conf.update(
         "maintenance-purge-expired-exports": {
             "task": "maintenance.purge_expired_exports",
             "schedule": crontab(minute=45, hour=4),
+        },
+        # Rattrapage quotidien des embeddings manquants (08 §8) : les
+        # vecteurs sont normalement calculés au fil de l'eau (à l'ingestion
+        # d'une offre), ce beat ne rattrape que les trous — offres ingérées
+        # pendant une panne du provider, profils validés, intitulés cibles
+        # et libellés de compétences. Tâches idempotentes (elles ne
+        # traitent que les lignes `embedding IS NULL`), donc sûres à
+        # rejouer. Décalées les unes des autres et placées AVANT le ménage
+        # de 03:45–04:45 pour ne pas concentrer les I/O.
+        # 🟡 Noms préfixés `ai.` : le routage de `task_routes` est par
+        # préfixe de file — c'est ce qui place ces tâches sur la file `ai`
+        # (voir l'en-tête de app/workers/embedding_tasks.py).
+        "embeddings-backfill-jobs": {
+            "task": "ai.embeddings.backfill_jobs",
+            "schedule": crontab(minute=10, hour=2),
+        },
+        "embeddings-backfill-profiles": {
+            "task": "ai.embeddings.backfill_profiles",
+            "schedule": crontab(minute=25, hour=2),
+        },
+        "embeddings-backfill-skills": {
+            "task": "ai.embeddings.backfill_skills",
+            "schedule": crontab(minute=40, hour=2),
         },
     },
 )

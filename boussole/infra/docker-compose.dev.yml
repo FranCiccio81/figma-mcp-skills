@@ -1,6 +1,34 @@
 # Boussole — environnement de développement (make up).
 # Deux Redis logiques (D17) : persistant (sessions + broker Celery) et cache.
+#
+# Le dev tourne DÉLIBÉRÉMENT avec le même backend de stockage que la
+# production (STORAGE_BACKEND=s3, ici MinIO) et avec l'API et le worker Celery
+# dans DEUX conteneurs distincts. C'est précisément l'écart inverse — dev
+# mono-processus sur disque local — qui avait masqué le fait que l'export RGPD
+# (F-Q) répondait 404 en multi-conteneur.
 name: boussole
+
+# Environnement commun API / worker : le worker DOIT voir exactement le même
+# stockage objet que l'API, sans quoi l'archive d'export est écrite d'un côté
+# et relue de l'autre.
+x-app-env: &app-env
+  ENV: development
+  DATABASE_URL: postgresql+asyncpg://boussole:boussole@postgres:5432/boussole
+  REDIS_PERSISTENT_URL: redis://redis-persistent:6379/0
+  REDIS_CACHE_URL: redis://redis-cache:6379/0
+  # Stockage objet (D09) — MinIO, comme la prod utilisera S3 UE.
+  STORAGE_BACKEND: s3
+  S3_ENDPOINT: http://minio:9000
+  S3_BUCKET: boussole-dev
+  S3_REGION: eu-west-1
+  S3_ACCESS_KEY: boussole-dev
+  S3_SECRET_KEY: boussole-dev-secret
+  # MinIO sans KES ne sait pas chiffrer côté serveur : SSE désactivée en dev
+  # UNIQUEMENT. En staging/production, S3_SSE=aws:kms (+ S3_KMS_KEY_ID) —
+  # « none » y est refusé au démarrage (check_storage_configuration).
+  S3_SSE: none
+  S3_ADDRESSING_STYLE: path
+  SESSION_TTL_DAYS: "30"
 
 services:
   postgres:
@@ -62,6 +90,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Création du bucket au démarrage : sans lui, le premier upload de CV échoue
+  # en NoSuchBucket et l'erreur est difficile à relier à l'infra. Idempotent
+  # (--ignore-existing), s'arrête une fois le bucket prêt.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc alias set dev http://minio:9000 boussole-dev boussole-dev-secret &&
+        mc mb --ignore-existing dev/boussole-dev &&
+        mc version enable dev/boussole-dev &&
+        echo "bucket boussole-dev prêt (versionné)"
+    restart: "no"
+
   mailpit:
     image: axllent/mailpit:latest
     ports:
@@ -78,16 +124,7 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.api
     environment:
-      ENV: development
-      DATABASE_URL: postgresql+asyncpg://boussole:boussole@postgres:5432/boussole
-      REDIS_PERSISTENT_URL: redis://redis-persistent:6379/0
-      REDIS_CACHE_URL: redis://redis-cache:6379/0
-      S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: boussole-dev
-      S3_REGION: eu-west-1
-      S3_ACCESS_KEY: boussole-dev
-      S3_SECRET_KEY: boussole-dev-secret
-      SESSION_TTL_DAYS: "30"
+      <<: *app-env
       # Proxies de confiance pour X-Forwarded-For (uvicorn --forwarded-allow-ips
       # ET app/main.py::trusted_proxies). Le SEUL front légitime est le
       # conteneur « web » (Next.js), épinglé sur une adresse fixe du réseau
@@ -103,11 +140,42 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\""]
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # Worker Celery — conteneur SÉPARÉ de l'API, volontairement : c'est la
+  # topologie de production. Il partage l'environnement *app-env, donc le même
+  # bucket MinIO : l'archive d'export RGPD qu'il écrit est relisible par l'API.
+  # Avec STORAGE_BACKEND=local, ce service et l'API auraient deux disques
+  # distincts et tout téléchargement d'export répondrait 404.
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    command:
+      - celery
+      - -A
+      - app.workers.celery_app
+      - worker
+      - -Q
+      - ingestion,ai,scoring,maintenance
+      - --loglevel=info
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-persistent:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   web:
     build:

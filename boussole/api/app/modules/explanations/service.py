@@ -28,6 +28,7 @@ import uuid
 from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.concurrency import run_in_threadpool
 
 from app.ai.providers.base import LLMProvider
 from app.core.problems import Problem
@@ -37,7 +38,19 @@ from app.modules.matching.service import MatchingService
 
 logger = logging.getLogger(__name__)
 
+#: Nom de tâche de la couche provider — celui de l'enum SQL ``ai_task``, des
+#: modèles par tâche (``AI_MODEL_EXPLAIN_MATCH``) et des timeouts p95.
+#:
+#: ⚠️ Ce n'est PAS ``match_explanation`` (le nom du SCHÉMA de sortie et du
+#: prompt). La confusion des deux coûtait cher et en silence (M6) : modèle
+#: résolu sur ``AI_MODEL_DEFAULT`` (sonnet au lieu de haiku, coût ×N),
+#: timeout de 30 s au lieu des 4 s de la cible p95 synchrone (08 §2.2),
+#: ``prompt_version`` journalisée « unknown », et INSERT rejeté par l'enum
+#: ``ai_task`` — donc zéro ligne dans ``ai_calls`` pour les explications.
+TASK = "explain_match"
+
 #: Versionnement des prompts (D08) — clé de cache avec scoring_version.
+#: Indexé sur le nom du SCHÉMA de sortie, pas sur celui de la tâche.
 PROMPT_VERSION = "match_explanation/1.0.0"
 
 #: Sortie canned du provider factice (M3 🟡) : déterministe et SANS AUCUN
@@ -141,7 +154,13 @@ class ExplanationsService:
         if cached is not None:
             return self._to_out(cached)
 
-        content = self._generate(match.explanation_facts)
+        # ``_generate`` est SYNCHRONE et bloquant (l'interface ``LLMProvider``
+        # l'est, D08) : appelée directement, elle gelait la boucle asyncio de
+        # tout le worker uvicorn pendant la durée de l'appel — 3,52 s mesurées
+        # avec un transport instantané, jusqu'à ~190 s avec un vrai réseau
+        # (retries + backoff), pendant lesquelles AUCUNE autre requête n'est
+        # servie (C1). Le threadpool Starlette restitue la boucle.
+        content = await run_in_threadpool(self._generate, match.explanation_facts)
         await self._repository.put(
             match.profile_id,
             match.job_id,
@@ -169,9 +188,7 @@ class ExplanationsService:
                     f"{prompt}\n\nTa précédente réponse était invalide :\n{last_error}\n"
                     "Corrige et renvoie un JSON strictement conforme."
                 )
-            raw = self._provider.complete_json(
-                "match_explanation", current_prompt, schema
-            )
+            raw = self._provider.complete_json(TASK, current_prompt, schema)
             try:
                 payload = MatchExplanationPayload.model_validate(raw)
                 break

@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+from app.ai.calls import AI_TASKS
 from app.ai.providers.fake import FakeProvider
 from tests.unit.conftest import InMemoryAuthRepository
 from tests.unit.matching_api.conftest import (
@@ -102,7 +103,11 @@ class TestGenerate:
             assert isinstance(body[key], list)
         # D14 : le prompt contient les facts du moteur, jamais l'offre brute.
         ((task, prompt),) = llm_provider.calls
-        assert task == "match_explanation"
+        # M6 : le nom de tâche DOIT être celui de l'enum SQL ``ai_task`` —
+        # ``match_explanation`` (nom du schéma) cassait modèle, timeout et
+        # journal ``ai_calls`` en silence.
+        assert task == "explain_match"
+        assert task in AI_TASKS
         assert "FAITS" in prompt
         assert job.description_text not in prompt
 

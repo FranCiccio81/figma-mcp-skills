@@ -37,6 +37,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.ai.providers.base import LLMProvider
+from app.ai.providers.factory import get_llm_provider
 from app.ai.providers.fake import FakeProvider
 from app.ai.tasks.extract_cv import (
     DEFAULT_MODEL,
@@ -45,6 +46,7 @@ from app.ai.tasks.extract_cv import (
     CvExtractionError,
     extract_cv,
 )
+from app.core.config import get_settings
 from app.core.db import create_worker_engine
 from app.core.storage import ObjectStorage, get_object_storage
 from app.modules.profiles.cv.models import CvDocument, ExtractionRun
@@ -66,8 +68,15 @@ def _run[T](coro: Awaitable[T]) -> T:
 
 
 def _get_provider() -> LLMProvider:
-    """Provider LLM de la tâche — FakeProvider 🟡 (Anthropic + fallback M5, D08)."""
-    return FakeProvider()
+    """Provider LLM de la tâche — sélectionné par configuration (D08).
+
+    ``AI_PROVIDER=fake`` (défaut) conserve le provider déterministe ; sinon
+    la fabrique (primaire + fallback + breaker). Activation d'un provider
+    réel conditionnée à Q4/Q38.
+    """
+    if get_settings().ai_provider == "fake":
+        return FakeProvider()
+    return get_llm_provider("extract_cv")
 
 
 # ------------------------------------------------------------ extraction texte

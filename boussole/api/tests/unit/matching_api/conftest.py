@@ -21,6 +21,7 @@ from app.matching.models import MatchResult as EngineMatchResult
 from app.modules.explanations.repository import get_explanations_repository
 from app.modules.explanations.router import get_llm_provider
 from app.modules.explanations.service import FAKE_EXPLANATION
+from app.modules.explanations.service import TASK as EXPLAIN_TASK
 from app.modules.jobs.models import JobLanguage as JobLanguageRow
 from app.modules.jobs.models import JobPosting
 from app.modules.matching.models import MatchExplanationRow, MatchResultRow
@@ -170,6 +171,12 @@ class InMemoryMatchingRepository:
         self.results: dict[tuple[uuid.UUID, uuid.UUID], MatchResultRow] = {}
         self.saved: dict[tuple[uuid.UUID, uuid.UUID], str] = {}
         self.skills: dict[uuid.UUID, str] = {}
+        self.skill_vectors: dict[uuid.UUID, list[float]] = {}
+        #: ``user_id`` → vecteurs de ``preference_titles.embedding`` (06 §2.3).
+        self.title_vectors: dict[uuid.UUID, list[list[float]]] = {}
+        #: Compteur d'appels par méthode — sert à prouver que les lectures de
+        #: vecteurs ne sont PAS refaites offre par offre dans ``list_matches``.
+        self.calls: dict[str, int] = {}
 
     def add(self, job: JobPosting) -> JobPosting:
         self.jobs[job.id] = job
@@ -190,8 +197,26 @@ class InMemoryMatchingRepository:
         jobs.sort(key=lambda job: (job.last_seen_at, job.id.int), reverse=True)
         return jobs[:limit]
 
+    def _record(self, name: str) -> None:
+        self.calls[name] = self.calls.get(name, 0) + 1
+
     async def skill_labels(self, skill_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
+        self._record("skill_labels")
         return {sid: self.skills[sid] for sid in skill_ids if sid in self.skills}
+
+    async def skill_embeddings(
+        self, skill_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, list[float]]:
+        """Vecteurs de compétences — vide par défaut (exact-only, comme en
+        production tant que la table ``skills`` n'est pas vectorisée)."""
+        self._record("skill_embeddings")
+        return {sid: self.skill_vectors[sid] for sid in skill_ids if sid in self.skill_vectors}
+
+    async def preference_title_embeddings(self, user_id: uuid.UUID) -> list[list[float]]:
+        """Vecteurs des intitulés cibles — vide par défaut (seul le vecteur
+        agrégé ``profiles.embedding`` est alors utilisé, comme avant M4)."""
+        self._record("preference_title_embeddings")
+        return list(self.title_vectors.get(user_id, []))
 
     async def get_cached(
         self, profile_id: uuid.UUID, job_id: uuid.UUID
@@ -279,7 +304,7 @@ def canned_explanation() -> dict[str, Any]:
 
 @pytest.fixture
 def llm_provider(canned_explanation: dict[str, Any]) -> FakeProvider:
-    return FakeProvider(canned={"match_explanation": canned_explanation})
+    return FakeProvider(canned={EXPLAIN_TASK: canned_explanation})
 
 
 @pytest.fixture
