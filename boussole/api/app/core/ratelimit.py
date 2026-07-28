@@ -44,3 +44,35 @@ class FixedWindowRateLimiter:
             retry_after = max(1, window_start + window_seconds - now)
             return RateLimitResult(allowed=False, remaining=0, retry_after=retry_after)
         return RateLimitResult(allowed=True, remaining=limit - count, retry_after=0)
+
+    async def refund(
+        self,
+        scope: str,
+        identifier: str,
+        *,
+        window_seconds: int,
+    ) -> bool:
+        """Rend un jeton de la fenêtre COURANTE — quota prélevé à tort.
+
+        Cas d'usage : un traitement asynchrone échoue de notre fait (panne
+        provider, contrôle d'ancrage), et l'utilisateur ne doit pas être
+        décompté pour un échec dont il n'est pas responsable.
+
+        Limite assumée 🟡 : seule la fenêtre courante est remboursable. Si
+        l'échec survient après une bascule de fenêtre, le jeton n'est pas
+        rendu — le rembourser sur la nouvelle fenêtre offrirait un quota
+        supplémentaire non consommé. Les traitements concernés durent des
+        secondes, la bascule est donc marginale ; le remboursement retourne
+        ``False`` dans ce cas, pour que l'appelant puisse le journaliser.
+
+        Jamais en dessous de zéro : un remboursement sur une fenêtre déjà
+        vide (clé expirée) est un no-op.
+        """
+        now = int(time.time())
+        window_start = now - (now % window_seconds)
+        key = f"{self._prefix}:{scope}:{identifier}:{window_start}"
+        current = await self._redis.get(key)
+        if current is None or int(current) <= 0:
+            return False
+        await self._redis.decr(key)
+        return True
