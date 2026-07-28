@@ -23,9 +23,11 @@ répond 404 ; les CV disparaissent au redémarrage. **La production DOIT utilise
 ``s3``.**
 
 :func:`check_storage_configuration` refuse explicitement cette combinaison
-(``ENV=production`` + ``STORAGE_BACKEND=local``) : mieux vaut ne pas démarrer
-que perdre des exports. Elle est destinée à être appelée au démarrage / dans
-``/readyz`` (branchement dans ``app/main.py`` — hors périmètre de ce module).
+(``ENV`` ≠ ``development`` + ``STORAGE_BACKEND=local``) : mieux vaut ne pas
+démarrer que perdre des exports. Elle est appelée au démarrage de l'API
+(``app/main.py``), au niveau MODULE des workers Celery
+(``app/workers/celery_app.py``) et dans ``/readyz`` — complétée là par
+:func:`probe_object_storage`, qui vérifie que le backend répond vraiment.
 
 Chiffrement au repos (09-security-and-privacy §5.6, D09/D23) : ``S3_SSE``
 sélectionne ``aws:kms`` (avec ``S3_KMS_KEY_ID`` si une clé gérée est fournie),
@@ -47,7 +49,30 @@ _KEY_SEGMENT = re.compile(r"^[A-Za-z0-9._-]+$")
 # Codes d'erreur S3 signifiant « objet absent ». ``NoSuchBucket`` en est
 # volontairement exclu : un bucket manquant est une ERREUR DE CONFIGURATION,
 # pas un objet absent — la masquer en 404 reproduirait le bug d'origine.
+#
+# ⚠️ Le code est le SEUL critère : S3 et MinIO répondent HTTP 404 sur
+# ``NoSuchBucket``, si bien qu'un repli sur le statut (``status == 404``)
+# annulait l'exclusion ci-dessus et retraduisait « bucket absent » en « objet
+# absent ». Conséquences observées : export RGPD « archive introuvable », CV
+# marqué ``unreadable``, et purge RGPD rapportant un succès sans avoir rien
+# supprimé. Ne JAMAIS réintroduire de test sur le statut HTTP ici.
 _NOT_FOUND_CODES = frozenset({"NoSuchKey", "NotFound", "404"})
+
+# Codes qui dénoncent une configuration inutilisable (bucket inexistant,
+# credentials ou politique IAM insuffisants) : ils doivent remonter en
+# :class:`StorageConfigurationError` — bruyants, jamais confondus avec un
+# objet absent, et donc jamais avalés par l'idempotence de ``delete``.
+_CONFIGURATION_CODES = frozenset(
+    {
+        "NoSuchBucket",
+        "AccessDenied",
+        "AllAccessDisabled",
+        "InvalidAccessKeyId",
+        "SignatureDoesNotMatch",
+        "InvalidBucketName",
+        "PermanentRedirect",
+    }
+)
 
 # Bornes réseau par défaut (botocore) — un worker ne doit jamais rester
 # suspendu indéfiniment sur le stockage objet.
@@ -94,6 +119,16 @@ class ObjectStorage(Protocol):
         """Supprime l'objet ``key`` — silencieux s'il n'existe pas (idempotent)."""
         ...
 
+    def ping(self) -> None:
+        """Vérifie que le backend est réellement JOIGNABLE (readiness).
+
+        Lève :class:`StorageConfigurationError` si le stockage ne peut pas
+        servir. La seule validation de la CONFIGURATION ne suffit pas : un
+        bucket supprimé ou une politique IAM révoquée laissaient ``/readyz``
+        vert pendant que tous les exports RGPD échouaient.
+        """
+        ...
+
 
 class LocalDiskStorage:
     """Stockage sur disque local (dev/tests) — un fichier par clé.
@@ -127,15 +162,49 @@ class LocalDiskStorage:
         path = self._path(key)
         path.unlink(missing_ok=True)
 
+    def ping(self) -> None:
+        """Racine accessible en écriture (équivalent local de ``HeadBucket``)."""
+        try:
+            self._root.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise StorageConfigurationError(
+                f"stockage local injoignable (racine={self._root}) : {exc.strerror}"
+            ) from exc
+        if not self._root.is_dir():
+            raise StorageConfigurationError(
+                f"stockage local invalide : {self._root} n'est pas un répertoire"
+            )
 
-def _is_not_found(exc: Any) -> bool:
-    """``True`` si un ``ClientError`` botocore signale un objet absent."""
+
+def _error_code(exc: Any) -> str:
+    """Code d'erreur S3 d'un ``ClientError`` botocore (``""`` si absent)."""
     response = getattr(exc, "response", None)
     if not isinstance(response, dict):
-        return False
-    code = str(response.get("Error", {}).get("Code", ""))
-    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-    return code in _NOT_FOUND_CODES or status == 404
+        return ""
+    error = response.get("Error")
+    if not isinstance(error, dict):
+        return ""
+    return str(error.get("Code", ""))
+
+
+def _is_not_found(exc: Any) -> bool:
+    """``True`` si un ``ClientError`` botocore signale un OBJET absent.
+
+    Le statut HTTP n'est délibérément pas consulté : voir
+    :data:`_NOT_FOUND_CODES`.
+    """
+    return _error_code(exc) in _NOT_FOUND_CODES
+
+
+def _raise_if_misconfigured(exc: Any, bucket: str) -> None:
+    """Traduit un défaut de bucket / de droits en erreur de CONFIGURATION."""
+    code = _error_code(exc)
+    if code in _CONFIGURATION_CODES:
+        raise StorageConfigurationError(
+            f"stockage objet inutilisable (bucket={bucket!r}, code S3={code}) : "
+            "bucket inexistant ou droits insuffisants. Ce n'est PAS un objet "
+            "absent — vérifier S3_BUCKET, la région et la politique IAM."
+        ) from exc
 
 
 class S3ObjectStorage:
@@ -247,12 +316,18 @@ class S3ObjectStorage:
     # ------------------------------------------------------------ contrat
 
     def put(self, key: str, data: bytes) -> None:
-        self.client.put_object(
-            Bucket=self._bucket,
-            Key=validate_key(key),
-            Body=data,
-            **self.encryption_params(),
-        )
+        from botocore.exceptions import ClientError
+
+        try:
+            self.client.put_object(
+                Bucket=self._bucket,
+                Key=validate_key(key),
+                Body=data,
+                **self.encryption_params(),
+            )
+        except ClientError as exc:
+            _raise_if_misconfigured(exc, self._bucket)
+            raise
 
     def get(self, key: str) -> bytes:
         from botocore.exceptions import ClientError
@@ -261,6 +336,7 @@ class S3ObjectStorage:
         try:
             response = self.client.get_object(Bucket=self._bucket, Key=validated)
         except ClientError as exc:
+            _raise_if_misconfigured(exc, self._bucket)
             if _is_not_found(exc):
                 raise ObjectNotFoundError(key) from exc
             raise
@@ -274,12 +350,37 @@ class S3ObjectStorage:
         try:
             self.client.delete_object(Bucket=self._bucket, Key=validated)
         except ClientError as exc:
+            # Un bucket absent ou des droits refusés doivent être BRUYANTS :
+            # avalés ici, ils faisaient rapporter à la purge RGPD un succès
+            # alors que rien n'avait été supprimé.
+            _raise_if_misconfigured(exc, self._bucket)
             # ``DeleteObject`` est déjà idempotent sur S3 ; certains backends
             # compatibles répondent tout de même 404 — le contrat impose le
             # silence (cf. purge RGPD, qui rejoue les suppressions).
             if _is_not_found(exc):
                 return
             raise
+
+    def ping(self) -> None:
+        """Sonde de disponibilité (``HeadBucket``) — readiness (13).
+
+        Lève :class:`StorageConfigurationError` si le bucket est absent ou
+        inaccessible. Bornée par les timeouts botocore du client
+        (``S3_CONNECT_TIMEOUT_SECONDS`` / ``S3_READ_TIMEOUT_SECONDS``,
+        ``S3_MAX_ATTEMPTS``) — voir aussi la borne d'attente côté ``/readyz``.
+        """
+        from botocore.exceptions import ClientError
+
+        try:
+            self.client.head_bucket(Bucket=self._bucket)
+        except ClientError as exc:
+            _raise_if_misconfigured(exc, self._bucket)
+            # ``HeadBucket`` ne renvoie pas de corps : un bucket inconnu
+            # remonte en « 404 » nu, qu'on ne peut pas distinguer d'un objet
+            # absent — ici, il n'y a pas d'objet, donc c'est bien le bucket.
+            raise StorageConfigurationError(
+                f"stockage objet injoignable (bucket={self._bucket!r}) : {type(exc).__name__}"
+            ) from exc
 
 
 # --------------------------------------------------------------- fabrique
@@ -331,16 +432,21 @@ def check_storage_configuration(settings: Settings | None = None) -> None:
 
     Lève :class:`StorageConfigurationError` si :
 
-    - ``ENV=production`` avec ``STORAGE_BACKEND=local`` : l'API et les workers
-      ne partagent pas de disque, F-Q (export RGPD) répondrait 404 et les CV
-      seraient perdus au redémarrage. Refuser de démarrer est le comportement
-      sûr ;
-    - ``ENV=production`` avec ``S3_SSE=none`` : D09/§5.6 imposent le
-      chiffrement au repos ;
+    - ``STORAGE_BACKEND=local`` hors développement (``staging`` **et**
+      ``production``) : l'API et les workers ne partagent pas de disque, F-Q
+      (export RGPD) répondrait 404 et les CV seraient perdus au redémarrage.
+      Refuser de démarrer est le comportement sûr ;
+    - ``S3_SSE=none`` hors développement : D09/§5.6 imposent le chiffrement au
+      repos ;
     - ``STORAGE_BACKEND=s3`` sans bucket configuré.
 
-    ⚠️ Non branchée dans ``app/main.py`` (hors périmètre) : à appeler dans le
-    ``lifespan`` de démarrage et/ou ``/readyz``.
+    Le seuil est ``env != "development"`` et non « égal à production » : un
+    staging multi-conteneurs perdait exactement les mêmes données, et un
+    ``ENV`` mal orthographié désactivait tout (voir :data:`Environment`, dont
+    le vocabulaire est désormais fermé).
+
+    Branchée dans ``app/main.py`` (démarrage + ``/readyz``) et **au niveau
+    module** de ``app/workers/celery_app.py``.
     """
     settings = settings if settings is not None else get_settings()
     backend = getattr(settings, "storage_backend", "local")
@@ -351,22 +457,34 @@ def check_storage_configuration(settings: Settings | None = None) -> None:
     if backend == "s3" and not getattr(settings, "s3_bucket", ""):
         raise StorageConfigurationError("STORAGE_BACKEND=s3 exige un S3_BUCKET non vide")
 
-    if not getattr(settings, "is_production", False):
+    if not getattr(settings, "is_hardened", False):
         return
 
+    env = getattr(settings, "env", "production")
     if backend == "local":
         raise StorageConfigurationError(
-            "STORAGE_BACKEND=local est interdit en production : le disque n'est pas "
-            "partagé entre l'API et les workers Celery — les exports RGPD seraient "
-            "introuvables (404) et les CV perdus au redémarrage. Configurer "
-            "STORAGE_BACKEND=s3 (bucket UE, D09)."
+            f"STORAGE_BACKEND=local est interdit en {env} (tout ce qui n'est pas "
+            "development) : le disque n'est pas partagé entre l'API et les workers "
+            "Celery — les exports RGPD seraient introuvables (404) et les CV perdus "
+            "au redémarrage. Configurer STORAGE_BACKEND=s3 (bucket UE, D09)."
         )
     if getattr(settings, "s3_sse", "AES256") == "none":
         raise StorageConfigurationError(
-            "S3_SSE=none est interdit en production : le chiffrement au repos est "
-            "exigé (D09, 09-security-and-privacy §5.6). Utiliser aws:kms "
-            "(S3_KMS_KEY_ID) ou, au minimum, AES256."
+            f"S3_SSE=none est interdit en {env} (tout ce qui n'est pas development) : "
+            "le chiffrement au repos est exigé (D09, 09-security-and-privacy §5.6). "
+            "Utiliser aws:kms (S3_KMS_KEY_ID) ou, au minimum, AES256."
         )
+
+
+def probe_object_storage() -> None:
+    """Sonde de readiness RÉELLE du stockage objet (13).
+
+    ``check_storage_configuration`` ne lit que la configuration : un bucket
+    supprimé, une clé révoquée ou un MinIO éteint laissaient ``/readyz`` vert.
+    Cette sonde ajoute un ``HeadBucket`` (ou un contrôle de racine en local),
+    borné par les timeouts botocore du client.
+    """
+    get_object_storage().ping()
 
 
 def get_object_storage() -> ObjectStorage:

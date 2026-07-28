@@ -21,6 +21,7 @@ from typing import Any
 import boto3
 import pytest
 from moto import mock_aws
+from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.core.storage import (
@@ -32,6 +33,7 @@ from app.core.storage import (
     StorageKeyError,
     check_storage_configuration,
     get_object_storage,
+    probe_object_storage,
     reset_object_storage_cache,
 )
 
@@ -389,3 +391,198 @@ class TestContratPartage:
         # KeyError : la hiérarchie d'exceptions fait partie du contrat.
         with pytest.raises(KeyError):
             storage.get("k/absent.bin")
+
+
+# ------------------------------------------- bucket absent / droits refusés
+
+
+def _client_error(code: str, status: int, operation: str = "GetObject") -> Any:
+    """``ClientError`` botocore réaliste — S3 répond 404 sur ``NoSuchBucket``."""
+    from botocore.exceptions import ClientError
+
+    return ClientError(
+        {
+            "Error": {"Code": code, "Message": code},
+            "ResponseMetadata": {"HTTPStatusCode": status},
+        },
+        operation,
+    )
+
+
+class _ExplodingClient:
+    """Client boto3 minimal qui lève toujours la même erreur S3."""
+
+    def __init__(self, error: Any) -> None:
+        self.error = error
+        self.calls: list[str] = []
+
+    def _raise(self, operation: str) -> Any:
+        self.calls.append(operation)
+        raise self.error
+
+    def get_object(self, **_: object) -> Any:
+        return self._raise("GetObject")
+
+    def put_object(self, **_: object) -> Any:
+        return self._raise("PutObject")
+
+    def delete_object(self, **_: object) -> Any:
+        return self._raise("DeleteObject")
+
+    def head_bucket(self, **_: object) -> Any:
+        return self._raise("HeadBucket")
+
+
+def _storage_with_error(code: str, status: int = 404) -> S3ObjectStorage:
+    storage = S3ObjectStorage(BUCKET, region=REGION, **CREDENTIALS)
+    storage._client = _ExplodingClient(_client_error(code, status))
+    return storage
+
+
+class TestBucketAbsentEtDroitsRefuses:
+    """M4 — un bucket manquant N'EST PAS un objet absent.
+
+    ``_is_not_found`` testait ``code in _NOT_FOUND_CODES **or** status == 404``.
+    Or S3 et MinIO répondent HTTP 404 sur ``NoSuchBucket`` : le repli sur le
+    statut annulait l'exclusion pourtant documentée du code. Conséquences
+    vérifiées : export RGPD « archive absente », CV marqué ``unreadable``, et
+    purge RGPD rapportant un succès sans avoir rien supprimé.
+    """
+
+    def test_get_sur_bucket_absent_est_une_erreur_de_configuration(self) -> None:
+        storage = _storage_with_error("NoSuchBucket", status=404)
+
+        with pytest.raises(StorageConfigurationError, match="NoSuchBucket"):
+            storage.get("privacy-exports/user-1/export.json")
+
+    def test_get_sur_bucket_absent_n_est_pas_un_object_not_found(self) -> None:
+        storage = _storage_with_error("NoSuchBucket", status=404)
+
+        # Le point exact de la régression : traduit en ObjectNotFoundError,
+        # l'incident devenait un 404 métier « archive introuvable ».
+        with pytest.raises(Exception) as excinfo:
+            storage.get("privacy-exports/user-1/export.json")
+        assert not isinstance(excinfo.value, ObjectNotFoundError)
+        assert not isinstance(excinfo.value, KeyError)
+
+    def test_delete_sur_bucket_absent_ne_rapporte_pas_un_faux_succes(self) -> None:
+        # Le plus grave : la purge RGPD rejoue les suppressions et considérait
+        # « bucket absent » comme « déjà supprimé » — succès rapporté, données
+        # toujours en place.
+        storage = _storage_with_error("NoSuchBucket", status=404)
+
+        with pytest.raises(StorageConfigurationError):
+            storage.delete("cv/user-1/doc.pdf")
+
+    def test_droits_refuses_remontent_en_erreur_de_configuration(self) -> None:
+        storage = _storage_with_error("AccessDenied", status=403)
+
+        with pytest.raises(StorageConfigurationError, match="AccessDenied"):
+            storage.get("cv/user-1/doc.pdf")
+
+    def test_droits_refuses_sur_delete_ne_sont_pas_avales(self) -> None:
+        storage = _storage_with_error("AccessDenied", status=403)
+
+        with pytest.raises(StorageConfigurationError):
+            storage.delete("cv/user-1/doc.pdf")
+
+    def test_droits_refuses_sur_put_remontent(self) -> None:
+        storage = _storage_with_error("AccessDenied", status=403)
+
+        with pytest.raises(StorageConfigurationError):
+            storage.put("cv/user-1/doc.pdf", b"x")
+
+    @pytest.mark.parametrize("code", ["InvalidAccessKeyId", "SignatureDoesNotMatch"])
+    def test_credentials_invalides_remontent_en_configuration(self, code: str) -> None:
+        with pytest.raises(StorageConfigurationError):
+            _storage_with_error(code, status=403).get("cv/a/b.pdf")
+
+    def test_une_cle_reellement_absente_reste_un_object_not_found(self) -> None:
+        # Contre-épreuve : le correctif ne doit pas casser le cas nominal.
+        storage = _storage_with_error("NoSuchKey", status=404)
+
+        with pytest.raises(ObjectNotFoundError):
+            storage.get("cv/user-1/absent.pdf")
+
+    def test_un_404_nu_sans_code_connu_n_est_plus_traduit_en_absent(self) -> None:
+        # Le statut HTTP ne décide plus de rien : seul le code compte.
+        storage = _storage_with_error("SomeUnknownError", status=404)
+
+        with pytest.raises(Exception) as excinfo:
+            storage.get("cv/user-1/doc.pdf")
+        assert not isinstance(excinfo.value, ObjectNotFoundError)
+
+
+class TestSondeDeJoignabilite:
+    """(13) ``/readyz`` ne testait que la configuration — un bucket supprimé
+    laissait le service « ready » pendant que tout échouait."""
+
+    def test_ping_passe_sur_un_bucket_existant(self, s3_storage: S3ObjectStorage) -> None:
+        assert s3_storage.ping() is None
+
+    def test_ping_echoue_sur_bucket_absent(self) -> None:
+        with pytest.raises(StorageConfigurationError):
+            _storage_with_error("NoSuchBucket", status=404).ping()
+
+    def test_ping_echoue_sur_droits_refuses(self) -> None:
+        with pytest.raises(StorageConfigurationError):
+            _storage_with_error("AccessDenied", status=403).ping()
+
+    def test_ping_local_cree_la_racine(self, tmp_path: Path) -> None:
+        storage = LocalDiskStorage(tmp_path / "absent")
+        storage.ping()
+        assert (tmp_path / "absent").is_dir()
+
+    def test_ping_local_refuse_une_racine_qui_est_un_fichier(self, tmp_path: Path) -> None:
+        fichier = tmp_path / "pas-un-repertoire"
+        fichier.write_bytes(b"x")
+
+        with pytest.raises(StorageConfigurationError):
+            LocalDiskStorage(fichier).ping()
+
+    def test_probe_object_storage_suit_la_configuration(
+        self, use_settings: Callable[..., Settings], tmp_path: Path
+    ) -> None:
+        use_settings(storage_backend="local", storage_local_path=str(tmp_path / "racine"))
+        probe_object_storage()
+        assert (tmp_path / "racine").is_dir()
+
+
+class TestSeuilDeDurcissementParEnvironnement:
+    """M5 — le refus de démarrer était contournable par une chaîne."""
+
+    @pytest.mark.parametrize("env", ["staging", "production"])
+    def test_le_backend_local_est_refuse_des_qu_on_quitte_le_developpement(
+        self, env: str
+    ) -> None:
+        # `staging` n'était couvert par AUCUN contrôle : mêmes conteneurs
+        # distincts, mêmes exports perdus.
+        with pytest.raises(StorageConfigurationError):
+            check_storage_configuration(_settings(env=env, storage_backend="local"))
+
+    @pytest.mark.parametrize("env", ["staging", "production"])
+    def test_le_chiffrement_au_repos_est_exige_des_qu_on_quitte_le_developpement(
+        self, env: str
+    ) -> None:
+        with pytest.raises(StorageConfigurationError, match="S3_SSE"):
+            check_storage_configuration(
+                _settings(env=env, storage_backend="s3", s3_sse="none")
+            )
+
+    @pytest.mark.parametrize("valeur", ["prod", "Production", "PRODUCTION", " production "])
+    def test_aucune_variante_d_orthographe_ne_desactive_les_controles(
+        self, valeur: str
+    ) -> None:
+        """Le cœur du contournement : ``is_production`` comparait par égalité
+        exacte sur un ``str`` libre. ``ENV=prod`` désactivait TOUS les
+        garde-fous — stockage local accepté, chiffrement facultatif, docs
+        OpenAPI exposées — sans le moindre message."""
+        try:
+            settings = _settings(env=valeur, storage_backend="local")
+        except ValidationError:
+            return  # vocabulaire fermé : la valeur est rejetée en amont
+        # …ou bien elle a été normalisée vers `production` : dans les deux cas
+        # le stockage local doit être refusé.
+        assert settings.env == "production"
+        with pytest.raises(StorageConfigurationError):
+            check_storage_configuration(settings)

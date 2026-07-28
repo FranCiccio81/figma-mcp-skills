@@ -23,8 +23,9 @@ métadonnées agrégées (coût, latence, taux d'échec) restent exploitables.
 
 Écriture depuis un appelant SYNCHRONE : l'interface ``LLMProvider`` est
 synchrone (``complete_json``) alors que la base est async. La journalisation
-est donc *planifiée* (:class:`DatabaseJournal`) sur la boucle courante quand
-il y en a une, exécutée par ``asyncio.run`` sinon, et **ne peut jamais faire
+(:class:`DatabaseJournal`) est donc exécutée jusqu'à son terme par
+:func:`_schedule` — sur une boucle éphémère, dans un thread dédié si une
+boucle tourne déjà dans le thread appelant — et **ne peut jamais faire
 échouer l'appel IA** : toute exception d'écriture est journalisée et avalée.
 """
 
@@ -34,6 +35,7 @@ import importlib
 import logging
 import uuid
 from collections.abc import Callable, Coroutine, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime
@@ -124,6 +126,17 @@ class AiCallRecord:
     error_code: str | None = None
 
     def __post_init__(self) -> None:
+        if self.task not in AI_TASKS:
+            # La colonne ``task`` est l'enum SQL ``ai_task`` : une valeur hors
+            # vocabulaire ne peut PAS être insérée. Sans ce contrôle, l'erreur
+            # ne se manifestait qu'au COMMIT — dans ``persist_ai_call``, qui
+            # avale tout — et la ligne disparaissait en silence. C'est ainsi
+            # que ``match_explanation`` (au lieu de ``explain_match``) a fait
+            # perdre 100 % du journal des explications, sans compter le
+            # mauvais modèle et le mauvais timeout côté provider (M6).
+            raise ValueError(
+                f"tâche IA hors vocabulaire fermé : {self.task!r} (connues : {list(AI_TASKS)})"
+            )
         if self.status not in CALL_STATUSES:
             raise ValueError(f"statut d'appel inconnu : {self.status!r}")
         if self.error_code is not None and self.error_code not in ERROR_CODES:
@@ -200,22 +213,43 @@ async def persist_ai_call(
         )
 
 
-#: Références fortes aux tâches de journalisation en vol — sans elles, la
-#: boucle asyncio peut collecter la tâche avant son exécution.
+#: Références fortes aux tâches de journalisation en vol. :func:`_schedule`
+#: n'en crée plus (voir sa docstring) ; le jeu reste le point de rendez-vous
+#: des ordonnanceurs INJECTÉS (tests, intégrations qui préfèrent une écriture
+#: réellement différée) et alimente :func:`drain_pending_writes`.
 _PENDING: set[asyncio.Task[None]] = set()
 
 
 def _schedule(coro: Coroutine[Any, Any, None]) -> None:
-    """Exécute ``coro`` sans bloquer l'appelant synchrone."""
+    """Exécute ``coro`` — TOUJOURS jusqu'à son terme, sans réentrer la boucle.
+
+    Le provider est synchrone ; l'écriture est async. Trois contextes
+    d'appel, un seul comportement attendu : la ligne est écrite.
+
+    ⚠️ Ne PAS revenir à ``loop.create_task(...)`` (M7). Les tâches Celery
+    exécutent tout leur cycle dans un ``asyncio.run`` et appellent le
+    provider SYNCHRONEMENT depuis cette coroutine : une tâche planifiée y
+    est annulée par ``asyncio.run`` à la fermeture de la boucle, avant
+    d'avoir pu écrire — et l'annulation est avalée par
+    :func:`persist_ai_call`. Vérifié sur PostgreSQL réel : ``ai_calls``
+    restait VIDE pour ``extract_cv``, ``extract_job`` et toutes les
+    ``generate_*``, c'est-à-dire l'intégralité du volume des workers.
+
+    Quand une boucle tourne déjà DANS ce thread, on ne peut ni ``await``
+    (l'appelant est synchrone) ni réentrer la boucle : la coroutine est
+    exécutée dans un thread dédié, avec sa propre boucle, et l'appelant
+    l'attend. Le coût (une écriture bornée, après un appel LLM de plusieurs
+    secondes) est négligeable devant la perte totale du journal.
+    """
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
-        # Hors boucle (script, worker synchrone) : exécution immédiate.
+        # Hors boucle (script, thread de threadpool côté API) : exécution
+        # immédiate sur une boucle éphémère.
         asyncio.run(coro)
         return
-    task = loop.create_task(coro)
-    _PENDING.add(task)
-    task.add_done_callback(_PENDING.discard)
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ai-journal") as pool:
+        pool.submit(asyncio.run, coro).result()
 
 
 async def drain_pending_writes() -> None:

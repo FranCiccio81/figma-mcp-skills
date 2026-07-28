@@ -25,6 +25,24 @@ réellement exploitable par l'application.
 
 Rien d'autre n'est modifié : colonnes, types et FK ``ON DELETE SET NULL``
 (qui porte déjà la sémantique d'anonymisation) sont conformes.
+
+MIGRATION SANS INTERRUPTION (12)
+--------------------------------
+``ai_calls`` est la table la plus volumineuse du système (≤ 10 k lignes/jour
+pour ``extract_job`` seule). Écrite naïvement, cette migration prend deux
+verrous bloquants sur toute la durée du traitement :
+
+- ``ADD CONSTRAINT … CHECK`` prend un ``ACCESS EXCLUSIVE`` **pendant le scan
+  complet** de la table : aucun ``INSERT`` de journal ne passe, donc aucun
+  appel IA n'est journalisé, pendant plusieurs minutes ;
+- ``CREATE INDEX`` (sans ``CONCURRENTLY``) prend un ``SHARE`` : les écritures
+  sont bloquées le temps de la construction.
+
+D'où : ``NOT VALID`` (le verrou fort ne dure que le temps de poser la
+contrainte — elle s'applique dès lors aux nouvelles lignes) puis
+``VALIDATE CONSTRAINT`` (scan sous ``SHARE UPDATE EXCLUSIVE``, qui laisse
+passer les écritures), et ``CREATE INDEX CONCURRENTLY``. Ce dernier ne peut
+pas s'exécuter dans une transaction : d'où le ``autocommit_block``.
 """
 
 import sqlalchemy as sa
@@ -39,15 +57,35 @@ _STATUS_CHECK = "status IN ('success', 'schema_retry', 'failed')"
 
 
 def upgrade() -> None:
-    op.create_check_constraint("ck_ai_calls_status", "ai_calls", sa.text(_STATUS_CHECK))
-    op.create_index(
-        "ix_ai_calls_user_id",
-        "ai_calls",
-        ["user_id"],
-        postgresql_where=sa.text("user_id IS NOT NULL"),
+    # 1. Contrainte posée NOT VALID : verrou fort, mais instantané.
+    op.execute(
+        sa.text(
+            f"ALTER TABLE ai_calls ADD CONSTRAINT ck_ai_calls_status "
+            f"CHECK ({_STATUS_CHECK}) NOT VALID"
+        )
     )
+    # 2. Validation de l'existant : scan sous SHARE UPDATE EXCLUSIVE — les
+    #    INSERT du journal continuent de passer.
+    op.execute(sa.text("ALTER TABLE ai_calls VALIDATE CONSTRAINT ck_ai_calls_status"))
+    # 3. Index partiel CONCURRENTLY (hors transaction, d'où l'autocommit).
+    with op.get_context().autocommit_block():
+        op.create_index(
+            "ix_ai_calls_user_id",
+            "ai_calls",
+            ["user_id"],
+            unique=False,
+            postgresql_where=sa.text("user_id IS NOT NULL"),
+            postgresql_concurrently=True,
+            if_not_exists=True,
+        )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_ai_calls_user_id", table_name="ai_calls")
+    with op.get_context().autocommit_block():
+        op.drop_index(
+            "ix_ai_calls_user_id",
+            table_name="ai_calls",
+            postgresql_concurrently=True,
+            if_exists=True,
+        )
     op.drop_constraint("ck_ai_calls_status", "ai_calls", type_="check")

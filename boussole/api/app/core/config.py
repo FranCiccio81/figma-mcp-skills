@@ -6,16 +6,27 @@ de développement local uniquement.
 """
 
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+#: Vocabulaire FERMÉ des environnements. Il était auparavant un ``str`` libre,
+#: comparé par égalité exacte dans :attr:`Settings.is_production` : ``ENV=prod``,
+#: ``ENV=Production``, ``ENV=PRODUCTION`` ou ``ENV="production "`` désactivaient
+#: TOUS les contrôles de démarrage (stockage local en prod, chiffrement au repos
+#: absent, docs OpenAPI exposées) sans la moindre alerte — un déploiement mal
+#: orthographié valait donc désactivation silencieuse de la sécurité.
+Environment = Literal["development", "staging", "production"]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Environnement : development | staging | production
-    env: str = "development"
+    # Environnement : development | staging | production.
+    # Toute autre valeur (y compris ``prod``) fait ÉCHOUER le démarrage : une
+    # faute de frappe ne doit jamais dégrader silencieusement les garde-fous.
+    env: Environment = "development"
     debug: bool = False
     api_prefix: str = "/api/v1"
 
@@ -156,6 +167,21 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     otel_exporter_otlp_endpoint: str = ""
 
+    @field_validator("env", mode="before")
+    @classmethod
+    def _normalize_env(cls, value: Any) -> Any:
+        """Tolère la casse et les espaces parasites, RIEN d'autre 🟡.
+
+        ``ENV=" Production "`` (copier-coller depuis un fichier de secrets,
+        indentation YAML) devient ``production`` ; ``ENV=prod`` reste REFUSÉ —
+        un alias muet redeviendrait un contournement. Le compromis est
+        volontaire : normaliser ce qui ne change pas le sens, refuser tout le
+        reste.
+        """
+        if isinstance(value, str):
+            return value.strip().lower()
+        return value
+
     @property
     def session_ttl_seconds(self) -> int:
         return self.session_ttl_days * 24 * 3600
@@ -163,6 +189,17 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @property
+    def is_hardened(self) -> bool:
+        """``True`` dès qu'on quitte le développement — **staging inclus**.
+
+        Les contrôles de démarrage (stockage partagé, chiffrement au repos)
+        ne visaient que ``production`` : un staging multi-conteneurs en
+        ``STORAGE_BACKEND=local`` perdait donc ses exports exactement comme la
+        production, sans aucun refus de démarrage.
+        """
+        return self.env != "development"
 
 
 @lru_cache

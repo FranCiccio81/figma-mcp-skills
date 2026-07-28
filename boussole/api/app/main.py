@@ -7,6 +7,7 @@
 - /healthz (liveness) et /readyz (readiness : DB + deux Redis).
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -18,6 +19,7 @@ from collections.abc import Awaitable, Callable
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from redis.asyncio import Redis
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import Settings, get_settings
@@ -26,7 +28,11 @@ from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
 from app.core.security import SessionStore, csrf_tokens_match
-from app.core.storage import StorageConfigurationError, check_storage_configuration
+from app.core.storage import (
+    StorageConfigurationError,
+    check_storage_configuration,
+    probe_object_storage,
+)
 from app.modules.applications.router import router as applications_router
 from app.modules.auth.router import router as auth_router
 from app.modules.explanations.router import router as explanations_router
@@ -267,12 +273,39 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def _storage_configured() -> bool:
-    """Sonde de readiness du stockage objet (configuration seule, pas d'E/S)."""
+#: Borne d'attente de la sonde de stockage dans ``/readyz`` 🟡. Le client
+#: botocore a déjà ses propres timeouts (``S3_*_TIMEOUT_SECONDS`` ×
+#: ``S3_MAX_ATTEMPTS``), mais leur produit peut dépasser la minute : la sonde
+#: de readiness doit répondre bien avant l'orchestrateur.
+READYZ_STORAGE_TIMEOUT_SECONDS = 3.0
+
+
+async def _storage_ready() -> bool:
+    """Readiness du stockage objet : configuration **puis** joignabilité (13).
+
+    L'ancienne sonde ne relisait que la configuration : un bucket supprimé,
+    une clé révoquée ou un MinIO éteint laissaient ``/readyz`` vert pendant
+    que tous les imports de CV et exports RGPD échouaient. On ajoute un
+    ``HeadBucket`` réel, exécuté dans un threadpool (boto3 est bloquant) et
+    borné par :data:`READYZ_STORAGE_TIMEOUT_SECONDS`.
+    """
     try:
         check_storage_configuration()
     except StorageConfigurationError:
         logger.error("storage_misconfigured")
+        return False
+    try:
+        await asyncio.wait_for(
+            run_in_threadpool(probe_object_storage),
+            timeout=READYZ_STORAGE_TIMEOUT_SECONDS,
+        )
+    except TimeoutError:
+        # ``wait_for`` n'interrompt pas le thread : la sonde continue en
+        # arrière-plan mais /readyz ne l'attend plus (fail-closed).
+        logger.error("storage_probe_timeout")
+        return False
+    except Exception:
+        logger.error("storage_unreachable")
         return False
     return True
 
@@ -345,7 +378,7 @@ def create_app(
             "database": await check_database(),
             "redis_persistent": await check_redis(app.state.redis_persistent_factory()),
             "redis_cache": await check_redis(app.state.redis_cache_factory()),
-            "storage": _storage_configured(),
+            "storage": await _storage_ready(),
         }
         if all(checks.values()):
             return JSONResponse({"status": "ready", "checks": checks})

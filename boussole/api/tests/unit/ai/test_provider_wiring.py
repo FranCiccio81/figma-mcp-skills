@@ -85,3 +85,75 @@ class TestProviderSelection:
         """Garde-fou Q4/Q38 : sans configuration explicite, aucun appel réseau
         n'est possible — l'activation relève d'une décision juridique."""
         assert get_settings().ai_provider == "fake"
+
+    def test_ingestion_uses_fake_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from app.modules.ingestion import service as ingestion_service
+
+        monkeypatch.setattr(
+            ingestion_service, "get_settings", lambda: _settings_with_provider("fake")
+        )
+        assert isinstance(ingestion_service.get_extraction_provider(), FakeProvider)
+
+    def test_ingestion_delegates_to_factory_when_configured(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """M8 — ``extract_job`` n'atteignait JAMAIS la fabrique.
+
+        ``normalize_raw`` construisait ``FakeProvider()`` en dur, sans jamais
+        consulter ``AI_PROVIDER`` : aucune configuration ne pouvait activer un
+        provider réel sur le plus gros volume du système (≤ 10 k appels/jour,
+        08 §2.2), et le secours LLM de 07 §5.2 retournait systématiquement une
+        extraction vide.
+        """
+        from app.modules.ingestion import service as ingestion_service
+
+        monkeypatch.setattr(
+            ingestion_service, "get_settings", lambda: _settings_with_provider("anthropic")
+        )
+        monkeypatch.setattr(
+            ingestion_service, "get_llm_provider", lambda task: _Sentinel()
+        )
+        assert isinstance(ingestion_service.get_extraction_provider(), _Sentinel)
+
+    def test_normalize_raw_uses_the_configured_provider(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Le câblage doit tenir au POINT D'APPEL, pas seulement dans un
+        helper que personne n'utilise."""
+        from app.modules.ingestion import service as ingestion_service
+        from app.modules.ingestion.connectors.base import RawJob
+
+        vus: list[str] = []
+
+        class _Recording:
+            def complete_json(self, task: str, *args: object, **kwargs: object) -> dict:
+                vus.append(task)
+                return {
+                    "skills_required": [],
+                    "skills_nice": [],
+                    "languages": [],
+                    "warnings": [],
+                }
+
+        monkeypatch.setattr(
+            ingestion_service, "get_settings", lambda: _settings_with_provider("anthropic")
+        )
+        monkeypatch.setattr(
+            ingestion_service, "get_llm_provider", lambda task: _Recording()
+        )
+
+        ingestion_service.normalize_raw(
+            RawJob(
+                external_ref="ref-1",
+                title="Développeuse Python senior",
+                company="Acme",
+                description="Poste chez Acme, stack Python et PostgreSQL.",
+                url="https://example.test/offres/ref-1",
+                payload={},
+            ),
+            source_slug="france-travail",
+        )
+
+        # Sans le correctif, `vus` reste vide : le FakeProvider en dur avait
+        # absorbé l'appel.
+        assert vus == ["extract_job"]

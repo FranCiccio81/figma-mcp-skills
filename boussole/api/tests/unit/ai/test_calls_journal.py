@@ -7,8 +7,10 @@ aucun champ de contenu) et vérifiée explicitement.
 
 import asyncio
 import uuid
+from unittest import mock
 
 import pytest
+from starlette.concurrency import run_in_threadpool
 
 from app.ai.calls import (
     AI_TASKS,
@@ -80,6 +82,30 @@ class TestStructureDuJournal:
         with pytest.raises(ValueError, match="code d'erreur"):
             a_record(status="failed", error_code="Ada Lovelace n'a pas de diplôme")
 
+    @pytest.mark.parametrize("task", AI_TASKS)
+    def test_les_taches_de_l_enum_sont_acceptees(self, task: str) -> None:
+        assert a_record(task=task).task == task
+
+    def test_une_tache_hors_enum_est_refusee(self) -> None:
+        """M6 : ``task`` est l'enum SQL ``ai_task``. Une valeur inconnue ne
+        pouvait être détectée qu'au COMMIT — dans ``persist_ai_call``, qui
+        avale toute erreur : la ligne disparaissait sans le moindre signal.
+        C'est ainsi que ``match_explanation`` a coûté 100 % du journal des
+        explications (et, côté provider, le mauvais modèle et un timeout ×7,5).
+        """
+        with pytest.raises(ValueError, match="tâche"):
+            a_record(task="match_explanation")
+
+        with pytest.raises(ValueError, match="tâche"):
+            a_record(task="generate")
+
+    def test_le_nom_de_tache_du_service_explanations_est_dans_l_enum(self) -> None:
+        from app.modules.explanations.service import TASK
+
+        # Le point d'appel réel, pas seulement une constante isolée.
+        assert TASK in AI_TASKS
+        assert a_record(task=TASK).task == "explain_match"
+
     def test_les_taches_couvrent_l_enum_sql(self) -> None:
         assert AI_TASKS == (
             "extract_cv", "extract_job", "explain_match", "generate_email",
@@ -149,3 +175,74 @@ class TestEcritureNonBloquante:
 
     def test_le_journal_inerte_ne_leve_jamais(self) -> None:
         assert NullJournal().record(a_record()) is None
+
+
+class TestEcritureDepuisUnWorkerCelery:
+    """M7 — les lignes ``ai_calls`` des workers étaient TOUTES perdues.
+
+    Les tâches Celery exécutent leur cycle via ``asyncio.run`` et appellent le
+    provider SYNCHRONEMENT depuis cette coroutine. L'ordonnanceur faisait
+    ``loop.create_task(...)`` : la boucle se refermait avant l'exécution, la
+    tâche était annulée, et l'annulation avalée. Vérifié sur PostgreSQL réel :
+    table vide pour ``extract_cv``, ``extract_job`` et toutes les
+    ``generate_*``.
+    """
+
+    def test_l_ecriture_aboutit_depuis_une_coroutine_asyncio_run(self) -> None:
+        ecrits: list[AiCallRecord] = []
+
+        async def _write(record: AiCallRecord, factory: object = None) -> None:
+            # Un point de suspension : la coroutine a besoin d'un tour de
+            # boucle, exactement comme une écriture SQL réelle.
+            await asyncio.sleep(0)
+            ecrits.append(record)
+
+        record = a_record()
+
+        async def _celery_like_cycle() -> None:
+            # Appel SYNCHRONE du provider depuis la coroutine de la tâche.
+            DatabaseJournal().record(record)
+
+        # Reproduit `_run(...)` des workers (cv_tasks, generation_tasks…).
+        with mock.patch("app.ai.calls.persist_ai_call", _write):
+            asyncio.run(_celery_like_cycle())
+
+        assert ecrits == [record], "la ligne ai_calls a été perdue à la fermeture de la boucle"
+
+    def test_l_ecriture_aboutit_hors_de_toute_boucle(self) -> None:
+        ecrits: list[AiCallRecord] = []
+
+        async def _write(record: AiCallRecord, factory: object = None) -> None:
+            await asyncio.sleep(0)
+            ecrits.append(record)
+
+        record = a_record()
+        with mock.patch("app.ai.calls.persist_ai_call", _write):
+            DatabaseJournal().record(record)  # contexte purement synchrone
+
+        assert ecrits == [record]
+
+    async def test_l_ecriture_aboutit_depuis_un_thread_de_threadpool(self) -> None:
+        # Chemin de l'API après C1 : le provider tourne dans un thread du
+        # threadpool Starlette, où aucune boucle ne tourne.
+        ecrits: list[AiCallRecord] = []
+
+        async def _write(record: AiCallRecord, factory: object = None) -> None:
+            await asyncio.sleep(0)
+            ecrits.append(record)
+
+        record = a_record()
+        with mock.patch("app.ai.calls.persist_ai_call", _write):
+            await run_in_threadpool(DatabaseJournal().record, record)
+
+        assert ecrits == [record]
+
+    def test_une_ecriture_en_echec_ne_remonte_jamais_a_l_appelant(self) -> None:
+        async def _boom(record: AiCallRecord, factory: object = None) -> None:
+            raise RuntimeError("base injoignable")
+
+        async def _celery_like_cycle() -> None:
+            DatabaseJournal().record(a_record())
+
+        with mock.patch("app.ai.calls.persist_ai_call", _boom):
+            asyncio.run(_celery_like_cycle())  # aucune exception ne sort

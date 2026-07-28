@@ -116,3 +116,16 @@ SAMPLE_SCHEMA: dict = {
 def _reset_provider_cache() -> None:
     """Instances et disjoncteurs sont globaux : jamais de fuite entre tests."""
     factory.reset_provider_cache()
+
+
+class FakeClock:
+    """Horloge monotone pilotée — réarmements et délais sans ``sleep``."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds

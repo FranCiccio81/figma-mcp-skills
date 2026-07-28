@@ -124,6 +124,18 @@ _UNSUPPORTED_SCHEMA_KEYS = frozenset(
 #: invalide pour une autre raison) : on dégrade alors le mode de sortie.
 _SCHEMA_REJECTION_MARKERS = ("output_config", "json_schema", "schema", "output_format")
 
+#: Durée de la dégradation « structured outputs off », PAR TÂCHE 🟡 (M10).
+#:
+#: Le drapeau était porté par l'instance — mémorisée une seule fois par
+#: processus : un unique 400 sur le schéma d'``extract_cv`` désactivait la
+#: sortie contrainte pour ``extract_job``, ``explain_match`` et toutes les
+#: ``generate_*``, définitivement, sans réactivation ni trace. Or le rejet
+#: dépend du SCHÉMA, donc de la tâche : rien ne justifie de propager la
+#: dégradation, ni de la rendre permanente (un schéma corrigé, ou une API qui
+#: évolue, doivent pouvoir reprendre). 15 minutes : assez long pour ne pas
+#: rejouer le 400 à chaque appel, assez court pour se réarmer tout seul.
+STRUCTURED_OUTPUT_REARM_SECONDS = 900.0
+
 
 def _text_of(message: Any) -> str:
     """Concatène les blocs texte d'une réponse Messages API."""
@@ -202,7 +214,7 @@ def repair_json(raw: str) -> dict[str, Any] | None:
     candidate = _first_balanced_object(text)
     if candidate is None:
         return None
-    for attempt in (candidate, re.sub(r",\s*([}\]])", r"\1", candidate)):
+    for attempt in (candidate, _strip_trailing_commas(candidate)):
         try:
             parsed = json.loads(attempt)
         except json.JSONDecodeError:
@@ -210,6 +222,45 @@ def repair_json(raw: str) -> dict[str, Any] | None:
         if isinstance(parsed, dict):
             return parsed
     return None
+
+
+def _strip_trailing_commas(text: str) -> str:
+    """Retire les virgules terminales — **hors chaînes JSON** (M9).
+
+    L'implémentation précédente était un ``re.sub(r",\\s*([}\\]])", r"\\1")``
+    aveugle au contexte : appliqué à ``{"closing": "Cordialement, ] Jean"}``,
+    il produisait ``"Cordialement] Jean"``. Le résultat restait un JSON
+    parfaitement valide, passait la validation Pydantic, était persisté et
+    servi à l'utilisateur — une corruption SILENCIEUSE du contenu généré, sur
+    des textes (lettres de motivation, e-mails) où « , ] » et « , } » ne sont
+    pas rares. Même automate que :func:`_first_balanced_object` : ce qui est
+    entre guillemets n'est jamais touché.
+    """
+    out: list[str] = []
+    in_string = False
+    escaped = False
+    for index, char in enumerate(text):
+        if in_string:
+            out.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+            out.append(char)
+            continue
+        if char == ",":
+            # Virgule terminale ⇔ le prochain caractère STRUCTUREL est une
+            # fermeture. Les espaces intermédiaires sont conservés tels quels.
+            rest = text[index + 1 :].lstrip()
+            if rest[:1] in ("}", "]"):
+                continue  # la virgule est supprimée, pas les espaces
+        out.append(char)
+    return "".join(out)
 
 
 def _first_balanced_object(text: str) -> str | None:
@@ -273,7 +324,10 @@ class AnthropicProvider:
         self._journal: CallJournal = journal or DatabaseJournal()
         self._sleep = sleeper
         self._clock = clock
-        self._structured_outputs = self._settings.ai_structured_outputs
+        #: Dégradation « structured outputs off » PAR TÂCHE et TEMPORAIRE
+        #: (M10) : tâche → instant de réarmement. Absent = mode contraint
+        #: actif. Voir :data:`STRUCTURED_OUTPUT_REARM_SECONDS`.
+        self._structured_disabled_until: dict[str, float] = {}
 
     # ------------------------------------------------------------ interface
 
@@ -359,6 +413,27 @@ class AnthropicProvider:
             return float(override)
         return TASK_TIMEOUTS.get(task, DEFAULT_TIMEOUT_SECONDS)
 
+    def structured_outputs_enabled(self, task: str) -> bool:
+        """Sortie contrainte active pour ``task`` ? (M10 — par tâche, réarmée)."""
+        if not self._settings.ai_structured_outputs:
+            return False
+        until = self._structured_disabled_until.get(task)
+        if until is None:
+            return True
+        if self._clock() >= until:
+            del self._structured_disabled_until[task]
+            logger.info("ai_structured_output_rearmed task=%s", task)
+            return True
+        return False
+
+    def _disable_structured_outputs(self, task: str) -> None:
+        """Dégrade ``task`` (et elle seule) vers « prompt + extraction »."""
+        self._structured_disabled_until[task] = self._clock() + STRUCTURED_OUTPUT_REARM_SECONDS
+        logger.warning(
+            "ai_structured_output_disabled task=%s rearm_in=%.0fs",
+            task, STRUCTURED_OUTPUT_REARM_SECONDS,
+        )
+
     # ------------------------------------------------------------- interne
 
     def _call_api(
@@ -377,7 +452,7 @@ class AnthropicProvider:
                 return self._send(task, prompt, schema, model)
             except anthropic.APITimeoutError as exc:
                 last_error = LLMTimeoutError(f"timeout provider (task={task})")
-                self._backoff(attempt, exc=exc, task=task)
+                self._wait_before_retry(attempt, attempts, exc=exc, task=task)
             except anthropic.RateLimitError as exc:
                 last_error = LLMRateLimitError(f"429 provider (task={task})")
                 delay = _retry_after_seconds(exc)
@@ -386,18 +461,19 @@ class AnthropicProvider:
                     # plutôt qu'un worker bloqué (D18).
                     logger.warning("ai_retry_after_too_long task=%s delay=%.1f", task, delay)
                     raise last_error from exc
-                self._backoff(attempt, exc=exc, task=task, retry_after=delay)
+                self._wait_before_retry(
+                    attempt, attempts, exc=exc, task=task, retry_after=delay
+                )
             except (anthropic.APIConnectionError, anthropic.InternalServerError) as exc:
                 last_error = LLMProviderError(f"erreur provider (task={task})")
-                self._backoff(attempt, exc=exc, task=task)
+                self._wait_before_retry(attempt, attempts, exc=exc, task=task)
             except anthropic.BadRequestError as exc:
-                if self._structured_outputs and self._is_schema_rejection(exc):
+                if self.structured_outputs_enabled(task) and self._is_schema_rejection(exc):
                     # Dégradation : l'API refuse le schéma contraint → on
-                    # repasse en « prompt + extraction stricte » pour ce
-                    # provider. Ne consomme PAS de tentative (le compteur
-                    # n'avance pas) et ne peut se produire qu'une fois.
-                    logger.warning("ai_structured_output_disabled task=%s", task)
-                    self._structured_outputs = False
+                    # repasse en « prompt + extraction stricte » POUR CETTE
+                    # TÂCHE (M10), temporairement. Ne consomme PAS de
+                    # tentative (le compteur n'avance pas).
+                    self._disable_structured_outputs(task)
                     continue
                 raise LLMProviderError(f"requête refusée par le provider (task={task})") from exc
             except anthropic.APIStatusError as exc:
@@ -421,7 +497,7 @@ class AnthropicProvider:
             "messages": [{"role": "user", "content": prompt}],
             "timeout": self.timeout_for(task),
         }
-        if self._structured_outputs and schema:
+        if self.structured_outputs_enabled(task) and schema:
             kwargs["output_config"] = {
                 "format": {
                     "type": "json_schema",
@@ -436,6 +512,31 @@ class AnthropicProvider:
     def _is_schema_rejection(error: anthropic.BadRequestError) -> bool:
         message = str(error).lower()
         return any(marker in message for marker in _SCHEMA_REJECTION_MARKERS)
+
+    def _wait_before_retry(
+        self,
+        attempt: int,
+        attempts: int,
+        *,
+        exc: Exception,
+        task: str,
+        retry_after: float | None = None,
+    ) -> None:
+        """Backoff — **jamais après la dernière tentative** (15).
+
+        ``_backoff`` était appelé à chaque échec, y compris sur l'ultime
+        essai : l'appel dormait jusqu'à 8 s (ou toute la valeur d'un
+        ``Retry-After``) puis sortait de la boucle pour lever de toute façon.
+        Latence pure, prise sur le budget p95 de la tâche et, côté API,
+        sur un thread du pool.
+        """
+        if attempt + 1 >= attempts:
+            logger.warning(
+                "ai_provider_giving_up task=%s attempts=%d error=%s",
+                task, attempts, type(exc).__name__,
+            )
+            return
+        self._backoff(attempt, exc=exc, task=task, retry_after=retry_after)
 
     def _backoff(
         self,
@@ -466,9 +567,14 @@ class AnthropicProvider:
         started: float,
         error_code: str | None = None,
     ) -> None:
-        """Journalise l'appel — métadonnées uniquement (11 §3)."""
-        self._journal.record(
-            AiCallRecord(
+        """Journalise l'appel — métadonnées uniquement (11 §3).
+
+        La construction du ``AiCallRecord`` peut échouer (tâche hors du
+        vocabulaire de l'enum SQL, M6) : le défaut est signalé BRUYAMMENT
+        mais ne fait jamais échouer l'appel IA lui-même (D18).
+        """
+        try:
+            record = AiCallRecord(
                 task=task,
                 prompt_version=prompt_version_for(task),
                 model=model,
@@ -479,4 +585,7 @@ class AnthropicProvider:
                 latency_ms=int((self._clock() - started) * 1000),
                 error_code=error_code,
             )
-        )
+        except ValueError:
+            logger.error("ai_call_record_rejected task=%s status=%s", task, status)
+            return
+        self._journal.record(record)

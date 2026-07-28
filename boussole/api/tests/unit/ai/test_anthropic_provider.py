@@ -11,8 +11,9 @@ import json
 import httpx
 import pytest
 
-from app.ai.calls import UNKNOWN_PROMPT_VERSION
+from app.ai.calls import AI_TASKS
 from app.ai.providers.anthropic import (
+    STRUCTURED_OUTPUT_REARM_SECONDS,
     AnthropicProvider,
     repair_json,
     schema_for_structured_output,
@@ -24,6 +25,7 @@ from app.ai.providers.base import (
 )
 from tests.unit.ai.conftest import (
     SAMPLE_SCHEMA,
+    FakeClock,
     FakeTransport,
     RecordingJournal,
     RecordingSleeper,
@@ -296,14 +298,21 @@ class TestJournalSansContenu:
 
         assert journal.records[0].prompt_version == "extract_cv/1.0.0"
 
-    def test_une_tache_inconnue_journalise_une_version_explicite(self) -> None:
+    def test_une_tache_hors_enum_n_est_pas_journalisee_et_ne_casse_rien(self) -> None:
+        """M6 : ``ai_calls.task`` est un enum SQL — une valeur hors vocabulaire
+        ne peut pas être insérée, et l'INSERT échouait en silence (exception
+        avalée par ``persist_ai_call``). Le refus est désormais explicite, à
+        la construction, et n'interrompt jamais l'appel IA."""
         provider, _, journal, _ = build_provider([ok("{}"), ok("{}")])
 
         provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
         assert journal.records[0].prompt_version == "extract_job/1.0.0"
 
-        provider.complete_json("tache_inconnue", PROMPT, SAMPLE_SCHEMA)
-        assert journal.records[1].prompt_version == UNKNOWN_PROMPT_VERSION
+        # L'appel aboutit malgré tout (le journal n'est pas une dépendance
+        # dure, D18) mais AUCUNE ligne invalide n'est produite.
+        assert provider.complete_json("tache_inconnue", PROMPT, SAMPLE_SCHEMA) == {}
+        assert len(journal.records) == 1
+        assert all(record.task in AI_TASKS for record in journal.records)
 
 
 class TestAssainissementDeSchema:
@@ -338,3 +347,157 @@ class TestAssainissementDeSchema:
         schema_for_structured_output(SAMPLE_SCHEMA)
 
         assert json.dumps(SAMPLE_SCHEMA, sort_keys=True) == original
+
+
+class TestVirgulesTerminalesSansCorruption:
+    """(M9) Le repair-parse ne doit JAMAIS toucher au contenu des chaînes."""
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            # Le cas qui corrompait : « , ] » et « , } » DANS une chaîne.
+            (
+                '{"closing": "Cordialement, ] Jean"}',
+                {"closing": "Cordialement, ] Jean"},
+            ),
+            (
+                '{"body": "Merci, } à bientôt", "n": 1,}',
+                {"body": "Merci, } à bientôt", "n": 1},
+            ),
+            # Virgule terminale RÉELLE : toujours corrigée.
+            ('{"a": [1, 2,],}', {"a": [1, 2]}),
+            ('{"a": [1, 2 , ] }', {"a": [1, 2]}),
+            # Échappements : un guillemet échappé ne referme pas la chaîne.
+            (r'{"q": "il a dit \"salut, ]\" hier"}', {"q": 'il a dit "salut, ]" hier'}),
+        ],
+    )
+    def test_le_contenu_des_chaines_est_preserve(self, raw: str, expected: dict) -> None:
+        assert repair_json(raw) == expected
+
+    def test_une_lettre_de_motivation_traverse_le_provider_intacte(self) -> None:
+        """Bout en bout : la corruption était validée par le schéma, persistée
+        et servie à l'utilisateur — aucun test ne pouvait la voir."""
+        body = "Je reste à votre disposition, ] et vous prie d'agréer, } mes salutations."
+        # Sortie « bavarde » : le repair-parse est donc bien traversé.
+        provider, _, _, _ = build_provider(
+            [ok('Voici :\n```json\n' + json.dumps({"body": body}, ensure_ascii=False) + '\n```')]
+        )
+
+        result = provider.complete_json("generate_letter", PROMPT, SAMPLE_SCHEMA)
+
+        assert result["body"] == body
+
+    def test_un_json_tronque_reste_irreparable(self) -> None:
+        # Garde-fou : la correction ne doit pas rendre « réparable » ce qui ne
+        # l'est pas (comportement vérifié comme correct avant le correctif).
+        assert repair_json('{"a": 1, "b": [1, 2') is None
+        assert repair_json('{"a": "chaîne jamais fermée') is None
+
+
+class TestDegradationStructuredOutputsParTache:
+    """(M10) Un 400 sur une tâche ne doit pas désarmer toutes les autres."""
+
+    def test_le_refus_de_schema_ne_degrade_que_la_tache_concernee(self) -> None:
+        provider, transport, _, _ = build_provider(
+            [
+                httpx.Response(400, json=error_payload("output_config.format: unsupported")),
+                ok('{"ok": true}'),  # extract_cv dégradée
+                ok('{"ok": true}'),  # extract_job : NON dégradée
+            ]
+        )
+
+        provider.complete_json("extract_cv", PROMPT, SAMPLE_SCHEMA)
+        provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
+
+        assert "output_config" not in transport.body(1)  # extract_cv dégradée
+        # Régression : le drapeau était porté par l'INSTANCE (une par
+        # processus) — extract_job perdait sa sortie contrainte à cause d'un
+        # 400 sur le schéma d'extract_cv, définitivement.
+        assert "output_config" in transport.body(2)
+        assert provider.structured_outputs_enabled("extract_job") is True
+        assert provider.structured_outputs_enabled("extract_cv") is False
+
+    def test_la_degradation_se_rearme_toute_seule(self) -> None:
+        clock = FakeClock()
+        transport = FakeTransport(
+            [
+                httpx.Response(400, json=error_payload("output_config.format: unsupported")),
+                ok('{"ok": true}'),
+                ok('{"ok": true}'),
+            ]
+        )
+        provider = AnthropicProvider(
+            settings=settings(),
+            client=make_client(transport),
+            journal=RecordingJournal(),
+            sleeper=RecordingSleeper(),
+            clock=clock,
+        )
+
+        provider.complete_json("extract_cv", PROMPT, SAMPLE_SCHEMA)
+        assert provider.structured_outputs_enabled("extract_cv") is False
+
+        clock.advance(STRUCTURED_OUTPUT_REARM_SECONDS)
+
+        # Sans réarmement, la dégradation était DÉFINITIVE pour le processus.
+        assert provider.structured_outputs_enabled("extract_cv") is True
+        provider.complete_json("extract_cv", PROMPT, SAMPLE_SCHEMA)
+        assert "output_config" in transport.body(2)
+
+    def test_la_configuration_globale_reste_prioritaire(self) -> None:
+        provider, transport, _, _ = build_provider([ok("{}")], ai_structured_outputs=False)
+
+        provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
+
+        assert provider.structured_outputs_enabled("extract_job") is False
+        assert "output_config" not in transport.body(0)
+
+
+class TestBackoffApresLaDerniereTentative:
+    """(15) Dormir après l'ultime essai, c'est de la latence pure."""
+
+    def test_aucune_attente_apres_le_dernier_essai_en_timeout(self) -> None:
+        provider, transport, _, sleeper = build_provider(
+            [
+                httpx.ReadTimeout("t", request=httpx.Request("POST", "https://x")),
+                httpx.ReadTimeout("t", request=httpx.Request("POST", "https://x")),
+                httpx.ReadTimeout("t", request=httpx.Request("POST", "https://x")),
+            ],
+            ai_max_retries=3,
+        )
+
+        with pytest.raises(LLMTimeoutError):
+            provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
+
+        assert len(transport.requests) == 3
+        # 3 tentatives ⇒ 2 attentes INTERCALAIRES, pas 3.
+        assert len(sleeper.delays) == 2
+
+    def test_aucune_attente_quand_il_n_y_a_qu_une_seule_tentative(self) -> None:
+        provider, transport, _, sleeper = build_provider(
+            [httpx.ReadTimeout("t", request=httpx.Request("POST", "https://x"))],
+            ai_max_retries=1,
+        )
+
+        with pytest.raises(LLMTimeoutError):
+            provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
+
+        assert len(transport.requests) == 1
+        assert sleeper.delays == []
+
+    def test_un_retry_after_de_la_derniere_tentative_n_est_pas_honore(self) -> None:
+        # Le pire cas : jusqu'à AI_RETRY_AFTER_MAX_SECONDS d'attente juste
+        # avant de lever de toute façon.
+        rate_limited = httpx.Response(
+            429, json=error_payload("slow down", "rate_limit_error"),
+            headers={"retry-after": "25"},
+        )
+        provider, _, _, sleeper = build_provider(
+            [rate_limited, rate_limited], ai_max_retries=2
+        )
+
+        with pytest.raises(Exception) as excinfo:
+            provider.complete_json("extract_job", PROMPT, SAMPLE_SCHEMA)
+
+        assert getattr(excinfo.value, "error_code", None) == "rate_limited"
+        assert sleeper.delays == [25.0]  # et non [25.0, 25.0]
