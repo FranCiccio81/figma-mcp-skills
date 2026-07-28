@@ -115,14 +115,36 @@ async def _persist(
 # ------------------------------------------------------------------- offres
 
 
-async def _job_targets(session: AsyncSession, limit: int, force: bool) -> list[EmbeddingTarget]:
-    """Offres ACTIVES à embarquer — les offres éteintes ne sont jamais scorées."""
+async def _job_targets(
+    session: AsyncSession,
+    limit: int,
+    force: bool,
+    after_id: uuid.UUID | None = None,
+) -> list[EmbeddingTarget]:
+    """Offres ACTIVES à embarquer — les offres éteintes ne sont jamais scorées.
+
+    Deux régimes de parcours, et la distinction est opérationnelle :
+
+    - **rattrapage** (``force=False``, le beat quotidien) : filtre
+      ``embedding IS NULL``. Chaque passage retire des lignes du périmètre,
+      la tâche converge d'elle-même ;
+    - **recalcul complet** (``force=True``, après un changement de modèle ou
+      de tokenisation) : plus aucun filtre ne rétrécit le périmètre. Sans
+      curseur, chaque exécution reprenait donc les mêmes ``limit`` lignes les
+      plus récentes — la commande prescrite au runbook ne progressait
+      jamais. Le parcours se fait par keyset sur ``id`` et la tâche renvoie
+      le dernier identifiant traité pour être enchaînée.
+    """
     stmt = select(
         JobPosting.id, JobPosting.title, JobPosting.description_text, JobPosting.embedding
     ).where(JobPosting.status == "active")
     if not force:
         stmt = stmt.where(JobPosting.embedding.is_(None))
-    stmt = stmt.order_by(JobPosting.last_seen_at.desc()).limit(limit)
+        stmt = stmt.order_by(JobPosting.last_seen_at.desc()).limit(limit)
+    else:
+        if after_id is not None:
+            stmt = stmt.where(JobPosting.id > after_id)
+        stmt = stmt.order_by(JobPosting.id).limit(limit)
     return [
         EmbeddingTarget(
             key=row.id,
@@ -133,18 +155,31 @@ async def _job_targets(session: AsyncSession, limit: int, force: bool) -> list[E
     ]
 
 
-async def _backfill_jobs_cycle(limit: int, force: bool) -> dict[str, int]:
+async def _backfill_jobs_cycle(
+    limit: int, force: bool, after_id: uuid.UUID | None = None
+) -> dict[str, Any]:
     provider = get_embedding_provider()
     settings = get_settings()
     engine = create_worker_engine()
     try:
         factory = async_sessionmaker(engine, expire_on_commit=False)
         async with factory() as session:
-            return await _embed_into(
-                session, provider, JobPosting, JobPosting.id,
-                await _job_targets(session, limit, force),
-                force=force, batch_size=settings.embeddings_batch_size,
+            targets = await _job_targets(session, limit, force, after_id)
+            report: dict[str, Any] = dict(
+                await _embed_into(
+                    session, provider, JobPosting, JobPosting.id,
+                    targets,
+                    force=force, batch_size=settings.embeddings_batch_size,
+                )
             )
+            if force:
+                # Curseur du recalcul complet : ``None`` signifie « corpus
+                # épuisé », toute autre valeur doit être repassée au run
+                # suivant (voir 18-deployment-runbook.md).
+                report["next_after_id"] = (
+                    str(targets[-1].key) if len(targets) == limit else None
+                )
+            return report
     finally:
         await engine.dispose()
 
@@ -341,13 +376,22 @@ async def _embed_profile_cycle(profile_id: uuid.UUID) -> dict[str, int]:
 
 
 @celery_app.task(name="ai.embeddings.backfill_jobs")
-def backfill_jobs(batch: int | None = None, force: bool = False) -> dict[str, int]:
+def backfill_jobs(
+    batch: int | None = None, force: bool = False, after_id: str | None = None
+) -> dict[str, Any]:
     """Calcule les embeddings des offres actives qui n'en ont pas (07 §5.6).
 
     Idempotente : sans ``force``, seules les lignes ``embedding IS NULL``
     sont traitées — rejouer la tâche est un no-op.
+
+    Avec ``force=True`` (recalcul complet après changement de modèle ou de
+    tokenisation, 08 §8), le parcours est un keyset : le rapport contient
+    ``next_after_id``, à repasser tel quel au run suivant jusqu'à ce qu'il
+    vaille ``None``. Sans ce curseur, la tâche retraitait indéfiniment les
+    mêmes ``batch`` lignes — le recalcul n'avançait jamais.
     """
-    report = _run(_backfill_jobs_cycle(_batch_size(batch), force))
+    cursor = uuid.UUID(after_id) if after_id else None
+    report = _run(_backfill_jobs_cycle(_batch_size(batch), force, cursor))
     logger.info("embeddings_backfill_jobs report=%s force=%s", report, force)
     return report
 
