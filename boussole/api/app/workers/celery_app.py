@@ -78,6 +78,7 @@ celery_app = Celery(
         "app.workers.generation_tasks",
         "app.workers.privacy_tasks",
         "app.workers.embedding_tasks",
+        "app.workers.scoring_tasks",
     ],
 )
 

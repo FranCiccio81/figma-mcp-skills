@@ -13,7 +13,15 @@ export default async function IndexPage() {
 
   if (!session) redirect("/connexion");
 
-  const apiUrl = process.env.API_URL ?? "http://localhost:8000";
+  // Les DEUX noms, comme le proxy BFF : le compose ne pose que
+  // `API_INTERNAL_URL`, et cette page ne lisait que `API_URL`. Mesuré contre
+  // l'image web réelle, avec un cookie de session VALIDE :
+  //     API_INTERNAL_URL posée (cas du compose) → GET / = 307 vers /connexion
+  //     API_URL posée                           → GET / = 307 vers /tableau-de-bord
+  // Le correctif précédent avait réparé le proxy et oublié la racine : un
+  // utilisateur connecté qui tape l'adresse du site était renvoyé au login.
+  const apiUrl =
+    process.env.API_INTERNAL_URL ?? process.env.API_URL ?? "http://localhost:8000";
   let authenticated = false;
   try {
     const response = await fetch(`${apiUrl}/api/v1/me`, {

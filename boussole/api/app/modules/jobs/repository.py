@@ -229,6 +229,7 @@ def build_search_statement(
     *,
     profile_id: uuid.UUID | None = None,
     scoring_version: str | None = None,
+    profile_version: int | None = None,
 ) -> Select[Any]:
     """Construit le SELECT de recherche (étapes 1-2 du pipeline D07).
 
@@ -239,10 +240,14 @@ def build_search_statement(
     saved = aliased(SavedJob)
     match = aliased(MatchResultRow)
     #: Le matching n'est joint que si l'utilisateur a un profil validé ET que
-    #: la version de scoring est connue : un score calculé par une version
+    #: les deux versions sont connues : un score calculé par une version
     #: précédente n'est pas comparable à un score courant, et l'afficher
     #: mélangerait deux échelles.
-    matching_joint = profile_id is not None and scoring_version is not None
+    matching_joint = (
+        profile_id is not None
+        and scoring_version is not None
+        and profile_version is not None
+    )
     conditions = [JobPosting.status == "active"]
 
     if filters.remote:
@@ -351,6 +356,26 @@ def build_search_statement(
                 match.job_posting_id == JobPosting.id,
                 match.profile_id == profile_id,
                 match.scoring_version == scoring_version,
+                # ``profile_version`` AUSSI, et c'est le point.
+                #
+                # La fiche d'une offre (``GET /jobs/{id}/match``) recalcule en
+                # paresseux dès que la version du profil change ; la liste ne
+                # filtrait que sur ``scoring_version`` et servait la valeur
+                # périmée. Mesuré en revue finale, après ajout de trois
+                # compétences à un profil déjà validé :
+                #
+                #     liste : Développeur Backend Python Sr.  79
+                #     fiche : le même                          98
+                #
+                # Deux écrans, deux chiffres, pour la même offre — et l'offre
+                # la mieux adaptée reléguée au 3ᵉ rang d'un tri qui s'appelle
+                # « Compatibilité ». Une ligne périmée doit donner ``null``
+                # (« pas encore calculé »), jamais un chiffre faux.
+                #
+                # La version vit dans le JSONB ``dimension_scores._meta`` :
+                # le schéma SQL ne porte pas de colonne dédiée (11 §1 🟡).
+                match.dimension_scores["_meta"]["profile_version"].as_integer()
+                == profile_version,
             ),
         )
     return (
@@ -549,12 +574,15 @@ class JobsRepository(Protocol):
         cursor: SearchCursor | None,
         profile_id: uuid.UUID | None = None,
         scoring_version: str | None = None,
+        profile_version: int | None = None,
     ) -> list[JobSearchRow]:
         """Retourne jusqu'à ``limit + 1`` lignes (détection de page suivante)."""
         ...
 
-    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
-        """Profil VALIDÉ de l'utilisateur, ``None`` sinon."""
+    async def validated_profile(
+        self, user_id: uuid.UUID
+    ) -> tuple[uuid.UUID, int] | None:
+        """``(profile_id, version)`` du profil VALIDÉ, ``None`` sinon."""
         ...
 
     async def get_detail(
@@ -586,13 +614,19 @@ class SqlAlchemyJobsRepository:
         cursor: SearchCursor | None,
         profile_id: uuid.UUID | None = None,
         scoring_version: str | None = None,
+        profile_version: int | None = None,
     ) -> list[JobSearchRow]:
         stmt = build_search_statement(
             user_id, filters, limit, cursor,
             profile_id=profile_id, scoring_version=scoring_version,
+            profile_version=profile_version,
         )
         result = await self._session.execute(stmt)
-        joint = profile_id is not None and scoring_version is not None
+        joint = (
+            profile_id is not None
+            and scoring_version is not None
+            and profile_version is not None
+        )
         rows = [
             JobSearchRow(
                 posting=ligne[0],
@@ -619,16 +653,21 @@ class SqlAlchemyJobsRepository:
             weights=RerankWeights.from_settings(settings),
         )
 
-    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
-        """Profil validé — condition d'existence d'un score comparable.
+    async def validated_profile(
+        self, user_id: uuid.UUID
+    ) -> tuple[uuid.UUID, int] | None:
+        """``(profile_id, version)`` du profil validé — ``None`` sinon.
 
-        Un profil ``draft`` n'a pas de ``match_results`` : joindre pour lui
-        coûterait une jointure garantie vide à chaque recherche.
+        La VERSION compte autant que l'identifiant : elle conditionne la
+        validité d'une ligne de cache. Un profil ``draft`` n'a pas de
+        ``match_results`` : joindre pour lui coûterait une jointure garantie
+        vide à chaque recherche.
         """
-        stmt = select(Profile.id).where(
+        stmt = select(Profile.id, Profile.version).where(
             Profile.user_id == user_id, Profile.status == "validated"
         )
-        return (await self._session.execute(stmt)).scalar_one_or_none()
+        ligne = (await self._session.execute(stmt)).first()
+        return (ligne[0], ligne[1]) if ligne is not None else None
 
     async def get_detail(
         self, job_id: uuid.UUID, user_id: uuid.UUID

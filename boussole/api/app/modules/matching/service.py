@@ -35,6 +35,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from app.ai.embeddings.factory import get_embedding_provider
+from app.core.enqueue import enqueue_best_effort
 from app.core.problems import Problem
 from app.matching.config import ScoringConfig, get_config
 from app.matching.engine import compute_match
@@ -523,13 +524,30 @@ def make_preferences_changed_hook(
 ) -> Callable[[uuid.UUID], Awaitable[None]]:
     """Hook « preferences_changed » (RM-D-4) branché sur le module matching.
 
-    M3 : invalidation simple — suppression des ``match_results`` de
-    l'utilisateur (les explications suivent par cascade) ; le prochain accès
-    recalcule paresseusement. TODO(M4) : re-scoring asynchrone des offres
-    actives (06 §4 déclencheur a) via worker.
+    Deux temps, et le second manquait : invalidation des ``match_results`` de
+    l'utilisateur (les explications suivent par cascade), **puis** enfilement
+    du re-scoring (06 §4, déclencheur a).
+
+    Il n'y avait que le premier, avec pour commentaire « recalcul paresseux au
+    prochain accès ». Or un seul écran recalcule paresseusement — ``GET
+    /matches`` — et la recherche d'offres se contente de lire le cache :
+
+        GET /jobs?sort=match   → [86, 84, 79]
+        PUT /preferences {...} → 200
+        GET /jobs?sort=match   → [null, null, null]
+
+    L'écran qui promet la compatibilité cessait donc de l'afficher juste après
+    l'action censée l'améliorer — pendant que la page Préférences annonçait
+    « Vos scores sont en cours de mise à jour ». Ils ne l'étaient pas.
+
+    L'enfilement est **best-effort** : les préférences sont déjà enregistrées,
+    et un courtier injoignable ne doit pas faire échouer un ``PUT`` qui a
+    abouti. L'utilisateur verra des cartes sans score — état honnête — au lieu
+    de chiffres périmés.
     """
 
     async def preferences_changed(user_id: uuid.UUID) -> None:
         await repository.delete_for_user(user_id)
+        enqueue_best_effort("scoring.rescore_user", user_id, queue="scoring")
 
     return preferences_changed

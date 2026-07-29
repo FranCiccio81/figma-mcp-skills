@@ -134,14 +134,17 @@ class InMemoryJobsRepository:
 
     # ------------------------------------------------------------ recherche
 
-    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
-        """Profil validé de l'utilisateur — ``None`` par défaut.
+    async def validated_profile(
+        self, user_id: uuid.UUID
+    ) -> tuple[uuid.UUID, int] | None:
+        """``(profile_id, version)`` — ``None`` par défaut.
 
         Les tests qui veulent un score le posent explicitement via
         ``self.profiles[user_id]`` : la valeur par défaut reproduit le cas le
         plus fréquent, un utilisateur sans profil validé.
         """
-        return self.profiles.get(user_id)
+        profile_id = self.profiles.get(user_id)
+        return None if profile_id is None else (profile_id, 1)
 
     async def search(
         self,
@@ -152,10 +155,15 @@ class InMemoryJobsRepository:
         cursor: SearchCursor | None,
         profile_id: uuid.UUID | None = None,
         scoring_version: str | None = None,
+        profile_version: int | None = None,
     ) -> list[JobSearchRow]:
         now = datetime.now(UTC)
         rows: list[JobSearchRow] = []
-        joint = profile_id is not None and scoring_version is not None
+        joint = (
+            profile_id is not None
+            and scoring_version is not None
+            and profile_version is not None
+        )
         for posting in self.postings.values():
             if posting.status != "active":
                 continue

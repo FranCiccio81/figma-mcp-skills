@@ -5,7 +5,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { FormField, fieldDescribedBy } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { apiFetch, isApiProblem } from "@/lib/api/client";
+import { getMe } from "@/lib/api/me";
 import type { RegisterInput } from "@/lib/api/types";
 import { CONSENT_PRIVACY_VERSION, CONSENT_TERMS_VERSION } from "@/lib/constants";
 
@@ -55,6 +56,8 @@ export default function RegisterPage() {
     defaultValues: { email: "", password: "", acceptTerms: false, acceptPrivacy: false },
   });
 
+  const locale = useLocale();
+
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
     setSubmitting(true);
@@ -62,13 +65,48 @@ export default function RegisterPage() {
     const payload: RegisterInput = {
       email: values.email,
       password: values.password,
-      locale: "fr",
+      // Suit la langue de l'interface plutôt qu'un "fr" en dur : c'est le
+      // champ que l'API conserve et renvoie sur `GET /me`.
+      locale,
       accepted_terms_version: CONSENT_TERMS_VERSION,
       accepted_privacy_version: CONSENT_PRIVACY_VERSION,
     };
 
     try {
       await apiFetch<unknown>("/auth/register", { method: "POST", body: payload });
+
+      // Le 201 de `/auth/register` est NEUTRE : l'API rend la même réponse
+      // que l'adresse ait été libre ou déjà prise, et pose dans le second cas
+      // un cookie de session LEURRE, jamais enregistré côté serveur
+      // (anti-énumération, Q31). Le front ne peut donc pas conclure du seul
+      // statut qu'un compte existe.
+      //
+      // Il le faisait pourtant : `router.replace("/tableau-de-bord")` sur 201.
+      // Reproduit en revue finale sur une adresse dont le compte venait d'être
+      // supprimé — l'index unique de `users.email` ignore `deleted_at`, donc
+      // l'adresse reste occupée jusqu'à la purge (J+30) :
+      //
+      //     POST /auth/register  → 201 « Compte créé »
+      //     GET  /tableau-de-bord → 200   (le middleware voit le cookie leurre)
+      //     GET  /me, /profile, /matches, /applications → 401
+      //     POST /auth/login (ancien ET nouveau mot de passe) → 401
+      //
+      // L'utilisateur lisait « Compte créé », atterrissait sur un tableau de
+      // bord dont chaque bloc échouait, et ne pouvait ni se connecter ni se
+      // réinscrire — sans qu'un seul message le lui dise.
+      //
+      // `GET /me` tranche, et n'affaiblit rien : le client détient déjà le
+      // cookie, donc cette information lui est de toute façon accessible. La
+      // garantie d'anti-énumération porte sur la RÉPONSE d'inscription, et
+      // elle tient.
+      try {
+        await getMe();
+      } catch {
+        setServerError(t("auth.register.errors.emailUnavailable"));
+        setSubmitting(false);
+        return;
+      }
+
       router.replace("/tableau-de-bord");
       router.refresh();
     } catch (error) {

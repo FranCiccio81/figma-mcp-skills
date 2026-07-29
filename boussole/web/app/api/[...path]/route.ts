@@ -28,28 +28,36 @@ const API_URL =
 /**
  * En-têtes entrants explicitement transmis à l'API (liste blanche).
  *
- * `x-forwarded-for` est la moitié manquante d'un correctif que l'API croyait
- * complet. Elle lit cet en-tête pour identifier l'appelant anonyme, et
- * `--forwarded-allow-ips` est bien passé à uvicorn — mais **personne ne
- * l'émettait** : le proxy ne le transmettait pas. Résultat mesuré en revue,
- * front réel devant l'API réelle : tout le trafic anonyme tombait dans UN
- * SEUL seau de quota (`rl:global:ip:127.0.0.1:…`, l'IP du proxy). Un script
- * à une requête par seconde suffisait à faire répondre 429 à **toutes** les
- * connexions et **toutes** les inscriptions, pour tout le monde.
+ * ⚠️ **`x-forwarded-for` en est volontairement ABSENT.** Il y a figuré, et
+ * c'était pire que le défaut qu'il corrigeait.
  *
- * Vérifié en exécution, faux API en écoute derrière le proxy réel :
+ * L'intention était bonne : l'API lit cet en-tête pour identifier l'appelant
+ * anonyme, `--forwarded-allow-ips` est bien passé à uvicorn, et sans émetteur
+ * tout le trafic anonyme tombe dans UN SEUL seau de quota (celui de l'IP du
+ * proxy) — un script à 1 req/s suffit alors à faire répondre 429 à toutes les
+ * connexions, pour tout le monde.
  *
- *     curl -H "X-Forwarded-For: 203.0.113.7" …  → l'API reçoit 203.0.113.7
- *     curl (sans en-tête)                       → l'API reçoit 127.0.0.1
+ * Mais ce proxy **recopie la valeur du client** (`headers.set(nom, valeur)`) :
+ * il remplace, il n'ajoute pas. Next ne pose l'en-tête que s'il est absent,
+ * donc une valeur envoyée par le client passe intacte jusqu'à uvicorn, qui —
+ * le front étant dans `FORWARDED_ALLOW_IPS` — la croit et réécrit
+ * `request.client`. Mesuré en revue finale, à travers le front réel :
  *
- * Le second cas est celui qui compte : quand rien n'arrive en amont, **Next
- * pose lui-même l'en-tête avec l'adresse réelle du client**. La chaîne est
- * donc complète avec ou sans reverse proxy devant — ce qui est la situation
- * du `docker-compose` livré, où le front est le premier saut.
+ *     POST /auth/login ×30, sans en-tête              → {401: 5, 429: 25}
+ *     POST /auth/login ×200, X-Forwarded-For tournant → {401: 200}
+ *     POST /auth/login ×500, 50 en parallèle          → {401: 500}  en 98 s
+ *     puis le bon mot de passe                        → 204
  *
- * Sa valeur n'est pas digne de confiance en soi — c'est pour ça que l'API
- * n'écoute que les pairs listés dans `FORWARDED_ALLOW_IPS`. La transmettre
- * sans cette liste blanche côté API laisserait n'importe qui usurper une IP.
+ * Soit ~440 000 tentatives par jour sur un compte, depuis une seule machine.
+ * Un limiteur **contournable** est pire qu'un limiteur **grossier** : le
+ * second gêne tout le monde de façon visible, le premier ne gêne que les
+ * honnêtes gens.
+ *
+ * Le rétablir suppose une couche en amont (ingress, reverse proxy) qui pose
+ * `X-Forwarded-For` de façon autoritaire ET **écrase** celui du client. C'est
+ * une exigence d'infrastructure, pas une ligne de code ici : tant qu'elle
+ * n'est pas remplie, l'auto-DoS grossier reste le moindre mal, et il est
+ * consigné comme prérequis de déploiement.
  */
 const FORWARDED_REQUEST_HEADERS = [
   "accept",
@@ -58,7 +66,6 @@ const FORWARDED_REQUEST_HEADERS = [
   "cookie",
   "idempotency-key",
   "x-csrf-token",
-  "x-forwarded-for",
 ] as const;
 
 /** En-têtes de transport recalculés par le runtime — jamais recopiés. */

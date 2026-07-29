@@ -115,8 +115,11 @@ class JobsService:
     ) -> SearchPage:
         """Recherche paginée par curseur opaque (pipeline D07)."""
         # Le profil validé conditionne tout : sans lui, aucun score n'existe.
-        profile_id = await self._repository.validated_profile_id(user_id)
-        effective_sort = self._effective_sort(sort, q, scored=profile_id is not None)
+        # Sa VERSION aussi : une ligne de cache calculée sur une version
+        # antérieure est périmée, et doit rendre `null` plutôt qu'un chiffre.
+        profil = await self._repository.validated_profile(user_id)
+        profile_id = profil[0] if profil else None
+        effective_sort = self._effective_sort(sort, q, scored=profil is not None)
         decoded = None
         if cursor is not None:
             try:
@@ -151,7 +154,8 @@ class JobsService:
             limit=limit,
             cursor=decoded,
             profile_id=profile_id,
-            scoring_version=get_config().scoring_version if profile_id else None,
+            scoring_version=get_config().scoring_version if profil else None,
+            profile_version=profil[1] if profil else None,
         )
         has_more = len(rows) > limit
         page_rows = rows[:limit]
