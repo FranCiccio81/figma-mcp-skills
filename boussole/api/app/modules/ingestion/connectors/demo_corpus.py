@@ -44,6 +44,25 @@ DEFAULT_CORPUS_PATH = Path(__file__).resolve().parents[4] / "config" / "demo-cor
 #: un utilisateur postuler auprès d'une entreprise qui n'existe pas.
 REQUIRED_URL_SUFFIX_HOST = ".invalid"
 
+#: Vocabulaire lisible du corpus → vocabulaire canonique du schéma. C'est le
+#: travail d'un connecteur : le fichier reste rédigé comme une vraie annonce
+#: française, la traduction est ici. Un vocabulaire inconnu est une ERREUR, pas
+#: un « autre » silencieux — sans quoi une faute de frappe dans le corpus
+#: dégraderait la dimension contrat sans que personne ne le voie.
+CONTRACT_MAP: dict[str, str] = {
+    "cdi": "permanent",
+    "cdd": "fixed_term",
+    "freelance": "freelance",
+    "stage": "internship",
+    "alternance": "apprenticeship",
+}
+
+REMOTE_MAP: dict[str, str] = {
+    "full": "full_remote",
+    "hybrid": "hybrid",
+    "onsite": "onsite",
+}
+
 
 class DemoCorpusUnavailableError(RuntimeError):
     """Le corpus de démonstration est demandé là où il ne doit pas exister."""
@@ -119,12 +138,12 @@ def _to_raw_job(item: dict[str, Any]) -> RawJob:
             for loc in item.get("locations", [])
         ],
         posted_at=posted_at,
-        contract=item.get("contract"),
+        contract=_map(CONTRACT_MAP, item.get("contract"), "contract"),
         # Confiance 1.0 : ces champs sont structurés dans le fichier, ils ne
         # sont pas devinés d'un libellé. Mentir ici fausserait l'indice de
         # confiance que la mesure doit justement évaluer.
         contract_conf=1.0 if item.get("contract") else None,
-        remote=item.get("remote"),
+        remote=_map(REMOTE_MAP, item.get("remote"), "remote"),
         remote_conf=1.0 if item.get("remote") else None,
         salary_min=item.get("salary_min"),
         salary_max=item.get("salary_max"),
@@ -135,9 +154,28 @@ def _to_raw_job(item: dict[str, Any]) -> RawJob:
         experience_max=item.get("experience_max"),
         experience_conf=1.0 if item.get("experience_min") is not None else None,
         languages=[(code, level) for code, level in item.get("languages", [])],
-        skills=list(item.get("skills_required", [])) + list(item.get("skills_nice", [])),
+        skills=list(item.get("skills_required", [])),
+        skills_nice=list(item.get("skills_nice", [])),
+        sector=item.get("sector"),
         language=item.get("language"),
     )
+
+
+def _map(table: dict[str, str], value: str | None, champ: str) -> str | None:
+    """Traduit vers le vocabulaire canonique — et refuse l'inconnu.
+
+    Retomber sur ``other`` en silence laisserait une coquille du corpus
+    fausser une dimension du matching sans le moindre signal.
+    """
+    if value is None:
+        return None
+    canonique = table.get(str(value).strip().casefold())
+    if canonique is None:
+        raise DemoCorpusUnavailableError(
+            f"{champ} inconnu dans le corpus : {value!r}. Valeurs acceptées : "
+            f"{sorted(table)}."
+        )
+    return canonique
 
 
 def _check_url_is_unreachable(url: str) -> None:

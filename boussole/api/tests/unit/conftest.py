@@ -90,11 +90,6 @@ def client(
     fake_persistent_server: fakeredis.FakeServer,
     fake_cache_server: fakeredis.FakeServer,
 ) -> Iterator[TestClient]:
-    app = create_app()
-
-    def override_repository() -> InMemoryAuthRepository:
-        return auth_repository
-
     def override_persistent() -> Redis:
         # Nouveau client par requête, état partagé via le serveur factice
         # (évite tout couplage de boucle asyncio avec TestClient).
@@ -104,6 +99,23 @@ def client(
 
     def override_cache() -> Redis:
         return fakeredis.aioredis.FakeRedis(server=fake_cache_server, decode_responses=True)
+
+    # Les fabriques sont passées à create_app, pas seulement en dépendances :
+    # le middleware de rate limiting lit ``app.state.redis_cache_factory`` et
+    # NON les dépendances FastAPI. Sans elles, il parlait au vrai Redis.
+    #
+    # Deux conséquences, toutes deux constatées : la suite entière n'exerçait
+    # que la branche DÉGRADÉE du limiteur (Redis injoignable → on laisse
+    # passer), et elle échouait en masse — 209 tests en 429 — sur toute
+    # machine où un Redis écoute sur le port par défaut, ce qui est le cas
+    # courant d'un poste de développement.
+    app = create_app(
+        redis_cache_factory=override_cache,
+        redis_persistent_factory=override_persistent,
+    )
+
+    def override_repository() -> InMemoryAuthRepository:
+        return auth_repository
 
     app.dependency_overrides[get_auth_repository] = override_repository
     app.dependency_overrides[get_redis_persistent] = override_persistent

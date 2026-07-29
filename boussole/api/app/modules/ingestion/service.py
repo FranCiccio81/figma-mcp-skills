@@ -36,6 +36,7 @@ from typing import Protocol
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.ai.embeddings.base import EmbeddingError, EmbeddingProvider
 from app.ai.embeddings.factory import get_embedding_provider
@@ -178,6 +179,7 @@ class NormalizedJob:
     locations: list[_ResolvedLocation] = field(default_factory=list)
     skills: list[tuple[uuid.UUID | None, str, bool, float]] = field(default_factory=list)
     languages: list[tuple[str, str, float]] = field(default_factory=list)
+    sector_code: str | None = None
     posted_at: datetime | None = None
     expires_at: datetime | None = None
     withdrawn: bool = False
@@ -268,9 +270,14 @@ def normalize_raw(
             for r in extract_rules.extract_languages(rule_text)
         ]
 
+    # Requis et souhaités séparés : la source fait la différence quand elle
+    # le peut, et le moteur pèse les deux à 25 % et 10 %.
     skills: list[tuple[uuid.UUID | None, str, bool, float]] = [
         (resolver.resolve(label), label, True, 0.9)  # référentiel source (ROME) : 0.9
         for label in raw.skills
+    ] + [
+        (resolver.resolve(label), label, False, 0.9)
+        for label in raw.skills_nice
     ]
 
     # --- étage 2 LLM en secours : uniquement les trous (07 §5.2) ---
@@ -395,6 +402,7 @@ def normalize_raw(
         locations=resolved,
         skills=skills,
         languages=languages,
+        sector_code=raw.sector,
         posted_at=raw.posted_at,
         expires_at=raw.expires_at,
         withdrawn=raw.withdrawn,
@@ -963,6 +971,7 @@ async def _ingest_one(
             company_name=normalized.company,
             description_text=normalized.description,
             language=normalized.language,
+            sector_code=normalized.sector_code,
             seniority=normalized.seniority,
             seniority_conf=normalized.seniority_conf,
             experience_min=normalized.experience_min,
@@ -1167,8 +1176,20 @@ class SqlAlchemyJobStore:
         ids = [row[0] for row in result]
         if not ids:
             return []
+        # ``selectinload(locations)`` n'est PAS une optimisation : le filtre
+        # géographique de l'étage 2 (``_too_far_apart``) lit
+        # ``candidate.locations``. En SQLAlchemy async, un chargement
+        # paresseux lève ``MissingGreenlet`` — l'exception remonte au
+        # gestionnaire par item, qui la journalise et **abandonne l'offre**.
+        # Résultat mesuré sur le corpus de démonstration : toute offre
+        # atteignant ce filtre était PERDUE, avec pour seule trace une ligne
+        # ``ingestion_item_error``. Or atteindre ce filtre est le cas NORMAL
+        # avec de vraies sources : c'est précisément la situation que la
+        # dédup existe pour traiter.
         postings = await self._session.execute(
-            select(JobPosting).where(JobPosting.id.in_(ids))
+            select(JobPosting)
+            .where(JobPosting.id.in_(ids))
+            .options(selectinload(JobPosting.locations))
         )
         return list(postings.scalars())
 

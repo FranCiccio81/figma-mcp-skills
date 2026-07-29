@@ -161,3 +161,55 @@ class TestLeJeuDannotationsEstComplet:
         """Sans quoi NDCG n'est pas défini pour ce profil (gain idéal nul)."""
         for case in load_dataset().cases:
             assert any(a.relevance > 0 for a in case.annotations), case.candidate_id
+
+
+class TestLeConnecteurTraduitVersLeVocabulaireCanonique:
+    """Traduire est le travail d'un connecteur, pas celui du schéma.
+
+    Le corpus est rédigé comme une annonce française (« cdi », « full ») ;
+    la base ne connaît que des énumérations (`permanent`, `full_remote`).
+    Sans cette traduction, l'ingestion échouait sur le type PostgreSQL et
+    l'offre était **perdue** — trouvé en montant le chemin de bout en bout.
+    """
+
+    def test_les_contrats_sont_traduits(self) -> None:
+        contrats = {job.contract for job in DemoCorpusConnector().fetch(None).jobs}
+        assert contrats <= {"permanent", "fixed_term", "freelance", "internship",
+                            "apprenticeship", "other"}
+        assert "permanent" in contrats
+
+    def test_les_politiques_de_teletravail_sont_traduites(self) -> None:
+        politiques = {job.remote for job in DemoCorpusConnector().fetch(None).jobs}
+        assert politiques <= {"onsite", "hybrid", "full_remote"}
+        assert "full_remote" in politiques
+
+    def test_un_vocabulaire_inconnu_est_une_erreur_pas_un_defaut_silencieux(
+        self, tmp_path: Path
+    ) -> None:
+        """Retomber sur « other » laisserait une coquille fausser le matching."""
+        corpus = _corpus()
+        corpus["jobs"] = corpus["jobs"][:1]
+        corpus["jobs"][0]["contract"] = "cdi-intermittent-du-spectacle"
+        chemin = _write(tmp_path, "jobs.json", corpus)
+
+        with pytest.raises(DemoCorpusUnavailableError, match="contract inconnu"):
+            DemoCorpusConnector(corpus_path=chemin).fetch(None)
+
+    def test_les_competences_souhaitees_sont_distinguees_des_exigees(self) -> None:
+        """`skills_nice` pèse 10 % : tout mettre en « exigé » fausse 35 % du poids."""
+        offres = DemoCorpusConnector().fetch(None).jobs
+        avec_souhaitees = [j for j in offres if j.skills_nice]
+        assert avec_souhaitees, "aucune offre ne distingue requis et souhaité"
+        offre = next(j for j in offres if j.external_ref == "demo-001")
+        assert set(offre.skills) == {"python", "postgresql", "fastapi"}
+        assert set(offre.skills_nice) == {"docker", "kubernetes"}
+
+    def test_les_secteurs_suivent_le_referentiel(self) -> None:
+        """Codes du référentiel `sectors` (lettres NAF), pas des étiquettes.
+
+        Un code hors référentiel viole la clé étrangère et fait perdre
+        l'offre ; une valeur absente laisse la dimension secteur inconnue.
+        """
+        secteurs = {job.sector for job in DemoCorpusConnector().fetch(None).jobs}
+        assert None not in secteurs
+        assert secteurs <= {"C", "F", "G", "H", "J", "K", "M", "N", "P", "Q"}

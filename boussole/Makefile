@@ -6,7 +6,7 @@ API_DIR := api
 PY := .venv/bin/python
 ALEMBIC := .venv/bin/alembic
 
-.PHONY: up down migrate seed seed-demo test test-integration evaluate lint typecheck api-dev openapi-gen
+.PHONY: up down migrate seed seed-demo test test-integration evaluate demo lint typecheck api-dev openapi-gen
 
 up: ## Démarre postgres, redis ×2, minio, mailpit, api, web
 	$(COMPOSE) up -d --build
@@ -22,6 +22,14 @@ seed: ## Référentiels idempotents (sectors, skills, prompt_versions, sources)
 
 seed-demo: ## Données de démo (dev/staging uniquement — D22)
 	cd $(API_DIR) && $(PY) -m app.seeds demo
+
+demo: ## Base VIDE → application utilisable (migrations + corpus + compte validé)
+	@echo "Amorçage complet : migrations, référentiels, ingestion du corpus de"
+	@echo "démonstration (offres FICTIVES, D34), embeddings, compte au profil"
+	@echo "validé. Refusé hors développement. Sortie non nulle si le résultat"
+	@echo "n'est pas une application réellement utilisable."
+	cd $(API_DIR) && $(ALEMBIC) -c alembic/alembic.ini upgrade head
+	cd $(API_DIR) && $(PY) -m app.demo
 
 test: ## Tests unitaires (rapides, sans Docker — l'intégration est exclue par défaut)
 	cd $(API_DIR) && $(PY) -m pytest tests/unit
