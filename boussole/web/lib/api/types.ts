@@ -376,6 +376,22 @@ export interface MatchResult {
   blocking_criteria: BlockingCriterion[];
   unknown_dimensions: UnknownDimension[];
   dimensions: DimensionScore[];
+  /**
+   * Seuils qui classent une dimension en force ou en lacune (06 §6).
+   *
+   * Servis par l'API parce que l'interface les recopiait : trois constantes en
+   * dur, dupliquées de `scoring-config.json`. Elles coïncidaient — jusqu'à la
+   * première recalibration, après quoi l'écran aurait classé forces et lacunes
+   * selon d'anciennes valeurs, sans que rien ne le signale.
+   */
+  explanation_thresholds: ExplanationThresholds;
+}
+
+/** Seuils de la couche d'explication déterministe (06 §6). */
+export interface ExplanationThresholds {
+  strength_min_subscore: number;
+  strength_min_weight: number;
+  gap_max_subscore: number;
 }
 
 /** Reformulation LLM des faits d'explication — `POST /jobs/{id}/explanation` (D14). */

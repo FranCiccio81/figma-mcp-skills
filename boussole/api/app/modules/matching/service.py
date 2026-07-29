@@ -57,6 +57,7 @@ from app.modules.matching.repository import MatchingRepository
 from app.modules.matching.schemas import (
     BlockingCriterionOut,
     DimensionOut,
+    ExplanationThresholdsOut,
     MatchResultOut,
     UnknownDimensionOut,
     UnknownReason,
@@ -217,6 +218,7 @@ class MatchingService:
     async def get_match(self, user_id: uuid.UUID, job_id: uuid.UUID) -> MatchResultOut:
         """GET /jobs/{id}/match — réponse conforme au schéma MatchResult."""
         data = await self.get_match_data(user_id, job_id)
+        cfg = self._get_config()
         return MatchResultOut(
             job_id=data.job_id,
             profile_version=data.profile_version,
@@ -230,6 +232,11 @@ class MatchingService:
             unknown_dimensions=[
                 UnknownDimensionOut.model_validate(item) for item in data.unknown_dimensions
             ],
+            explanation_thresholds=ExplanationThresholdsOut(
+                strength_min_subscore=cfg.explanation.strength_min_subscore,
+                strength_min_weight=cfg.explanation.strength_min_weight,
+                gap_max_subscore=cfg.explanation.gap_max_subscore,
+            ),
             dimensions=[DimensionOut.model_validate(item) for item in data.dimensions],
         )
 

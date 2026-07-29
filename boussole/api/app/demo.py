@@ -421,8 +421,15 @@ def _print(rapport: dict[str, Any]) -> int:
     print(f"  Offres ingérées      : {rapport['ingestion']['creees']} créées, "
           f"{rapport['ingestion']['mises_a_jour']} mises à jour, "
           f"{rapport['ingestion']['rattachees_etage1']} rattachées (dédup)")
-    print(f"  Vecteurs calculés    : {rapport['embeddings']['offres']} offres, "
-          f"{rapport['embeddings']['competences']} compétences, "
+    # « Vecteurs calculés : 0 offres » se lisait comme un échec de l'étape,
+    # alors que le chiffre était juste : l'ingestion les avait DÉJÀ vectorisées,
+    # et ce rattrapage ne compte que les lignes restées `embedding IS NULL`.
+    # Assez trompeur pour faire conclure que le rerank vectoriel était mort.
+    # On affiche donc l'état FINAL, avec le rattrapage entre parenthèses.
+    rattrapees = rapport["embeddings"]["offres"]
+    print(f"  Offres vectorisées   : {verif['offres_vectorisees']}/{verif['offres_actives']}"
+          + (f" (dont {rattrapees} rattrapée(s) ici)" if rattrapees else " (à l'ingestion)"))
+    print(f"  Autres vecteurs      : {rapport['embeddings']['competences']} compétences, "
           f"{rapport['embeddings']['intitules']} intitulés cibles")
     print(f"  Recherche « python » : {verif['recherche_python']} offre(s)")
     print(f"  Sources visibles     : {verif['sources_visibles']}")

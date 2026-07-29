@@ -184,7 +184,15 @@
       "title": "Blocking criteria",
       "badge": "⛔ Blocking criterion",
       "transparency": "This job remains displayed for transparency. A blocking criterion does not cancel the score: it flags an incompatibility with your requirements. Adjustable in your preferences.",
-      "fallbackLabel": "Incompatibility with your requirements ({code})."
+      "fallbackLabel": "Incompatibility with your requirements ({code}).",
+      "codes": {
+        "location_incompatible": "On-site role outside your accepted area",
+        "remote_required": "You require full remote; this role requires on-site presence",
+        "language_missing": "Required language missing from your profile, or level too far below",
+        "contract_excluded": "Contract type you excluded",
+        "salary_below_minimum": "Pay below your stated minimum",
+        "sector_excluded": "Sector you excluded"
+      }
     },
     "unknown": {
       "title": "Not specified",
@@ -219,7 +227,7 @@
         "languages": "Languages",
         "contract": "Contract type",
         "salary": "Salary",
-        "fine_preferences": "Fine preferences"
+        "preference_boost": "Fine preferences"
       }
     },
     "explanation": {

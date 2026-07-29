@@ -28,10 +28,12 @@ import uuid
 from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from redis.asyncio import Redis
 from starlette.concurrency import run_in_threadpool
 
 from app.ai.providers.base import LLMProvider, LLMProviderError
 from app.core.problems import Problem
+from app.core.ratelimit import FixedWindowRateLimiter
 from app.modules.explanations.repository import ExplanationsRepository
 from app.modules.explanations.schemas import MatchExplanationOut
 from app.modules.matching.service import MatchingService
@@ -118,6 +120,24 @@ def _collect_numbers(value: object) -> set[float]:
     return numbers
 
 
+#: Quotas LLM (12 §11) — alignés sur ceux de la génération de documents.
+QUOTA_PER_HOUR = 10
+QUOTA_PER_DAY = 40
+
+
+def _rate_limited(retry_after: int, window_label: str) -> Problem:
+    return Problem(
+        status=429,
+        code="rate_limited",
+        title="Trop de requêtes",
+        detail=(
+            f"Quota d'explications atteint ({window_label}). Le score et les "
+            "critères détaillés restent accessibles sans reformulation."
+        ),
+        headers={"Retry-After": str(retry_after)},
+    )
+
+
 def _provider_unavailable() -> Problem:
     """503 — la fonction est suspendue, le reste de l'écran reste juste."""
     return Problem(
@@ -148,11 +168,13 @@ class ExplanationsService:
         repository: ExplanationsRepository,
         provider: LLMProvider,
         prompt_version: str = PROMPT_VERSION,
+        cache: Redis | None = None,
     ) -> None:
         self._matching = matching
         self._repository = repository
         self._provider = provider
         self._prompt_version = prompt_version
+        self._cache = cache
 
     async def explain(self, user_id: uuid.UUID, job_id: uuid.UUID) -> MatchExplanationOut:
         """POST /jobs/{id}/explanation — reformulation D14 avec cache.
@@ -167,6 +189,11 @@ class ExplanationsService:
         )
         if cached is not None:
             return self._to_out(cached)
+
+        # Quota APRÈS le cache, jamais avant : une explication déjà calculée ne
+        # coûte aucun appel au fournisseur, et la faire consommer un jeton
+        # punirait l'utilisateur qui relit une offre.
+        await self._enforce_quotas(user_id)
 
         # ``_generate`` est SYNCHRONE et bloquant (l'interface ``LLMProvider``
         # l'est, D08) : appelée directement, elle gelait la boucle asyncio de
@@ -239,6 +266,45 @@ class ExplanationsService:
                 f"des faits du moteur : {foreign}."
             )
         return content
+
+    async def _enforce_quotas(self, user_id: uuid.UUID) -> None:
+        """Quotas 10/h puis 40/j — les mêmes que la génération (12 §11).
+
+        Cette route n'en avait **aucun**. Vérifié en revue : huit appels
+        consécutifs sur huit offres différentes (donc hors cache), zéro 429.
+        Un utilisateur qui parcourt deux cents offres déclenchait deux cents
+        appels LLM non plafonnés — un coût direct, et une porte ouverte pour
+        qui veut le faire exprès. Le front porte pourtant depuis toujours une
+        branche 429 dédiée (« Limite de générations atteinte, 10 par heure,
+        40 par jour ») qui ne pouvait jamais s'afficher.
+
+        Compteurs SÉPARÉS de ceux de la génération de documents : ce sont deux
+        fonctions distinctes, et faire qu'expliquer un score empêche d'écrire
+        une lettre serait incompréhensible.
+        """
+        if self._cache is None:  # pragma: no cover - service construit sans cache
+            logger.warning("explanation_quota_skipped_no_cache")
+            return
+        limiter = FixedWindowRateLimiter(self._cache)
+        try:
+            heure = await limiter.hit(
+                "explanations:hour", str(user_id),
+                limit=QUOTA_PER_HOUR, window_seconds=3600,
+            )
+            jour = await limiter.hit(
+                "explanations:day", str(user_id),
+                limit=QUOTA_PER_DAY, window_seconds=86400,
+            )
+        except Exception:
+            # Redis volatile injoignable : on laisse passer, comme le limiteur
+            # global (D18). Un quota indisponible ne doit pas suspendre une
+            # fonction ; l'incident se voit dans les journaux.
+            logger.warning("explanation_quota_unavailable")
+            return
+        if not heure.allowed:
+            raise _rate_limited(heure.retry_after, f"{QUOTA_PER_HOUR} par heure")
+        if not jour.allowed:
+            raise _rate_limited(jour.retry_after, f"{QUOTA_PER_DAY} par jour")
 
     def _to_out(self, content: dict[str, Any]) -> MatchExplanationOut:
         return MatchExplanationOut(prompt_version=self._prompt_version, **content)

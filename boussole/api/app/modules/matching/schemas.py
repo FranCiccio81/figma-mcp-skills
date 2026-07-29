@@ -49,6 +49,22 @@ class DimensionOut(BaseModel):
     details: dict[str, Any] = Field(default_factory=dict)
 
 
+class ExplanationThresholdsOut(BaseModel):
+    """Seuils qui classent une dimension en force ou en lacune (06 §6).
+
+    Exposés parce que l'interface les appliquait en les RECOPIANT : trois
+    constantes en dur dans ``match-panel.tsx``, dupliquées de
+    ``scoring-config.json``. Elles coïncidaient — jusqu'à la première
+    recalibration, après quoi l'écran aurait classé forces et lacunes selon
+    d'anciennes valeurs, sans que rien ne le signale. Une valeur qui décide de
+    ce que l'utilisateur lit doit venir de l'endroit qui la définit.
+    """
+
+    strength_min_subscore: float
+    strength_min_weight: float
+    gap_max_subscore: float
+
+
 class MatchResultOut(BaseModel):
     """Réponse de GET /jobs/{id}/match — schéma MatchResult d'openapi.yaml."""
 
@@ -61,3 +77,4 @@ class MatchResultOut(BaseModel):
     blocking_criteria: list[BlockingCriterionOut] = Field(default_factory=list)
     unknown_dimensions: list[UnknownDimensionOut] = Field(default_factory=list)
     dimensions: list[DimensionOut] = Field(default_factory=list)
+    explanation_thresholds: ExplanationThresholdsOut

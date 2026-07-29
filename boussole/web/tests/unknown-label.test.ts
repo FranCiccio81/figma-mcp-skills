@@ -30,9 +30,14 @@ function inconnue(overrides: Partial<UnknownDimension> = {}): UnknownDimension {
 }
 
 describe("libellé d'un critère non évalué", () => {
-  it("reprend le libellé de l'API quand il existe", () => {
+  it("IGNORE le libellé de l'API quand le code lui suffit", () => {
+    // Ce test disait l'inverse — « reprend le libellé de l'API quand il
+    // existe » — et il encodait le défaut. L'API rend ses libellés en
+    // français sans condition : la reprendre télégraphiait du français dans
+    // une interface anglaise. Voir le bloc « la langue de l'interface
+    // l'emporte » plus bas.
     const libelle = unknownLabel(t, inconnue({ label: "Métier : comparaison indisponible" }));
-    expect(libelle).toBe("Métier : comparaison indisponible");
+    expect(libelle).toContain("unknown.unavailableFallback");
   });
 
   it("n'accuse ni le profil ni l'offre quand la limite est la nôtre", () => {
@@ -56,5 +61,75 @@ describe("libellé d'un critère non évalué", () => {
   it("retombe sur l'offre pour une donnée absente de l'annonce", () => {
     const libelle = unknownLabel(t, inconnue({ reason: "job_not_provided" }));
     expect(libelle).toContain("unknown.jobFallback");
+  });
+});
+
+/**
+ * La langue de l'interface l'emporte sur celle de l'API.
+ *
+ * L'API rend ses libellés **en français, sans condition** : elle ne lit jamais
+ * `Accept-Language`, alors que le proxy BFF le lui transmet. La précédence
+ * était `if (unknown.label) return unknown.label`, donc un utilisateur en
+ * anglais lisait « Similarité du métier : comparaison indisponible (outil non
+ * calibré) » sur l'écran même censé lui expliquer son score — et les
+ * traductions `unknown.*Fallback`, présentes et correctes en `en`, étaient du
+ * code mort.
+ */
+describe("la langue de l'interface l'emporte sur celle de l'API", () => {
+  it("ignore le libellé de l'API quand le code est connu", () => {
+    const rendu = unknownLabel(
+      t,
+      inconnue({ label: "Similarité du métier : comparaison indisponible" }),
+    );
+    expect(rendu).toContain("unknown.unavailableFallback");
+    expect(rendu).not.toContain("Similarité du métier");
+  });
+
+  it("garde le libellé de l'API sur une raison qu'il ne connaît pas", () => {
+    // Compatibilité ascendante : mieux vaut un libellé dans la mauvaise
+    // langue qu'une ligne vide si l'API introduit un nouveau code.
+    const rendu = unknownLabel(
+      t,
+      inconnue({ reason: "raison_future" as never, label: "Libellé de l'API" }),
+    );
+    expect(rendu).toBe("Libellé de l'API");
+  });
+
+  it("garde le libellé de l'API sur une dimension qu'il ne connaît pas", () => {
+    const rendu = unknownLabel(
+      t,
+      inconnue({ dimension: "dimension_future", label: "Libellé de l'API" }),
+    );
+    expect(rendu).toBe("Libellé de l'API");
+  });
+});
+
+describe("les critères bloquants sont traduits par l'interface", () => {
+  it("traduit les six codes de la spécification", async () => {
+    const { blockingLabel } = await import("@/components/match/match-panel");
+    const codes = [
+      "location_incompatible",
+      "remote_required",
+      "language_missing",
+      "contract_excluded",
+      "salary_below_minimum",
+      "sector_excluded",
+    ];
+    for (const code of codes) {
+      const rendu = blockingLabel(t, {
+        code,
+        label: "Langue requise absente ou >= 2 niveaux CECRL en dessous",
+      } as never);
+      expect(rendu).toBe(`blocking.codes.${code}`);
+      expect(rendu).not.toContain("CECRL");
+    }
+  });
+
+  it("retombe sur le libellé de l'API pour un code inconnu", () => {
+    return import("@/components/match/match-panel").then(({ blockingLabel }) => {
+      expect(
+        blockingLabel(t, { code: "code_futur", label: "Libellé de l'API" } as never),
+      ).toBe("Libellé de l'API");
+    });
   });
 });

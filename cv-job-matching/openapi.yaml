@@ -182,6 +182,136 @@ paths:
       parameters: [{ $ref: "#/components/parameters/Id" }]
       responses: { "204": { description: Supprimée } }
 
+  # --- Compétences, formations, langues -------------------------------------
+  # Ces trois familles suivent EXACTEMENT le motif de /profile/experiences :
+  # ajout, modification (la provenance passe à user_input), suppression.
+  # Elles étaient servies et absentes du contrat — or le front les appelle
+  # pour toute édition de profil.
+  /profile/skills:
+    post:
+      summary: Ajouter une compétence (source = user_input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SkillInput" }
+      responses:
+        "201":
+          description: Créée
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Skill" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /profile/skills/{id}:
+    patch:
+      summary: Modifier une compétence (provenance passe à user_input)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SkillInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Skill" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Supprimer une compétence
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: Supprimée } }
+
+  /profile/educations:
+    post:
+      summary: Ajouter une formation (source = user_input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EducationInput" }
+      responses:
+        "201":
+          description: Créée
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Education" }
+
+  /profile/educations/{id}:
+    patch:
+      summary: Modifier une formation (provenance passe à user_input)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EducationInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Education" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Supprimer une formation
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: Supprimée } }
+
+  /profile/languages:
+    post:
+      summary: Ajouter une langue (source = user_input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LanguageInput" }
+      responses:
+        "201":
+          description: Créée
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Language" }
+
+  /profile/languages/{id}:
+    patch:
+      summary: Modifier une langue (provenance passe à user_input)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LanguageInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Language" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Supprimer une langue
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: Supprimée } }
+
+  /cv-documents/{id}/apply:
+    post:
+      summary: Reporter l'extraction d'un CV dans le profil (jamais automatique)
+      description: >
+        Validation humaine obligatoire avant tout report (D05) : rien n'entre
+        dans le profil sans cette action explicite. 409 `cv_not_parsed` si
+        l'extraction n'a pas abouti.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: Profil mis à jour
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "409": { $ref: "#/components/responses/Problem" }
+
   /preferences:
     get:
       summary: Lire les préférences
@@ -448,6 +578,37 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Application" }
 
+  /applications/{id}:
+    get:
+      summary: Détail d'une candidature (avec son historique d'événements)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+        "404": { $ref: "#/components/responses/Problem" }
+    patch:
+      summary: Modifier les notes et les champs d'une candidature externe
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationPatch" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      summary: Supprimer une candidature
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses: { "204": { description: Supprimée } }
+
   /applications/{id}/status:
     post:
       summary: Changer le statut (transition historisée)
@@ -497,6 +658,26 @@ paths:
                   status: { type: string, enum: [pending, ready, expired] }
                   download_url: { type: [string, "null"] }
 
+
+  /privacy/exports/{id}/download:
+    get:
+      summary: Télécharger l'archive d'export (JSON)
+      description: >
+        Le lien est signé (HMAC + expiration 7 jours) MAIS n'est pas un jeton
+        porteur : une session valide ET la propriété de l'export sont exigées
+        en plus. Une signature seule ne donne accès à rien.
+      parameters:
+        - { $ref: "#/components/parameters/Id" }
+        - { name: expires, in: query, required: true, schema: { type: integer } }
+        - { name: sig, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Archive complète
+          content:
+            application/json:
+              schema: { type: object }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
   /account:
     delete:
       summary: Supprimer le compte (soft delete immédiat, purge sous 30 jours)
@@ -568,6 +749,58 @@ components:
     RemotePreference: { type: string, enum: [required, preferred, indifferent, onsite_preferred] }
     CefrLevel: { type: string, enum: [A1, A2, B1, B2, C1, C2] }
     ApplicationStatus: { type: string, enum: [draft, to_apply, applied, interviewing, offer, rejected, withdrawn] }
+    SkillInput:
+      type: object
+      required: [label]
+      properties:
+        label: { type: string, maxLength: 200 }
+    Skill:
+      allOf:
+        - $ref: "#/components/schemas/SkillInput"
+        - type: object
+          required: [id, provenance]
+          properties:
+            id: { type: string, format: uuid }
+            provenance: { $ref: "#/components/schemas/Provenance" }
+    EducationInput:
+      type: object
+      required: [degree, institution]
+      properties:
+        degree: { type: string, maxLength: 300 }
+        institution: { type: string, maxLength: 300 }
+        start_year: { type: [integer, "null"], minimum: 1900, maximum: 2100 }
+        end_year: { type: [integer, "null"], minimum: 1900, maximum: 2100 }
+    Education:
+      allOf:
+        - $ref: "#/components/schemas/EducationInput"
+        - type: object
+          required: [id, provenance]
+          properties:
+            id: { type: string, format: uuid }
+            provenance: { $ref: "#/components/schemas/Provenance" }
+    LanguageInput:
+      type: object
+      required: [lang_code, level]
+      properties:
+        lang_code: { type: string, description: "Code ISO 639-1 (fr, en...)" }
+        level: { type: string, enum: [A1, A2, B1, B2, C1, C2] }
+    Language:
+      allOf:
+        - $ref: "#/components/schemas/LanguageInput"
+        - type: object
+          required: [id, provenance]
+          properties:
+            id: { type: string, format: uuid }
+            provenance: { $ref: "#/components/schemas/Provenance" }
+    ApplicationPatch:
+      type: object
+      description: Champs modifiables d'une candidature (tous optionnels)
+      properties:
+        external_title: { type: [string, "null"], maxLength: 500 }
+        external_company: { type: [string, "null"], maxLength: 500 }
+        external_url: { type: [string, "null"], maxLength: 2000 }
+        notes: { type: [string, "null"], maxLength: 10000 }
+
     Provenance:
       type: object
       description: Provenance et confiance d'un champ extrait (D05)

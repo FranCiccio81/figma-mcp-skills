@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
@@ -20,6 +20,8 @@ class AuthRepository(Protocol):
     async def get_user_by_email(self, email: str) -> User | None: ...
 
     async def email_taken(self, email: str) -> bool: ...
+
+    async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]: ...
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None: ...
 
@@ -62,6 +64,36 @@ class SqlAlchemyAuthRepository:
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
         stmt = select(User).where(User.id == user_id, User.deleted_at.is_(None))
         return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]:
+        """(CV importé, profil validé, préférences définies) — une seule requête.
+
+        Les trois indicateurs étaient des littéraux ``False``, avec pour
+        commentaire « M1 : tant que les modules profiles/preferences (M2+) ne
+        fournissent pas leurs services ». Ils les fournissent depuis longtemps.
+
+        Conséquence visible : la carte « Mon CV » du tableau de bord affichait
+        à vie « Aucun CV importé pour le moment » et proposait « Importer mon
+        CV » au lieu de « Réimporter », quel que soit le nombre de CV
+        réellement importés. Le composant note pourtant qu'il lit ``GET /me``
+        « jamais d'état local seul » — la source de vérité choisie était
+        justement celle qui mentait.
+
+        Trois ``EXISTS`` dans une requête plutôt que trois allers-retours :
+        cette route est appelée à chaque chargement de page.
+        """
+        resultat = await self._session.execute(
+            text(
+                "SELECT "
+                " EXISTS (SELECT 1 FROM cv_documents WHERE user_id = :uid),"
+                " EXISTS (SELECT 1 FROM profiles WHERE user_id = :uid"
+                "         AND status = 'validated'),"
+                " EXISTS (SELECT 1 FROM preferences WHERE user_id = :uid)"
+            ),
+            {"uid": user_id},
+        )
+        cv, profil, preferences = resultat.one()
+        return bool(cv), bool(profil), bool(preferences)
 
     async def create_user(
         self,

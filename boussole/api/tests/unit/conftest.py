@@ -52,6 +52,8 @@ class InMemoryAuthRepository:
     def __init__(self) -> None:
         self.users_by_id: dict[uuid.UUID, User] = {}
         self.consents: list[tuple[uuid.UUID, str, str]] = []
+        #: user_id -> (cv importé, profil validé, préférences définies).
+        self.onboarding: dict[uuid.UUID, tuple[bool, bool, bool]] = {}
 
     async def get_user_by_email(self, email: str) -> User | None:
         needle = email.lower()
@@ -59,6 +61,15 @@ class InMemoryAuthRepository:
             if user.email.lower() == needle and user.deleted_at is None:
                 return user
         return None
+
+    async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]:
+        """Reflète ce que les tests ont posé, pas trois ``False`` en dur.
+
+        C'est justement le littéral qui a laissé passer le défaut : la
+        doublure disait la même chose que le code, donc aucun test ne pouvait
+        voir que le code ne regardait rien.
+        """
+        return self.onboarding.get(user_id, (False, False, False))
 
     async def email_taken(self, email: str) -> bool:
         """Reproduit l'index unique RÉEL : il ignore ``deleted_at``.

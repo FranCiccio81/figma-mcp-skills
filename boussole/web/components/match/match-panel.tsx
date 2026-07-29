@@ -18,16 +18,16 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { isApiProblem } from "@/lib/api/client";
 import { getMatch, isProfileNotValidated, matchKeys, postExplanation } from "@/lib/api/matching";
-import type { DimensionDetails, DimensionScore, UnknownDimension } from "@/lib/api/types";
+import type {
+  BlockingCriterion,
+  DimensionDetails,
+  DimensionScore,
+  UnknownDimension,
+} from "@/lib/api/types";
 
 /** Quotas LLM des explications (04 Flux 4 : 10/h, 40/j) — pour le message M4-b. */
 const EXPLANATION_QUOTA_HOURLY = 10;
 const EXPLANATION_QUOTA_DAILY = 40;
-
-/** Seuils de la couche d'explication déterministe (06 §6). */
-const STRENGTH_MIN_SUBSCORE = 0.8;
-const STRENGTH_MIN_WEIGHT = 6;
-const GAP_MAX_SUBSCORE = 0.4;
 
 /**
  * 🟡 Identifiants de dimensions connus (06 §2 + exemple 12 §4) — traduits via
@@ -46,7 +46,11 @@ const KNOWN_DIMENSION_IDS: ReadonlySet<string> = new Set([
   "languages",
   "contract",
   "salary",
-  "fine_preferences",
+  // L'identifiant RÉEL du moteur est `preference_boost` (06 §2, dimension 12).
+  // La clé i18n s'appelait `fine_preferences` : le test d'appartenance échouait,
+  // et l'utilisateur lisait `preference boost` — le repli dé-snake-casé — en
+  // français comme en anglais. Les onze autres dimensions étaient correctes.
+  "preference_boost",
 ]);
 
 type Translator = ReturnType<typeof useTranslations<"match">>;
@@ -58,8 +62,29 @@ function dimensionName(t: Translator, dimension: string): string {
     : dimension.replaceAll("_", " ");
 }
 
+/** Raisons d'inconnue que ce front sait traduire lui-même. */
+const TRANSLATED_REASONS = new Set([
+  "profile_not_provided",
+  "low_extraction_confidence",
+  "unavailable",
+  "job_not_provided",
+]);
+
 /**
- * Libellé d'une inconnue : API repris tel quel (M3-a), repli par côté manquant.
+ * Libellé d'une inconnue — TRADUIT ICI, l'API n'est qu'un dernier recours.
+ *
+ * La précédence était inverse (`if (unknown.label) return unknown.label`), et
+ * l'API rend ses libellés **en français, sans condition** : elle ne lit jamais
+ * `Accept-Language`, alors que le proxy BFF le lui transmet. Un utilisateur en
+ * anglais lisait donc « Role similarity » (front) juste au-dessus de
+ * « Similarité du métier : comparaison indisponible (outil non calibré) »
+ * (API) — sur l'écran même censé lui expliquer son score. Et les traductions
+ * `unknown.*Fallback`, présentes et correctes en `en`, étaient du code mort.
+ *
+ * L'API reste la source des **codes** (`dimension`, `reason`) ; la langue est
+ * une affaire d'interface. Son `label` ne sert plus que si elle introduit un
+ * code que ce front ne connaît pas encore — mieux vaut un libellé dans la
+ * mauvaise langue qu'une ligne vide.
  *
  * Exportée pour être testée : c'est ici que se joue la garantie de ne mettre
  * en cause NI le profil NI l'offre quand la limite est la nôtre (raison
@@ -67,7 +92,9 @@ function dimensionName(t: Translator, dimension: string): string {
  * incertaine » accuserait une annonce qui n'a aucun défaut.
  */
 export function unknownLabel(t: Translator, unknown: UnknownDimension): string {
-  if (unknown.label) return unknown.label;
+  if (!TRANSLATED_REASONS.has(unknown.reason) || !KNOWN_DIMENSION_IDS.has(unknown.dimension)) {
+    if (unknown.label) return unknown.label;
+  }
   const label = dimensionName(t, unknown.dimension);
   if (unknown.reason === "profile_not_provided") return t("unknown.profileFallback", { label });
   if (unknown.reason === "low_extraction_confidence") {
@@ -76,6 +103,31 @@ export function unknownLabel(t: Translator, unknown: UnknownDimension): string {
   // Ni le profil ni l'offre ne sont en cause : ne rien leur reprocher.
   if (unknown.reason === "unavailable") return t("unknown.unavailableFallback", { label });
   return t("unknown.jobFallback", { label });
+}
+
+/** Codes de critères bloquants que ce front sait traduire (06 §3). */
+const TRANSLATED_BLOCKING_CODES = new Set([
+  "location_incompatible",
+  "remote_required",
+  "language_missing",
+  "contract_excluded",
+  "salary_below_minimum",
+  "sector_excluded",
+]);
+
+/**
+ * Libellé d'un bloquant — traduit ici, pour la même raison que ci-dessus.
+ *
+ * L'API rendait « Langue requise absente ou >= 2 niveaux CECRL en dessous »
+ * en anglais comme en français. C'est de surcroît la description de la RÈGLE,
+ * écrite pour la spécification ; l'utilisateur a besoin de savoir ce qui le
+ * concerne, lui.
+ */
+export function blockingLabel(t: Translator, criterion: BlockingCriterion): string {
+  if (TRANSLATED_BLOCKING_CODES.has(criterion.code)) {
+    return t(`blocking.codes.${criterion.code}` as Parameters<Translator>[0]);
+  }
+  return criterion.label ?? t("blocking.fallbackLabel", { code: criterion.code });
 }
 
 /** Lignes « valeurs comparées » d'une dimension (couvertes / proches / manquantes…). */
@@ -309,9 +361,13 @@ export function MatchPanel({ jobId }: MatchPanelProps) {
   const match = matchQuery.data;
   const knownDimensions = match.dimensions.filter((dimension) => dimension.known);
   const strengths = knownDimensions.filter(
-    (d) => d.subscore >= STRENGTH_MIN_SUBSCORE && d.weight >= STRENGTH_MIN_WEIGHT,
+    (d) =>
+      d.subscore >= match.explanation_thresholds.strength_min_subscore &&
+      d.weight >= match.explanation_thresholds.strength_min_weight,
   );
-  const gaps = knownDimensions.filter((d) => d.subscore <= GAP_MAX_SUBSCORE);
+  const gaps = knownDimensions.filter(
+    (d) => d.subscore <= match.explanation_thresholds.gap_max_subscore,
+  );
   const others = knownDimensions.filter(
     (d) => !strengths.includes(d) && !gaps.includes(d),
   );
@@ -395,7 +451,7 @@ export function MatchPanel({ jobId }: MatchPanelProps) {
                   {t("blocking.badge")}
                 </span>
                 <p className="text-content">
-                  {criterion.label ?? t("blocking.fallbackLabel", { code: criterion.code })}
+                  {blockingLabel(t, criterion)}
                 </p>
               </li>
             ))}

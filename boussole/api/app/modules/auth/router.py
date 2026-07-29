@@ -176,19 +176,25 @@ async def logout(
 
 
 @router.get("/me", response_model=MeResponse)
-async def me(user: User = Depends(require_current_user)) -> MeResponse:
-    """Utilisateur courant + état d'onboarding.
+async def me(
+    user: User = Depends(require_current_user),
+    repository: AuthRepository = Depends(get_auth_repository),
+) -> MeResponse:
+    """Utilisateur courant + état d'onboarding RÉEL.
 
-    M1 : les indicateurs d'onboarding sont False tant que les modules
-    profiles/preferences (M2+) ne fournissent pas leurs services.
+    Les trois indicateurs étaient des littéraux ``False`` : le tableau de bord
+    invitait indéfiniment à importer un CV déjà importé.
     """
+    cv_imported, profile_validated, preferences_set = await repository.onboarding_state(
+        user.id
+    )
     return MeResponse(
         id=user.id,
         email=user.email,
         locale=user.locale,
         onboarding=OnboardingState(
-            cv_imported=False,
-            profile_validated=False,
-            preferences_set=False,
+            cv_imported=cv_imported,
+            profile_validated=profile_validated,
+            preferences_set=preferences_set,
         ),
     )

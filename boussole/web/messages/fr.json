@@ -184,7 +184,15 @@
       "title": "Critères bloquants",
       "badge": "⛔ Critère bloquant",
       "transparency": "Cette offre reste affichée par transparence. Un critère bloquant n'annule pas le score : il signale une incompatibilité avec vos exigences. Modifiable dans vos préférences.",
-      "fallbackLabel": "Incompatibilité avec vos exigences ({code})."
+      "fallbackLabel": "Incompatibilité avec vos exigences ({code}).",
+      "codes": {
+        "location_incompatible": "Poste sur site hors de votre zone acceptée",
+        "remote_required": "Vous exigez le full remote ; ce poste impose une présence",
+        "language_missing": "Langue requise absente de votre profil, ou niveau trop éloigné",
+        "contract_excluded": "Type de contrat que vous avez exclu",
+        "salary_below_minimum": "Rémunération sous votre minimum",
+        "sector_excluded": "Secteur que vous avez exclu"
+      }
     },
     "unknown": {
       "title": "Non précisé",
@@ -219,7 +227,7 @@
         "languages": "Langues",
         "contract": "Type de contrat",
         "salary": "Salaire",
-        "fine_preferences": "Préférences fines"
+        "preference_boost": "Préférences fines"
       }
     },
     "explanation": {

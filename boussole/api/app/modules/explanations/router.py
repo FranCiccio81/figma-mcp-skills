@@ -10,12 +10,14 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from redis.asyncio import Redis
 
 from app.ai.providers.base import LLMProvider, ProviderUnavailableError
 from app.ai.providers.factory import get_llm_provider as provider_factory
 from app.ai.providers.fake import FakeProvider
 from app.core.config import get_settings
 from app.core.problems import Problem
+from app.core.redis import get_redis_cache
 from app.modules.auth.models import User
 from app.modules.auth.router import require_current_user
 from app.modules.explanations.repository import (
@@ -66,8 +68,9 @@ def get_explanations_service(
     matching: MatchingService = Depends(get_matching_service),
     repository: ExplanationsRepository = Depends(get_explanations_repository),
     provider: LLMProvider = Depends(get_llm_provider),
+    cache: Redis = Depends(get_redis_cache),
 ) -> ExplanationsService:
-    return ExplanationsService(matching, repository, provider)
+    return ExplanationsService(matching, repository, provider, cache=cache)
 
 
 CurrentUser = Annotated[User, Depends(require_current_user)]
