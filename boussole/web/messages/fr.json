@@ -713,7 +713,8 @@
       "kind": {
         "public_api": "API publique",
         "ats_feed": "Flux ATS",
-        "partner": "Partenaire"
+        "partner": "Partenaire",
+        "demo": "Corpus de démonstration (offres fictives)"
       },
       "lastSync": "dernière synchronisation {date}",
       "lastSyncUnknown": "dernière synchronisation inconnue",

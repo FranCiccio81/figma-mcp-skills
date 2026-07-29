@@ -528,7 +528,7 @@ paths:
                   properties:
                     slug: { type: string }
                     name: { type: string }
-                    kind: { type: string, enum: [public_api, ats_feed, partner] }
+                    kind: { type: string, enum: [public_api, ats_feed, partner, demo] }
                     last_sync_at: { type: [string, "null"], format: date-time }
 
 components:

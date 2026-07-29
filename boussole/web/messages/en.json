@@ -713,7 +713,8 @@
       "kind": {
         "public_api": "Public API",
         "ats_feed": "ATS feed",
-        "partner": "Partner"
+        "partner": "Partner",
+        "demo": "Demonstration corpus (fictional postings)"
       },
       "lastSync": "last synced {date}",
       "lastSyncUnknown": "last sync unknown",

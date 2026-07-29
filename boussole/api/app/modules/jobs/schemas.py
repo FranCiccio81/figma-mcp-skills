@@ -22,7 +22,10 @@ SeniorityLevel = Literal["intern", "junior", "mid", "senior", "lead", "principal
 JobStatus = Literal["active", "expired", "withdrawn"]
 SavedState = Literal["saved", "hidden"]
 SortMode = Literal["match", "date", "relevance"]
-SourceKind = Literal["public_api", "ats_feed", "partner"]
+#: ``demo`` : corpus de démonstration, offres FICTIVES (D34). Le dire
+#: explicitement permet à l'interface de l'étiqueter comme tel —
+#: l'inverse de le faire passer pour une source ordinaire.
+SourceKind = Literal["public_api", "ats_feed", "partner", "demo"]
 
 
 class MatchSummary(BaseModel):

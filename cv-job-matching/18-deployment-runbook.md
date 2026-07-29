@@ -1,8 +1,45 @@
 # 18 — Runbook de déploiement et d'exploitation
 
-> Document **opérationnel**. Tout ce qui suit a été vérifié dans le code de `boussole/` — rédigé au commit `811d4d1` (merge M6), tenu à jour depuis (dernier passage : lot post-M6 n° 1). Les commandes citées existent dans le `Makefile`, le `docker-compose.dev.yml`, le `Dockerfile.api` ou sont directement dérivables des tâches Celery enregistrées. Les incertitudes et les points non vérifiables depuis le code portent 🟡.
+> Document **opérationnel**. Tout ce qui suit a été vérifié dans le code de `boussole/` — rédigé au commit `811d4d1` (merge M6), tenu à jour depuis (dernier passage : finalisation). Les commandes citées existent dans le `Makefile`, le `docker-compose.dev.yml`, le `Dockerfile.api` ou sont directement dérivables des tâches Celery enregistrées. Les incertitudes et les points non vérifiables depuis le code portent 🟡.
 >
 > Ce document ne tranche **aucune** question juridique. Les points de conformité renvoient à [17-open-questions.md](17-open-questions.md).
+
+---
+
+## 0. Démarrage le plus court — une application utilisable en une commande
+
+Pour éprouver l'application en vrai, sans attendre l'homologation des sources
+réelles (Q2/Q3) :
+
+```bash
+cd boussole
+cp .env.example .env          # SMTP_HOST=mailpit, FEATURE_SOURCE_DEMO=true
+make up                       # postgres, redis ×2, minio, mailpit, api, worker, beat, web
+make demo                     # base VIDE → application utilisable
+```
+
+`make demo` enchaîne migrations, référentiels, **ingestion du corpus par la
+chaîne de production** (normalisation, géocodage, dédup), embeddings, et un
+compte dont le profil est **validé** — sans quoi toutes les routes de matching
+répondent 409 et l'application paraît cassée alors qu'elle applique sa règle.
+La commande vérifie son propre résultat et sort en erreur si la recherche ne
+remonte rien.
+
+| | |
+|---|---|
+| Application | http://localhost:3000 |
+| API | http://localhost:8000/api/v1 |
+| Boîte aux lettres (mailpit) | http://localhost:8025 |
+| Identifiants | `demo@boussole.dev` / `boussole-demo-1234` |
+
+> ⚠️ **Les douze offres sont FICTIVES** (D34). Leurs liens sont sur le TLD
+> réservé `.invalid` et ne résolvent pas ; la source s'affiche comme « Corpus
+> de démonstration (offres fictives) ». Le connecteur **refuse de s'activer**
+> dès que `ENV` vaut `staging` ou `production`, quel que soit le feature flag.
+
+Ce que ce démarrage NE fait pas : activer un provider LLM réel (`AI_PROVIDER`
+reste `fake` — les explications et générations sortent des textes canned) ni
+une source d'offres réelle. Les deux attendent des décisions, pas du code.
 
 ---
 
@@ -23,9 +60,9 @@
 
 ### Ce que l'infrastructure ne fournit **pas** aujourd'hui
 
-- **Aucun envoi d'e-mail transactionnel.** Aucun module SMTP/mailer n'existe dans `api/app` (vérifié : aucune occurrence de `smtp`, `mailer`, `send_email`). `mailpit` est présent dans le compose de dev mais **rien ne lui écrit**. Conséquence : pas d'e-mail de confirmation de suppression de compte (hypothèse Q30), pas de digest (Q9).
+- **E-mail transactionnel : SMTP livré, fournisseur non choisi.** `app/core/mail.py` envoie par SMTP (`mailpit` en dev) et la **confirmation de suppression de compte** part. Manquent : la fenêtre de rétractation de 7 jours et son lien d'annulation (Q30), le digest (Q9), et le choix d'un fournisseur (Q15) — SMTP est volontairement le dénominateur commun et ne préempte rien. `SMTP_HOST` vide ⇒ aucun envoi, **journalisé**.
 - **Aucun antivirus à l'upload.** ClamAV (Q16) est explicitement hors périmètre (`app/modules/profiles/cv/router.py`). Les protections en place sont structurelles (magic bytes, bornes anti-bombe de décompression) — pas un scan de contenu.
-- **Aucune exportation d'observabilité.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont **déclarés dans la configuration mais jamais lus par le code applicatif** (vérifié par recherche exhaustive sur `app/`). Les renseigner n'a aucun effet. Seuls existent : logs JSON structurés sur stdout avec `trace_id` (`app/main.py::JsonLogFormatter`) et les sondes HTTP.
+- **Export d'erreurs livré, traces distribuées non.** `SENTRY_DSN` est **lu** (`app/core/observability.py`) : renseigné, tout `logger.error` devient un événement — c'est ce qui fait qu'une alerte de purge RGPD en retard atteint quelqu'un. Les données personnelles sont retirées avant envoi (corps de requête, cookies, en-têtes d'identité, variables locales des piles). Un DSN renseigné **sans** l'extra installé fait **échouer le démarrage**. `OTEL_EXPORTER_OTLP_ENDPOINT` a été **retirée** : elle était déclarée et inerte.
 
 ---
 
@@ -83,6 +120,18 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | `CSRF_HEADER_NAME` | En-tête CSRF attendu | `X-CSRF-Token` | Non | Non |
 | `LOGIN_RATE_LIMIT` | Tentatives de login par fenêtre | `5` | Non | Non |
 | `LOGIN_RATE_WINDOW_SECONDS` | Fenêtre de login | `60` | Non | Non |
+
+### 2.4 bis — Observabilité, e-mail, corpus de démonstration
+
+| Variable | Rôle | Défaut | Prod | Secret |
+|---|---|---|---|---|
+| `SENTRY_DSN` | Export d'erreurs **et des alertes de conformité**. Renseigné sans l'extra `[observability]` ⇒ **refus de démarrage** | `""` | **Recommandé** | **Oui** |
+| `SMTP_HOST` | Hôte SMTP. Vide ⇒ aucun envoi, journalisé | `""` | **Oui** | Non |
+| `SMTP_PORT` | Port SMTP (`1025` mailpit, `587` avec STARTTLS) | `1025` | **Oui** | Non |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | Authentification SMTP | `""` | Selon fournisseur | **Oui** |
+| `SMTP_STARTTLS` | STARTTLS après connexion | `false` | **Oui → `true`** | Non |
+| `MAIL_FROM` | Expéditeur affiché | `Boussole <no-reply@boussole.example>` | **Oui** | Non |
+| `FEATURE_SOURCE_DEMO` | Corpus de démonstration, offres **FICTIVES** (D34). Le connecteur refuse de s'activer dès `ENV=staging` — ce drapeau seul ne suffit pas | `false` | **Non — jamais** | Non |
 
 > ⚠️ **`PRIVACY_SIGNING_KEY` signe seule l'accès à `GET /privacy/exports/{id}/download`** — une archive contenant l'intégralité des données personnelles d'un compte. Sa valeur par défaut est dans le dépôt, donc publique : laissée en place, n'importe qui ayant lu le code peut forger un lien valide pour un `export_id` deviné.
 >

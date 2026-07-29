@@ -143,7 +143,7 @@ export type SearchPage = Page<JobCard>;
 export interface SourceInfo {
   slug: string;
   name: string;
-  kind: "public_api" | "ats_feed" | "partner";
+  kind: "public_api" | "ats_feed" | "partner" | "demo";
   last_sync_at: string | null;
 }
 

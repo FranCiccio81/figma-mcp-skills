@@ -4,7 +4,9 @@
 >
 > **Méthode** : tout ce qui suit a été vérifié dans le code de `boussole/`, et les chiffres proviennent d'exécutions réelles des suites de tests. Ce document ne recopie pas les intentions des spécifications : quand le code et la spec divergent, c'est le code qui est rapporté, et la divergence est signalée. Les incertitudes portent 🟡. Aucune question juridique n'est tranchée ici.
 >
-> **État de référence** : lot post-M6 n° 2 — **1255 tests unitaires + 66 tests d'intégration**, `ruff` et `mypy` verts (146 fichiers). La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
+> **État de référence** : **finalisation** — 1323 tests unitaires + 68 d'intégration (PostgreSQL réel) + 11 front, `ruff`, `mypy` (151 fichiers), `tsc` et parité i18n verts. La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
+>
+> **Démarrage à froid vérifié** : `make demo` amène une base VIDE à une application utilisable — migrations, référentiels, ingestion du corpus par la chaîne de production, embeddings, compte au profil validé. Vérifié contre un vrai PostgreSQL et une API en fonctionnement : connexion, recherche, matching explicable, page des sources, préférences, candidatures.
 
 ---
 
@@ -12,12 +14,12 @@
 
 Six jalons ont été livrés et mergés : M1 (fondations + auth), M2 (ingestion + recherche), M3 (matching + explications), M4 (CV + générations + candidatures), M5 (privacy + durcissement), M6 (mise en service).
 
-**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1255 tests unitaires + 66 tests d’intégration PostgreSQL, lint et types verts) et un front Next.js.
+**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1323 tests unitaires + 68 d’intégration PostgreSQL + 11 front, lint et types verts) et un front Next.js.
 
 **Ce qui manque pour que ce soit un produit** : trois choses de nature différente.
 
 1. **Des décisions juridiques, pas du code.** Les connecteurs d'offres sont écrits mais désactivés en attendant Q2/Q3. Le provider LLM réel est écrit mais inactif en attendant Q4/Q38. Sans offres, le produit n'a rien à matcher ; c'est aujourd'hui le blocage n°1 et il ne se lève pas en écrivant du code.
-2. **Un peu d'exploitation.** Pas d'e-mail transactionnel, pas d'antivirus, et surtout **aucun export d'observabilité** : `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet, les logs stdout sont le seul signal. Conséquence directe : les alertes de conformité que le système émet désormais (§5.6) n'atteignent personne.
+2. **Un peu d'exploitation** — nettement moins qu'avant. L'export d'erreurs est branché (`SENTRY_DSN` fait désormais quelque chose, et son absence de paquet fait échouer le démarrage plutôt que de laisser croire à une couverture) ; la confirmation de suppression de compte part par SMTP. Restent : pas d'antivirus à l'upload (Q16, assumé), et le choix d'un fournisseur d'e-mail reste à faire (Q15) — SMTP ne préempte rien.
 3. **Des fonctionnalités assumées comme absentes** : export PDF/DOCX, digest e-mail, OAuth, multi-CV.
 
 **Sur le niveau de maturité** : les revues de code ont trouvé, à chaque jalon, des défauts sérieux dans du code dont la suite de tests était verte — six sur M4/M5, et quatre garde-fous sur cinq qui ne tenaient pas à l'exécution sur M6. Tous ont été corrigés avec un test de régression vérifié par réintroduction du bug. Ce qu'il faut en retenir n'est pas « le code est mauvais » : c'est que **la suite de tests seule n'a jamais suffi à valider ce système**, et que le budget de revue doit rester dans le plan de charge.
@@ -228,9 +230,9 @@ Mesurées sur le commit `811d4d1`, `boussole/api`.
 
 | Suite | Volume | État | Commande |
 |---|---|---|---|
-| Unitaires | **1255** tests | ✅ tous verts (82 s) | `make test` |
-| Intégration PostgreSQL | **66** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
-| Front | **0** | 🔴 aucun runner de test dans `web/package.json` | — |
+| Unitaires | **1323** tests | ✅ tous verts (83 s) | `make test` |
+| Intégration PostgreSQL | **68** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
+| Front | **11** tests | ✅ verts (vitest + Testing Library) — plus `tsc` et parité i18n | `npm test` (dans `web/`) |
 
 Répartition des 1255 unitaires (50 en `evaluation`, 12 sur le garde-fou de calibration) :
 
@@ -252,7 +254,7 @@ Répartition des 66 tests d'intégration : contraintes SQL 15, purge RGPD 12, d�
 |---|---|---|
 | `ruff` | `api/` — règles E, F, W, I, UP, B, SIM, RUF | ✅ **All checks passed** |
 | `mypy` | `app` (146 fichiers), **strict** sur `app.core.*` et `app.matching.*` | ✅ **no issues found** |
-| `next lint` / `tsc --noEmit` | `web/` | Non exécuté ici (dépendances npm non installées) 🟡 |
+| `next lint` / `tsc --noEmit` | `web/` | ✅ verts — et `tsc` a immédiatement trouvé une erreur réelle (voir §8.2) |
 
 ### CI
 
@@ -285,7 +287,7 @@ N15 reste **épinglée par test de caractérisation et délibérément non corri
 
 ### Ce qui n'est pas mesuré
 
-- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1255 tests sont un volume, pas une couverture.
+- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1323 tests sont un volume, pas une couverture.
 - **Performance** : la cible « recherche p95 < 500 ms » n'a jamais été mesurée sur un corpus réel — il n'y a pas eu de corpus réel, les connecteurs étant désactivés.
 - **Prompts** : les tests de prompts en CI et le jeu adversarial prévus par la stratégie de test n'existent pas.
 
@@ -312,7 +314,7 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 
 ### 8.2 Blocages **techniques** — faisables, ordonnés
 
-> **Mise à jour** — cette liste comptait 15 entrées dont 5 critiques à sa rédaction. Sept sont fermées : trois par la finalisation, quatre par le lot post-M6 n° 1. **Aucun blocage critique ne subsiste.** Les points fermés restent listés, barrés, avec ce qui les a réglés : une liste de blocages qui perd ses lignes sans laisser de trace ne se relit pas.
+> **Mise à jour** — cette liste comptait 15 entrées dont 5 critiques à sa rédaction. **Douze sont fermées** ; aucun blocage critique ne subsiste, et parmi les « élevés » il ne reste que le jeu annoté, qui n'est pas un problème technique. Les points fermés restent listés, barrés, avec ce qui les a réglés : une liste de blocages qui perd ses lignes sans laisser de trace ne se relit pas.
 
 **Critique — sans quoi une alpha ne doit pas ouvrir**
 
@@ -324,24 +326,25 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 
 **Élevé — pour que l'alpha produise des enseignements exploitables**
 
-6. **Constituer le jeu annoté** — l'instrument est livré, il attend son jeu. `make evaluate` mesure Spearman, NDCG@10 et les bloquants contre les `evaluation_gates` (D35), sur un corpus de démonstration fictif (D34) et des **cas de référence construits**. Ce qui manque est ce qui coûte : des annotateurs humains sur des offres réelles (Q19/Q20/Q47 — et donc Q2/Q3). **Toujours le point n° 1 restant, mais la moitié technique est faite.**
-7. ~~**Traiter N14**~~ — ✅ **fait** (lot n° 2, D36). La dimension est déclarée inconnue tant que ses seuils ne sont pas calibrés pour le modèle de vecteurs employé, au lieu d'être notée 0. L'indice de confiance a perdu les 15 points qu'il revendiquait à tort. La recalibration complète des seuils (0,75 « proche », 0,92 dédup, pondération de rerank — Q12/Q41) reste suspendue à Q11 ; renseigner `calibrated_for_model` est le geste qui réactivera la dimension.
-7 bis. **Instruire N15** — la couverture des compétences requises favorise les offres peu exigeantes, et c'est ce qui fait tomber la porte Spearman. Aucune piste ne doit être retenue sans la mesurer : c'est exactement l'usage du harnais.
-8. **Brancher une observabilité qui existe.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont des variables sans effet ; les logs stdout sont le seul signal disponible. C'est aussi ce qui manque pour que l'alerte du point 2 atteigne quelqu'un : elle est aujourd'hui une ligne ERROR que personne ne lit.
-9. ~~**Purge par âge de `ai_calls`** (13 mois)~~ — ✅ **fait** (lot n° 1). `maintenance.purge_ai_calls` à 05:30, suppression par lots de 5 000 bornés à 20 lots par exécution (un `DELETE` global verrouillerait la table, donc les appels IA en cours). Borne calculée en **mois calendaires** : `13 × 30 jours` supprimerait cinq jours trop tôt, c'est-à-dire des lignes encore sous engagement de conservation. Vérifié contre un vrai PostgreSQL — `DELETE` n'accepte pas de `LIMIT`, la requête bornée est inhabituelle et méritait autre chose qu'un fake.
+6. **Constituer le jeu annoté** — l'instrument est livré et **toutes les portes passent** désormais sur les cas de référence. Ce qui manque est ce qui coûte : des annotateurs humains sur des offres réelles (Q19/Q20/Q47 — donc Q2/Q3). **Seul point majeur restant, et il n'est pas technique.**
+7. ~~**Traiter N14**~~ — ✅ **fait** (D36).
+7 bis. ~~**Instruire N15**~~ — ✅ **corrigé et mesuré** (D38) : `k` continu, Spearman du pire profil 0,526 → 0,714.
+8. ~~**Brancher une observabilité qui existe**~~ — ✅ **fait**. `SENTRY_DSN` est lu, un ERROR devient un événement (donc les alertes de purge en retard atteignent quelqu'un), les données personnelles sont retirées avant envoi, et un DSN sans le paquet fait échouer le démarrage. `OTEL_EXPORTER_OTLP_ENDPOINT` a été **retirée** plutôt que laissée inerte.
+9. ~~**Purge par âge de `ai_calls`**~~ — ✅ **fait** (lot n° 1).
 
 **Moyen — dette assumée à ne pas laisser filer**
 
-10. **Verrou anti-chevauchement d'ingestion et circuit breaker par source** — deviennent nécessaires dès que des sources réelles tournent en continu.
-11. **Idempotency-Key des candidatures en Redis** plutôt qu'en mémoire de processus : la solution actuelle ne survit ni au redémarrage ni au multi-instance.
-12. **Colonnes `embedding_source_hash` / `embedding_model_version`** : sans elles, aucun changement de modèle n'est détectable automatiquement, et le rattrapage reste une opération manuelle risquée.
-13. **Amorcer une suite de tests front** : `web/` n'a aujourd'hui aucun test.
-14. **Décider du sort des e-mails transactionnels** : la confirmation de suppression avec lien d'annulation (Q30) suppose un fournisseur (Q15) qui n'a pas été choisi.
-15. ~~**Rafraîchir la documentation résiduelle**~~ — ✅ **fait** (lot n° 1). Le README de `tests/integration/` ne décrit plus un `xfail(strict=True)` retiré depuis longtemps, et les décomptes de tests des quatre README sont à jour.
+10. ~~**Verrou anti-chevauchement d'ingestion**~~ — ✅ **fait** : bail Redis à jeton, le cycle renonce au lieu d'attendre. 🟡 Le circuit breaker par source reste non implémenté ; les retries bornés de Celery couvrent le cas courant.
+11. ~~**Idempotency-Key des candidatures en Redis**~~ — ✅ **fait** : cache partagé, TTL 24 h, portée par utilisateur. Reste un cache de rejeu, pas un verrou : deux requêtes strictement simultanées peuvent encore créer deux lignes.
+12. **Colonnes `embedding_source_hash` / `embedding_model_version`** — toujours ouvert, et le garde-fou de D36 en a montré la limite : il compare le provider **actif**, pas la provenance réelle de chaque ligne.
+13. ~~**Amorcer une suite de tests front**~~ — ✅ **fait** : vitest + Testing Library, 11 tests sur les garanties produit du rendu, `tsc` et parité i18n en CI. `tsc` a immédiatement trouvé une erreur réelle (un `JobCard | undefined` poussé dans un instantané de mise à jour optimiste — un retour arrière aurait laissé un trou dans la liste).
+14. **Décider du fournisseur d'e-mail** (Q15) — l'envoi SMTP est livré et ne préempte rien ; reste l'arbitrage (UE, sous-traitance, registre des transferts) et la fenêtre de rétractation de 7 jours (Q30).
+15. ~~**Rafraîchir la documentation résiduelle**~~ — ✅ **fait** (lot n° 1).
 
-**Nouveau — soulevé par le lot n° 1**
+**Nouveau — soulevé par la finalisation**
 
-16. **L'engagement des 30 jours est tenu à un cycle près** : `purge_after` est posé à J+30 et la purge tourne une fois par jour, donc une purge peut légitimement s'exécuter au 31ᵉ jour. La surveillance rend le dépassement visible, elle ne le supprime pas. Se règle en posant `purge_after` à J+29 — c'est une modification de D09, à arbitrer.
+16. **L'engagement des 30 jours est tenu à un cycle près** : `purge_after` est posé à J+30 et la purge tourne une fois par jour. Se règle en posant `purge_after` à J+29 — modification de D09, à arbitrer.
+17. **Le corpus de démonstration devra être retiré** le jour où une source réelle est homologuée — ou conservé pour la seule mesure. Il refuse déjà de s'activer hors développement ; c'est une décision à acter, pas un risque technique.
 
 **Non bloquant — assumé pour le MVP**
 
