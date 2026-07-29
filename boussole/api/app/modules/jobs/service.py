@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from app.core.problems import Problem
+from app.matching import get_config
 from app.modules.jobs.models import JobPosting
 from app.modules.jobs.repository import (
     InvalidCursorError,
@@ -34,6 +35,7 @@ from app.modules.jobs.schemas import (
     JobDetail,
     JobSourceOut,
     JobStatus,
+    MatchSummary,
     RemotePolicy,
     SavedState,
     SearchPage,
@@ -112,7 +114,9 @@ class JobsService:
         cursor: str | None,
     ) -> SearchPage:
         """Recherche paginée par curseur opaque (pipeline D07)."""
-        effective_sort = self._effective_sort(sort, q)
+        # Le profil validé conditionne tout : sans lui, aucun score n'existe.
+        profile_id = await self._repository.validated_profile_id(user_id)
+        effective_sort = self._effective_sort(sort, q, scored=profile_id is not None)
         decoded = None
         if cursor is not None:
             try:
@@ -142,7 +146,12 @@ class JobsService:
             sort=effective_sort,
         )
         rows = await self._repository.search(
-            user_id=user_id, filters=filters, limit=limit, cursor=decoded
+            user_id=user_id,
+            filters=filters,
+            limit=limit,
+            cursor=decoded,
+            profile_id=profile_id,
+            scoring_version=get_config().scoring_version if profile_id else None,
         )
         has_more = len(rows) > limit
         page_rows = rows[:limit]
@@ -154,14 +163,25 @@ class JobsService:
                           next_cursor=next_cursor)
 
     @staticmethod
-    def _effective_sort(sort: str, q: str | None) -> str:
-        """Tri effectif M2 : ``match`` → ``relevance`` ; sans ``q`` → ``date``.
+    def _effective_sort(sort: str, q: str | None, *, scored: bool) -> str:
+        """Tri effectif.
 
-        ``sort=match`` est accepté (défaut du contrat) mais retombe sur la
-        pertinence full-text tant que le scoring n'existe pas (M3, module
-        matching) — comportement documenté, aucun 422.
+        ``sort=match`` retombait TOUJOURS sur la pertinence full-text, avec
+        pour commentaire « tant que le scoring n'est pas livré (M3) ». Il
+        l'était : ``/matches`` rendait des scores, le front affichait un
+        sélecteur « Compatibilité », et cette page-ci ne triait rien et
+        n'affichait aucun score. Le tableau de bord y renvoyait pourtant
+        explicitement pour ça.
+
+        Le repli demeure quand l'utilisateur n'a **pas** de profil validé :
+        il n'a alors aucun score, et trier par compatibilité n'aurait aucun
+        sens. La pertinence est le meilleur substitut disponible.
         """
-        if sort in ("match", "relevance"):
+        if sort == "match":
+            if scored:
+                return "match"
+            return "relevance" if q else "date"
+        if sort == "relevance":
             return "relevance" if q else "date"
         return "date"
 
@@ -267,7 +287,16 @@ class JobsService:
                 posting.salary_period,
             ),
             posted_at=self._earliest_posted_at(posting),
-            match=None,  # M2 : toujours null, le scoring arrive au M3.
+            match=(
+                MatchSummary(
+                    score=row.match.score,
+                    confidence=row.match.confidence,
+                    low_data=row.match.low_data,
+                    has_blocking=row.match.has_blocking,
+                )
+                if row.match is not None
+                else None
+            ),
             saved_state=cast(SavedState | None, row.saved_state),
         )
 
@@ -288,7 +317,10 @@ class JobsService:
                 posting.salary_period,
             ),
             posted_at=self._earliest_posted_at(posting),
-            match=None,  # M2 : toujours null, le scoring arrive au M3.
+            # Le détail a sa propre route de matching (GET /jobs/{id}/match),
+            # qui rend le score ET le détail par dimension. Le dupliquer ici
+            # ferait deux chemins de calcul pour le même chiffre.
+            match=None,
             saved_state=cast(SavedState | None, row.saved_state),
             description_text=posting.description_text,
             language=posting.language,

@@ -58,6 +58,12 @@ from app.core.config import Settings, get_settings
 from app.core.db import get_db_session
 from app.modules.jobs.models import JobLocation, JobPosting, JobSource, SavedJob, Source
 
+# Lecture seule d'une table d'un autre module : la carte d'offre doit porter
+# le score, et le recopier dans `jobs` créerait deux sources de vérité pour le
+# chiffre central du produit.
+from app.modules.matching.models import MatchResultRow
+from app.modules.profiles.models import Profile
+
 logger = logging.getLogger(__name__)
 
 EARTH_RADIUS_KM = 6371.0
@@ -138,12 +144,25 @@ class SearchFilters:
 
 
 @dataclass(frozen=True, slots=True)
+class MatchRowSummary:
+    """Ce que la carte affiche du matching — pas le détail par dimension."""
+
+    score: int
+    confidence: int
+    low_data: bool
+    has_blocking: bool
+
+
+@dataclass(frozen=True, slots=True)
 class JobSearchRow:
     """Ligne de résultat : offre + état saved/hidden + valeur de tri keyset."""
 
     posting: JobPosting
     saved_state: str | None
     sort_value: datetime | float
+    #: Résumé de matching de l'utilisateur courant, ``None`` si l'offre n'a
+    #: pas encore été scorée pour lui (ou si son profil n'est pas validé).
+    match: MatchRowSummary | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,11 +211,24 @@ def ts_config_for(language: str | None) -> str:
     return "english" if language is not None and language.lower().startswith("en") else "french"
 
 
+#: Score de substitution pour une offre NON SCORÉE, en tri par compatibilité.
+#:
+#: ``NULLS LAST`` seul ne suffit pas : la pagination keyset compare un tuple
+#: ``(score, id)``, et un ``NULL`` y rend toute comparaison indéterminée — la
+#: page suivante reviendrait vide. ``-1`` est hors de l'intervalle 0–100, donc
+#: les offres non scorées se rangent après toutes les autres, dans un ordre
+#: stable et comparable.
+UNSCORED_SORT_VALUE = -1
+
+
 def build_search_statement(
     user_id: uuid.UUID,
     filters: SearchFilters,
     limit: int,
     cursor: SearchCursor | None,
+    *,
+    profile_id: uuid.UUID | None = None,
+    scoring_version: str | None = None,
 ) -> Select[Any]:
     """Construit le SELECT de recherche (étapes 1-2 du pipeline D07).
 
@@ -205,6 +237,12 @@ def build_search_statement(
     suivante sans COUNT ni OFFSET.
     """
     saved = aliased(SavedJob)
+    match = aliased(MatchResultRow)
+    #: Le matching n'est joint que si l'utilisateur a un profil validé ET que
+    #: la version de scoring est connue : un score calculé par une version
+    #: précédente n'est pas comparable à un score courant, et l'afficher
+    #: mélangerait deux échelles.
+    matching_joint = profile_id is not None and scoring_version is not None
     conditions = [JobPosting.status == "active"]
 
     if filters.remote:
@@ -271,7 +309,14 @@ def build_search_statement(
     # Any : InstrumentedAttribute et Function n'ont pas d'ancêtre commun
     # satisfaisant pour mypy ; les deux portent .desc()/.label().
     sort_expr: Any
-    if filters.sort == "relevance" and rank is not None:
+    if filters.sort == "match" and matching_joint:
+        # Le tri par compatibilité EXISTE désormais. Il retombait sur la
+        # pertinence full-text — donc « Trier par → Compatibilité » ne triait
+        # rien, et aucune carte n'affichait de score, alors que le tableau de
+        # bord renvoyait vers cette page précisément pour ça.
+        sort_expr = func.coalesce(match.score, UNSCORED_SORT_VALUE)
+        order_by = (sort_expr.desc(), JobPosting.id.desc())
+    elif filters.sort == "relevance" and rank is not None:
         sort_expr = rank
         order_by = (rank.desc(), JobPosting.id.desc())
     else:
@@ -282,10 +327,34 @@ def build_search_statement(
         # Keyset descendant : strictement « après » le dernier élément servi.
         conditions.append(tuple_(sort_expr, JobPosting.id) < (cursor.value, cursor.last_id))
 
-    return (
-        select(JobPosting, saved.state.label("saved_state"), sort_expr.label("sort_value"))
+    colonnes: list[Any] = [
+        JobPosting,
+        saved.state.label("saved_state"),
+        sort_expr.label("sort_value"),
+    ]
+    if matching_joint:
+        colonnes += [
+            match.score.label("match_score"),
+            match.confidence.label("match_confidence"),
+            match.low_data.label("match_low_data"),
+            match.blocking_criteria.label("match_blocking"),
+        ]
+
+    stmt = (
+        select(*colonnes)
         .outerjoin(saved, and_(saved.job_posting_id == JobPosting.id, saved.user_id == user_id))
-        .where(*conditions)
+    )
+    if matching_joint:
+        stmt = stmt.outerjoin(
+            match,
+            and_(
+                match.job_posting_id == JobPosting.id,
+                match.profile_id == profile_id,
+                match.scoring_version == scoring_version,
+            ),
+        )
+    return (
+        stmt.where(*conditions)
         .order_by(*order_by)
         .limit(limit + 1)
         .options(
@@ -478,8 +547,14 @@ class JobsRepository(Protocol):
         filters: SearchFilters,
         limit: int,
         cursor: SearchCursor | None,
+        profile_id: uuid.UUID | None = None,
+        scoring_version: str | None = None,
     ) -> list[JobSearchRow]:
         """Retourne jusqu'à ``limit + 1`` lignes (détection de page suivante)."""
+        ...
+
+    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
+        """Profil VALIDÉ de l'utilisateur, ``None`` sinon."""
         ...
 
     async def get_detail(
@@ -509,12 +584,32 @@ class SqlAlchemyJobsRepository:
         filters: SearchFilters,
         limit: int,
         cursor: SearchCursor | None,
+        profile_id: uuid.UUID | None = None,
+        scoring_version: str | None = None,
     ) -> list[JobSearchRow]:
-        stmt = build_search_statement(user_id, filters, limit, cursor)
+        stmt = build_search_statement(
+            user_id, filters, limit, cursor,
+            profile_id=profile_id, scoring_version=scoring_version,
+        )
         result = await self._session.execute(stmt)
+        joint = profile_id is not None and scoring_version is not None
         rows = [
-            JobSearchRow(posting=posting, saved_state=saved_state, sort_value=sort_value)
-            for posting, saved_state, sort_value in result.all()
+            JobSearchRow(
+                posting=ligne[0],
+                saved_state=ligne[1],
+                sort_value=ligne[2],
+                match=(
+                    MatchRowSummary(
+                        score=ligne[3],
+                        confidence=ligne[4],
+                        low_data=bool(ligne[5]),
+                        has_blocking=bool(ligne[6]),
+                    )
+                    if joint and ligne[3] is not None
+                    else None
+                ),
+            )
+            for ligne in result.all()
         ]
         settings = get_settings()
         return rerank_with_embeddings(
@@ -523,6 +618,17 @@ class SqlAlchemyJobsRepository:
             query_embedding=await _query_embedding(filters, settings),
             weights=RerankWeights.from_settings(settings),
         )
+
+    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
+        """Profil validé — condition d'existence d'un score comparable.
+
+        Un profil ``draft`` n'a pas de ``match_results`` : joindre pour lui
+        coûterait une jointure garantie vide à chaque recherche.
+        """
+        stmt = select(Profile.id).where(
+            Profile.user_id == user_id, Profile.status == "validated"
+        )
+        return (await self._session.execute(stmt)).scalar_one_or_none()
 
     async def get_detail(
         self, job_id: uuid.UUID, user_id: uuid.UUID

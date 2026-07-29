@@ -20,6 +20,7 @@ from app.modules.jobs.repository import (
     EARTH_RADIUS_KM,
     JobDetailRow,
     JobSearchRow,
+    MatchRowSummary,
     SearchCursor,
     SearchFilters,
     SourceRow,
@@ -121,12 +122,26 @@ class InMemoryJobsRepository:
         self.postings: dict[uuid.UUID, JobPosting] = {}
         self.saved: dict[tuple[uuid.UUID, uuid.UUID], str] = {}
         self.sources: list[SourceRow] = []
+        #: user_id -> profile_id validé. Vide = personne n'a de profil validé,
+        #: donc aucun score : c'est le cas par défaut d'un nouvel utilisateur.
+        self.profiles: dict[uuid.UUID, uuid.UUID] = {}
+        #: (profile_id, job_id) -> résumé de matching, pour les tests de tri.
+        self.matches: dict[tuple[uuid.UUID, uuid.UUID], MatchRowSummary] = {}
 
     def add(self, posting: JobPosting) -> JobPosting:
         self.postings[posting.id] = posting
         return posting
 
     # ------------------------------------------------------------ recherche
+
+    async def validated_profile_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
+        """Profil validé de l'utilisateur — ``None`` par défaut.
+
+        Les tests qui veulent un score le posent explicitement via
+        ``self.profiles[user_id]`` : la valeur par défaut reproduit le cas le
+        plus fréquent, un utilisateur sans profil validé.
+        """
+        return self.profiles.get(user_id)
 
     async def search(
         self,
@@ -135,9 +150,12 @@ class InMemoryJobsRepository:
         filters: SearchFilters,
         limit: int,
         cursor: SearchCursor | None,
+        profile_id: uuid.UUID | None = None,
+        scoring_version: str | None = None,
     ) -> list[JobSearchRow]:
         now = datetime.now(UTC)
         rows: list[JobSearchRow] = []
+        joint = profile_id is not None and scoring_version is not None
         for posting in self.postings.values():
             if posting.status != "active":
                 continue
@@ -185,10 +203,25 @@ class InMemoryJobsRepository:
                 rank = float(haystack.count(filters.q.lower()))
                 if rank == 0.0:
                     continue
+            resume = (
+                self.matches.get((profile_id, posting.id)) if joint else None
+            )
             sort_value: datetime | float
-            sort_value = rank if filters.sort == "relevance" else posting.last_seen_at
+            if filters.sort == "match" and joint:
+                # Même convention que le SQL : une offre non scorée vaut -1,
+                # donc elle se range après toutes les autres, de façon stable.
+                sort_value = float(resume.score) if resume else -1.0
+            elif filters.sort == "relevance":
+                sort_value = rank
+            else:
+                sort_value = posting.last_seen_at
             rows.append(
-                JobSearchRow(posting=posting, saved_state=state, sort_value=sort_value)
+                JobSearchRow(
+                    posting=posting,
+                    saved_state=state,
+                    sort_value=sort_value,
+                    match=resume,
+                )
             )
 
         rows.sort(key=lambda r: (r.sort_value, r.posting.id.int), reverse=True)
