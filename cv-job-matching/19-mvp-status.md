@@ -337,7 +337,7 @@ Ordonné par criticité. **Les blocages juridiques ne se résolvent pas en écri
 12. **Colonnes `embedding_source_hash` / `embedding_model_version`** : sans elles, aucun changement de modèle n'est détectable automatiquement, et le rattrapage reste une opération manuelle risquée.
 13. **Amorcer une suite de tests front** : `web/` n'a aujourd'hui aucun test.
 14. **Décider du sort des e-mails transactionnels** : la confirmation de suppression avec lien d'annulation (Q30) suppose un fournisseur (Q15) qui n'a pas été choisi.
-15. **Rafraîchir la documentation résiduelle** : le README de `tests/integration/` décrit encore un `xfail(strict=True)` sur la recherche accentuée — le bug a été corrigé et le `xfail` retiré ; le README annonce aussi « ~750 tests » unitaires alors qu'il y en a 1193.
+15. ~~**Rafraîchir la documentation résiduelle**~~ — ✅ **fait** (lot n° 1). Le README de `tests/integration/` ne décrit plus un `xfail(strict=True)` retiré depuis longtemps, et les décomptes de tests des quatre README sont à jour.
 
 **Nouveau — soulevé par le lot n° 1**
 
