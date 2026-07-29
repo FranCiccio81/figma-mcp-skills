@@ -14,7 +14,7 @@ from kombu import Queue
 
 from app.core.config import get_settings
 from app.core.observability import configure_observability
-from app.core.secrets import check_secrets_configuration
+from app.core.secrets import check_hardening_configuration, check_secrets_configuration
 from app.core.storage import check_storage_configuration
 
 settings = get_settings()
@@ -35,6 +35,7 @@ settings = get_settings()
 # la moindre tâche.
 check_storage_configuration(settings)
 check_secrets_configuration(settings)
+check_hardening_configuration(settings)
 
 # Les alertes de conformité (purges RGPD en retard) sont émises par des
 # tâches Celery : sans export ici, elles n'atteindraient personne.

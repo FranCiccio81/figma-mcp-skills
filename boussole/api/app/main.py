@@ -28,7 +28,7 @@ from app.core.observability import configure_observability
 from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
-from app.core.secrets import check_secrets_configuration
+from app.core.secrets import check_hardening_configuration, check_secrets_configuration
 from app.core.security import SessionStore, csrf_tokens_match
 from app.core.storage import (
     StorageConfigurationError,
@@ -338,6 +338,7 @@ def create_app(
     # Même parti pris pour les secrets : un défaut de développement en
     # production rendrait forgeables les liens d'export RGPD (D23).
     check_secrets_configuration(settings)
+    check_hardening_configuration(settings)
 
     app = FastAPI(
         title="Boussole API",

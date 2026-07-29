@@ -4,6 +4,7 @@ L'export asynchrone vit dans ``export_builder.py`` (exécuté par le worker) ;
 la purge planifiée dans ``purge_runner.py``.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -85,28 +86,35 @@ class PrivacyService:
         # immédiatement (RM-Q-1) — les dépendances d'auth rejettent par
         # ailleurs tout compte deleted_at non nul (repository auth).
         await self._sessions.delete_all_for_user(user.id)
-        self._send_deletion_confirmation(user, deletion)
+        await self._send_deletion_confirmation(user, deletion)
         return AccountDeletionOutcome(deletion=deletion)
 
-    def _send_deletion_confirmation(self, user: User, deletion: object) -> None:
+    async def _send_deletion_confirmation(self, user: User, deletion: object) -> None:
         """Confirme la demande — la seule trace que l'utilisateur en reçoit.
 
         L'envoi ne peut pas faire échouer la suppression : elle est déjà
         enregistrée et l'utilisateur y a droit. Un échec est journalisé en
         ERROR par l'expéditeur, donc remonté par l'export d'erreurs.
+
+        ``to_thread`` : l'envoi SMTP fait des E/S bloquantes. Appelé
+        directement depuis cette coroutine, il gelait la boucle d'événements
+        — donc TOUTES les requêtes de TOUS les utilisateurs — pendant la
+        durée du timeout. Mesuré : 5,1 s de pause de boucle avec un serveur
+        SMTP muet, et le défaut vaut 10 s.
         """
         if self._mailer is None:
             return
         echeance = getattr(deletion, "purge_after", None)
         try:
-            self._mailer.send(
+            await asyncio.to_thread(
+                self._mailer.send,
                 Message(
                     to=user.email,
                     subject=DELETION_SUBJECT,
                     body=DELETION_BODY.format(
                         date=echeance.strftime("%d/%m/%Y") if echeance else "sous 30 jours"
                     ),
-                )
+                ),
             )
         except Exception:
             # Le contrat de ``Mailer`` dit « ne lève jamais » ; on ne s'y fie

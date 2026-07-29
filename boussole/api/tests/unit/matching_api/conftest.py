@@ -341,11 +341,14 @@ def client(
     return client
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def _calibrated_scoring_config(tmp_path_factory: pytest.TempPathFactory):
-    """Voir l'en-tête du module. Substitution par le CHEMIN par défaut :
-    ``get_config`` est mis en cache par chemin, la config calibrée a donc sa
-    propre entrée et n'écrase pas celle de la config livrée."""
+    """Voir l'en-tête du module.
+
+    Portée FONCTION : en portée session, la substitution survivait à ce
+    dossier et polluait les suites suivantes — les tests d'évaluation, qui
+    doivent voir la config LIVRÉE, voyaient la calibrée.
+    """
     import app.matching.config as config_module
     from tests.unit.matching._calibration import write_calibrated_config
 

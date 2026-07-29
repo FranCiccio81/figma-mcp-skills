@@ -255,3 +255,170 @@ class TestLaConfianceSuitLaMemeRegle:
         resultat = compute_match(perfect_candidate(), perfect_job())
         assert resultat.score == 100
         assert resultat.confidence == 100
+
+
+class TestLesExplicationsVoientLePoidsEFFECTIF:
+    """Sinon le moteur et l'interface se contredisent sur le même écran.
+
+    La couche d'explication déterministe (06 §6) retient une dimension comme
+    « force » si son sous-score dépasse un seuil ET son poids un autre. Elle
+    recevait le poids DÉCLARÉ pendant que le résultat exposait l'EFFECTIF.
+
+    Mesuré : une offre n'exigeant qu'une compétence souhaitée, satisfaite,
+    voyait `skills_nice` annoncée comme force par le moteur (déclaré 10 ≥ 6)
+    alors que le front, qui lit le poids effectif (3,33 < 6), ne l'affichait
+    pas. Deux moitiés du même écran en désaccord — et sur le fond, appeler
+    « force » une dimension qu'on vient de juger peu documentée contredit
+    exactement le correctif de N15.
+    """
+
+    CANDIDAT = CandidateInput(
+        skills=("python", "docker"), seniority="senior", total_experience_years=5.0
+    )
+
+    def _offre_a_une_seule_souhaitee(self) -> JobInput:
+        from app.matching import Confident
+
+        return JobInput(
+            skills_required=(JobSkill("python"), JobSkill("docker")),
+            skills_nice=(JobSkill("python"),),
+            seniority=Confident("senior"),
+            experience_min=3.0,
+            experience_max=8.0,
+        )
+
+    def test_une_dimension_peu_documentee_nest_pas_annoncee_comme_force(self) -> None:
+        resultat = compute_match(self.CANDIDAT, self._offre_a_une_seule_souhaitee())
+        poids = dim(resultat, "skills_nice").weight
+        seuil = get_config().explanation.strength_min_weight
+
+        assert poids < seuil, "le cas de test ne reproduit plus l'atténuation"
+        assert "skills_nice" not in [f.dimension for f in resultat.explanation_facts.strengths]
+
+    def test_le_moteur_et_le_poids_expose_disent_la_meme_chose(self) -> None:
+        """L'invariant général : pour CHAQUE dimension, être annoncée force
+        équivaut à dépasser les deux seuils avec le poids exposé."""
+        resultat = compute_match(self.CANDIDAT, self._offre_a_une_seule_souhaitee())
+        seuils = get_config().explanation
+        forces = {f.dimension for f in resultat.explanation_facts.strengths}
+
+        for score in resultat.dimension_scores:
+            if not score.known or score.subscore is None:
+                continue
+            attendu = (
+                score.subscore >= seuils.strength_min_subscore
+                and score.weight >= seuils.strength_min_weight
+            )
+            assert (score.dimension in forces) is attendu, score.dimension
+
+
+class TestLaContrepartieSymetrique:
+    """L'atténuation joue dans les DEUX sens, et il faut le dire.
+
+    Réduire le poids d'une dimension ne fait pas que « ne plus sur-récompenser
+    une couverture complète » : quand le sous-score vaut 0, cela **retire la
+    pénalité**. Le numérateur ne bouge pas, seul le dénominateur diminue.
+
+    Mesuré sur le corpus de démonstration, en comparant avec et sans
+    ``evidence_full_count`` : sur 30 paires dont le score change, **22 sont
+    des offres de pertinence ≤ 1 et leur score MONTE**. Le pire cas :
+    « Chef de projet infrastructure » (une exigence, non couverte) passe de
+    **49 à 64** pour une développeuse backend senior.
+
+    Pourquoi on l'assume malgré tout :
+
+    1. le CLASSEMENT s'améliore — c'est ce que mesurent les portes, et elles
+       passent toutes désormais ;
+    2. la **confiance chute** en même temps (83 → 63 sur ce cas). Le produit
+       affiche toujours score ET confiance côte à côte, jamais fusionnés
+       (D03) : le couple reste honnête ;
+    3. sur le fond, c'est cohérent. Une seule exigence non couverte ne prouve
+       pas grand-chose. Prétendre le contraire serait affirmer plus que ce
+       que l'offre dit d'elle-même.
+
+    Ce que ça ne rend PAS acceptable : lire le score comme une valeur absolue
+    sans regarder la confiance. C'est la limite, elle est ici et dans D38.
+    """
+
+    def test_une_offre_non_couverte_voit_son_score_monter(self, tmp_path) -> None:
+        """Épinglé pour que ce ne soit pas une surprise le jour où on le voit."""
+        import collections
+        import json
+
+        from app.matching import Confident
+
+        candidat = CandidateInput(
+            skills=("python", "postgresql"),
+            seniority="senior",
+            total_experience_years=6.0,
+            contract_types=frozenset({"cdi"}),
+        )
+        offre = JobInput(
+            skills_required=(JobSkill("gestion de projet"),),  # non couverte
+            seniority=Confident("senior"),
+            experience_min=5.0,
+            experience_max=10.0,
+            contract=Confident("cdi"),
+        )
+
+        source = json.loads(
+            SHIPPED_CONFIG.read_text(encoding="utf-8"),
+            object_pairs_hook=collections.OrderedDict,
+        )
+        for nom in ("skills_required", "skills_nice"):
+            source["dimensions"][nom].pop("evidence_full_count", None)
+        chemin = tmp_path / "sans.json"
+        chemin.write_text(json.dumps(source), encoding="utf-8")
+
+        sans = compute_match(candidat, offre, get_config(chemin))
+        avec = compute_match(candidat, offre)
+
+        assert avec.score > sans.score, "la contrepartie n'est plus reproductible"
+        # Et la confiance descend : c'est ce qui garde le couple honnête.
+        assert avec.confidence < sans.confidence
+
+
+class TestLInteractionAvecLowData:
+    """`low_data` peut basculer sur une offre dont TOUT est connu.
+
+    Le seuil compare la somme ATTÉNUÉE `Σ(w·k)` à `min_known_weight_ratio ×
+    Σ(w)`, qui n'est PAS atténué. Une offre dont chaque dimension est
+    renseignée, mais qui n'exige qu'une compétence, perd les deux tiers de
+    ses 25 points d'un côté de l'inégalité sans que l'autre bouge.
+
+    Ce n'est pas un défaut : le drapeau dit « peu de matière pour juger »,
+    ce qui est exactement le cas d'une annonce de trois lignes. Mais il ne
+    dit PLUS « peu de dimensions renseignées », et c'est un changement de
+    sens qui devait être écrit quelque part (06 §1) plutôt que déduit du
+    code par le prochain lecteur.
+    """
+
+    def test_le_drapeau_reagit_a_la_maigreur_pas_seulement_aux_trous(self) -> None:
+        from app.matching import Confident
+
+        candidat = CandidateInput(
+            skills=("python", "sql", "docker"),
+            seniority="senior",
+            total_experience_years=5.0,
+        )
+
+        def offre(nb: int) -> JobInput:
+            return JobInput(
+                skills_required=tuple(
+                    JobSkill(c) for c in ("python", "sql", "docker")[:nb]
+                ),
+                seniority=Confident("senior"),
+                experience_min=3.0,
+                experience_max=8.0,
+            )
+
+        # Mêmes dimensions connues des deux côtés, seule la MATIÈRE diffère.
+        maigre = compute_match(candidat, offre(1))
+        pleine = compute_match(candidat, offre(3))
+
+        assert maigre.unknown_dimensions == pleine.unknown_dimensions, (
+            "les deux offres doivent avoir exactement les mêmes trous — "
+            "sinon le test mesure autre chose que l'atténuation"
+        )
+        assert maigre.low_data is True
+        assert pleine.low_data is False

@@ -14,10 +14,14 @@ Boucle d'événements : chaque tâche exécute UNE seule coroutine via
 coroutine — jamais le moteur global poolé, dont les connexions asyncpg
 resteraient liées à une boucle fermée (RuntimeError au cycle suivant).
 
-Verrou anti-chevauchement (07 §4.2) : chaque cycle prend un bail Redis
-``ingestion:{slug}`` et RENONCE s'il est déjà tenu. Deux cycles concurrents
-sur la même source liraient le même curseur de départ, referaient le même
-travail et pourraient faire reculer le curseur de l'autre.
+Verrou anti-chevauchement (07 §4.2) : ``sync_source`` **et** ``reconcile``
+prennent le bail Redis ``ingestion:{slug}`` et RENONCENT s'il est déjà tenu.
+Deux cycles concurrents sur la même source liraient le même curseur de
+départ, referaient le même travail et pourraient faire reculer le curseur de
+l'autre. Pour la réconciliation, l'enjeu est plus grave encore : elle appelle
+``mark_expired``, dont le compteur d'absence n'est correct que si les
+instantanés de fetch sont sérialisés — sans verrou, une offre vivante ingérée
+par un cycle concurrent était **éteinte à tort**.
 
 🟡 Circuit breaker par source (``ingestion:cb:{slug}``, 07 §4.5) toujours
 non implémenté : les retries bornés de Celery (backoff exponentiel plafonné
@@ -27,7 +31,7 @@ non implémenté : les retries bornés de Celery (backoff exponentiel plafonné
 import asyncio
 import logging
 import uuid
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Any
@@ -67,8 +71,15 @@ def _run[T](coro: Awaitable[T]) -> T:
 INGESTION_LOCK_TTL_SECONDS = 3600
 
 
-async def _sous_verrou(slug: str, coro: Awaitable[Any]) -> Any:
-    """Exécute ``coro`` sous le verrou de la source, ou lève.
+async def _sous_verrou(slug: str, fabrique: Callable[[], Awaitable[Any]]) -> Any:
+    """Exécute le cycle sous le verrou de la source, ou lève.
+
+    ``fabrique`` et non ``coro`` : une coroutine passée en argument est créée
+    AVANT l'appel, donc avant la prise du verrou. Quand le verrou n'est pas
+    obtenu — le cas nominal que ce mécanisme existe pour traiter — elle n'est
+    jamais consommée, et Python journalise un ``RuntimeWarning: coroutine was
+    never awaited`` à chaque cycle renoncé. Elle retient de surcroît le
+    connecteur, qui ouvre un client HTTP à sa construction.
 
     Le client Redis est dédié au cycle et refermé au retour : chaque tâche
     Celery a sa propre boucle d'événements (voir ``app/core/redis.py``).
@@ -76,7 +87,7 @@ async def _sous_verrou(slug: str, coro: Awaitable[Any]) -> Any:
     async with worker_redis_cache() as cache:
         verrou = LeaseLock(cache)
         async with hold(verrou, f"ingestion:{slug}", ttl_seconds=INGESTION_LOCK_TTL_SECONDS):
-            return await coro
+            return await fabrique()
 
 
 def _feature_enabled(slug: str) -> bool:
@@ -267,7 +278,7 @@ def sync_source(self: Any, slug: str) -> dict[str, Any] | None:
         return None
     connector = _build_connector(slug)
     try:
-        report = _run(_sous_verrou(slug, _sync_cycle(slug, connector)))
+        report = _run(_sous_verrou(slug, lambda: _sync_cycle(slug, connector)))
     except LockNotAcquiredError:
         logger.warning("ingestion_cycle_skipped slug=%s reason=deja_en_cours", slug)
         return None
@@ -288,7 +299,21 @@ def reconcile(self: Any, slug: str) -> dict[str, Any] | None:
         logger.info("ingestion_cycle_skipped slug=%s reason=feature_flag_off", slug)
         return None
     connector = _build_connector(slug)
-    report = _run(_reconcile_cycle(slug, connector))
+    # MÊME verrou que ``sync_source``, et ce n'est pas une symétrie
+    # cosmétique. ``_reconcile_cycle`` ingère PUIS appelle ``mark_expired`` :
+    # le mécanisme d'expiration par absence (compteur, seuil 2) ne vaut que
+    # si les instantanés de fetch sont sérialisés. Mesuré en revue avec un
+    # `sync_source` concurrent : une offre VIVANTE, ingérée pendant le fetch
+    # de la réconciliation, voyait son compteur d'absence atteindre 2 et
+    # passait en `expired`.
+    #
+    # La fenêtre est réelle : le bail de sync vaut une heure, France Travail
+    # synchronise à 02:00 et réconcilie à 03:00.
+    try:
+        report = _run(_sous_verrou(slug, lambda: _reconcile_cycle(slug, connector)))
+    except LockNotAcquiredError:
+        logger.warning("ingestion_reconcile_skipped slug=%s reason=deja_en_cours", slug)
+        return None
     logger.info("ingestion_reconcile_success slug=%s report=%s", slug, report)
     return report
 

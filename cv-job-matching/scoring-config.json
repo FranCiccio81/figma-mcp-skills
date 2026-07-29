@@ -173,6 +173,6 @@
     "ndcg_at_10_min": 0.75,
     "blocking_precision_min": 0.95,
     "blocking_recall_min": 0.85,
-    "max_spearman_regression": 0.02
+    "_note_non_regression": "max_spearman_regression a ete RETIREE : elle etait declaree et evaluee par personne. La non-regression exige une valeur de reference stockee, qui n'existe pas encore (elle suppose le jeu annote de N16). Le harnais REFUSE desormais toute porte declaree qu'il ne sait pas evaluer, pour que le cas ne se reproduise pas."
   }
 }

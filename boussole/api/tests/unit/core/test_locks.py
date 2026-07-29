@@ -106,3 +106,51 @@ class TestContexte:
             async with hold(verrou, "ingestion:demo", ttl_seconds=60):
                 await redis.delete("lock:ingestion:demo")  # simule l'expiration
         assert any("lock_deja_expire" in r.message for r in caplog.records)
+
+
+class TestRemboursementAtomique:
+    """Le « jamais en dessous de zéro » du limiteur exigeait une transaction.
+
+    ``GET`` puis ``DECR`` sont deux aller-retours que rien ne lie. Mesuré en
+    revue avec six processus concurrents sur un vrai Redis : le compteur
+    descendait à **−4**, et la fenêtre autorisait ensuite **12 appels pour une
+    limite de 5**. Les remboursements viennent de tâches Celery exécutées en
+    parallèle : la concurrence est le cas nominal.
+    """
+
+    async def test_des_remboursements_concurrents_ne_passent_pas_sous_zero(
+        self, redis
+    ) -> None:
+        import asyncio
+
+        from app.core.ratelimit import FixedWindowRateLimiter
+
+        limiteur = FixedWindowRateLimiter(redis)
+        await limiteur.hit("q", "u", limit=100, window_seconds=3600)
+
+        # Huit remboursements pour UN seul jeton consommé.
+        rendus = await asyncio.gather(
+            *(limiteur.refund("q", "u", window_seconds=3600) for _ in range(8))
+        )
+
+        assert sum(rendus) == 1, "un seul remboursement pouvait réussir"
+        cles = [c async for c in redis.scan_iter("rl:q:u:*")]
+        assert int(await redis.get(cles[0])) == 0
+
+    async def test_le_quota_nest_pas_gonfle_apres_remboursements(self, redis) -> None:
+        """La conséquence concrète : la fenêtre autorisait plus que sa limite."""
+        import asyncio
+
+        from app.core.ratelimit import FixedWindowRateLimiter
+
+        limiteur = FixedWindowRateLimiter(redis)
+        await limiteur.hit("q", "u", limit=5, window_seconds=3600)
+        await asyncio.gather(
+            *(limiteur.refund("q", "u", window_seconds=3600) for _ in range(8))
+        )
+
+        autorises = 0
+        for _ in range(20):
+            if (await limiteur.hit("q", "u", limit=5, window_seconds=3600)).allowed:
+                autorises += 1
+        assert autorises == 5, f"{autorises} appels autorisés pour une limite de 5"

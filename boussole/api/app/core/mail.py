@@ -24,6 +24,7 @@ forme : les gabarits sont des chaînes fixes avec au plus une date.
 
 import logging
 import smtplib
+import ssl
 from dataclasses import dataclass
 from email.message import EmailMessage
 from typing import Protocol
@@ -74,17 +75,29 @@ class SmtpMailer:
 
     def send(self, message: Message) -> bool:
         conf = self._settings
-        courriel = EmailMessage()
-        courriel["From"] = conf.mail_from
-        courriel["To"] = message.to
-        courriel["Subject"] = message.subject
-        courriel.set_content(message.body)
         try:
+            # La construction du message est DANS le ``try`` : une adresse
+            # contenant un retour chariot fait lever ``EmailMessage``, et le
+            # contrat de ``Mailer`` promet de ne jamais lever. Elle était
+            # au-dessus ; seul le ``except`` de l'appelant rattrapait.
+            courriel = EmailMessage()
+            courriel["From"] = conf.mail_from
+            courriel["To"] = message.to
+            courriel["Subject"] = message.subject
+            courriel.set_content(message.body)
+
             with smtplib.SMTP(
                 conf.smtp_host, conf.smtp_port, timeout=conf.smtp_timeout_seconds
             ) as serveur:
                 if conf.smtp_starttls:
-                    serveur.starttls()
+                    # Contexte EXPLICITE. ``starttls()`` sans argument retombe
+                    # sur un contexte qui ne vérifie NI le certificat NI le nom
+                    # d'hôte : un intercepteur présentant un certificat
+                    # auto-signé lit les identifiants SMTP et le destinataire.
+                    # Mesuré en revue — le mot de passe du service ressortait
+                    # en clair côté attaquant.
+                    contexte = ssl.create_default_context()
+                    serveur.starttls(context=contexte)
                 if conf.smtp_username:
                     serveur.login(conf.smtp_username, conf.smtp_password)
                 serveur.send_message(courriel)

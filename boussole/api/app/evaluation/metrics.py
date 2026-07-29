@@ -100,7 +100,14 @@ def ndcg_at_k(predicted: Sequence[float], expected: Sequence[float], k: int = 10
     if not predicted:
         raise MetricError("NDCG exige au moins une observation")
 
-    ordre = sorted(range(len(predicted)), key=lambda i: predicted[i], reverse=True)
+    # Départage des ex aequo : à score égal, l'offre la MOINS pertinente
+    # d'abord. Deux raisons. D'abord le déterminisme : un tri seulement
+    # décroissant est stable, donc le résultat dépendait de l'ordre des
+    # annotations dans le fichier — mesuré, 300 permutations du même jeu
+    # donnaient un NDCG entre 0,9861 et 1,0000 à moteur inchangé. Ensuite
+    # l'honnêteté : quand le moteur ne sait pas départager, on ne lui accorde
+    # pas le bénéfice du doute.
+    ordre = sorted(range(len(predicted)), key=lambda i: (-predicted[i], expected[i]))
     gains_obtenus = [expected[i] for i in ordre[:k]]
     gains_ideaux = sorted(expected, reverse=True)[:k]
 

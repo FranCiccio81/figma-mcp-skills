@@ -95,8 +95,11 @@ class TestLeSingletonCasseEntreDeuxTaches:
         partage = LoopBoundRedis()
 
         async def cycle() -> bool:
+            # ``hit`` et non ``refund`` : le sujet est le LIEN à la boucle, et
+            # ``hit`` n'a besoin que de commandes simples — le fake reste
+            # minimal, donc lisible.
             limiter = FixedWindowRateLimiter(partage)
-            return await limiter.refund("q", "u1", window_seconds=3600)
+            return (await limiter.hit("q", "u1", limit=10, window_seconds=3600)).allowed
 
         asyncio.run(cycle())
         with pytest.raises(RuntimeError, match="Event loop is closed"):
@@ -118,8 +121,7 @@ class TestClientDedieParCycle:
         async def cycle() -> bool:
             async with worker_redis_cache() as cache:
                 limiter = FixedWindowRateLimiter(cache)
-                await limiter.hit("q", "u1", limit=10, window_seconds=3600)
-                return await limiter.refund("q", "u1", window_seconds=3600)
+                return (await limiter.hit("q", "u1", limit=10, window_seconds=3600)).allowed
 
         assert asyncio.run(cycle()) is True
         assert asyncio.run(cycle()) is True

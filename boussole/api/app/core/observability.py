@@ -11,11 +11,32 @@ le paquet n'est pas installé, le démarrage **échoue**. Une observabilité
 configurée qui ne remonte rien est pire que pas d'observabilité : on croit
 être couvert. Même logique que les garde-fous de stockage et de secrets.
 
-**Confidentialité.** Ce produit manipule des CV. Un rapport d'erreur mal
-réglé exfiltre des données personnelles vers un tiers — ce serait un
-transfert non prévu au registre. D'où trois verrous : ``send_default_pii``
-désactivé, corps de requête jamais joint, et un filtre qui retire les
-en-têtes porteurs de session ou d'authentification avant l'envoi.
+**Confidentialité — la partie difficile.** Ce produit manipule des CV, des
+requêtes de recherche d'emploi et des adresses. Sentry est un sous-traitant
+tiers : tout ce qui part est un transfert. La première version se contentait
+de ``send_default_pii=False`` et d'un nettoyage de trois champs. Une revue a
+montré, en exécutant le vrai SDK, que **l'adresse d'un utilisateur et le
+sujet « demande de suppression de compte » partaient quand même** — par les
+fils d'Ariane construits à partir des logs INFO, puis rattachés à n'importe
+quelle erreur ultérieure du processus. Et que huit autres chemins portaient
+des données : ``request.query_string`` (la requête de recherche d'emploi,
+qui peut révéler une santé ou une reconversion), ``extra``, ``contexts``,
+``tags``, ``user``, ``message``, ``logentry``, les fils d'Ariane.
+
+D'où deux décisions :
+
+1. **aucun fil d'Ariane issu des journaux** (``level=None``) — la source du
+   défaut, coupée net. On perd le contexte des lignes précédant l'erreur ;
+   c'est le prix, et il est bas devant une fuite d'adresse ;
+2. **liste blanche, pas liste noire.** ``scrub_event`` ne conserve que des
+   champs dont on sait qu'ils ne portent pas de données, et **retire tout le
+   reste**. Énumérer ce qu'on retire est une course perdue : chaque nouveau
+   champ du SDK, chaque nouveau ``extra`` ajouté par un développeur, passe à
+   travers. Énumérer ce qu'on garde échoue, au pire, du côté d'un rapport
+   d'erreur moins riche.
+
+Le principe conservé : **garder la forme, jeter les valeurs**. Le gabarit
+``"mail_envoi_echoue destinataire=%s"`` reste ; l'adresse, non.
 
 **Traces distribuées** : pas exportées, et la variable
 ``OTEL_EXPORTER_OTLP_ENDPOINT`` a été **retirée** de la configuration plutôt
@@ -30,42 +51,99 @@ from app.core.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
-#: En-têtes retirés de tout rapport : ils portent l'identité de session.
-_SENSITIVE_HEADERS = frozenset(
-    {"cookie", "set-cookie", "authorization", "x-csrf-token", "proxy-authorization"}
+#: Champs de l'événement conservés tels quels — aucun ne porte de donnée
+#: utilisateur : identité de l'événement, niveau, horodatage, plateforme,
+#: environnement, version, empreinte de regroupement.
+_SAFE_TOP_LEVEL = frozenset(
+    {
+        "event_id", "timestamp", "platform", "level", "logger", "transaction",
+        "environment", "release", "server_name", "sdk", "fingerprint", "type",
+        "modules", "exception", "threads", "request", "contexts", "logentry",
+    }
 )
+
+#: En-têtes conservés : ni identité, ni adresse, ni contenu.
+_SAFE_HEADERS = frozenset({"content-type", "content-length", "accept", "user-agent"})
+
+#: Contextes techniques du SDK, sans rapport avec l'utilisateur.
+_SAFE_CONTEXTS = frozenset({"runtime", "os", "device", "trace"})
 
 
 class ObservabilityConfigurationError(RuntimeError):
     """Observabilité demandée mais impossible à activer."""
 
 
-def scrub_event(event: dict[str, Any], _hint: Any = None) -> dict[str, Any] | None:
-    """Retire de l'événement tout ce qui peut porter des données personnelles.
+def _scrub_request(requete: dict[str, Any]) -> dict[str, Any]:
+    """Garde la route et la méthode ; jette tout ce qui peut porter du contenu.
 
-    Appelé par Sentry avant chaque envoi. Testé sans Sentry installé : c'est
-    une fonction pure sur un dictionnaire, et c'est délibéré — la barrière de
-    confidentialité ne doit pas dépendre d'un paquet optionnel pour être
-    vérifiable.
+    ``query_string`` est le piège : sur ``GET /jobs``, le paramètre ``q`` est
+    la requête de recherche d'emploi de la personne. Elle peut porter une
+    information de santé, un handicap, une reconversion après un burn-out.
+    Elle ne sort pas.
     """
-    requete = event.get("request")
-    if isinstance(requete, dict):
-        # Le corps peut contenir un CV, une lettre, un profil entier.
-        requete.pop("data", None)
-        requete.pop("cookies", None)
-        entetes = requete.get("headers")
-        if isinstance(entetes, dict):
-            requete["headers"] = {
-                nom: valeur
-                for nom, valeur in entetes.items()
-                if nom.lower() not in _SENSITIVE_HEADERS
-            }
-    # Les variables locales d'une pile d'appels contiennent volontiers le
-    # texte en cours de traitement.
-    for exception in (event.get("exception") or {}).get("values") or []:
-        for frame in (exception.get("stacktrace") or {}).get("frames") or []:
+    entetes = requete.get("headers")
+    propre: dict[str, Any] = {
+        cle: valeur
+        for cle, valeur in requete.items()
+        if cle in {"method", "url"}
+    }
+    if isinstance(entetes, dict):
+        propre["headers"] = {
+            nom: valeur
+            for nom, valeur in entetes.items()
+            if nom.lower() in _SAFE_HEADERS
+        }
+    return propre
+
+
+def _scrub_exception(exception: dict[str, Any]) -> dict[str, Any]:
+    """Retire les variables locales de chaque cadre de pile.
+
+    Elles contiennent volontiers le texte en cours de traitement — un CV, une
+    lettre, un profil entier.
+    """
+    for valeur in exception.get("values") or []:
+        for frame in (valeur.get("stacktrace") or {}).get("frames") or []:
             frame.pop("vars", None)
-    return event
+    return exception
+
+
+def _scrub_logentry(logentry: dict[str, Any]) -> dict[str, Any]:
+    """Garde le GABARIT, jette les paramètres.
+
+    ``"mail_envoi_echoue destinataire=%s"`` reste — c'est ce qui permet de
+    diagnostiquer. ``"…destinataire=jean@exemple.fr"`` ne sort pas.
+    """
+    return {"message": logentry.get("message")} if logentry.get("message") else {}
+
+
+def scrub_event(event: dict[str, Any], _hint: Any = None) -> dict[str, Any] | None:
+    """Ne laisse passer que ce dont on sait qu'il ne porte pas de données.
+
+    Liste BLANCHE délibérée. Appelé par Sentry avant chaque envoi, et testé
+    sans Sentry installé : c'est une fonction pure sur un dictionnaire, et
+    c'est le point — une barrière de confidentialité ne doit pas dépendre
+    d'un paquet optionnel pour être vérifiable en CI.
+    """
+    propre: dict[str, Any] = {
+        cle: valeur for cle, valeur in event.items() if cle in _SAFE_TOP_LEVEL
+    }
+
+    if isinstance(propre.get("request"), dict):
+        propre["request"] = _scrub_request(propre["request"])
+    if isinstance(propre.get("exception"), dict):
+        propre["exception"] = _scrub_exception(propre["exception"])
+    if isinstance(propre.get("logentry"), dict):
+        propre["logentry"] = _scrub_logentry(propre["logentry"])
+    if isinstance(propre.get("contexts"), dict):
+        # Seuls les contextes techniques du SDK. Un contexte applicatif ajouté
+        # par du code métier porterait des données par construction.
+        propre["contexts"] = {
+            nom: valeur
+            for nom, valeur in propre["contexts"].items()
+            if nom in _SAFE_CONTEXTS
+        }
+    return propre
 
 
 def configure_observability(settings: Settings | None = None) -> bool:
@@ -102,11 +180,20 @@ def configure_observability(settings: Settings | None = None) -> bool:
         # de données personnelles non prévu au registre.
         send_default_pii=False,
         before_send=scrub_event,
+        # Les fils d'Ariane du SDK (requêtes HTTP sortantes, SQL) ne sont pas
+        # filtrés par ``before_send`` de façon fiable : on les coupe aussi.
+        max_breadcrumbs=0,
         integrations=[
-            # C'est CETTE intégration qui fait remonter les alertes de
-            # conformité : un logger.error devient un événement. Sans elle,
-            # `purge_backlog_detected` resterait une ligne de stdout.
-            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR)
+            # ``level=None`` : AUCUN fil d'Ariane construit à partir des
+            # journaux. C'était la fuite : un `logger.info` mentionnant une
+            # adresse devenait un fil d'Ariane, rattaché ensuite à n'importe
+            # quelle erreur ultérieure du processus — et ``before_send`` ne
+            # nettoyait pas cette partie de l'enveloppe.
+            #
+            # ``event_level=ERROR`` reste : c'est lui qui fait remonter les
+            # alertes de conformité. Sans ça, `purge_backlog_detected`
+            # resterait une ligne de stdout.
+            LoggingIntegration(level=None, event_level=logging.ERROR)
         ],
     )
     logger.info("observabilite_active env=%s", conf.env)

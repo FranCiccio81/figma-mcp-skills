@@ -188,12 +188,34 @@ def _evaluate_gates(report: EvaluationReport, cfg: ScoringConfig) -> list[GateOu
     return outcomes
 
 
+#: Portes que ce harnais sait évaluer. Toute porte déclarée dans la
+#: configuration doit y figurer — voir :func:`_gates_of`.
+IMPLEMENTED_GATES = frozenset(
+    {
+        "spearman_min",
+        "ndcg_at_10_min",
+        "blocking_precision_min",
+        "blocking_recall_min",
+    }
+)
+
+
 def _gates_of(cfg: ScoringConfig) -> dict[str, float]:
     """Seuils lus sur la configuration, jamais recopiés ici.
 
     Recopier les seuils dans le code désarmerait la mesure le jour où
     ``scoring-config.json`` est resserré : les portes continueraient de
     passer sur les anciennes valeurs.
+
+    Deux refus, tous deux issus de la revue :
+
+    - une porte **déclarée mais non implémentée** est refusée. La
+      configuration portait ``max_spearman_regression`` que rien n'évaluait :
+      la non-régression annoncée par 06 §5 n'existait pas, et le rapport
+      disait « toutes les portes passent » ;
+    - une porte **manquante ou mal typée** est refusée avec un message. Un
+      ``"0.6"`` entre guillemets était écarté en silence par le chargeur de
+      configuration, puis donnait un ``KeyError`` nu à l'exécution.
     """
     raw: Any = getattr(cfg, "evaluation_gates", None)
     if not raw:
@@ -201,7 +223,23 @@ def _gates_of(cfg: ScoringConfig) -> dict[str, float]:
             "scoring-config.json ne porte pas d'evaluation_gates : rien à "
             "vérifier, et une évaluation sans seuil ne dit rien"
         )
-    return {key: float(value) for key, value in dict(raw).items()}
+    gates = {key: float(value) for key, value in dict(raw).items()}
+
+    declarees_non_implementees = set(gates) - IMPLEMENTED_GATES
+    if declarees_non_implementees:
+        raise ValueError(
+            f"portes déclarées mais NON évaluées : {sorted(declarees_non_implementees)}. "
+            "Une porte que personne ne vérifie donne un faux sentiment de "
+            "couverture — l'implémenter, ou la retirer de la configuration."
+        )
+    manquantes = IMPLEMENTED_GATES - set(gates)
+    if manquantes:
+        raise ValueError(
+            f"portes absentes ou mal typées dans evaluation_gates : {sorted(manquantes)}. "
+            "Une valeur non numérique (\"0.6\" entre guillemets) est écartée "
+            "au chargement de la configuration."
+        )
+    return gates
 
 
 def format_report(report: EvaluationReport) -> str:

@@ -9,6 +9,7 @@ import time
 from dataclasses import dataclass
 
 from redis.asyncio import Redis
+from redis.exceptions import WatchError
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,12 +68,30 @@ class FixedWindowRateLimiter:
 
         Jamais en dessous de zéro : un remboursement sur une fenêtre déjà
         vide (clé expirée) est un no-op.
+
+        ⚠️ Le « jamais en dessous de zéro » exige une TRANSACTION, pas un
+        ``GET`` suivi d'un ``DECR``. Mesuré avec six processus concurrents sur
+        un vrai Redis : le compteur descendait à **−4**, et la fenêtre
+        autorisait ensuite **12 appels pour une limite de 5**. Les
+        remboursements viennent de tâches Celery exécutées en parallèle — la
+        concurrence est le cas nominal, pas un cas limite.
         """
         now = int(time.time())
         window_start = now - (now % window_seconds)
         key = f"{self._prefix}:{scope}:{identifier}:{window_start}"
-        current = await self._redis.get(key)
-        if current is None or int(current) <= 0:
-            return False
-        await self._redis.decr(key)
-        return True
+        async with self._redis.pipeline(transaction=True) as pipe:
+            while True:
+                try:
+                    await pipe.watch(key)
+                    current = await pipe.get(key)
+                    if current is None or int(current) <= 0:
+                        await pipe.unwatch()
+                        return False
+                    pipe.multi()
+                    pipe.decr(key)
+                    await pipe.execute()
+                    return True
+                except WatchError:
+                    # Un autre remboursement (ou un hit) est passé entre-temps :
+                    # on relit, et le contrôle « > 0 » retranchera.
+                    continue

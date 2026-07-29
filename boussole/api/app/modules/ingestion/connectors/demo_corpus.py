@@ -28,6 +28,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from app.core.config import Settings, get_settings
 from app.modules.ingestion.connectors.base import FetchResult, RawJob, RawLocation
@@ -61,6 +62,16 @@ REMOTE_MAP: dict[str, str] = {
     "full": "full_remote",
     "hybrid": "hybrid",
     "onsite": "onsite",
+}
+
+#: Identité — le corpus écrit déjà les sections NACE du référentiel. La table
+#: n'existe que pour faire passer ``sector`` par le même refus de l'inconnu
+#: que ``contract`` et ``remote`` : ``job_postings.sector_code`` est une clé
+#: étrangère, et une coquille ici coûterait la dimension « secteur » sur
+#: l'offre concernée sans autre signe qu'un avertissement dans le journal.
+SECTOR_MAP: dict[str, str] = {
+    code.casefold(): code
+    for code in ("C", "F", "G", "H", "J", "K", "M", "N", "P", "Q")
 }
 
 
@@ -156,7 +167,7 @@ def _to_raw_job(item: dict[str, Any]) -> RawJob:
         languages=[(code, level) for code, level in item.get("languages", [])],
         skills=list(item.get("skills_required", [])),
         skills_nice=list(item.get("skills_nice", [])),
-        sector=item.get("sector"),
+        sector=_map(SECTOR_MAP, item.get("sector"), "sector"),
         language=item.get("language"),
     )
 
@@ -179,8 +190,15 @@ def _map(table: dict[str, str], value: str | None, champ: str) -> str | None:
 
 
 def _check_url_is_unreachable(url: str) -> None:
-    """Refuse une URL qui pourrait être prise pour une annonce réelle."""
-    host = url.split("//", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+    """Refuse une URL qui pourrait être prise pour une annonce réelle.
+
+    ``urlsplit`` et non un découpage à la main : la version précédente coupait
+    sur ``//`` puis ``/`` puis ``:``, et ignorait donc le fragment et la
+    requête. ``https://recrutement.exemple-reel.com#.invalid`` passait —
+    l'hôte réel est une entreprise qui existe. Elle rejetait par ailleurs
+    ``.INVALID`` en majuscules, pourtant légitime.
+    """
+    host = (urlsplit(url).hostname or "").casefold()
     if not host.endswith(REQUIRED_URL_SUFFIX_HOST):
         raise DemoCorpusUnavailableError(
             f"URL {url!r} : le corpus de démonstration n'accepte que des hôtes "

@@ -110,7 +110,7 @@ async def bootstrap() -> dict[str, Any]:
         async with factory() as session:
             rapport["embeddings"] = await _embed_everything(session)
         async with engine.connect() as conn:
-            rapport["verification"] = await _verify(conn)
+            rapport["verification"] = await _verify(conn, rapport["ingestion"])
     finally:
         await engine.dispose()
     return rapport
@@ -243,7 +243,7 @@ async def _seed_preferences(conn: AsyncConnection, user_id: uuid.UUID) -> None:
     await conn.execute(
         text(
             "INSERT INTO preference_sectors (user_id, sector_code, mode) "
-            "SELECT :uid, code, 'preferred' FROM sectors WHERE code = 'J' "
+            "SELECT :uid, code, 'preferred' FROM sectors WHERE code = :secteur "
             "ON CONFLICT DO NOTHING"
         ),
         {"uid": user_id, "secteur": DEMO_PROFILE.sector_code},
@@ -262,6 +262,7 @@ async def _ingest_demo_corpus(session: Any) -> dict[str, Any]:
         "creees": rapport.created,
         "mises_a_jour": rapport.updated,
         "rattachees_etage1": rapport.attached_stage1,
+        "rattachees_etage2": rapport.attached_stage2,
         "erreurs": rapport.errors,
     }
 
@@ -319,11 +320,51 @@ async def _embed_everything(session: Any) -> dict[str, int]:
     return compteurs
 
 
-async def _verify(conn: AsyncConnection) -> dict[str, Any]:
+def ingestion_problems(ingestion: dict[str, Any]) -> list[str]:
+    """Toute offre reçue doit être comptabilisée quelque part.
+
+    ``ingest_batch`` isole chaque item dans un savepoint : une offre qui
+    échoue est annulée seule, comptée dans ``errors``, et le batch continue.
+    C'est le bon comportement — mais personne ne lisait ``errors``. Sur un
+    corpus de douze offres dont une échouait, l'amorçage affichait « 11
+    créées » puis « ✅ Application utilisable » et sortait en 0 ; la seule
+    trace était une ligne ``ingestion_item_error`` noyée dans le journal.
+
+    Le contrôle porte sur le compte rendu, pas sur le nombre de lignes en
+    base : une offre RATTACHÉE par déduplication est traitée, pas perdue, et
+    ne crée pas de ligne. Compter les lignes ferait crier la dédup.
+    """
+    problemes: list[str] = []
+    if ingestion["erreurs"]:
+        problemes.append(
+            f"{ingestion['erreurs']} offre(s) en erreur à l'ingestion — "
+            "chercher « ingestion_item_error » dans le journal ci-dessus"
+        )
+    traitees = sum(
+        ingestion[cle]
+        for cle in ("creees", "mises_a_jour", "rattachees_etage1", "rattachees_etage2")
+    )
+    if traitees != ingestion["recues"]:
+        problemes.append(
+            f"{ingestion['recues']} offre(s) reçues du corpus, {traitees} traitées"
+        )
+    return problemes
+
+
+async def _verify(
+    conn: AsyncConnection, ingestion: dict[str, Any]
+) -> dict[str, Any]:
     """Contrôles de sortie : ce qui est vérifié ici est ce qui est promis.
 
     Un amorçage qui rapporte « OK » sans que la recherche ne renvoie rien
     serait pire qu'un échec — il ferait chercher le problème ailleurs.
+
+    ``ingestion`` est passé pour que le NOMBRE d'offres soit vérifié, pas
+    seulement leur existence : le savepoint par item rend une offre perdue
+    parfaitement silencieuse ici. Un corpus de 12 dont une seule échouait
+    donnait « 11 créées » puis « ✅ Application utilisable », code de sortie
+    0 — la ligne ``ingestion_item_error`` restant la seule trace, noyée dans
+    le journal.
     """
     offres = (
         await conn.execute(
@@ -354,7 +395,7 @@ async def _verify(conn: AsyncConnection) -> dict[str, Any]:
         )
     ).scalar_one()
 
-    problemes = []
+    problemes = ingestion_problems(ingestion)
     if offres == 0:
         problemes.append("aucune offre active")
     if vecteurs != offres:
