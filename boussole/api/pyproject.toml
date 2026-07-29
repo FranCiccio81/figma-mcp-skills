@@ -33,6 +33,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Export d'erreurs. Optionnel par choix : tout le monde n'utilise pas Sentry,
+# et une dépendance réseau imposée à qui n'en veut pas est un mauvais défaut.
+# En revanche, SENTRY_DSN configuré SANS cet extra fait échouer le démarrage
+# (app/core/observability.py) — se croire observé est pire que ne pas l'être.
+observability = [
+    "sentry-sdk>=2.0",
+]
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.24",

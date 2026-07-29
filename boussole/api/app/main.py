@@ -24,6 +24,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import Settings, get_settings
 from app.core.db import check_database
+from app.core.observability import configure_observability
 from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
@@ -333,6 +334,7 @@ def create_app(
     # LE SIEN — exports RGPD et CV introuvables dès que les conteneurs sont
     # distincts (défaut relevé en revue M5).
     check_storage_configuration(settings)
+    configure_observability(settings)
     # Même parti pris pour les secrets : un défaut de développement en
     # production rendrait forgeables les liens d'export RGPD (D23).
     check_secrets_configuration(settings)

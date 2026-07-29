@@ -168,9 +168,16 @@ class Settings(BaseSettings):
     #: ne suffit pas à l'activer en staging ou en production.
     feature_source_demo: bool = False
 
-    # Observabilité (D20).
+    # Observabilité (D20). ``SENTRY_DSN`` est LU (app/core/observability.py) :
+    # renseigné, il fait remonter les erreurs et les alertes de conformité ;
+    # renseigné sans le paquet installé, le démarrage échoue plutôt que de
+    # laisser croire à une couverture.
+    #
+    # ``OTEL_EXPORTER_OTLP_ENDPOINT`` a été RETIRÉE : elle était déclarée et
+    # lue par personne. Une variable qui ne fait rien induit en erreur plus
+    # sûrement qu'une variable absente. Les traces distribuées ne sont pas
+    # exportées ; le `trace_id` est propagé dans les logs JSON.
     sentry_dsn: str = ""
-    otel_exporter_otlp_endpoint: str = ""
 
     @field_validator("env", mode="before")
     @classmethod
