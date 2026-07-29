@@ -1,6 +1,7 @@
 """Logique métier du module auth : register, login, logout, utilisateur courant."""
 
 import logging
+import uuid
 from dataclasses import dataclass
 
 from app.core.security import (
@@ -30,6 +31,27 @@ class AuthCookies:
 class RegisterOutcome:
     created: bool
     cookies: AuthCookies
+    #: Identifiant du compte créé — ``None`` quand l'adresse était déjà prise
+    #: (réponse neutre). Permet de rattacher la ligne d'audit sans écrire
+    #: l'adresse tentée.
+    user_id: uuid.UUID | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class LoginOutcome:
+    """Issue d'une tentative de connexion.
+
+    ``user_id`` est renseigné dès que le COMPTE existe — y compris sur un
+    échec de mot de passe. C'est ce qui permet de compter les échecs par
+    compte sans jamais écrire l'adresse tentée dans le journal.
+    """
+
+    cookies: AuthCookies | None
+    user_id: uuid.UUID | None
+
+    @property
+    def succeeded(self) -> bool:
+        return self.cookies is not None
 
 
 class AuthService:
@@ -77,18 +99,31 @@ class AuthService:
         return RegisterOutcome(
             created=True,
             cookies=AuthCookies(session_token=token, csrf_token=generate_csrf_token()),
+            user_id=user.id,
         )
 
-    async def login(self, email: str, password: str) -> AuthCookies | None:
-        """Ouvre une session ; None si identifiants invalides (temps constant)."""
+    async def login(self, email: str, password: str) -> LoginOutcome:
+        """Ouvre une session ; issue détaillée pour le journal d'audit.
+
+        Rend un :class:`LoginOutcome` et non ``AuthCookies | None`` : le
+        journal de sécurité (09 §5.7) doit pouvoir rattacher un échec au
+        COMPTE visé quand il existe, sans que l'appelant ait à refaire la
+        recherche — ni à écrire l'adresse tentée, ce qu'on ne veut pas.
+
+        Le temps de réponse reste constant : ``waste_time_like_verify``
+        conserve le coût d'un hachage quand le compte n'existe pas.
+        """
         user = await self._repository.get_user_by_email(email)
         if user is None or user.password_hash is None:
             waste_time_like_verify(password)
-            return None
+            return LoginOutcome(cookies=None, user_id=None)
         if not verify_password(password, user.password_hash):
-            return None
+            return LoginOutcome(cookies=None, user_id=user.id)
         token = await self._sessions.create(user.id)
-        return AuthCookies(session_token=token, csrf_token=generate_csrf_token())
+        return LoginOutcome(
+            cookies=AuthCookies(session_token=token, csrf_token=generate_csrf_token()),
+            user_id=user.id,
+        )
 
     async def logout(self, session_token: str) -> None:
         await self._sessions.delete(session_token)

@@ -54,6 +54,8 @@ class InMemoryAuthRepository:
         self.consents: list[tuple[uuid.UUID, str, str]] = []
         #: user_id -> (cv importé, profil validé, préférences définies).
         self.onboarding: dict[uuid.UUID, tuple[bool, bool, bool]] = {}
+        #: Lignes d'audit écrites : (user_id, action, meta).
+        self.audit: list[tuple[uuid.UUID | None, str, dict[str, object]]] = []
 
     async def get_user_by_email(self, email: str) -> User | None:
         needle = email.lower()
@@ -61,6 +63,16 @@ class InMemoryAuthRepository:
             if user.email.lower() == needle and user.deleted_at is None:
                 return user
         return None
+
+    async def add_audit(
+        self, user_id: uuid.UUID | None, action: str, *, meta: dict[str, object]
+    ) -> None:
+        """Conserve les lignes d'audit pour que les tests puissent les LIRE.
+
+        Une doublure qui les jetterait laisserait passer exactement le défaut
+        d'origine : du code qui appelle un journal, et un journal vide.
+        """
+        self.audit.append((user_id, action, dict(meta)))
 
     async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]:
         """Reflète ce que les tests ont posé, pas trois ``False`` en dur.

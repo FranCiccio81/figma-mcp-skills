@@ -4,9 +4,10 @@ Le protocole ``AuthRepository`` permet de substituer une implémentation en
 mémoire dans les tests unitaires (pas de PostgreSQL requis).
 """
 
+import logging
 import uuid
-from collections.abc import Sequence
-from typing import Protocol
+from collections.abc import Mapping, Sequence
+from typing import Any, Protocol
 
 from fastapi import Depends
 from sqlalchemy import select, text
@@ -15,6 +16,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db_session
 from app.modules.auth.models import Consent, User
 
+# Table transversale : le modèle vit dans privacy, la ligne est écrite ici.
+from app.modules.privacy.models import AuditLog
+
+logger = logging.getLogger(__name__)
+
 
 class AuthRepository(Protocol):
     async def get_user_by_email(self, email: str) -> User | None: ...
@@ -22,6 +28,10 @@ class AuthRepository(Protocol):
     async def email_taken(self, email: str) -> bool: ...
 
     async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]: ...
+
+    async def add_audit(
+        self, user_id: uuid.UUID | None, action: str, *, meta: Mapping[str, Any]
+    ) -> None: ...
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None: ...
 
@@ -64,6 +74,20 @@ class SqlAlchemyAuthRepository:
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
         stmt = select(User).where(User.id == user_id, User.deleted_at.is_(None))
         return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def add_audit(
+        self, user_id: uuid.UUID | None, action: str, *, meta: Mapping[str, Any]
+    ) -> None:
+        """Écrit une ligne d'``audit_log``.
+
+        Ne se protège PAS elle-même : la garde est chez l'appelant
+        (:func:`app.modules.auth.audit.record`), pour qu'il n'y ait qu'un
+        seul endroit où l'on décide qu'un journal indisponible ne bloque
+        personne — et pour qu'elle couvre aussi les erreurs qui ne viennent
+        pas d'ici.
+        """
+        self._session.add(AuditLog(user_id=user_id, action=action, meta=dict(meta)))
+        await self._session.commit()
 
     async def onboarding_state(self, user_id: uuid.UUID) -> tuple[bool, bool, bool]:
         """(CV importé, profil validé, préférences définies) — une seule requête.

@@ -11,6 +11,14 @@ from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import get_redis_cache, get_redis_persistent
 from app.core.security import SessionStore
+from app.modules.auth.audit import (
+    LOGGED_OUT,
+    LOGIN_FAILED,
+    LOGIN_SUCCEEDED,
+    REGISTERED,
+    build_meta,
+    record,
+)
 from app.modules.auth.models import User
 from app.modules.auth.repository import AuthRepository, get_auth_repository
 from app.modules.auth.schemas import (
@@ -85,7 +93,9 @@ def _clear_auth_cookies(response: Response, settings: Settings) -> None:
 @router.post("/auth/register", status_code=201, response_model=RegisterResponse)
 async def register(
     payload: RegisterRequest,
+    request: Request,
     service: AuthService = Depends(get_auth_service),
+    repository: AuthRepository = Depends(get_auth_repository),
 ) -> JSONResponse:
     """Crée un compte et ouvre une session.
 
@@ -94,6 +104,20 @@ async def register(
     n'est créé et le jeton de session posé est un leurre invalide.
     """
     outcome = await service.register(payload)
+    # Journalisé même quand aucun compte n'a été créé (adresse déjà prise) :
+    # une rafale d'inscriptions sur des adresses existantes est une tentative
+    # d'énumération, et c'est le seul endroit où elle se voit. `created` le
+    # distingue sans révéler quelle adresse était prise.
+    await record(repository,
+        outcome.user_id,
+        REGISTERED,
+        meta=build_meta(
+            client_ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            trace_id=getattr(request.state, "trace_id", None),
+            created=outcome.created,
+        ),
+    )
     response = JSONResponse(
         status_code=201,
         content={"message": "Compte créé. Un e-mail de confirmation vous a été envoyé."},
@@ -108,6 +132,7 @@ async def login(
     request: Request,
     service: AuthService = Depends(get_auth_service),
     cache: Redis = Depends(get_redis_cache),
+    repository: AuthRepository = Depends(get_auth_repository),
 ) -> Response:
     """Ouvre une session (cookie httpOnly + cookie CSRF). Rate-limité 5/min 🟡."""
     settings = get_settings()
@@ -146,16 +171,28 @@ async def login(
             headers={"Retry-After": str(result.retry_after)},
         )
 
-    cookies = await service.login(payload.email, payload.password)
-    if cookies is None:
+    issue = await service.login(payload.email, payload.password)
+    meta = build_meta(
+        client_ip=client_ip,
+        user_agent=request.headers.get("user-agent"),
+        trace_id=getattr(request.state, "trace_id", None),
+    )
+    if not issue.succeeded:
+        # Écrit AVANT de lever : 09 §5.7 demande les échecs, et c'est
+        # précisément l'événement qu'une attaque par force brute produit en
+        # rafale. `user_id` est renseigné quand le compte existe — jamais
+        # l'adresse tentée.
+        await record(repository, issue.user_id, LOGIN_FAILED, meta=meta)
         raise Problem(
             status=401,
             code="invalid_credentials",
             title="Identifiants invalides",
             detail="E-mail ou mot de passe incorrect.",
         )
+    await record(repository, issue.user_id, LOGIN_SUCCEEDED, meta=meta)
     response = Response(status_code=204)
-    _set_auth_cookies(response, cookies, settings)
+    assert issue.cookies is not None
+    _set_auth_cookies(response, issue.cookies, settings)
     return response
 
 
@@ -164,12 +201,22 @@ async def logout(
     request: Request,
     _user: User = Depends(require_current_user),
     service: AuthService = Depends(get_auth_service),
+    repository: AuthRepository = Depends(get_auth_repository),
 ) -> Response:
     """Ferme la session courante et efface les cookies."""
     settings = get_settings()
     token = request.cookies.get(settings.session_cookie_name)
     if token:
         await service.logout(token)
+    await record(repository,
+        _user.id,
+        LOGGED_OUT,
+        meta=build_meta(
+            client_ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            trace_id=getattr(request.state, "trace_id", None),
+        ),
+    )
     response = Response(status_code=204)
     _clear_auth_cookies(response, settings)
     return response
