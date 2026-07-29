@@ -111,3 +111,27 @@ jobs:
         # d'addopts (pyproject.toml) : ces tests ne tournent QUE ici et via
         # `make test-integration`. Le schéma vient des migrations Alembic.
         run: pytest tests/integration -m integration -q
+
+  web:
+    name: Front (types, i18n, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: boussole/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: boussole/web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Parité i18n
+        # Une clé traduite d'un seul côté fait un texte anglais dans une
+        # interface française, ou une clé brute affichée telle quelle.
+        run: npm run i18n:check
+      - name: Tests
+        run: npm test

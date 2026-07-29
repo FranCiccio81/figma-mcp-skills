@@ -245,12 +245,18 @@ function JobsSearchScreen() {
         const pages = data.pages.map((page, pageIndex) => {
           const itemIndex = page.items.findIndex((item) => item.id === id);
           if (itemIndex === -1) return page;
+          // `noUncheckedIndexedAccess` : l'index vient de findIndex et est
+          // donc valide, mais le typage ne le sait pas. On lit la valeur au
+          // lieu de l'affirmer — si elle manquait, restaurer `undefined` en
+          // cas d'échec réintroduirait un trou dans la liste.
+          const item = page.items[itemIndex];
+          if (!item) return page;
           touched = true;
           snapshots.push({
             queryKey: queryKey as JobSnapshot["queryKey"],
             pageIndex,
             itemIndex,
-            item: page.items[itemIndex],
+            item,
             removed,
           });
           return {
