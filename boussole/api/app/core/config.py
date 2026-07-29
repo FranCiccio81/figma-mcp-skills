@@ -179,6 +179,22 @@ class Settings(BaseSettings):
     # exportées ; le `trace_id` est propagé dans les logs JSON.
     sentry_dsn: str = ""
 
+    # E-mail transactionnel. SMTP plutôt qu'une API de fournisseur : le choix
+    # du fournisseur est Q15, non tranchée, et suppose un arbitrage (UE,
+    # sous-traitance, registre des transferts). SMTP est le dénominateur
+    # commun — mailpit en dev, n'importe quel fournisseur ensuite — et ne
+    # préempte rien.
+    #
+    # ``SMTP_HOST`` vide ⇒ aucun envoi, mais journalisé : le message aurait
+    # dû partir, et ça se voit. C'est le comportement d'avant, rendu visible.
+    smtp_host: str = ""
+    smtp_port: int = 1025  # mailpit en dev ; 587 avec STARTTLS en production
+    smtp_username: str = ""
+    smtp_password: str = ""  # vault en production (D23)
+    smtp_starttls: bool = False
+    smtp_timeout_seconds: float = 10.0
+    mail_from: str = "Boussole <no-reply@boussole.example>"
+
     @field_validator("env", mode="before")
     @classmethod
     def _normalize_env(cls, value: Any) -> Any:

@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Header, Query, Response
 from redis.asyncio import Redis
 
 from app.core.config import get_settings
+from app.core.mail import get_mailer
 from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import get_redis_cache, get_redis_persistent
@@ -299,7 +300,7 @@ async def delete_account(
             headers={"Retry-After": str(attempt.retry_after)},
         )
 
-    service = PrivacyService(repository, sessions)
+    service = PrivacyService(repository, sessions, get_mailer())
     outcome = await service.delete_account(user, payload.password)
     if outcome is None:
         # Audit de l'ÉCHEC (M4) : un mot de passe erroné sur cette route est un
