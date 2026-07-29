@@ -4,7 +4,7 @@
 >
 > **Méthode** : tout ce qui suit a été vérifié dans le code de `boussole/`, et les chiffres proviennent d'exécutions réelles des suites de tests. Ce document ne recopie pas les intentions des spécifications : quand le code et la spec divergent, c'est le code qui est rapporté, et la divergence est signalée. Les incertitudes portent 🟡. Aucune question juridique n'est tranchée ici.
 >
-> **État de référence** : **finalisation** — 1323 tests unitaires + 68 d'intégration (PostgreSQL réel) + 11 front, `ruff`, `mypy` (151 fichiers), `tsc` et parité i18n verts. La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
+> **État de référence** : **finalisation, après revue** — 1360 tests unitaires + 71 d'intégration (PostgreSQL réel) + 11 front, `ruff`, `mypy` (151 fichiers), `tsc` et parité i18n verts. La rédaction initiale portait sur le commit `811d4d1` ; §8.2 a été mis à jour à chaque lot depuis, chaque fois en fermant des points qu'écrire ce document avait révélés.
 >
 > **Démarrage à froid vérifié** : `make demo` amène une base VIDE à une application utilisable — migrations, référentiels, ingestion du corpus par la chaîne de production, embeddings, compte au profil validé. Vérifié contre un vrai PostgreSQL et une API en fonctionnement : connexion, recherche, matching explicable, page des sources, préférences, candidatures.
 
@@ -14,7 +14,7 @@
 
 Six jalons ont été livrés et mergés : M1 (fondations + auth), M2 (ingestion + recherche), M3 (matching + explications), M4 (CV + générations + candidatures), M5 (privacy + durcissement), M6 (mise en service).
 
-**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1323 tests unitaires + 68 d’intégration PostgreSQL + 11 front, lint et types verts) et un front Next.js.
+**Ce qui existe** : une application complète de bout en bout. Un utilisateur peut créer un compte, importer un CV, valider un profil, définir ses préférences, chercher des offres, voir un score de matching explicable, générer un e-mail ou une lettre ancrés dans son profil, suivre ses candidatures, exporter ses données et supprimer son compte. Le tout derrière une API FastAPI (1360 tests unitaires + 71 d’intégration PostgreSQL + 11 front, lint et types verts) et un front Next.js.
 
 **Ce qui manque pour que ce soit un produit** : trois choses de nature différente.
 
@@ -210,7 +210,31 @@ Onze autres défauts ont été corrigés dans le même passage, dont : le provid
 
 Le même passage a corrigé quatre fonctionnalités **écrites mais inatteignables depuis le code de production** : le crédit « compétence proche » n'était câblé que côté candidat (sous-score 0,0 avec un cosinus de 0,99) ; la similarité d'intitulé faisait la **moyenne** des intitulés cibles au lieu du **max** exigé par la spec (0,000 au lieu de 0,889 pour un candidat parfaitement ciblé).
 
-### 6.3 Ce que ces revues disent du niveau de maturité
+### 6.3 Finalisation — quatorze défauts, dont une fuite de données personnelles
+
+Revue en quatre volets (confidentialité, concurrence, matching, ingestion & données), chaque agent tenu de **reproduire contre le vrai système** — un Redis réel, le SDK Sentry réel, un PostgreSQL réel — et de ne remonter que ce qu'il pouvait faire échouer.
+
+| # | Défaut | Effet réel, mesuré |
+|---|---|---|
+| 1 | Le nettoyeur d'événements Sentry énumérait ce qu'il **retirait** | Huit chemins portaient encore des données. L'**adresse** de l'utilisateur et le sujet « demande de suppression de compte » partaient par les fils d'Ariane construits depuis les journaux `INFO`, puis se rattachaient à n'importe quelle erreur ultérieure du processus. Idem pour la **requête de recherche d'emploi** (`query_string`), qui peut révéler une santé, un handicap, une reconversion. Passé en **liste blanche** |
+| 2 | `starttls()` sans contexte explicite | Le mot de passe SMTP du service ressortait **en clair** côté intercepteur (contexte par défaut : ni certificat ni nom d'hôte vérifiés) |
+| 3 | Clients Redis **singletons** réutilisés par les tâches Celery | `asyncio.run` ouvre une boucle neuve par tâche : remboursement de quota valide **une fois sur deux**, sessions d'un compte purgé qui lui survivent. Invisible sous fakeredis |
+| 4 | `refund` en `GET` puis `DECR` | Compteur à **−4** avec six processus concurrents ; la fenêtre autorisait ensuite **12 appels pour une limite de 5** |
+| 5 | Un secteur hors référentiel violait une clé étrangère | Savepoint par item → **l'offre entière disparaissait**. Une source publiant des codes NAF complets perdait **100 % de ses annonces**, une par une |
+| 6 | `sector_code` n'était écrit qu'à la **création** | Une offre née avant que sa source ne publie son secteur le gardait `NULL` à vie : dimension inconnue par construction |
+| 7 | Le drapeau `required` d'une compétence ne bougeait plus jamais | Figé sur la *première* publication : une compétence promue en exigence restait pesée à **10 % au lieu de 25 %** |
+| 8 | Un libellé cité en exigé **et** en souhaité | Deux lignes à la création, une seule à la fusion : compté deux fois (25 + 10 %), et **le même flux donnait un résultat différent selon le chemin** |
+| 9 | `errors` de l'amorçage calculé et lu par personne | Onze offres sur douze, code de sortie **0**, verdict « ✅ Application utilisable » |
+| 10 | `max_spearman_regression` déclarée dans les portes, évaluée par rien | Le rapport annonçait « toutes les portes passent » sans avoir jamais comparé deux exécutions |
+
+S'y ajoutent : `reconcile` exécuté hors du verrou d'ingestion, l'envoi SMTP qui gelait la boucle d'événements, un NDCG non déterministe sur ex æquo, et une étape de CI dont l'échec faisait passer les tests d'intégration en « skipped » — **un vert qui n'exécutait rien**.
+
+**Ce que ce lot ajoute au diagnostic du §6.3.** Deux mécanismes nouveaux, tous deux liés à la *commodité* :
+
+- **Le jeu de données commode masque les chemins qu'il devrait exercer.** Les douze offres du corpus de démonstration naissent complètes, avec leur secteur, sans recouvrement entre exigé et souhaité, et ne sont jamais republiées enrichies. Les quatre défauts d'ingestion ci-dessus vivaient exactement dans les chemins que ce corpus ne parcourt jamais. Ils n'ont été trouvés qu'en **rejouant deux cycles** contre PostgreSQL.
+- **Le substitut de test commode efface la propriété testée.** fakeredis ne lie pas ses connexions à une boucle d'événements : aucun test unitaire ne pouvait voir le défaut nº 3. Le fake en mémoire de l'ingestion n'a pas de clé étrangère : le nº 5 y survivait déjà.
+
+### 6.4 Ce que ces revues disent du niveau de maturité
 
 Trois lectures, à tenir ensemble :
 
@@ -218,42 +242,45 @@ Trois lectures, à tenir ensemble :
 
 2. **Le mode de défaillance dominant est identifiable et récurrent** : *du code qui a l'air d'être là et qui ne s'exécute pas*. Garde-fou branché sur un signal qui avale les exceptions ; provider câblé en dur ignorant la configuration ; purgeur enregistré mais resté stub ; contrôle d'ancrage passant sur liste vide ; fonctionnalité correcte mais jamais atteinte depuis le chemin de production. Une suite de tests qui vérifie l'**appel** et non l'**effet** ne voit rien de tout cela. C'est exactement pourquoi la suite d'intégration existe — et pourquoi elle a immédiatement trouvé, à sa création, un bug produit vivant (la recherche accentuée qui ne remontait rien, cas nominal d'un francophone).
 
-3. **La densité de défauts décroît en gravité mais pas en nombre.** M4/M5 : six défauts critiques touchant la conformité et la sécurité. M6 : quatre garde-fous inopérants + onze défauts d'exécution. La qualité de ce qui est livré **après revue** est bonne ; la qualité de ce qui est livré **avant** ne l'est pas encore assez pour se passer de l'étape. Un décideur doit en tirer une conséquence de planning : **prévoir la revue et son cycle de correction comme une phase à part entière de chaque jalon**, pas comme un aléa.
+3. **La densité de défauts décroît en gravité mais pas en nombre.** M4/M5 : six défauts critiques touchant la conformité et la sécurité. M6 : quatre garde-fous inopérants + onze défauts d'exécution. Finalisation : quatorze, dont une fuite de données personnelles vers un sous-traitant tiers. La qualité de ce qui est livré **après revue** est bonne ; la qualité de ce qui est livré **avant** ne l'est pas encore assez pour se passer de l'étape. Un décideur doit en tirer une conséquence de planning : **prévoir la revue et son cycle de correction comme une phase à part entière de chaque jalon**, pas comme un aléa. Sur ce projet, le ratio observé est stable : environ un tiers du temps de développement va à la revue et à ses correctifs, et c'est là que se trouvent les défauts qui comptent.
+
+4. **Ce qui est déclaré et jamais exécuté est plus dangereux que ce qui manque.** `SENTRY_DSN` lu par personne, `OTEL_EXPORTER_OTLP_ENDPOINT` inerte, une porte d'évaluation sans évaluateur, une étape de CI qui passe en « skipped » sur erreur : dans chaque cas, le tableau de bord affichait « couvert ». La règle adoptée depuis — **livré, ou retiré, jamais inerte** (D42) — et son corollaire technique — refuser de démarrer sur une déclaration qu'on ne sait pas honorer — sont la seule protection qui ait tenu.
 
 ---
 
 ## 7. Métriques de qualité actuelles
 
-Mesurées sur le commit `811d4d1`, `boussole/api`.
+Mesurées après la revue de finalisation, `boussole/api`.
 
 ### Tests
 
 | Suite | Volume | État | Commande |
 |---|---|---|---|
-| Unitaires | **1323** tests | ✅ tous verts (83 s) | `make test` |
-| Intégration PostgreSQL | **68** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
+| Unitaires | **1360** tests | ✅ tous verts (86 s) | `make test` |
+| Intégration PostgreSQL | **71** tests | ✅ verts contre un PostgreSQL 16 + pgvector réel | `make test-integration` |
 | Front | **11** tests | ✅ verts (vitest + Testing Library) — plus `tsc` et parité i18n | `npm test` (dans `web/`) |
 
-Répartition des 1255 unitaires (50 en `evaluation`, 12 sur le garde-fou de calibration) :
+Répartition des unitaires :
 
 | Domaine | Tests | | Domaine | Tests |
 |---|---|---|---|---|
-| matching (moteur) | 166 | | privacy | 84 |
-| ingestion | 156 | | cv | 82 |
-| core (config, stockage, gardes) | 147 | | jobs | 80 |
+| matching (moteur) | 202 | | privacy | 92 |
+| core (config, stockage, gardes, verrous) | 190 | | jobs | 86 |
+| ingestion | 167 | | cv | 82 |
 | ai (providers, journal, rétention) | 133 | | generation | 76 |
 | embeddings | 70 | | matching_api | 60 |
-| applications | 47 | | auth/sécurité/erreurs (racine) | 45 |
-| profiles | 32 | | preferences | 15 |
+| evaluation (harnais de mesure) | 57 | | applications | 53 |
+| auth/sécurité/erreurs (racine) | 45 | | profiles | 32 |
+| preferences | 15 | | | |
 
-Répartition des 66 tests d'intégration : contraintes SQL 15, purge RGPD 12, dédup 8, trigger full-text 8, pagination keyset 8, rétention `ai_calls` 5, export RGPD 5, filtre salaire 5.
+Le démarrage à froid est vérifié à part, par exécution réelle : base **vide** → migrations → référentiels → ingestion du corpus par la chaîne de production → embeddings → compte au profil validé, avec contrôle de sortie non nul si le résultat n'est pas une application utilisable (`make demo`, D40/D45).
 
 ### Lint et types
 
 | Outil | Périmètre | Résultat |
 |---|---|---|
 | `ruff` | `api/` — règles E, F, W, I, UP, B, SIM, RUF | ✅ **All checks passed** |
-| `mypy` | `app` (146 fichiers), **strict** sur `app.core.*` et `app.matching.*` | ✅ **no issues found** |
+| `mypy` | `app` (151 fichiers), **strict** sur `app.core.*` et `app.matching.*` | ✅ **no issues found** |
 | `next lint` / `tsc --noEmit` | `web/` | ✅ verts — et `tsc` a immédiatement trouvé une erreur réelle (voir §8.2) |
 
 ### CI
@@ -262,32 +289,36 @@ Répartition des 66 tests d'intégration : contraintes SQL 15, purge RGPD 12, d�
 
 Le fichier a passé six jalons dans `infra/github-workflows/` avec un README demandant de le déplacer : **aucune vérification automatique n'a tourné sur les PR de tout le projet**, y compris celles où les revues manuelles ont trouvé des défauts critiques.
 
+Un cinquième job couvre le front (types, parité i18n, tests). La revue de finalisation a par ailleurs corrigé un défaut de la CI elle-même : l'étape de détection de changements utilisait `git fetch --depth=0`, que git refuse — sa sortie restait vide et les tests d'intégration passaient en « skipped », c'est-à-dire un vert qui n'exécutait rien.
+
 ### Qualité du matching — première mesure
 
 `scoring-config.json` portait des `evaluation_gates` depuis le premier jour sans qu'aucune n'ait jamais été exécutée. Le harnais existe désormais (`make evaluate`, D35) et a tourné. Résultat au corpus de démonstration :
 
 | Porte | Seuil | Mesuré | |
 |---|---|---|---|
-| `spearman_min` | ≥ 0,60 | **0,526** (pire profil : `cand-devops`) | ❌ |
-| `ndcg_at_10_min` | ≥ 0,75 | 0,913 (pire profil) | ✅ |
+| `spearman_min` | ≥ 0,60 | **0,714** (pire profil : `cand-junior`) | ✅ |
+| `ndcg_at_10_min` | ≥ 0,75 | 0,956 (pire profil) | ✅ |
 | `blocking_precision_min` | ≥ 0,95 | 1,000 — 0 rédhibitoire annoncé à tort | ✅ |
 | `blocking_recall_min` | ≥ 0,85 | 1,000 — 0 rédhibitoire manqué | ✅ |
 
-Par profil : `cand-backend-senior` ρ = 0,832 / NDCG 0,944 · `cand-devops` ρ = 0,526 / NDCG 0,907 · `cand-junior` ρ = 0,710 / NDCG 0,991.
+Par profil : `cand-backend-senior` ρ = 0,852 / NDCG 0,956 · `cand-devops` ρ = 0,726 / NDCG 0,983 · `cand-junior` ρ = 0,714 / NDCG 0,986.
+
+⚠️ Une cinquième porte, `max_spearman_regression`, figurait dans la configuration et **n'était évaluée par rien** : le rapport concluait « toutes les portes passent » sans avoir jamais comparé deux exécutions. Elle a été retirée, et le harnais **refuse désormais de démarrer** sur une porte déclarée qu'il ne sait pas mesurer. La non-régression suppose d'archiver un run de référence — un travail à part, pas une ligne de configuration.
 
 **Ce que ça vaut.** Le jeu est fait de **cas de référence construits**, pas d'annotations humaines d'offres réelles (N16) : le rapport dit si le moteur se comporte comme spécifié sur des situations choisies, pas si le matching est bon pour de vrais candidats. Cette question-là reste entière et reste le chemin critique le plus long.
 
 **Ce que la première exécution a trouvé**, en revanche, est solide et chiffré :
 
 - ~~**N14 — `title_similarity` est inerte et compte comme un fait connu.**~~ ✅ **corrigée** (D36). Sous-score 0,00 sur les **36 paires** avec le statut « connu » : 15 % du poids qui ne discriminaient rien et gonflaient l'indice de confiance. Le moteur rapproche désormais le modèle qui a produit le vecteur des seuils calibrés pour lui, et déclare la dimension **inconnue** en cas de discordance. Effet mesuré : confiance moyenne **97,2 → 82,2** (max 98 → 83), score moyen 49,1 → 58,2, aucune paire en `low_data`. Spearman passe de 0,570 à 0,526 — non pas une dégradation, mais la disparition d'une compression accidentelle qui flattait le classement (la renormalisation dépend de l'ensemble des dimensions connues, qui varie d'une paire à l'autre).
-- **N15 — la couverture des compétences favorise les offres maigres.** Une offre à une seule exigence satisfaite obtient 1,00 sur la dimension à 25 %. Mesuré : un poste « Développeur Python Junior » sur site atteint 60 pour un profil DevOps senior exigeant le full remote. C'est ce qui fait tomber Spearman sous la porte.
-- **N13 — « full remote requis » ne bloque pas un poste hybride.** Le moteur suit la spec ; c'est la spec qui mérite discussion — un niveau nommé « requis » qui ne bloque pas est difficile à défendre.
+- ~~**N15 — la couverture des compétences favorise les offres maigres.**~~ ✅ **corrigée** (D38). Une offre à une seule exigence satisfaite obtenait 1,00 sur la dimension à 25 % ; un poste « Développeur Python Junior » sur site atteignait 60 pour un profil DevOps senior exigeant le full remote. Le facteur `k` est devenu **continu** : la preuve partielle pèse à proportion, le sous-score n'est pas touché. Spearman du pire profil **0,526 → 0,714**, NDCG 0,907 → 0,956, bloquants inchangés. Contrepartie assumée et mesurée : une offre pauvrement décrite voit son score monter (jusqu'à +15 points), mais sa **confiance chute en même temps**, et les deux sont toujours affichés ensemble.
+- ~~**N13 — « full remote requis » ne bloque pas un poste hybride.**~~ ✅ **tranchée** (D39). Un niveau nommé « requis » qui ne bloque pas rend « requis » et « préféré » indiscernables dans les faits. La règle est passée en configuration (`remote.blocking_policies`) ; le sous-score hybride reste à 0,4 et l'offre reste visible.
 
-N15 reste **épinglée par test de caractérisation et délibérément non corrigée** : un jeu recalé sur la sortie du moteur ne mesure plus rien. C'est aujourd'hui la seule cause connue de l'échec de la porte Spearman.
+**Les quatre portes passent donc aujourd'hui.** Ce que ça prouve reste borné par la nature du jeu (ci-dessus) : le moteur se comporte comme spécifié sur des cas choisis. La mesure sur annotations humaines (N16) reste le chemin critique le plus long du projet.
 
 ### Ce qui n'est pas mesuré
 
-- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1323 tests sont un volume, pas une couverture.
+- **Couverture de code** : aucun outil de couverture n'est configuré. Les 1360 tests sont un volume, pas une couverture.
 - **Performance** : la cible « recherche p95 < 500 ms » n'a jamais été mesurée sur un corpus réel — il n'y a pas eu de corpus réel, les connecteurs étant désactivés.
 - **Prompts** : les tests de prompts en CI et le jeu adversarial prévus par la stratégie de test n'existent pas.
 

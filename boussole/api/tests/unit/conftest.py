@@ -2,6 +2,12 @@
 
 Aucune dépendance externe : la base est remplacée par un repository en
 mémoire, les deux Redis par fakeredis (serveurs partagés entre requêtes).
+
+Cette promesse est désormais **tenue par un garde-fou** et non par la
+discipline — voir :func:`_aucun_redis_reel`. Elle avait été rompue deux fois,
+et les deux fois sans que rien ne l'indique : une suite qui touche un vrai
+Redis passe sur la machine du développeur, où un Redis tourne, et échoue en
+CI. Ou pire, elle passe des deux côtés en n'exerçant que la branche dégradée.
 """
 
 import uuid
@@ -14,10 +20,30 @@ import pytest
 from fastapi.testclient import TestClient
 from redis.asyncio import Redis
 
+from app.core.config import get_settings
 from app.core.redis import get_redis_cache, get_redis_persistent
 from app.main import create_app
 from app.modules.auth.models import User
 from app.modules.auth.repository import get_auth_repository
+
+
+@pytest.fixture(autouse=True)
+def _aucun_redis_reel(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Aucun test unitaire n'ouvre de connexion Redis — jamais.
+
+    Les URL pointent un port sur lequel rien n'écoute. Un test qui construit
+    un vrai client échoue donc **immédiatement et partout**, au lieu de
+    dépendre de ce qui tourne sur la machine.
+
+    Ce n'est pas théorique. Le verrou d'ingestion a fait passer quatre tests
+    de ``tests/unit/ingestion/test_worker_tasks.py`` par un client réel : ils
+    passaient ici, ils tombaient en CI. Et avant eux, la fabrique
+    d'application des tests laissait le limiteur de débit parler au Redis
+    local, si bien que 209 tests n'exerçaient que sa branche dégradée.
+    """
+    monkeypatch.setenv("REDIS_CACHE_URL", "redis://127.0.0.1:1/0")
+    monkeypatch.setenv("REDIS_PERSISTENT_URL", "redis://127.0.0.1:1/1")
+    get_settings.cache_clear()
 
 
 class InMemoryAuthRepository:
