@@ -139,7 +139,7 @@ class TestGetMatch:
         body = response.json()
         assert body["job_id"] == str(job.id)
         assert body["profile_version"] == 3
-        assert body["scoring_version"] == "1.0.0"
+        assert body["scoring_version"] == "1.3.0"
         assert 0 <= body["score"] <= 100
         assert 0 <= body["confidence"] <= 100
         assert isinstance(body["low_data"], bool)
@@ -221,7 +221,7 @@ class TestGetMatch:
         (key,) = matching_repository.results
         matching_repository.results[key].scoring_version = "0.9.0"
 
-        assert client.get(match_url(job.id)).json()["scoring_version"] == "1.0.0"
+        assert client.get(match_url(job.id)).json()["scoring_version"] == "1.3.0"
         assert len(engine_calls) == 2
 
     def test_canonical_skill_labels_via_taxonomy(

@@ -13,7 +13,8 @@ from celery.schedules import crontab
 from kombu import Queue
 
 from app.core.config import get_settings
-from app.core.secrets import check_secrets_configuration
+from app.core.observability import configure_observability
+from app.core.secrets import check_hardening_configuration, check_secrets_configuration
 from app.core.storage import check_storage_configuration
 
 settings = get_settings()
@@ -34,6 +35,11 @@ settings = get_settings()
 # la moindre tâche.
 check_storage_configuration(settings)
 check_secrets_configuration(settings)
+check_hardening_configuration(settings)
+
+# Les alertes de conformité (purges RGPD en retard) sont émises par des
+# tâches Celery : sans export ici, elles n'atteindraient personne.
+configure_observability(settings)
 
 celery_app = Celery(
     "boussole",
@@ -109,6 +115,21 @@ celery_app.conf.update(
         "maintenance-purge-expired-exports": {
             "task": "maintenance.purge_expired_exports",
             "schedule": crontab(minute=45, hour=4),
+        },
+        # Surveillance de l'engagement des 30 jours (D20). Placée APRÈS la
+        # purge de 04:15 : ce qu'elle trouve encore `pending` est ce que la
+        # purge n'a pas su traiter. Une heure d'écart laisse le temps à une
+        # purge lente de finir avant qu'on la déclare en retard.
+        "maintenance-check-purge-backlog": {
+            "task": "maintenance.check_purge_backlog",
+            "schedule": crontab(minute=15, hour=5),
+        },
+        # Rétention 13 mois du journal des appels IA (11 §3). Après le reste
+        # du ménage : c'est la tâche la plus longue (suppression par lots sur
+        # la plus grosse table) et la moins urgente des trois.
+        "maintenance-purge-ai-calls": {
+            "task": "maintenance.purge_ai_calls",
+            "schedule": crontab(minute=30, hour=5),
         },
         # Rattrapage quotidien des embeddings manquants (08 §8) : les
         # vecteurs sont normalement calculés au fil de l'eau (à l'ingestion

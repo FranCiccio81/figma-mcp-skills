@@ -18,6 +18,7 @@ from collections.abc import Awaitable
 from datetime import UTC, datetime
 from typing import Any
 
+import fakeredis.aioredis
 import pytest
 from sqlalchemy.pool import NullPool
 
@@ -108,6 +109,15 @@ def worker_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     )
     monkeypatch.setattr(
         ingestion_tasks, "SqlAlchemyJobStore", lambda _session: env["store"]
+    )
+    # Redis substitué. Sans ça, le verrou d'ingestion ouvre une VRAIE connexion
+    # sur le port du cache : ces tests ne passaient que sur une machine où un
+    # Redis écoutait par hasard, et tombaient en CI. Exactement le défaut que
+    # cette revue traque ailleurs — un test qui ne mesure pas ce qu'il croit
+    # parce que l'environnement le sauve.
+    monkeypatch.setattr(
+        "app.core.redis.create_worker_redis_cache",
+        lambda: fakeredis.aioredis.FakeRedis(decode_responses=True),
     )
     return env
 

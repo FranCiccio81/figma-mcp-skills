@@ -63,7 +63,15 @@ class RawJob:
     experience_max: float | None = None
     experience_conf: float | None = None
     languages: list[tuple[str, str]] = field(default_factory=list)  # (code, CECRL), conf 1.0
-    skills: list[str] = field(default_factory=list)  # libellés fournis (ex. ROME)
+    skills: list[str] = field(default_factory=list)  # libellés EXIGÉS fournis (ex. ROME)
+    #: Compétences SOUHAITÉES quand la source les distingue. Sans ce champ,
+    #: tout ce qu'une source publie atterrit en « indispensable » et la
+    #: dimension ``skills_nice`` (10 % du poids) reste morte pour toute source
+    #: à règles — seule l'extraction LLM savait faire la différence.
+    skills_nice: list[str] = field(default_factory=list)
+    #: Code secteur du référentiel ``sectors`` quand la source le publie.
+    #: Sans lui, la dimension ``sector`` (4 %) est inconnue par construction.
+    sector: str | None = None
     language: str | None = None  # langue de rédaction si fournie
     expires_at: datetime | None = None  # signal explicite d'expiration (07 §4.6.1)
     withdrawn: bool = False  # signal « annulée/pourvue » (07 §4.6.1)

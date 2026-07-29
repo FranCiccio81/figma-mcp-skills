@@ -19,15 +19,19 @@ Règles portées ici (le repository ne fait que persister) :
   interne liée, résolus en UNE requête pour toute la page (:meth:`job_refs`,
   pas de N+1) ; ``None`` sur une candidature externe, et ``None`` aussi si
   l'offre a disparu entre-temps (dégradation silencieuse, pas d'erreur) ;
-- Idempotency-Key 🟡 simple : cache en mémoire de processus (clé → id de
-  candidature) ; ignorée si non fournie, best-effort mono-processus — une
-  table dédiée arrive avec le module privacy/infra si besoin.
+- Idempotency-Key : cache PARTAGÉ sur le Redis volatile (clé → id de
+  candidature), TTL 24 h ; ignorée si non fournie. Partagé entre instances —
+  la version précédente tenait un dictionnaire en mémoire de processus, que
+  deux répliques d'API ne voyaient pas, si bien qu'un double-clic créait le
+  doublon que la clé existait pour empêcher. Ce reste un cache de REJEU, pas
+  un verrou : deux requêtes strictement simultanées peuvent encore passer.
 """
 
 import uuid
 from datetime import UTC, datetime
 from typing import cast
 
+from app.core.idempotency import IdempotencyStore
 from app.core.problems import Problem
 from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.repository import (
@@ -47,9 +51,8 @@ from app.modules.applications.schemas import (
     StatusChangeInput,
 )
 
-#: Cache d'idempotence 🟡 (user_id, clé) → id de candidature — mémoire de
-#: processus, best-effort (perdu au redémarrage, non partagé entre workers).
-_IDEMPOTENCY_CACHE: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
+#: Portée des clés d'idempotence de ce module dans le cache partagé.
+IDEMPOTENCY_SCOPE = "applications"
 
 
 def _not_found() -> Problem:
@@ -97,8 +100,16 @@ def _ref_of(
 
 
 class ApplicationsService:
-    def __init__(self, repository: ApplicationsRepository) -> None:
+    def __init__(
+        self,
+        repository: ApplicationsRepository,
+        idempotency: IdempotencyStore | None = None,
+    ) -> None:
         self._repository = repository
+        # Sans magasin, l'idempotence est simplement inopérante — le POST se
+        # comporte comme si aucune clé n'avait été fournie. C'est la
+        # dégradation acceptable ; l'inverse (refuser la création) ne l'est pas.
+        self._idempotency = idempotency
 
     async def _job_ref(self, application: Application) -> JobRef | None:
         """Libellés de l'offre d'UNE candidature (aucune requête si externe)."""
@@ -165,8 +176,10 @@ class ApplicationsService:
         que les transitions de statut (RM-P-3) ; le statut initial est porté
         par la candidature elle-même.
         """
-        if idempotency_key is not None:
-            cached_id = _IDEMPOTENCY_CACHE.get((user_id, idempotency_key))
+        if idempotency_key is not None and self._idempotency is not None:
+            cached_id = await self._idempotency.get(
+                IDEMPOTENCY_SCOPE, user_id, idempotency_key
+            )
             if cached_id is not None:
                 existing = await self._repository.get_for_user(cached_id, user_id)
                 if existing is not None:
@@ -204,8 +217,10 @@ class ApplicationsService:
         )
         application.events = []
         created = await self._repository.create(application)
-        if idempotency_key is not None:
-            _IDEMPOTENCY_CACHE[(user_id, idempotency_key)] = created.id
+        if idempotency_key is not None and self._idempotency is not None:
+            await self._idempotency.remember(
+                IDEMPOTENCY_SCOPE, user_id, idempotency_key, created.id
+            )
         return self._to_out(created, job_ref)
 
     # ------------------------------------------------------------ détail

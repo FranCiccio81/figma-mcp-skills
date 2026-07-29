@@ -90,3 +90,43 @@ def _default_values() -> dict[str, object]:
         for name, field in Settings.model_fields.items()
         if field.default is not None
     }
+
+
+def check_hardening_configuration(settings: Settings | None = None) -> None:
+    """Refuse de démarrer sur une configuration qui expose des données.
+
+    Deux réglages, deux fuites mesurées en revue :
+
+    - **``SMTP_STARTTLS`` à faux avec authentification** : le mot de passe du
+      compte d'envoi et l'adresse de chaque destinataire transitent en clair.
+      Qui a ce mot de passe peut écrire au nom du service — à une base
+      d'utilisateurs qui attendent précisément des messages sur la suppression
+      de leur compte ;
+    - **``DEBUG`` à vrai** : ``create_async_engine(echo=debug)`` journalise
+      chaque requête AVEC ses paramètres liés. Contenus de profil, adresses,
+      extraits de CV se retrouvent dans les journaux, et de là dans tout
+      export d'erreurs.
+
+    Même parti pris que les autres garde-fous : un service qui ne démarre pas
+    se voit ; une fuite, non.
+    """
+    conf = settings or get_settings()
+    if not conf.is_hardened:
+        return
+
+    manquements: list[str] = []
+    if conf.smtp_host.strip() and conf.smtp_username and not conf.smtp_starttls:
+        manquements.append(
+            "SMTP_STARTTLS=false avec authentification : le mot de passe SMTP "
+            "et l'adresse de chaque destinataire transitent EN CLAIR"
+        )
+    if conf.debug:
+        manquements.append(
+            "DEBUG=true : SQLAlchemy journalise chaque requête avec ses "
+            "paramètres liés (profils, adresses, extraits de CV)"
+        )
+    if manquements:
+        raise SecretConfigurationError(
+            f"Configuration refusée en ENV={conf.env} :\n  - "
+            + "\n  - ".join(manquements)
+        )

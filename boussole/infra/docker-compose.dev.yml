@@ -16,6 +16,11 @@ x-app-env: &app-env
   DATABASE_URL: postgresql+asyncpg://boussole:boussole@postgres:5432/boussole
   REDIS_PERSISTENT_URL: redis://redis-persistent:6379/0
   REDIS_CACHE_URL: redis://redis-cache:6379/0
+  # mailpit reçoit tout : rien ne sort de la machine en dev.
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  # Corpus de démonstration (offres FICTIVES, D34).
+  FEATURE_SOURCE_DEMO: "true"
   # Stockage objet (D09) — MinIO, comme la prod utilisera S3 UE.
   STORAGE_BACKEND: s3
   S3_ENDPOINT: http://minio:9000

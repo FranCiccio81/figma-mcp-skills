@@ -5,14 +5,19 @@ from __future__ import annotations
 import pytest
 
 from app.matching import CandidateInput, Confident, JobInput
-from tests.unit.matching.factories import E1, outcome, vector_with_cosine
+from tests.unit.matching.factories import (
+    E1,
+    job_with_title_cosine,
+    outcome,
+    vector_with_cosine,
+)
 
 # --------------------------------------------------------- similarité métier
 
 
 def test_um07_affine_mapping_midpoint() -> None:
     candidate = CandidateInput(target_titles_embeddings=(E1,))
-    job = JobInput(title_embedding=vector_with_cosine(0.675))
+    job = job_with_title_cosine(0.675)
     result = outcome("title_similarity", candidate, job)
     assert result.subscore == pytest.approx(0.5, abs=1e-6)
     assert result.details["similarity"] == pytest.approx(0.675, abs=1e-4)
@@ -20,17 +25,17 @@ def test_um07_affine_mapping_midpoint() -> None:
 
 def test_um07_affine_bounds() -> None:
     candidate = CandidateInput(target_titles_embeddings=(E1,))
-    low = outcome("title_similarity", candidate, JobInput(title_embedding=vector_with_cosine(0.55)))
+    low = outcome("title_similarity", candidate, job_with_title_cosine(0.55))
     assert low.subscore == pytest.approx(0.0, abs=1e-6)
     below = outcome(
-        "title_similarity", candidate, JobInput(title_embedding=vector_with_cosine(0.30))
+        "title_similarity", candidate, job_with_title_cosine(0.30)
     )
     assert below.subscore == pytest.approx(0.0)
     high = outcome(
-        "title_similarity", candidate, JobInput(title_embedding=vector_with_cosine(0.80))
+        "title_similarity", candidate, job_with_title_cosine(0.80)
     )
     assert high.subscore == pytest.approx(1.0, abs=1e-6)
-    above = outcome("title_similarity", candidate, JobInput(title_embedding=E1))
+    above = outcome("title_similarity", candidate, job_with_title_cosine(1.0))
     assert above.subscore == pytest.approx(1.0)
 
 
@@ -38,7 +43,7 @@ def test_title_takes_max_over_candidate_targets() -> None:
     candidate = CandidateInput(
         target_titles_embeddings=(vector_with_cosine(0.0), E1)  # le meilleur cosinus gagne
     )
-    result = outcome("title_similarity", candidate, JobInput(title_embedding=E1))
+    result = outcome("title_similarity", candidate, job_with_title_cosine(1.0))
     assert result.subscore == pytest.approx(1.0)
 
 
@@ -47,7 +52,7 @@ def test_title_missing_embeddings_means_unknown() -> None:
     no_job = outcome("title_similarity", CandidateInput(target_titles_embeddings=(E1,)), JobInput())
     assert not no_job.known
     assert no_job.unknown_reason == "job_missing"
-    no_candidate = outcome("title_similarity", CandidateInput(), JobInput(title_embedding=E1))
+    no_candidate = outcome("title_similarity", CandidateInput(), job_with_title_cosine(1.0))
     assert not no_candidate.known
     assert no_candidate.unknown_reason == "candidate_missing"
 

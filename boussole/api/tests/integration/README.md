@@ -2,7 +2,7 @@
 
 ## Pourquoi cette suite existe
 
-La suite unitaire (`tests/unit`, ~750 tests) n'exerce **jamais** de base de
+La suite unitaire (`tests/unit`, 1193 tests) n'exerce **jamais** de base de
 données : elle substitue des repositories en mémoire, ou se contente de
 compiler du SQL vers le dialecte PostgreSQL. C'est ce qui la rend rapide — et
 c'est aussi ce qui a laissé passer deux bugs critiques.
@@ -88,11 +88,11 @@ est testé.
   dépendances.
 - Le worker Celery n'est pas démarré : les tâches (`build_export`,
   `purge_due_accounts`) sont appelées directement, comme le fait le worker.
-- Un test est marqué `xfail(strict=True)` sur une **anomalie réelle constatée
-  ici** (`test_jobs_fulltext_trigger.py`) : le trigger désaccentue le texte
-  indexé mais la requête ne l'est pas, si bien qu'une recherche saisie avec
-  accents (« développeur ») ne remonte rien. Le test devient vert dès le
-  correctif — retirer alors le `xfail`.
+- L'anomalie de recherche accentuée qui a longtemps vécu ici en
+  `xfail(strict=True)` (`test_jobs_fulltext_trigger.py`) est **corrigée** :
+  le trigger désaccentuait le texte indexé mais pas la requête, si bien
+  qu'une recherche saisie avec accents (« développeur ») ne remontait rien.
+  `unaccent` est appliqué des deux côtés et le test est un test normal.
 
 ## Ajouter un test
 

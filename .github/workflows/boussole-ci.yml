@@ -1,8 +1,11 @@
 # CI Boussole — lint (ruff + mypy), tests unitaires et tests d'intégration
 # (PostgreSQL réel) sur PR touchant boussole/.
-# Voir README.md de ce dossier : à déplacer vers .github/workflows/ à la racine
-# du repo (les permissions de l'app GitHub ne permettent pas toujours de
-# pousser des workflows directement).
+#
+# Ce fichier a vécu six jalons dans `boussole/infra/github-workflows/`, avec
+# une note disant de le déplacer ici : personne ne l'a fait, donc AUCUNE
+# vérification automatique n'a tourné sur les PR de tout le projet. Les
+# revues manuelles ont trouvé ce qu'elles ont trouvé ; ce n'est pas une
+# raison de se passer du filet mécanique.
 
 name: boussole-ci
 
@@ -60,8 +63,14 @@ jobs:
       - id: filter
         name: La PR touche-t-elle boussole/api/** ?
         run: |
+          # `--depth=0` n'existe pas : git 2.54 refuse « depth 0 is not a
+          # positive number » et le job sortait en 128. Conséquence bien pire
+          # que le job rouge : la sortie `api` restait VIDE, donc les tests
+          # d'intégration passaient en « skipped » — un vert qui n'a jamais
+          # rien exécuté. `fetch-depth: 0` sur le checkout donne déjà tout
+          # l'historique ; ce fetch ne sert qu'à garantir la réf de base.
           base="origin/${{ github.base_ref }}"
-          git fetch --no-tags --depth=0 origin "${{ github.base_ref }}"
+          git fetch --no-tags origin "${{ github.base_ref }}"
           if git diff --name-only "$base"...HEAD | grep -q '^boussole/api/'; then
             echo "api=true" >> "$GITHUB_OUTPUT"
           else
@@ -108,3 +117,27 @@ jobs:
         # d'addopts (pyproject.toml) : ces tests ne tournent QUE ici et via
         # `make test-integration`. Le schéma vient des migrations Alembic.
         run: pytest tests/integration -m integration -q
+
+  web:
+    name: Front (types, i18n, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: boussole/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: boussole/web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Parité i18n
+        # Une clé traduite d'un seul côté fait un texte anglais dans une
+        # interface française, ou une clé brute affichée telle quelle.
+        run: npm run i18n:check
+      - name: Tests
+        run: npm test

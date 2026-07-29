@@ -35,6 +35,10 @@ class InMemoryJobStore:
         self.languages: list[JobLanguage] = []
         self.skill_aliases: dict[str, uuid.UUID] = {}
         self.skill_canonicals: dict[str, uuid.UUID] = {}
+        #: Référentiel ``sectors`` — les dix sections NACE d'``app/seeds.py``.
+        #: En base c'est une clé étrangère : un code absent d'ici doit être
+        #: écarté à la normalisation, sinon il fait perdre l'offre entière.
+        self.sectors: set[str] = {"C", "F", "G", "H", "J", "K", "M", "N", "P", "Q"}
         self._absences: dict[uuid.UUID, int] = {}
 
     # -- helpers de test --------------------------------------------------
@@ -72,6 +76,9 @@ class InMemoryJobStore:
 
     async def skill_lookup(self) -> tuple[dict[str, uuid.UUID], dict[str, uuid.UUID]]:
         return dict(self.skill_aliases), dict(self.skill_canonicals)
+
+    async def sector_codes(self) -> frozenset[str]:
+        return frozenset(self.sectors)
 
     async def locations_for(self, posting_id: uuid.UUID) -> list[JobLocation]:
         return [x for x in self.locations if x.job_posting_id == posting_id]

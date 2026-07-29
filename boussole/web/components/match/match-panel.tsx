@@ -58,14 +58,23 @@ function dimensionName(t: Translator, dimension: string): string {
     : dimension.replaceAll("_", " ");
 }
 
-/** Libellé d'une inconnue : API repris tel quel (M3-a), fallback par côté manquant. */
-function unknownLabel(t: Translator, unknown: UnknownDimension): string {
+/**
+ * Libellé d'une inconnue : API repris tel quel (M3-a), repli par côté manquant.
+ *
+ * Exportée pour être testée : c'est ici que se joue la garantie de ne mettre
+ * en cause NI le profil NI l'offre quand la limite est la nôtre (raison
+ * `unavailable`). Un repli par défaut vers « information extraite de l'offre
+ * incertaine » accuserait une annonce qui n'a aucun défaut.
+ */
+export function unknownLabel(t: Translator, unknown: UnknownDimension): string {
   if (unknown.label) return unknown.label;
   const label = dimensionName(t, unknown.dimension);
   if (unknown.reason === "profile_not_provided") return t("unknown.profileFallback", { label });
   if (unknown.reason === "low_extraction_confidence") {
     return t("unknown.uncertainFallback", { label });
   }
+  // Ni le profil ni l'offre ne sont en cause : ne rien leur reprocher.
+  if (unknown.reason === "unavailable") return t("unknown.unavailableFallback", { label });
   return t("unknown.jobFallback", { label });
 }
 

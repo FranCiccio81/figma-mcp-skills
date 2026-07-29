@@ -12,20 +12,33 @@ Pour chaque paire (profil, offre), le moteur produit un objet `match_result` :
 | `score` | int 0–100 | Compatibilité calculée **sur les dimensions connues uniquement** |
 | `confidence` | int 0–100 | Couverture pondérée × fiabilité d'extraction des données utilisées |
 | `blocking_criteria[]` | liste | Critères rédhibitoires détectés (l'offre reste visible, badgée) |
-| `unknown_dimensions[]` | liste | Dimensions non évaluables (donnée absente d'un des deux côtés) |
+| `unknown_dimensions[]` | liste | Dimensions non évaluables : donnée absente d'un des deux côtés, confiance d'extraction < 0,5, **ou outil de comparaison non calibré** (D36) |
 | `dimension_scores[]` | liste | Par dimension : sous-score, poids, statut, valeurs comparées |
 | `explanation_facts` | objet | Faits structurés pour l'explication (D14) — dérivés des lignes ci-dessus |
 | `scoring_version` | string | Version de `scoring-config.json` utilisée |
 
-**Formules** (poids `w_d`, sous-score `s_d ∈ [0,1]`, `k_d = 1` si dimension connue sinon 0, `q_d ∈ [0,1]` fiabilité d'extraction) :
+**Formules** (poids `w_d`, sous-score `s_d ∈ [0,1]`, `q_d ∈ [0,1]` fiabilité d'extraction, `k_d ∈ [0,1]` **facteur de poids**) :
 
 ```
 score      = round( 100 × Σ(w_d·s_d·k_d) / Σ(w_d·k_d) )      # renormalisation sur le connu
 confidence = round( 100 × Σ(w_d·k_d·q_d) / Σ(w_d) )
 ```
 
+**`k_d` est continu, pas binaire (D38).** `k_d = 0` reste le cas « dimension inconnue » — renormalisée hors du score comme hors de la confiance. Au-dessus de 0, il vaut 1 par défaut, mais les dimensions de **couverture** (compétences indispensables et complémentaires) l'atténuent au prorata du nombre d'exigences publiées :
+
+```
+k_d = min(1, n_exigences / evidence_full_count)         # evidence_full_count = 3
+```
+
+*Pourquoi* : une offre qui n'exige qu'une compétence dit beaucoup moins qu'une offre qui en exige cinq, et « 1 sur 1 » ne doit pas peser autant que « 5 sur 5 ». Le **sous-score n'est pas touché** — seul le poids l'est.
+
+*Contrepartie assumée et mesurée* : une offre pauvrement décrite voit son score **monter** (jusqu'à +15 points sur le jeu d'évaluation, pire cas observé 49 → 64 sur une paire de pertinence 0), parce que la dimension mal couverte pèse moins dans la renormalisation. Elle est conservée parce que sa **confiance chute en même temps** (83 → 63 sur la même paire) et que les deux sont toujours affichés ensemble. Ce couple est verrouillé par test (`tests/unit/matching/test_evidence_weighting.py`).
+
+**Interaction avec `low_data`.** Le seuil compare la somme **atténuée** `Σ(w_d·k_d)` au seuil `min_known_weight_ratio × Σ(w_d)`, qui n'est **pas** atténué. Une offre dont toutes les dimensions sont connues mais dont les compétences sont peu nombreuses peut donc franchir le seuil et être marquée `low_data = true`. C'est délibéré et cohérent : le drapeau signale « peu de matière pour juger », ce qui est exactement le cas d'une offre en trois lignes. Il ne signifie pas « peu de dimensions renseignées ».
+
 - Si `Σ(w_d·k_d) < 40` (moins de 40 % du poids total connu), le score est affiché mais marqué `low_data = true` ; l'UI le grise.
 - `q_d = min(conf_extraction_candidat_d, conf_extraction_offre_d)` ; toute donnée d'extraction avec confiance < 0,5 est traitée comme **inconnue** (`k_d = 0`), jamais comme un fait.
+- **Calibration obligatoire (D36)** : un cosinus n'est interprété que par des seuils calibrés **contre le modèle qui l'a produit**. Si `calibrated_for_model` de la dimension ne correspond pas au modèle d'embedding de la paire — ou vaut `null` —, la dimension est `k_d = 0`, avec la raison `uncalibrated_embeddings`. Rendre un sous-score sur des seuils empruntés à un autre modèle serait un chiffre que rien ne fonde.
 - Un critère bloquant **ne met pas le score à zéro** : il est signalé séparément (transparence). Le tri par défaut relègue les offres bloquées ; un filtre permet de les masquer.
 
 ## 2. Dimensions
@@ -54,13 +67,15 @@ Chaque dimension définit : **normalisation · calcul · donnée manquante · ex
 **1. Compétences indispensables (w=25)**
 - *Normalisation* : chaque compétence (deux côtés) est mappée vers la taxonomie interne (base ESCO 🟡 + table d'alias, ex. `React.js`→`react`) ; à défaut, forme canonique lowercase/trim.
 - *Calcul* : pour chaque compétence requise `r` : crédit 1,0 si présente dans le profil (match exact taxonomie), 0,5 si compétence « proche » (cosinus embeddings de libellés ≥ `skill_related_threshold` = 0,75 🟡), 0 sinon. `s = Σ crédits / |required|`.
+- *Poids effectif* : `k = min(1, |required| / evidence_full_count)` avec `evidence_full_count = 3` (D38, §1). Une offre qui n'exige qu'une compétence pèse un tiers de ses 25 points sur cette dimension.
 - *Manquant* : offre sans compétences extraites → `k=0`. Profil sans compétences → impossible (profil non validable sans ≥ 3 compétences).
 - *Explication* : liste nominative des requises couvertes / proches / manquantes. Les manquantes alimentent « lacunes ».
 
-**2. Compétences complémentaires (w=10)** — même méthode sur `skills_nice_to_have` ; `s = Σ crédits / |nice|` ; si l'offre n'en liste pas → `k=0` (fréquent, non pénalisant).
+**2. Compétences complémentaires (w=10)** — même méthode sur `skills_nice_to_have` ; `s = Σ crédits / |nice|` ; même atténuation `k = min(1, |nice| / 3)` ; si l'offre n'en liste pas → `k=0` (fréquent, non pénalisant).
 
 **3. Similarité du métier (w=15)**
-- *Calcul* : `sim = max` des cosinus entre embeddings des intitulés cibles du candidat et l'embedding « intitulé + 1er paragraphe » de l'offre. Mapping affine par morceaux : sim ≤ 0,55 → 0 ; 0,55–0,80 → linéaire 0→1 ; ≥ 0,80 → 1. (Seuils 🟡, à calibrer.)
+- *Calcul prévu* : `sim = max` des cosinus entre embeddings des intitulés cibles du candidat et l'embedding « intitulé + 1er paragraphe » de l'offre. Mapping affine par morceaux : sim ≤ 0,55 → 0 ; 0,55–0,80 → linéaire 0→1 ; ≥ 0,80 → 1.
+- ⚠️ **Inactif à ce jour (D36).** `calibrated_for_model` vaut `null` dans `scoring-config.json` : ces deux seuils n'ont été mesurés contre **aucun** modèle d'embedding, donc la dimension rend `k=0` (`uncalibrated_embeddings`) au lieu d'un sous-score arbitraire. Ses 15 points sont renormalisés hors du score **et** hors de la confiance. Renseigner l'identifiant de modèle réactive la dimension — c'est le geste qui matérialise Q11 puis Q12.
 - *Manquant* : jamais manquant côté offre ; si aucune préférence d'intitulé, on utilise les 2 derniers intitulés occupés ; si profil sans expérience ni cible → `k=0`.
 - *Explication* : « métier très proche de vos cibles (Développeur backend) » / « métier éloigné de vos cibles ».
 
@@ -88,9 +103,15 @@ Chaque dimension définit : **normalisation · calcul · donnée manquante · ex
 
 **8. Télétravail (w=6)** — matrice préférence × politique :
 
+> **Révision (N13).** « Requis » désigne une **contrainte**, pas un souhait — le vocabulaire distingue déjà « préféré » pour le négociable. Un poste **hybride impose une présence** certains jours : pour qui ne peut pas venir, il est aussi impossible à tenir qu'un poste sur site. La version initiale ne bloquait que « sur site », si bien qu'un candidat recevait des offres hybrides **sans badge** et pouvait bâtir une candidature autour d'un poste inaccessible.
+>
+> Le sous-score hybride reste à **0,4** : l'offre n'est pas sans valeur — un arrangement se négocie parfois — elle doit être **signalée**. Un bloquant n'annule pas un score et ne masque pas l'offre (§1), il avertit.
+>
+> Les politiques rédhibitoires sont désormais **dans la configuration** (`remote.blocking_policies`), plus en dur dans le moteur.
+
 | candidat \ offre | full-remote | hybride | sur-site | inconnu |
 |---|---|---|---|---|
-| requis | 1,0 | 0,4 | 0 + **bloquant** `remote_required` | k=0 |
+| requis | 1,0 | 0,4 + **bloquant** `remote_required` | 0 + **bloquant** `remote_required` | k=0 |
 | préféré | 1,0 | 0,8 | 0,3 | k=0 |
 | indifférent | 1,0 | 1,0 | 1,0 | k=0 |
 | sur-site préféré | 0,5 | 0,8 | 1,0 | k=0 |
@@ -116,7 +137,7 @@ Chaque dimension définit : **normalisation · calcul · donnée manquante · ex
 | Code | Condition | Donnée requise des deux côtés |
 |---|---|---|
 | `location_incompatible` | sur-site strict et d > 2×rayon | oui |
-| `remote_required` | candidat exige full-remote, offre sur-site | oui |
+| `remote_required` | candidat exige full-remote, offre imposant une présence (sur-site **ou hybride**) | oui |
 | `language_missing` | langue requise absente ou ≥ 2 crans sous le niveau | oui |
 | `contract_excluded` | type refusé en mode strict | oui |
 | `salary_below_minimum` | max offre < minimum strict déclaré | oui |
@@ -136,7 +157,8 @@ Règles : un bloquant n'est **jamais** inféré depuis une donnée à confiance 
 - **Constitution** : 500 paires (profil, offre) au MVP — 20 profils synthétiques + volontaires anonymisés × 25 offres réelles, stratifiées par verticale (tech, support, vente) et par présence/absence de données (salaire, séniorité).
 - **Annotation** : 3 annotateurs par paire ; grille : pertinence 0–4 (guide d'annotation versionné) + repérage des bloquants. Accord inter-annotateurs cible : Krippendorff α ≥ 0,65 ; désaccords arbitrés.
 - **Métriques** : Spearman(score, médiane annotateurs) ≥ 0,6 ; NDCG@10 ≥ 0,75 sur le classement par profil ; précision des bloquants ≥ 0,95 et rappel ≥ 0,85 (un faux bloquant est plus grave qu'un manqué) ; calibration de `confidence` (les paires basse-confiance doivent concentrer les erreurs).
-- **Processus** : jeu gelé en version (`eval-set-vX`) ; toute modification de `scoring-config.json` exige un run d'évaluation en CI avec non-régression (Spearman −0,02 max toléré) ; rapport archivé.
+- **Processus** : jeu gelé en version (`eval-set-vX`) ; toute modification de `scoring-config.json` exige un run d'évaluation en CI ; rapport archivé.
+- ⚠️ **La non-régression n'est pas implémentée.** `max_spearman_regression` figurait dans les portes de la configuration et **rien ne l'évaluait** : le rapport concluait « toutes les portes passent » sans avoir jamais comparé deux exécutions. La clé a été retirée, et `app/evaluation/runner.py` **refuse désormais de démarrer** sur une porte déclarée qu'il ne sait pas mesurer. La comparer à un run de référence suppose d'archiver ce run quelque part — c'est un travail à part, pas une ligne de configuration.
 - **Biais** : jeu contrôlé pour l'équilibre hommes/femmes des prénoms des profils synthétiques ; vérification que masquer le prénom/l'adresse ne change aucun score (test automatique — doit être trivialement vrai puisque ces champs ne sont pas des entrées du moteur).
 
 ## 6. Règles d'explication (couche déterministe)
@@ -144,6 +166,6 @@ Règles : un bloquant n'est **jamais** inféré depuis une donnée à confiance 
 Pour chaque dimension évaluée, un fait est émis :
 - `strength` si `s ≥ 0,8` et `w ≥ 6` — ex. « 7/8 compétences indispensables couvertes ».
 - `gap` si `s ≤ 0,4` — avec la donnée chiffrée exacte (jamais de paraphrase floue).
-- `uncertain` si `k=0` — libellé « non précisé dans l'offre » ou « absent de votre profil » selon le côté manquant.
+- `uncertain` si `k=0` — trois libellés selon la cause : « non précisé dans l'offre », « absent de votre profil », ou « comparaison indisponible (outil non calibré) » (D36). Le troisième dit que **nous** ne savons pas comparer, pas que la donnée manque : confondre les deux ferait chercher le trou du mauvais côté.
 - Les bloquants sont toujours listés en premier, avec la règle déclenchée.
 La reformulation LLM (D14) reçoit **exclusivement** ces faits (`ai-output-schemas.json#match_explanation`) et il est interdit d'y introduire un chiffre ou un fait absent des entrées ; contrôle post-génération par diff des valeurs numériques.

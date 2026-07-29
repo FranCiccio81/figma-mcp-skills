@@ -23,6 +23,7 @@ from app.modules.jobs.models import JobSkill as JobSkillRow
 from app.modules.matching.adapters import candidate_input_from, job_input_from
 from app.modules.profiles.models import ProfileSkill
 from app.modules.referentials.models import EMBEDDING_DIM
+from tests.unit.matching._calibration import TEST_EMBEDDING_MODEL
 from tests.unit.matching_api.conftest import (
     make_job,
     make_preferences,
@@ -60,6 +61,10 @@ def build(job: Any, profile: Any, **kwargs: Any) -> Any:
     job_input = job_input_from(
         job, job.skills, job.languages, job.locations, skills_taxonomy=taxonomy,
         skill_embeddings=kwargs.pop("job_skill_embeddings", None),
+        # Ce que passe le service réel : le modèle du provider actif. Sans
+        # lui, le moteur refuse d'interpréter le cosinus (dimension « non
+        # calibrée », N14) et rien de ce fichier ne serait exercé.
+        embedding_model=kwargs.pop("embedding_model", TEST_EMBEDDING_MODEL),
     )
     return compute_match(candidate, job_input)
 

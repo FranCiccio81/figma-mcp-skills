@@ -141,8 +141,15 @@ def test_blocker_never_zeroes_score() -> None:
     )
     result = compute_match(candidate, job)
     assert _codes(result) == ["remote_required"]
-    # skills 25×1 + location 8×1 + remote 6×0 → round(100×33/39) = 85 ≠ 0.
-    assert result.score == 85
+    # L'INVARIANT vérifié ici est celui de 06 §1 : un bloquant est signalé à
+    # part, il ne met jamais le score à zéro.
+    assert result.score > 0
+    # Le chiffre exact, pour que tout changement de sémantique se voie :
+    # l'offre n'exige QU'UNE compétence, donc `skills_required` ne pèse que
+    # 25 × 1/3 ≈ 8,33 depuis que k est continu (N15) — contre 25 avant, d'où
+    # 85 auparavant. Reste 8,33×1 + location 8×1 + remote 6×0 sur 22,33,
+    # soit round(100 × 16,33/22,33) = 73.
+    assert result.score == 73
 
 
 def test_blocking_codes_are_deduplicated() -> None:
@@ -159,3 +166,48 @@ def test_blocking_labels_come_from_config() -> None:
     for code, (_, make) in _PAIRS.items():
         result = compute_match(*make(1.0))
         assert result.blocking_criteria[0].label == get_config().blocking_labels[code]
+
+
+class TestTeletravailExigeFaceAUnPosteHybride:
+    """N13, tranchée : « requis » est une contrainte, donc l'hybride bloque.
+
+    Le vocabulaire distingue déjà « préféré » pour le souhait négociable. Un
+    poste hybride impose une présence certains jours : pour qui ne peut pas
+    venir, il est aussi impossible à tenir qu'un poste sur site. La version
+    initiale ne bloquait que « sur site », si bien qu'un candidat recevait des
+    offres hybrides **sans badge** et pouvait construire une candidature
+    autour d'un poste inaccessible.
+
+    Ce qui NE change pas : le sous-score reste 0,4 et l'offre reste visible.
+    Un bloquant avertit, il n'annule ni le score ni l'offre (06 §1).
+    """
+
+    def test_lhybride_bloque_quand_le_full_remote_est_exige(self) -> None:
+        resultat = compute_match(
+            CandidateInput(remote_pref="required"), JobInput(remote=Confident("hybrid"))
+        )
+        assert _codes(resultat) == ["remote_required"]
+
+    def test_le_sous_score_reste_celui_de_la_matrice(self) -> None:
+        """Bloquant ≠ score nul : l'arrangement se négocie parfois."""
+        resultat = compute_match(
+            CandidateInput(remote_pref="required"), JobInput(remote=Confident("hybrid"))
+        )
+        assert dim(resultat, "remote").subscore == pytest.approx(0.4)
+
+    @pytest.mark.parametrize("preference", ["preferred", "indifferent", "onsite_preferred"])
+    def test_les_autres_preferences_ne_bloquent_pas_lhybride(
+        self, preference: str
+    ) -> None:
+        """Seule une CONTRAINTE bloque. Élargir au-delà rendrait le badge
+        banal, donc illisible."""
+        resultat = compute_match(
+            CandidateInput(remote_pref=preference), JobInput(remote=Confident("hybrid"))
+        )
+        assert _codes(resultat) == []
+
+    def test_les_politiques_bloquantes_viennent_de_la_configuration(self) -> None:
+        """En dur dans le moteur, elles échapperaient au versionnement du
+        scoring — donc à l'invalidation du cache et à la traçabilité (D02)."""
+        politiques = get_config().dimension("remote").params["blocking_policies"]
+        assert politiques == {"required": ["onsite", "hybrid"]}

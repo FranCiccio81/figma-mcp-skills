@@ -162,10 +162,38 @@ class Settings(BaseSettings):
     feature_source_france_travail: bool = False
     feature_source_greenhouse: bool = False
     feature_source_lever: bool = False
+    #: Corpus de démonstration — offres FICTIVES, pour exercer la chaîne et
+    #: mesurer le matching tant que les sources réelles attendent Q2/Q3.
+    #: Refusé hors développement par ``build_demo_connector`` : le flag seul
+    #: ne suffit pas à l'activer en staging ou en production.
+    feature_source_demo: bool = False
 
-    # Observabilité (D20).
+    # Observabilité (D20). ``SENTRY_DSN`` est LU (app/core/observability.py) :
+    # renseigné, il fait remonter les erreurs et les alertes de conformité ;
+    # renseigné sans le paquet installé, le démarrage échoue plutôt que de
+    # laisser croire à une couverture.
+    #
+    # ``OTEL_EXPORTER_OTLP_ENDPOINT`` a été RETIRÉE : elle était déclarée et
+    # lue par personne. Une variable qui ne fait rien induit en erreur plus
+    # sûrement qu'une variable absente. Les traces distribuées ne sont pas
+    # exportées ; le `trace_id` est propagé dans les logs JSON.
     sentry_dsn: str = ""
-    otel_exporter_otlp_endpoint: str = ""
+
+    # E-mail transactionnel. SMTP plutôt qu'une API de fournisseur : le choix
+    # du fournisseur est Q15, non tranchée, et suppose un arbitrage (UE,
+    # sous-traitance, registre des transferts). SMTP est le dénominateur
+    # commun — mailpit en dev, n'importe quel fournisseur ensuite — et ne
+    # préempte rien.
+    #
+    # ``SMTP_HOST`` vide ⇒ aucun envoi, mais journalisé : le message aurait
+    # dû partir, et ça se voit. C'est le comportement d'avant, rendu visible.
+    smtp_host: str = ""
+    smtp_port: int = 1025  # mailpit en dev ; 587 avec STARTTLS en production
+    smtp_username: str = ""
+    smtp_password: str = ""  # vault en production (D23)
+    smtp_starttls: bool = False
+    smtp_timeout_seconds: float = 10.0
+    mail_from: str = "Boussole <no-reply@boussole.example>"
 
     @field_validator("env", mode="before")
     @classmethod

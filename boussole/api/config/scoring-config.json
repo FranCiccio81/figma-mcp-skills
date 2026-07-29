@@ -1,5 +1,5 @@
 {
-  "scoring_version": "1.0.0",
+  "scoring_version": "1.3.0",
   "description": "Configuration du moteur de matching déterministe Boussole. Toute modification exige un run d'évaluation (voir 06-matching-specification.md §5).",
   "min_known_weight_ratio": 0.4,
   "extraction_confidence_floor": 0.5,
@@ -10,26 +10,47 @@
       "method": "coverage",
       "exact_credit": 1.0,
       "related_credit": 0.5,
-      "related_similarity_threshold": 0.75
+      "related_similarity_threshold": 0.75,
+      "evidence_full_count": 3,
+      "evidence_full_count_note": "Nombre d'exigences a partir duquel la dimension pese son poids plein. En dessous, le poids est attenue au prorata : une offre qui n'exige qu'une competence dit moins qu'une offre qui en exige cinq, et ne doit pas peser autant. Le sous-score, lui, n'est pas touche."
     },
     "skills_nice": {
       "weight": 10,
       "method": "coverage",
       "exact_credit": 1.0,
       "related_credit": 0.5,
-      "related_similarity_threshold": 0.75
+      "related_similarity_threshold": 0.75,
+      "evidence_full_count": 3
     },
     "title_similarity": {
       "weight": 15,
       "method": "embedding_piecewise",
       "zero_below": 0.55,
-      "one_above": 0.8
+      "one_above": 0.8,
+      "calibrated_for_model": null,
+      "calibrated_for_model_note": "null = ces seuils n'ont ete calibres contre AUCUN modele. La dimension est donc INCONNUE (renormalisee hors du score ET de la confiance) au lieu de rendre un sous-score que rien ne fonde. Y mettre l'identifiant de modele le jour ou zero_below/one_above auront ete mesures contre lui (Q11 puis Q12) : c'est cette ligne qui reactive les 15 % de poids."
     },
     "seniority": {
       "weight": 8,
       "method": "ordinal_table",
-      "levels": ["intern", "junior", "mid", "senior", "lead", "principal", "executive"],
-      "delta_scores": { "0": 1.0, "-1": 0.8, "-2": 0.5, "-3": 0.3, "1": 0.6, "2": 0.25, "3": 0.0 },
+      "levels": [
+        "intern",
+        "junior",
+        "mid",
+        "senior",
+        "lead",
+        "principal",
+        "executive"
+      ],
+      "delta_scores": {
+        "0": 1.0,
+        "-1": 0.8,
+        "-2": 0.5,
+        "-3": 0.3,
+        "1": 0.6,
+        "2": 0.25,
+        "3": 0.0
+      },
       "delta_cap": 3
     },
     "experience_years": {
@@ -42,7 +63,12 @@
     "sector": {
       "weight": 4,
       "method": "categorical",
-      "scores": { "preferred": 1.0, "experienced": 0.8, "adjacent": 0.6, "other": 0.3 }
+      "scores": {
+        "preferred": 1.0,
+        "experienced": 0.8,
+        "adjacent": 0.6,
+        "other": 0.3
+      }
     },
     "location": {
       "weight": 8,
@@ -54,11 +80,34 @@
       "weight": 6,
       "method": "matrix",
       "matrix": {
-        "required":        { "full_remote": 1.0, "hybrid": 0.4, "onsite": 0.0 },
-        "preferred":       { "full_remote": 1.0, "hybrid": 0.8, "onsite": 0.3 },
-        "indifferent":     { "full_remote": 1.0, "hybrid": 1.0, "onsite": 1.0 },
-        "onsite_preferred":{ "full_remote": 0.5, "hybrid": 0.8, "onsite": 1.0 }
-      }
+        "required": {
+          "full_remote": 1.0,
+          "hybrid": 0.4,
+          "onsite": 0.0
+        },
+        "preferred": {
+          "full_remote": 1.0,
+          "hybrid": 0.8,
+          "onsite": 0.3
+        },
+        "indifferent": {
+          "full_remote": 1.0,
+          "hybrid": 1.0,
+          "onsite": 1.0
+        },
+        "onsite_preferred": {
+          "full_remote": 0.5,
+          "hybrid": 0.8,
+          "onsite": 1.0
+        }
+      },
+      "blocking_policies": {
+        "required": [
+          "onsite",
+          "hybrid"
+        ]
+      },
+      "blocking_policies_note": "Politiques d'offre redhibitoires par preference candidat. « requis » designe une CONTRAINTE, pas un souhait — le vocabulaire distingue deja « prefere ». Un poste hybride impose une presence certains jours : il est aussi impossible a tenir qu'un poste sur site pour qui ne peut pas venir. L'offre reste VISIBLE et badgee, comme tout bloquant."
     },
     "languages": {
       "weight": 8,
@@ -81,16 +130,38 @@
     "preference_boost": {
       "weight": 2,
       "method": "categorical",
-      "scores": { "target_company": 1.0, "keyword_match": 0.7, "none": 0.0 }
+      "scores": {
+        "target_company": 1.0,
+        "keyword_match": 0.7,
+        "none": 0.0
+      }
     }
   },
   "blocking_rules": [
-    { "code": "location_incompatible", "description": "Poste sur site strict hors zone acceptée (d > 2x rayon)" },
-    { "code": "remote_required", "description": "Candidat exige full-remote, offre sur site" },
-    { "code": "language_missing", "description": "Langue requise absente ou >= 2 niveaux CECRL en dessous" },
-    { "code": "contract_excluded", "description": "Type de contrat refusé en mode strict" },
-    { "code": "salary_below_minimum", "description": "Maximum de l'offre sous le minimum strict déclaré" },
-    { "code": "sector_excluded", "description": "Secteur exclu par l'utilisateur" }
+    {
+      "code": "location_incompatible",
+      "description": "Poste sur site strict hors zone acceptée (d > 2x rayon)"
+    },
+    {
+      "code": "remote_required",
+      "description": "Candidat exigeant le full-remote, offre imposant une présence (sur site ou hybride)"
+    },
+    {
+      "code": "language_missing",
+      "description": "Langue requise absente ou >= 2 niveaux CECRL en dessous"
+    },
+    {
+      "code": "contract_excluded",
+      "description": "Type de contrat refusé en mode strict"
+    },
+    {
+      "code": "salary_below_minimum",
+      "description": "Maximum de l'offre sous le minimum strict déclaré"
+    },
+    {
+      "code": "sector_excluded",
+      "description": "Secteur exclu par l'utilisateur"
+    }
   ],
   "explanation_thresholds": {
     "strength_min_subscore": 0.8,
@@ -102,6 +173,6 @@
     "ndcg_at_10_min": 0.75,
     "blocking_precision_min": 0.95,
     "blocking_recall_min": 0.85,
-    "max_spearman_regression": 0.02
+    "_note_non_regression": "max_spearman_regression a ete RETIREE : elle etait declaree et evaluee par personne. La non-regression exige une valeur de reference stockee, qui n'existe pas encore (elle suppose le jeu annote de N16). Le harnais REFUSE desormais toute porte declaree qu'il ne sait pas evaluer, pour que le cas ne se reproduise pas."
   }
 }

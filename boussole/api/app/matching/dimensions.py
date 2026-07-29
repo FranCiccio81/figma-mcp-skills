@@ -22,6 +22,7 @@ __all__ = [
     "DIMENSION_LABELS",
     "JOB_MISSING",
     "LOW_CONFIDENCE",
+    "UNCALIBRATED",
     "UNCONVERTIBLE",
     "UNKNOWN_REASON_LABELS",
     "DimensionOutcome",
@@ -33,12 +34,14 @@ JOB_MISSING = "job_missing"
 CANDIDATE_MISSING = "candidate_missing"
 LOW_CONFIDENCE = "low_confidence"
 UNCONVERTIBLE = "unconvertible_value"
+UNCALIBRATED = "uncalibrated_embeddings"
 
 UNKNOWN_REASON_LABELS: Mapping[str, str] = {
     JOB_MISSING: "non précisé dans l'offre",
     CANDIDATE_MISSING: "absent de votre profil",
     LOW_CONFIDENCE: "extraction trop incertaine pour être utilisée",
     UNCONVERTIBLE: "valeur non convertible (devise non supportée)",
+    UNCALIBRATED: "comparaison indisponible (outil non calibré)",
 }
 
 DIMENSION_LABELS: Mapping[str, str] = {
@@ -78,6 +81,11 @@ class DimensionOutcome:
     known: bool
     subscore: float | None = None
     q: float = 1.0
+    #: Atténuation du poids de la dimension pour CETTE paire, dans ]0, 1].
+    #: Une dimension calculée sur peu d'éléments dit moins de choses qu'une
+    #: dimension calculée sur beaucoup : elle doit peser moins, sans quoi une
+    #: preuve maigre vaut autant qu'une preuve solide.
+    weight_factor: float = 1.0
     details: dict[str, object] = field(default_factory=dict)
     unknown_reason: str | None = None
     blocking: list[str] = field(default_factory=list)
@@ -191,21 +199,75 @@ def _coverage(
 
     subscore = credits / len(retained)
     q = sum(item.confidence for item in retained) / len(retained)
+
+    # Atténuation par quantité de preuve (N15). Une offre qui n'exige QU'UNE
+    # compétence, que le candidat possède, obtenait 1,00 sur la dimension la
+    # plus lourde — 25 % — pendant qu'une offre pertinente exigeant cinq
+    # compétences dont quatre satisfaites plafonnait à 0,80. Mesuré : un poste
+    # « Développeur Python Junior » sur site passait DEVANT le poste
+    # exactement adapté, pour un profil senior.
+    #
+    # Le correctif ne touche pas au sous-score — 1,00 reste vrai, le candidat
+    # couvre bien tout ce qui est demandé — mais au POIDS de cette
+    # information. Peu d'exigences = peu de preuve = moins de poids, et la
+    # renormalisation existante fait le reste.
+    #
+    # Choix de forme : atténuer le poids plutôt que lisser le sous-score vers
+    # une moyenne. Le lissage interdirait à jamais d'atteindre 1,00, donc de
+    # marquer 100 sur une offre parfaitement couverte — une promesse produit
+    # qu'on ne casse pas pour corriger un biais.
+    plein = dim.params.get("evidence_full_count")
+    facteur = 1.0
+    if isinstance(plein, int | float) and plein > 0:
+        facteur = min(1.0, len(retained) / float(plein))
+
     details: dict[str, object] = {"matched": matched, "related": related, "missing": missing}
     if dropped:
         details["dropped_low_confidence"] = dropped
-    return DimensionOutcome(known=True, subscore=subscore, q=q, details=details)
+    if facteur < 1.0:
+        details["evidence_count"] = len(retained)
+        details["weight_factor"] = round(facteur, 4)
+    return DimensionOutcome(
+        known=True, subscore=subscore, q=q, details=details, weight_factor=facteur
+    )
 
 
 def _embedding_piecewise(
     dim: DimensionConfig, config: ScoringConfig, candidate: CandidateInput, job: JobInput
 ) -> DimensionOutcome:
-    """Similarité métier : max des cosinus + mapping affine par morceaux (06 §2.3)."""
+    """Similarité métier : max des cosinus + mapping affine par morceaux (06 §2.3).
+
+    ⚠️ **Un cosinus n'a de sens qu'avec les seuils calibrés pour le modèle qui
+    l'a produit.** ``zero_below`` / ``one_above`` découpent une échelle qui
+    dépend entièrement de la famille de vecteurs : les valeurs d'un modèle
+    sémantique et celles d'un condensat lexical ne vivent pas dans le même
+    intervalle. Appliquer les unes aux autres ne produit pas une mesure
+    imprécise — ça produit une mesure fausse, présentée comme un fait.
+
+    Mesuré avant ce garde-fou : avec le provider par défaut (lexical, D27) et
+    les seuils écrits pour des vecteurs sémantiques, le sous-score valait
+    **0,00 sur 100 % des paires**, et était publié comme **connu**. 15 % du
+    poids ne discriminaient rien, abaissaient uniformément tous les scores, et
+    — le plus grave — gonflaient l'indice de confiance d'une dimension qui ne
+    mesurait rien (17-open-questions.md N14).
+
+    D'où le rapprochement de modèles ci-dessous. Il protège aussi le cas
+    inverse, qui viendra : brancher un provider sémantique (Q11) sans
+    recalibrer produirait des sous-scores plausibles ET faux — beaucoup plus
+    difficiles à repérer qu'un zéro constant.
+    """
     if job.title_embedding is None:
         return _unknown(JOB_MISSING)
     if not candidate.target_titles_embeddings:
         # Sans embeddings d'intitulés (cibles ou derniers postes) → k=0.
         return _unknown(CANDIDATE_MISSING)
+    # Contrôle de calibration APRÈS les vecteurs : quand il n'y en a pas,
+    # « absent » renseigne mieux que « non calibré ».
+    calibre = dim.params.get("calibrated_for_model")
+    if not isinstance(calibre, str) or calibre != job.title_embedding_model:
+        return _unknown(
+            UNCALIBRATED, calibrated_for=calibre, embedding_model=job.title_embedding_model
+        )
 
     similarity = max(
         cosine_similarity(vector, job.title_embedding)
@@ -448,8 +510,23 @@ def _matrix(
         q=job.remote.confidence,
         details={"candidate_pref": candidate.remote_pref, "job_policy": policy},
     )
-    if candidate.remote_pref == "required" and policy == "onsite":
-        _apply_blocker(outcome, "remote_required", job.remote.confidence, config)
+    # Politiques rédhibitoires lues sur la configuration, jamais en dur (D02).
+    #
+    # N13 : « requis » désigne une CONTRAINTE — le vocabulaire distingue déjà
+    # « préféré » pour le souhait négociable. Un poste hybride impose une
+    # présence certains jours : il est aussi impossible à tenir, pour qui ne
+    # peut pas venir, qu'un poste sur site. La spec d'origine ne bloquait que
+    # « sur site », si bien qu'un candidat recevait des offres hybrides sans
+    # badge et pouvait bâtir une candidature autour d'un poste inaccessible.
+    #
+    # Le sous-score reste celui de la matrice (0,4) : l'offre n'est pas sans
+    # valeur, elle doit être SIGNALÉE. Un bloquant n'annule pas un score, il
+    # avertit — et l'offre demeure visible (06 §1).
+    bloquantes = dim.params.get("blocking_policies")
+    if isinstance(bloquantes, Mapping):
+        interdites = bloquantes.get(candidate.remote_pref)
+        if isinstance(interdites, list) and policy in {_norm(str(p)) for p in interdites}:
+            _apply_blocker(outcome, "remote_required", job.remote.confidence, config)
     return outcome
 
 

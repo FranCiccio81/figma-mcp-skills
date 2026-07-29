@@ -29,6 +29,7 @@ SQLAlchemy pour la prod, fake en mémoire dans les tests unitaires.
 import logging
 import math
 import uuid
+from collections.abc import Collection
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -36,6 +37,7 @@ from typing import Protocol
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.ai.embeddings.base import EmbeddingError, EmbeddingProvider
 from app.ai.embeddings.factory import get_embedding_provider
@@ -64,7 +66,7 @@ from app.modules.jobs.models import (
     JobSource,
     Source,
 )
-from app.modules.referentials.models import Skill, SkillAlias
+from app.modules.referentials.models import Sector, Skill, SkillAlias
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,8 @@ class JobStore(Protocol):
     async def skill_lookup(
         self,
     ) -> tuple[dict[str, uuid.UUID], dict[str, uuid.UUID]]: ...
+
+    async def sector_codes(self) -> frozenset[str]: ...
 
     async def locations_for(self, posting_id: uuid.UUID) -> list[JobLocation]: ...
 
@@ -178,6 +182,7 @@ class NormalizedJob:
     locations: list[_ResolvedLocation] = field(default_factory=list)
     skills: list[tuple[uuid.UUID | None, str, bool, float]] = field(default_factory=list)
     languages: list[tuple[str, str, float]] = field(default_factory=list)
+    sector_code: str | None = None
     posted_at: datetime | None = None
     expires_at: datetime | None = None
     withdrawn: bool = False
@@ -202,6 +207,67 @@ def get_extraction_provider() -> LLMProvider:
     return get_llm_provider("extract_job")
 
 
+def _dedupe_skills(
+    skills: list[tuple[uuid.UUID | None, str, bool, float]],
+) -> list[tuple[uuid.UUID | None, str, bool, float]]:
+    """Un libellé, une ligne — l'exigé l'emporte sur le souhaité.
+
+    Rien n'interdit à une source de citer ``docker`` dans ses exigences ET
+    dans ses souhaits. Sans dédoublonnage, la création écrivait DEUX lignes
+    ``job_skills`` : l'offre s'affichait avec la compétence dans les deux
+    colonnes, et le moteur la comptait deux fois (25 % + 10 %). Le chemin de
+    fusion, lui, dédoublonnait déjà — le même flux donnait donc un résultat
+    différent selon qu'il créait ou qu'il rattachait.
+
+    L'exigé gagne parce que c'est ce que l'offre affirme de plus fort ; et
+    ``skills_required`` n'étant pas une dimension bloquante, cette lecture ne
+    peut pas inventer de rejet dur.
+    """
+    retenues: dict[str, tuple[uuid.UUID | None, str, bool, float]] = {}
+    for skill_id, label_raw, required, confidence in skills:
+        cle = canonicalize(label_raw)
+        precedente = retenues.get(cle)
+        if precedente is None:
+            retenues[cle] = (skill_id, label_raw, required, confidence)
+        elif required and not precedente[2]:
+            retenues[cle] = (skill_id, label_raw, True, max(precedente[3], confidence))
+        else:
+            retenues[cle] = (*precedente[:3], max(precedente[3], confidence))
+    return list(retenues.values())
+
+
+def _valid_sector(
+    code: str | None, known: Collection[str] | None, external_ref: str
+) -> str | None:
+    """Code secteur hors référentiel → ``None`` bruyant, pas offre perdue.
+
+    ``job_postings.sector_code`` est une clé étrangère vers ``sectors.code``,
+    qui ne contient que les dix sections NACE du MVP (``app/seeds.py``). Un
+    code inconnu ne dégradait pas une dimension : il faisait lever un
+    ``IntegrityError`` que le savepoint par item convertissait en
+    ``report.errors += 1`` — **l'offre entière disparaissait**. Une source
+    publiant des codes NAF complets (``62.01Z``) perdait ainsi 100 % de ses
+    annonces, une par une.
+
+    Le secteur pèse 4 % : le laisser inconnu coûte cette dimension, et le
+    moteur sait déjà renormaliser sur le connu. Perdre l'offre coûte tout.
+    Le WARNING est ce qui dit à l'exploitant qu'il manque une correspondance
+    dans l'adaptateur de la source.
+    """
+    if code is None or known is None:
+        return code
+    if code in known:
+        return code
+    logger.warning(
+        "job_sector_hors_referentiel external_ref=%s code=%r — secteur ignoré "
+        "(la dimension « secteur » restera inconnue). Ajouter la "
+        "correspondance dans l'adaptateur de la source, ou le code au "
+        "référentiel.",
+        external_ref, code,
+    )
+    return None
+
+
 def normalize_raw(
     raw: RawJob,
     *,
@@ -209,6 +275,7 @@ def normalize_raw(
     geocoder: Geocoder | None = None,
     resolver: SkillResolver | None = None,
     provider: LLMProvider | None = None,
+    known_sectors: Collection[str] | None = None,
 ) -> NormalizedJob:
     """Normalise une offre brute : étage 0 → source → règles → LLM secours.
 
@@ -217,6 +284,10 @@ def normalize_raw(
     :func:`get_extraction_provider` (donc de ``AI_PROVIDER``) : ``fake`` par
     défaut 🟡 — extraction vide, l'offre est publiée avec les seuls attributs
     déterministes.
+
+    ``known_sectors`` est le référentiel ``sectors`` chargé par
+    :func:`ingest_source`. ``None`` = référentiel non fourni, aucun contrôle
+    (appel direct en test). Voir :func:`_valid_sector`.
     """
     geocoder = geocoder or StaticGeocoder()
     resolver = resolver or SkillResolver()
@@ -268,10 +339,18 @@ def normalize_raw(
             for r in extract_rules.extract_languages(rule_text)
         ]
 
-    skills: list[tuple[uuid.UUID | None, str, bool, float]] = [
-        (resolver.resolve(label), label, True, 0.9)  # référentiel source (ROME) : 0.9
-        for label in raw.skills
-    ]
+    # Requis et souhaités séparés : la source fait la différence quand elle
+    # le peut, et le moteur pèse les deux à 25 % et 10 %.
+    skills: list[tuple[uuid.UUID | None, str, bool, float]] = _dedupe_skills(
+        [
+            (resolver.resolve(label), label, True, 0.9)  # référentiel source (ROME) : 0.9
+            for label in raw.skills
+        ]
+        + [
+            (resolver.resolve(label), label, False, 0.9)
+            for label in raw.skills_nice
+        ]
+    )
 
     # --- étage 2 LLM en secours : uniquement les trous (07 §5.2) ---
     # TODO 🟡 (07 §4.3/§5.2, REPORTÉ — avant de brancher un provider réel) :
@@ -312,13 +391,13 @@ def normalize_raw(
                 experience_min = extraction.experience_min_years
                 experience_max = extraction.experience_max_years
             if not skills:
-                skills = [
+                skills = _dedupe_skills([
                     (resolver.resolve(s.label), s.label, required, s.confidence)
                     for s, required in [
                         *((s, True) for s in extraction.skills_required),
                         *((s, False) for s in extraction.skills_nice),
                     ]
-                ]
+                ])
             if not languages:
                 languages = [
                     (lang.lang_code, lang.min_level, lang.confidence)
@@ -395,6 +474,7 @@ def normalize_raw(
         locations=resolved,
         skills=skills,
         languages=languages,
+        sector_code=_valid_sector(raw.sector, known_sectors, raw.external_ref),
         posted_at=raw.posted_at,
         expires_at=raw.expires_at,
         withdrawn=raw.withdrawn,
@@ -436,6 +516,40 @@ def _merge_confidence_field(
             setattr(posting, conf_attr, new_conf)
 
 
+def _merge_skill_requirement(
+    posting: JobPosting,
+    existing: JobSkill,
+    required: bool,
+    confidence: float,
+    *,
+    same_source: bool,
+) -> None:
+    """« Souhaitée » ↔ « indispensable » : le drapeau doit pouvoir bouger.
+
+    Seule ``confidence`` était relevée quand le libellé existait déjà :
+    ``required`` restait figé sur ce que la PREMIÈRE publication en disait.
+    Une compétence promue en exigence dans la version suivante de l'annonce
+    continuait d'être pesée à 10 % au lieu de 25 %, et inversement.
+
+    Deux régimes, comme pour les autres champs :
+
+    - même source (07 §4.4) : elle se corrige elle-même, on la suit ;
+    - sources concurrentes (§6.3) : la plus sûre gagne, à égalité on garde
+      l'existant et on journalise — ce désaccord dit quelque chose de la
+      qualité d'une des deux sources.
+    """
+    if bool(existing.required) == required:
+        return
+    if same_source or confidence > float(existing.confidence) + CONFIDENCE_EPSILON:
+        existing.required = required
+        return
+    logger.info(
+        "job_field_conflict posting=%s field=skill_required:%s current=%r incoming=%r "
+        "kept=current",
+        posting.id, existing.label_raw, bool(existing.required), required,
+    )
+
+
 def _apply_same_source_fields(posting: JobPosting, incoming: NormalizedJob) -> None:
     """Re-normalisation d'une mise à jour de la MÊME source (07 §4.4).
 
@@ -467,6 +581,8 @@ def _apply_same_source_fields(posting: JobPosting, incoming: NormalizedJob) -> N
         posting.experience_max = incoming.experience_max
     if incoming.country_code is not None:
         posting.country_code = incoming.country_code
+    if incoming.sector_code is not None:
+        posting.sector_code = incoming.sector_code
 
 
 async def _merge_posting(
@@ -534,6 +650,13 @@ async def _merge_posting(
         if posting.country_code is None and incoming.country_code is not None:
             posting.country_code = incoming.country_code
 
+        # Secteur : remplissage du NULL uniquement. Il n'était écrit qu'à la
+        # CRÉATION — une offre née sans secteur (source qui ne le publie pas
+        # encore, ou qui l'ajoute plus tard) le gardait NULL à vie, et la
+        # dimension « secteur » restait inconnue par construction.
+        if posting.sector_code is None and incoming.sector_code is not None:
+            posting.sector_code = incoming.sector_code
+
     # Satellites : union (labels normalisés pour éviter les doublons).
     existing_locations = {norm(x.raw_label) for x in await store.locations_for(posting.id)}
     for loc in incoming.locations:
@@ -550,6 +673,9 @@ async def _merge_posting(
         if key in known:
             for existing in existing_skills:
                 if canonicalize(existing.label_raw) == key:
+                    _merge_skill_requirement(
+                        posting, existing, required, confidence, same_source=same_source
+                    )
                     existing.confidence = max(float(existing.confidence), confidence)
         else:
             await store.add(JobSkill(
@@ -867,6 +993,7 @@ async def ingest_batch(
 
     aliases, canonicals = await store.skill_lookup()
     resolver = SkillResolver(aliases, canonicals)
+    known_sectors = await store.sector_codes()
     report = IngestReport()
 
     for raw in raw_jobs:
@@ -882,7 +1009,7 @@ async def ingest_batch(
                 await _ingest_one(
                     store, source, raw, report,
                     geocoder=geocoder, resolver=resolver, provider=provider,
-                    embedder=embedder, now=now,
+                    embedder=embedder, now=now, known_sectors=known_sectors,
                 )
                 await store.flush()
         except Exception:
@@ -908,13 +1035,14 @@ async def _ingest_one(
     resolver: SkillResolver,
     provider: LLMProvider | None,
     now: datetime,
+    known_sectors: Collection[str] | None = None,
     #: ``None`` = offre ingérée sans vecteur (étage 2 sans décision) —
     #: défaut explicite pour rester appelable sans embeddings.
     embedder: EmbeddingProvider | None = None,
 ) -> None:
     normalized = normalize_raw(
         raw, source_slug=source.slug, geocoder=geocoder,
-        resolver=resolver, provider=provider,
+        resolver=resolver, provider=provider, known_sectors=known_sectors,
     )
     # Vecteur de l'offre ENTRANTE : il sert à la décision de l'étage 2 puis
     # à peupler ``job_postings.embedding`` (07 §5.6).
@@ -963,6 +1091,7 @@ async def _ingest_one(
             company_name=normalized.company,
             description_text=normalized.description,
             language=normalized.language,
+            sector_code=normalized.sector_code,
             seniority=normalized.seniority,
             seniority_conf=normalized.seniority_conf,
             experience_min=normalized.experience_min,
@@ -1167,8 +1296,20 @@ class SqlAlchemyJobStore:
         ids = [row[0] for row in result]
         if not ids:
             return []
+        # ``selectinload(locations)`` n'est PAS une optimisation : le filtre
+        # géographique de l'étage 2 (``_too_far_apart``) lit
+        # ``candidate.locations``. En SQLAlchemy async, un chargement
+        # paresseux lève ``MissingGreenlet`` — l'exception remonte au
+        # gestionnaire par item, qui la journalise et **abandonne l'offre**.
+        # Résultat mesuré sur le corpus de démonstration : toute offre
+        # atteignant ce filtre était PERDUE, avec pour seule trace une ligne
+        # ``ingestion_item_error``. Or atteindre ce filtre est le cas NORMAL
+        # avec de vraies sources : c'est précisément la situation que la
+        # dédup existe pour traiter.
         postings = await self._session.execute(
-            select(JobPosting).where(JobPosting.id.in_(ids))
+            select(JobPosting)
+            .where(JobPosting.id.in_(ids))
+            .options(selectinload(JobPosting.locations))
         )
         return list(postings.scalars())
 
@@ -1176,6 +1317,10 @@ class SqlAlchemyJobStore:
         aliases = await self._session.execute(select(SkillAlias.alias, SkillAlias.skill_id))
         canonicals = await self._session.execute(select(Skill.canonical_label, Skill.id))
         return dict(aliases.all()), dict(canonicals.all())  # type: ignore[arg-type]
+
+    async def sector_codes(self) -> frozenset[str]:
+        result = await self._session.execute(select(Sector.code))
+        return frozenset(result.scalars())
 
     async def locations_for(self, posting_id: uuid.UUID) -> list[JobLocation]:
         result = await self._session.execute(

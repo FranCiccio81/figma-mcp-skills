@@ -1,0 +1,509 @@
+{
+  "_lisez_moi": [
+    "CORPUS DE DÉMONSTRATION — TOUTES CES OFFRES SONT FICTIVES.",
+    "",
+    "Aucune ne correspond à un poste réel, aucune entreprise citée n'existe.",
+    "Les URL sont sur le TLD réservé `.invalid` (RFC 2606) : elles ne peuvent",
+    "pas résoudre, et ne peuvent donc pas être confondues avec une annonce",
+    "véritable ni conduire quiconque à postuler dans le vide.",
+    "",
+    "À quoi ça sert : les trois connecteurs réels sont derrière leurs feature",
+    "flags en attente d'un arbitrage juridique (Q2/Q3). Sans offres, ni la",
+    "recherche, ni le matching, ni la mesure de qualité ne peuvent être",
+    "exercés de bout en bout. Ce corpus lève ce blocage POUR LA MESURE, sans",
+    "rien préjuger du juridique.",
+    "",
+    "Ce qu'il ne sert PAS à faire : peupler une démonstration commerciale ou",
+    "un environnement où un utilisateur pourrait les prendre pour des offres",
+    "réelles. La source refuse de s'activer hors développement (voir",
+    "app/modules/ingestion/connectors/demo_corpus.py)."
+  ],
+  "corpus_version": "1.0.0",
+  "jobs": [
+    {
+      "external_ref": "demo-001",
+      "title": "Développeur Backend Python Senior",
+      "company": "Fictis Technologies",
+      "description": "Nous recherchons un développeur backend Python expérimenté pour concevoir et faire évoluer nos API. Vous travaillerez sur une architecture FastAPI et PostgreSQL, avec une forte culture du test. Maîtrise de Python et PostgreSQL exigée. La connaissance de Docker et de Kubernetes est un plus. Minimum 5 ans d'expérience sur des systèmes en production.",
+      "url": "https://fictis-technologies.invalid/carrieres/demo-001",
+      "employer_ref": "FIC-2026-001",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 55000,
+      "salary_max": 70000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 5.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "python",
+        "postgresql",
+        "fastapi"
+      ],
+      "skills_nice": [
+        "docker",
+        "kubernetes"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-002",
+      "title": "Ingénieur Backend Python",
+      "company": "Exemplum Labs",
+      "description": "Rejoignez notre équipe plateforme pour construire les services qui portent notre produit. Stack Python, PostgreSQL, Redis. Vous participerez aux revues de code et à la conception. Trois ans d'expérience minimum. Télétravail complet possible.",
+      "url": "https://exemplum-labs.invalid/jobs/demo-002",
+      "employer_ref": "EXL-2026-014",
+      "locations": [
+        {
+          "label": "Lyon, France",
+          "lat": 45.764,
+          "lon": 4.8357,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "full",
+      "salary_min": 45000,
+      "salary_max": 58000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 3.0,
+      "seniority": "mid",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "B2"
+        ]
+      ],
+      "skills_required": [
+        "python",
+        "postgresql"
+      ],
+      "skills_nice": [
+        "redis",
+        "celery"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-003",
+      "title": "Développeur Python Junior",
+      "company": "Nullius Software",
+      "description": "Premier poste ou stage de fin d'études : vous rejoindrez une équipe de six développeurs pour contribuer à nos outils internes en Python. Accompagnement par un référent technique. Aucune expérience professionnelle exigée.",
+      "url": "https://nullius-software.invalid/offres/demo-003",
+      "employer_ref": "NUL-2026-003",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "onsite",
+      "salary_min": 34000,
+      "salary_max": 40000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 0.0,
+      "experience_max": 2.0,
+      "seniority": "junior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "B2"
+        ]
+      ],
+      "skills_required": [
+        "python"
+      ],
+      "skills_nice": [
+        "git"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-004",
+      "title": "Ingénieur Data Senior",
+      "company": "Fictis Technologies",
+      "description": "Vous concevrez et opérerez nos pipelines de données : ingestion, transformation, qualité. Python et SQL au quotidien, orchestration Airflow, entrepôt sur PostgreSQL. Cinq ans d'expérience en data engineering.",
+      "url": "https://fictis-technologies.invalid/carrieres/demo-004",
+      "employer_ref": "FIC-2026-004",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 58000,
+      "salary_max": 72000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 5.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ],
+        [
+          "en",
+          "B2"
+        ]
+      ],
+      "skills_required": [
+        "python",
+        "sql",
+        "airflow"
+      ],
+      "skills_nice": [
+        "postgresql",
+        "dbt"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-005",
+      "title": "Ingénieur DevOps",
+      "company": "Exemplum Labs",
+      "description": "Vous prendrez en charge notre infrastructure : Kubernetes, Terraform, CI/CD. Astreintes partagées. Quatre ans d'expérience en exploitation de plateformes conteneurisées.",
+      "url": "https://exemplum-labs.invalid/jobs/demo-005",
+      "employer_ref": "EXL-2026-021",
+      "locations": [
+        {
+          "label": "Nantes, France",
+          "lat": 47.2184,
+          "lon": -1.5536,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 50000,
+      "salary_max": 65000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 4.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "kubernetes",
+        "terraform",
+        "docker"
+      ],
+      "skills_nice": [
+        "python",
+        "prometheus"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-006",
+      "title": "Développeur Frontend React",
+      "company": "Nullius Software",
+      "description": "Vous construirez les interfaces de notre application avec React et TypeScript. Sensibilité forte à l'accessibilité et au design system. Trois ans d'expérience.",
+      "url": "https://nullius-software.invalid/offres/demo-006",
+      "employer_ref": "NUL-2026-006",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 45000,
+      "salary_max": 56000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 3.0,
+      "seniority": "mid",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "B2"
+        ]
+      ],
+      "skills_required": [
+        "react",
+        "typescript"
+      ],
+      "skills_nice": [
+        "accessibility",
+        "figma"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-007",
+      "title": "Product Designer",
+      "company": "Specimen Studio",
+      "description": "Vous menez la recherche utilisateur, les maquettes et les tests d'usage sur notre produit. Maîtrise de Figma. Quatre ans d'expérience en design produit.",
+      "url": "https://specimen-studio.invalid/postes/demo-007",
+      "employer_ref": "SPE-2026-007",
+      "locations": [
+        {
+          "label": "Bordeaux, France",
+          "lat": 44.8378,
+          "lon": -0.5792,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "full",
+      "salary_min": 42000,
+      "salary_max": 54000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 4.0,
+      "seniority": "senior",
+      "sector": "M",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "figma",
+        "user research"
+      ],
+      "skills_nice": [
+        "design system"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-008",
+      "title": "Développeur Backend Python — mission 6 mois",
+      "company": "Fictis Technologies",
+      "description": "Mission de six mois en freelance pour renforcer l'équipe API pendant une refonte. Python, FastAPI, PostgreSQL. Démarrage immédiat.",
+      "url": "https://fictis-technologies.invalid/carrieres/demo-008",
+      "employer_ref": "FIC-2026-008",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "freelance",
+      "remote": "full",
+      "salary_min": 500,
+      "salary_max": 650,
+      "salary_currency": "EUR",
+      "salary_period": "day",
+      "experience_min": 4.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "python",
+        "fastapi",
+        "postgresql"
+      ],
+      "skills_nice": [],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-009",
+      "title": "Senior Backend Engineer (Python)",
+      "company": "Exemplum Labs",
+      "description": "You will design and operate the services behind our platform. Python, PostgreSQL, event-driven architecture. Fluent English required, French not necessary. Six years of experience.",
+      "url": "https://exemplum-labs.invalid/jobs/demo-009",
+      "employer_ref": "EXL-2026-030",
+      "locations": [
+        {
+          "label": "Berlin, Allemagne",
+          "lat": 52.52,
+          "lon": 13.405,
+          "country_code": "DE"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "onsite",
+      "salary_min": 70000,
+      "salary_max": 85000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 6.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "en",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "python",
+        "postgresql"
+      ],
+      "skills_nice": [
+        "kafka"
+      ],
+      "language": "en"
+    },
+    {
+      "external_ref": "demo-010",
+      "title": "Analyste Données Marketing",
+      "company": "Specimen Studio",
+      "description": "Vous produisez les tableaux de bord de la direction marketing et analysez les campagnes. Excel avancé, SQL, Looker. Deux ans d'expérience.",
+      "url": "https://specimen-studio.invalid/postes/demo-010",
+      "employer_ref": "SPE-2026-010",
+      "locations": [
+        {
+          "label": "Lille, France",
+          "lat": 50.6292,
+          "lon": 3.0573,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 36000,
+      "salary_max": 44000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 2.0,
+      "seniority": "mid",
+      "sector": "N",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "sql",
+        "excel"
+      ],
+      "skills_nice": [
+        "looker"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-011",
+      "title": "Chef de projet infrastructure",
+      "company": "Nullius Software",
+      "description": "Vous pilotez le programme de migration de notre infrastructure vers le cloud : planning, budget, coordination des équipes. Sept ans d'expérience en gestion de projet technique.",
+      "url": "https://nullius-software.invalid/offres/demo-011",
+      "employer_ref": "NUL-2026-011",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "onsite",
+      "salary_min": 60000,
+      "salary_max": 75000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 7.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ]
+      ],
+      "skills_required": [
+        "gestion de projet"
+      ],
+      "skills_nice": [
+        "cloud",
+        "itil"
+      ],
+      "language": "fr"
+    },
+    {
+      "external_ref": "demo-012",
+      "title": "Ingénieur DevOps Senior",
+      "company": "Fictis Technologies",
+      "description": "Vous êtes le référent technique de notre plateforme : Kubernetes multi-cluster, Terraform, observabilité, sécurité. Vous encadrez deux ingénieurs. Six ans d'expérience.",
+      "url": "https://fictis-technologies.invalid/carrieres/demo-012",
+      "employer_ref": "FIC-2026-012",
+      "locations": [
+        {
+          "label": "Paris, France",
+          "lat": 48.8566,
+          "lon": 2.3522,
+          "country_code": "FR"
+        }
+      ],
+      "contract": "cdi",
+      "remote": "hybrid",
+      "salary_min": 65000,
+      "salary_max": 80000,
+      "salary_currency": "EUR",
+      "salary_period": "year",
+      "experience_min": 6.0,
+      "seniority": "senior",
+      "sector": "J",
+      "languages": [
+        [
+          "fr",
+          "C1"
+        ],
+        [
+          "en",
+          "B2"
+        ]
+      ],
+      "skills_required": [
+        "kubernetes",
+        "terraform"
+      ],
+      "skills_nice": [
+        "python",
+        "prometheus",
+        "sécurité"
+      ],
+      "language": "fr"
+    }
+  ]
+}

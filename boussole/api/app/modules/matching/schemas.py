@@ -13,7 +13,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-UnknownReason = Literal["job_not_provided", "profile_not_provided", "low_extraction_confidence"]
+UnknownReason = Literal[
+    "job_not_provided",
+    "profile_not_provided",
+    "low_extraction_confidence",
+    #: Limite de NOTRE outil, pas des données : le critère n'a pas pu être
+    #: évalué. Ne jamais replier ce cas sur une raison qui met en cause le
+    #: profil ou l'offre.
+    "unavailable",
+]
 
 
 class BlockingCriterionOut(BaseModel):

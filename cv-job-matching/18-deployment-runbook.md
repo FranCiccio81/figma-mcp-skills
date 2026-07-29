@@ -1,8 +1,45 @@
 # 18 — Runbook de déploiement et d'exploitation
 
-> Document **opérationnel**. Tout ce qui suit a été vérifié dans le code de `boussole/` au commit `811d4d1` (merge M6). Les commandes citées existent dans le `Makefile`, le `docker-compose.dev.yml`, le `Dockerfile.api` ou sont directement dérivables des tâches Celery enregistrées. Les incertitudes et les points non vérifiables depuis le code portent 🟡.
+> Document **opérationnel**. Tout ce qui suit a été vérifié dans le code de `boussole/` — rédigé au commit `811d4d1` (merge M6), tenu à jour depuis (dernier passage : finalisation). Les commandes citées existent dans le `Makefile`, le `docker-compose.dev.yml`, le `Dockerfile.api` ou sont directement dérivables des tâches Celery enregistrées. Les incertitudes et les points non vérifiables depuis le code portent 🟡.
 >
 > Ce document ne tranche **aucune** question juridique. Les points de conformité renvoient à [17-open-questions.md](17-open-questions.md).
+
+---
+
+## 0. Démarrage le plus court — une application utilisable en une commande
+
+Pour éprouver l'application en vrai, sans attendre l'homologation des sources
+réelles (Q2/Q3) :
+
+```bash
+cd boussole
+cp .env.example .env          # SMTP_HOST=mailpit, FEATURE_SOURCE_DEMO=true
+make up                       # postgres, redis ×2, minio, mailpit, api, worker, beat, web
+make demo                     # base VIDE → application utilisable
+```
+
+`make demo` enchaîne migrations, référentiels, **ingestion du corpus par la
+chaîne de production** (normalisation, géocodage, dédup), embeddings, et un
+compte dont le profil est **validé** — sans quoi toutes les routes de matching
+répondent 409 et l'application paraît cassée alors qu'elle applique sa règle.
+La commande vérifie son propre résultat et sort en erreur si la recherche ne
+remonte rien.
+
+| | |
+|---|---|
+| Application | http://localhost:3000 |
+| API | http://localhost:8000/api/v1 |
+| Boîte aux lettres (mailpit) | http://localhost:8025 |
+| Identifiants | `demo@boussole.dev` / `boussole-demo-1234` |
+
+> ⚠️ **Les douze offres sont FICTIVES** (D34). Leurs liens sont sur le TLD
+> réservé `.invalid` et ne résolvent pas ; la source s'affiche comme « Corpus
+> de démonstration (offres fictives) ». Le connecteur **refuse de s'activer**
+> dès que `ENV` vaut `staging` ou `production`, quel que soit le feature flag.
+
+Ce que ce démarrage NE fait pas : activer un provider LLM réel (`AI_PROVIDER`
+reste `fake` — les explications et générations sortent des textes canned) ni
+une source d'offres réelle. Les deux attendent des décisions, pas du code.
 
 ---
 
@@ -23,9 +60,9 @@
 
 ### Ce que l'infrastructure ne fournit **pas** aujourd'hui
 
-- **Aucun envoi d'e-mail transactionnel.** Aucun module SMTP/mailer n'existe dans `api/app` (vérifié : aucune occurrence de `smtp`, `mailer`, `send_email`). `mailpit` est présent dans le compose de dev mais **rien ne lui écrit**. Conséquence : pas d'e-mail de confirmation de suppression de compte (hypothèse Q30), pas de digest (Q9).
+- **E-mail transactionnel : SMTP livré, fournisseur non choisi.** `app/core/mail.py` envoie par SMTP (`mailpit` en dev) et la **confirmation de suppression de compte** part. Manquent : la fenêtre de rétractation de 7 jours et son lien d'annulation (Q30), le digest (Q9), et le choix d'un fournisseur (Q15) — SMTP est volontairement le dénominateur commun et ne préempte rien. `SMTP_HOST` vide ⇒ aucun envoi, **journalisé**.
 - **Aucun antivirus à l'upload.** ClamAV (Q16) est explicitement hors périmètre (`app/modules/profiles/cv/router.py`). Les protections en place sont structurelles (magic bytes, bornes anti-bombe de décompression) — pas un scan de contenu.
-- **Aucune exportation d'observabilité.** `SENTRY_DSN` et `OTEL_EXPORTER_OTLP_ENDPOINT` sont **déclarés dans la configuration mais jamais lus par le code applicatif** (vérifié par recherche exhaustive sur `app/`). Les renseigner n'a aucun effet. Seuls existent : logs JSON structurés sur stdout avec `trace_id` (`app/main.py::JsonLogFormatter`) et les sondes HTTP.
+- **Export d'erreurs livré, traces distribuées non.** `SENTRY_DSN` est **lu** (`app/core/observability.py`) : renseigné, tout `logger.error` devient un événement — c'est ce qui fait qu'une alerte de purge RGPD en retard atteint quelqu'un. Les données personnelles sont retirées avant envoi (corps de requête, cookies, en-têtes d'identité, variables locales des piles). Un DSN renseigné **sans** l'extra installé fait **échouer le démarrage**. `OTEL_EXPORTER_OTLP_ENDPOINT` a été **retirée** : elle était déclarée et inerte.
 
 ---
 
@@ -84,7 +121,21 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | `LOGIN_RATE_LIMIT` | Tentatives de login par fenêtre | `5` | Non | Non |
 | `LOGIN_RATE_WINDOW_SECONDS` | Fenêtre de login | `60` | Non | Non |
 
-> ⚠️ **`PRIVACY_SIGNING_KEY` est le trou de garde-fou le plus dangereux de la configuration.** Il a une valeur par défaut publique, il n'est **contrôlé par aucun garde-fou de démarrage**, et il signe seul l'accès à `GET /privacy/exports/{id}/download` — c'est-à-dire à une archive contenant l'intégralité des données personnelles d'un compte. Laissé au défaut en production, n'importe qui connaissant le code peut forger un lien valide pour un `export_id` deviné. **Sa mise en place doit être vérifiée manuellement avant chaque mise en production** (checklist §8).
+### 2.4 bis — Observabilité, e-mail, corpus de démonstration
+
+| Variable | Rôle | Défaut | Prod | Secret |
+|---|---|---|---|---|
+| `SENTRY_DSN` | Export d'erreurs **et des alertes de conformité**. Renseigné sans l'extra `[observability]` ⇒ **refus de démarrage** | `""` | **Recommandé** | **Oui** |
+| `SMTP_HOST` | Hôte SMTP. Vide ⇒ aucun envoi, journalisé | `""` | **Oui** | Non |
+| `SMTP_PORT` | Port SMTP (`1025` mailpit, `587` avec STARTTLS) | `1025` | **Oui** | Non |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | Authentification SMTP | `""` | Selon fournisseur | **Oui** |
+| `SMTP_STARTTLS` | STARTTLS après connexion | `false` | **Oui → `true`** | Non |
+| `MAIL_FROM` | Expéditeur affiché | `Boussole <no-reply@boussole.example>` | **Oui** | Non |
+| `FEATURE_SOURCE_DEMO` | Corpus de démonstration, offres **FICTIVES** (D34). Le connecteur refuse de s'activer dès `ENV=staging` — ce drapeau seul ne suffit pas | `false` | **Non — jamais** | Non |
+
+> ⚠️ **`PRIVACY_SIGNING_KEY` signe seule l'accès à `GET /privacy/exports/{id}/download`** — une archive contenant l'intégralité des données personnelles d'un compte. Sa valeur par défaut est dans le dépôt, donc publique : laissée en place, n'importe qui ayant lu le code peut forger un lien valide pour un `export_id` deviné.
+>
+> Depuis la finalisation, `app/core/secrets.py` **refuse le démarrage** hors développement tant que cette valeur (et `S3_SECRET_KEY`) n'a pas été remplacée — côté API comme côté workers, à l'import du module, avant qu'une seule tâche ne soit acceptée. Le remplacement lui-même reste un geste de déploiement (checklist §8), mais il ne peut plus être oublié en silence : le service ne démarre pas.
 
 ### 2.5 Providers LLM
 
@@ -258,7 +309,7 @@ Idempotent (`INSERT … ON CONFLICT DO NOTHING`). Contenu : ~10 sections NACE si
    celery -A app.workers.celery_app beat --loglevel=info
    ```
 
-> ⚠️ **Le `docker-compose.dev.yml` ne contient aucun service `beat`.** Le compose de dev démarre `postgres`, `redis-persistent`, `redis-cache`, `minio`, `minio-init`, `mailpit`, `api`, `worker`, `web` — pas de beat. Un déploiement calqué sur le compose n'exécuterait donc **aucune** tâche planifiée : ni ingestion, ni expiration d'offres, ni **purge RGPD** (§6). C'est le premier écart à combler.
+> ℹ️ Le `docker-compose.dev.yml` porte un service `beat` depuis la finalisation. Il en était absent pendant six jalons : un déploiement calqué sur le compose n'exécutait **aucune** tâche planifiée — ni ingestion, ni expiration d'offres, ni **purge RGPD** (§6). Le commentaire au-dessus du service dit pourquoi il n'est pas optionnel ; ne pas le supprimer.
 
 > ⚠️ **L'image `Dockerfile.api` ne lance pas les migrations.** Sa commande par défaut est uvicorn. Les migrations doivent être un job explicite (le binaire `alembic` est présent dans `/opt/venv/bin`, et `api/alembic` est copié dans l'image).
 
@@ -362,6 +413,8 @@ Lue dans `app/workers/celery_app.py` (`timezone="UTC"`, `enable_utc=True` — **
 | `maintenance-expire-jobs` | `maintenance.expire_jobs` | 03:45 quotidien | Expiration par `expires_at` dépassé | Offres périmées encore proposées et scorées |
 | `maintenance-purge-due-accounts` | `maintenance.purge_due_accounts` | **04:15 quotidien** | **Purge RGPD** des comptes dont `purge_after` est échu | 🔴 **Voir ci-dessous** |
 | `maintenance-purge-expired-exports` | `maintenance.purge_expired_exports` | 04:45 quotidien | Suppression des archives d'export dont le lien signé a expiré (objet **et** ligne) | 🔴 Des dumps personnels complets survivent sans finalité au-delà de leurs 7 jours (D09, minimisation) |
+| `maintenance-check-purge-backlog` | `maintenance.check_purge_backlog` | 05:15 quotidien | **Surveillance** : journalise en ERROR toute demande échue depuis plus de 26 h et toujours `pending` ; journalise `purge_backlog_ok` sinon | Une purge qui échoue en boucle redevient invisible — c'est l'état d'avant (voir ci-dessous) |
+| `maintenance-purge-ai-calls` | `maintenance.purge_ai_calls` | 05:30 quotidien | **Rétention 13 mois** du journal `ai_calls`, par lots de 5 000 bornés à 20 lots | La rétention annoncée n'est pas tenue, et la table qui croît le plus vite ne décroît jamais |
 
 Les tâches d'ingestion planifiées sur une source dont le `FEATURE_SOURCE_*` est `false` sont des **no-op logués** — c'est le comportement attendu tant que §8.2 n'est pas levé.
 
@@ -369,7 +422,16 @@ Les tâches d'ingestion planifiées sur une source dont le `FEATURE_SOURCE_*` es
 
 C'est la conséquence la plus grave d'un beat absent. `DELETE /account` ne fait qu'un **soft delete** et pose `deletion_requests.purge_after = now + 30 jours` (`PURGE_DELAY_DAYS = 30`). La suppression physique — données de tous les modules du registre, objets stockés, anonymisation de `users`/`audit_log`/`ai_calls` — est **entièrement portée par cette tâche beat**. Rien d'autre ne la déclenche : ni l'API, ni un trigger SQL, ni un `ON DELETE` en cascade.
 
-Sans beat, l'engagement « suppression effective ≤ 30 jours » (D09, RM-T) est rompu **en silence** : l'utilisateur a reçu son 204, la demande reste `pending`, les données restent. Aucune alerte n'existe aujourd'hui pour le signaler (D20 prévoit un « dashboard de conformité, purges en retard = alerte critique » — non implémenté). Voir §7.3 pour la requête de surveillance à mettre en place à la main.
+Sans beat, l'engagement « suppression effective ≤ 30 jours » (D09, RM-T) est rompu **en silence** : l'utilisateur a reçu son 204, la demande reste `pending`, les données restent.
+
+### Surveillance : `maintenance.check_purge_backlog`
+
+Depuis le lot post-M6 n° 1, la requête de §7.3 est exécutée automatiquement à 05:15 — une heure après la purge, dont elle vérifie l'effet. Ce qu'elle trouve encore `pending` au-delà de 26 heures est ce que la purge n'a pas su traiter : un module du registre qui lève à chaque passage, par exemple, laisse la demande en attente indéfiniment, avec un `account_purge_partial` par tentative et rien au-dessus.
+
+**Deux limites, à connaître avant de s'y fier.**
+
+1. **Un beat arrêté reste invisible de l'intérieur.** La surveillance est elle-même une tâche beat : si l'ordonnanceur meurt, ni la purge ni son contrôle ne tournent, et le silence est total. D'où le battement `purge_backlog_ok` journalisé même quand tout va bien — **c'est son absence qu'il faut alerter**, pas seulement la présence d'un ERROR. Une alerte « aucun `purge_backlog_ok` depuis 26 h » est la seule qui attrape ce cas.
+2. **La marge de 26 h autorise une purge au 31ᵉ jour.** `purge_after` est J+30 et la purge tourne une fois par jour : l'engagement est tenu à un cycle près par construction. La surveillance rend ce dépassement visible ; elle ne le corrige pas. Le fond se règle en posant `purge_after` à J+29 — modification de D09, non faite.
 
 ### 🟡 Trou connu — préférences modifiées sans re-validation du profil
 
@@ -426,7 +488,14 @@ GROUP BY task, status;
 
 ### 7.3 Que faire si la purge RGPD prend du retard
 
-**Détection** (à mettre en place — rien ne le fait automatiquement) :
+**Détection automatique** : `maintenance.check_purge_backlog` exécute ce contrôle chaque jour à 05:15 (§6) et journalise `purge_backlog_detected` en **ERROR** avec le nombre de demandes et l'âge de la plus ancienne. À câbler sur deux alertes, pas une :
+
+| Alerte | Condition | Ce qu'elle attrape |
+|---|---|---|
+| Retard de purge | un log `purge_backlog_detected` | Une purge qui échoue en boucle |
+| **Absence de battement** | aucun log `purge_backlog_ok` ni `purge_backlog_detected` depuis 26 h | **Un ordonnanceur arrêté** — que la première alerte ne peut pas voir, puisqu'elle est elle-même une tâche beat |
+
+**Détection manuelle**, pour instruire une alerte ou vérifier après coup :
 
 ```sql
 SELECT id, user_id, purge_after, now() - purge_after AS retard
@@ -435,7 +504,7 @@ WHERE status = 'pending' AND purge_after <= now()
 ORDER BY purge_after;
 ```
 
-Toute ligne remontée est un dépassement de l'engagement des 30 jours.
+Toute ligne dont le retard dépasse ~26 h est un dépassement de l'engagement des 30 jours. En deçà, c'est l'attente normale du prochain passage quotidien.
 
 **Marche à suivre** :
 
@@ -457,7 +526,9 @@ Le ménage des archives d'export (`maintenance.purge_expired_exports`, 04:45) su
 
 ### 7.4 Points d'exploitation à connaître
 
-- **`ai_calls` croît sans limite.** La rétention de 13 mois (11 §3) est **documentée mais non implémentée** : `app/ai/calls.py` porte explicitement un « TODO M6 : tâche beat de suppression des lignes `created_at < now() - interval '13 months'` », et aucune entrée de `beat_schedule` ne le fait. Seule la purge RGPD **par utilisateur** existe, et c'est une *anonymisation* (`user_id → NULL`), jamais une suppression. Prévoir une purge par âge avant que le volume ne devienne un problème d'exploitation — et noter que la rétention annoncée n'est aujourd'hui pas tenue par le système.
+- **`ai_calls` est bornée depuis le lot post-M6 n° 1.** La rétention de 13 mois (11 §3) est appliquée par `maintenance.purge_ai_calls` (05:30). Elle était jusque-là documentée et non implémentée : la table qui croît le plus vite du système ne décroissait jamais, et la durée de conservation annoncée n'était tenue par rien. Deux choses à savoir pour l'exploiter :
+  - la suppression est **bornée** — lots de 5 000, 20 lots maximum par exécution. Un `DELETE` global verrouillerait la table, donc l'écriture du journal, donc les appels IA en cours. Le premier passage après une longue période sans rétention journalisera `ai_calls_retention_truncated` et reprendra le lendemain ; c'est normal, et c'est visible exprès ;
+  - à ne pas confondre avec la purge RGPD **par utilisateur**, qui est une *anonymisation* (`user_id → NULL`) et jamais une suppression : les métadonnées agrégées de coût et de latence doivent survivre à la suppression d'un compte.
 - **La dédup étage 2 est neutralisée** tant que `EMBEDDINGS_PROVIDER` n'est pas `managed` : `_stage2_threshold()` retourne `STAGE2_DISABLED_THRESHOLD = 1.5`, inatteignable. Seul l'étage 1 (hash exact) déduplique. C'est délibéré (§ M6 a mesuré des fusions d'offres réellement distinctes à 0,955 et 1,0000 avec les vecteurs lexicaux ; la fusion est irréversible pour l'utilisateur). Ne pas « réactiver » en baissant `DEDUP_STAGE2_COSINE_THRESHOLD` : le seuil n'est simplement pas consulté.
 - **Le rerank de recherche est local à la page** 🟡 : il réordonne à l'intérieur d'une page sans altérer le curseur keyset, donc sans doublon ni saut, mais une offre ne « remonte » pas d'une page à l'autre.
 - **Le lien d'export RGPD est un HMAC applicatif**, pas encore un pré-signé S3 (`app/modules/privacy/signing.py`, marqué stub 🟡). D'où la criticité de `PRIVACY_SIGNING_KEY`.
@@ -486,7 +557,7 @@ Le ménage des archives d'export (`maintenance.purge_expired_exports`, 04:45) su
 | T12 | 🔴 **Backfill forcé des embeddings exécuté** (§5.1) et convergé | `SELECT count(*) … WHERE embedding IS NULL` |
 | T13 | `/readyz` vert sur **chaque** instance API | Sonde HTTP |
 | T14 | Sauvegardes PITR actives, rétention 30 j alignée sur la fenêtre de purge, **restauration testée** (D19) | Console hébergeur + exercice de restauration |
-| T15 | Supervision en place sur : purges en retard (§7.3), profondeur des files, présence de beat | Requêtes / alertes créées |
+| T15 | Supervision en place sur : `purge_backlog_detected`, **absence de `purge_backlog_ok` depuis 26 h** (§7.3), profondeur des files, présence de beat | Alertes créées sur les deux conditions, pas seulement la première |
 | T16 | Décision consciente sur `AI_PROVIDER` et `EMBEDDINGS_PROVIDER` ; si `fake`/`hashing`, les limites de §7.4 sont acceptées et documentées | Configuration + note d'exploitation |
 | T17 | Conscience que `SENTRY_DSN` / `OTEL_EXPORTER_OTLP_ENDPOINT` **n'ont aucun effet** ; l'observabilité repose sur les logs stdout | — |
 | T18 | Conscience qu'aucun e-mail transactionnel n'est envoyé et qu'aucun antivirus ne scanne les uploads | — |
@@ -555,7 +626,7 @@ Le compose de dev active le versionnement du bucket MinIO (`mc version enable`).
 - Backfill embeddings : `boussole/api/app/workers/embedding_tasks.py`, `boussole/api/app/ai/embeddings/`
 - Purge RGPD : `boussole/api/app/modules/privacy/purge_runner.py`, `boussole/api/app/workers/privacy_tasks.py`
 - Migrations : `boussole/api/alembic/versions/`
-- Infra : `boussole/infra/docker-compose.dev.yml`, `boussole/infra/Dockerfile.api`, `boussole/infra/github-workflows/boussole-ci.yml`
+- Infra : `boussole/infra/docker-compose.dev.yml`, `boussole/infra/Dockerfile.api`, `.github/workflows/boussole-ci.yml`
 - Tests : `boussole/api/tests/integration/README.md`
 - État du MVP : [19-mvp-status.md](19-mvp-status.md)
 - Questions ouvertes : [17-open-questions.md](17-open-questions.md) — décisions : [decisions.md](decisions.md)

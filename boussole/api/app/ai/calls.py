@@ -14,12 +14,12 @@ test (``tests/unit/ai/test_calls_journal.py``) : la revue a déjà trouvé une
 fuite de sortie LLM dans les journaux applicatifs — elle ne doit pas être
 reproduite ici.
 
-**Rétention : 13 mois** (11 §3, aligné sur ``audit_log``). La purge par
-âge n'est pas encore planifiée (TODO M6 : tâche beat de suppression des
-lignes ``created_at < now() - interval '13 months'``) ; la purge RGPD par
-utilisateur, elle, est implémentée : anonymisation ``user_id → NULL``
-(:mod:`app.modules.ai_calls.purge`, RM-Q-2), jamais suppression — les
-métadonnées agrégées (coût, latence, taux d'échec) restent exploitables.
+**Rétention : 13 mois** (11 §3, aligné sur ``audit_log``), appliquée par
+:mod:`app.modules.ai_calls.retention` (tâche beat ``maintenance.purge_ai_calls``,
+suppression par lots bornés). À ne pas confondre avec la purge RGPD **par
+utilisateur** (:mod:`app.modules.ai_calls.purge`, RM-Q-2), qui est une
+anonymisation ``user_id → NULL`` et jamais une suppression — les métadonnées
+agrégées (coût, latence, taux d'échec) doivent rester exploitables.
 
 Écriture depuis un appelant SYNCHRONE : l'interface ``LLMProvider`` est
 synchrone (``complete_json``) alors que la base est async. La journalisation

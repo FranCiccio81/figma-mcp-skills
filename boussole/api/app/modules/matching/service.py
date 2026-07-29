@@ -27,12 +27,14 @@ Règles portées ici :
   asynchrone des offres actives.
 """
 
+import logging
 import uuid
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, cast
 
+from app.ai.embeddings.factory import get_embedding_provider
 from app.core.problems import Problem
 from app.matching.config import ScoringConfig, get_config
 from app.matching.engine import compute_match
@@ -80,7 +82,13 @@ _REASON_TO_API: dict[str, UnknownReason] = {
     "candidate_missing": "profile_not_provided",
     "low_confidence": "low_extraction_confidence",
     "unconvertible_value": "low_extraction_confidence",
+    # NOTRE limite, pas celle des données. La replier sur
+    # ``low_extraction_confidence`` accuserait l'extraction de l'offre d'une
+    # incertitude qui n'existe pas — une hypothèse présentée comme un fait.
+    "uncalibrated_embeddings": "unavailable",
 }
+
+logger = logging.getLogger(__name__)
 
 
 def _profile_not_validated() -> Problem:
@@ -181,6 +189,19 @@ class MatchingService:
 
     def _get_config(self) -> ScoringConfig:
         return self._config if self._config is not None else get_config()
+
+    def _embedding_model(self) -> str | None:
+        """Identifiant du provider d'embeddings actif, ou ``None`` s'il est HS.
+
+        Une panne du provider ne doit pas faire échouer un scoring : sans
+        identifiant, la dimension d'intitulé devient simplement inconnue — le
+        même comportement que sans vecteur du tout, et le bon.
+        """
+        try:
+            return get_embedding_provider().model
+        except Exception:  # pragma: no cover - dépend de la config du provider
+            logger.warning("embedding_provider_indisponible_pour_le_scoring")
+            return None
 
     # ------------------------------------------------------------ garde-fous
 
@@ -323,6 +344,10 @@ class MatchingService:
             # (``matching/dimensions.py``) : sans celui-ci, le dictionnaire
             # d'embeddings de l'offre reste vide et le crédit ne tombe jamais.
             skill_embeddings=skill_vectors or None,
+            # Modèle du provider ACTIF : le moteur le rapproche du
+            # ``calibrated_for_model`` de la dimension et refuse d'interpréter
+            # un cosinus avec les seuils d'un autre modèle (N14).
+            embedding_model=self._embedding_model(),
         )
         result = self._engine(candidate, job_input)
         data = self._serialize(result, profile, job)

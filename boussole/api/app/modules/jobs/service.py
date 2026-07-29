@@ -12,6 +12,7 @@ Règles portées ici (le repository ne fait que des requêtes) :
   utilisateurs ne sont jamais adressables : clé (user_id, job_id) implicite).
 """
 
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import cast
@@ -40,6 +41,8 @@ from app.modules.jobs.schemas import (
     SourceKind,
     SourceOut,
 )
+
+logger = logging.getLogger(__name__)
 
 #: Rétention des offres expirées (RM-E-4) : lisibles 12 mois puis 404.
 EXPIRED_RETENTION = timedelta(days=365)
@@ -217,7 +220,18 @@ class JobsService:
         # sources.kind est du texte libre en base (pas de CHECK) : une valeur
         # hors vocabulaire est ignorée plutôt que de casser tout GET /sources
         # par une ResponseValidationError.
-        valid_kinds: tuple[SourceKind, ...] = ("public_api", "ats_feed", "partner")
+        #
+        # ⚠️ Mais JAMAIS en silence. Une source active a disparu de la page de
+        # transparence sans un mot pendant tout un démarrage à froid, parce
+        # que sa nature ne figurait pas dans cette liste — le symptôme était
+        # « la page des sources est vide », très loin de la cause.
+        valid_kinds: tuple[SourceKind, ...] = ("public_api", "ats_feed", "partner", "demo")
+        for row in rows:
+            if row.kind not in valid_kinds:
+                logger.warning(
+                    "source_masquee_nature_inconnue slug=%s kind=%r attendues=%s",
+                    row.slug, row.kind, valid_kinds,
+                )
         return [
             SourceOut(
                 slug=r.slug,

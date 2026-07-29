@@ -12,7 +12,10 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Query, Response
+from redis.asyncio import Redis
 
+from app.core.idempotency import IdempotencyStore
+from app.core.redis import get_redis_cache
 from app.modules.applications.repository import (
     ApplicationsRepository,
     get_applications_repository,
@@ -34,8 +37,13 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 def get_applications_service(
     repository: ApplicationsRepository = Depends(get_applications_repository),
+    cache: Redis = Depends(get_redis_cache),
 ) -> ApplicationsService:
-    return ApplicationsService(repository)
+    # Le magasin d'idempotence passe par la DÉPENDANCE, pas par un appel
+    # direct : c'est ce qui le rend substituable en test, et c'est la leçon
+    # déjà payée sur le rate limiting (dont la seule branche exercée par la
+    # suite était la branche dégradée).
+    return ApplicationsService(repository, IdempotencyStore(cache))
 
 
 @router.get("", response_model=ApplicationPage, summary="Lister les candidatures")
@@ -67,7 +75,7 @@ async def create_application(
     service: Annotated[ApplicationsService, Depends(get_applications_service)],
     idempotency_key: Annotated[
         uuid.UUID | None,
-        Header(alias="Idempotency-Key", description="Rejeu sans double création 🟡"),
+        Header(alias="Idempotency-Key", description="Rejeu sans double création"),
     ] = None,
 ) -> ApplicationOut:
     """Crée une candidature en statut ``draft``.
@@ -77,7 +85,7 @@ async def create_application(
     - ``job_posting_id`` fourni → l'offre doit exister, sinon 404 ;
     - ``Idempotency-Key`` optionnelle 🟡 : le rejeu de la même clé renvoie la
       candidature déjà créée (201, même corps) au lieu d'en créer une seconde ;
-      ignorée si absente.
+      ignorée si absente. Le cache est partagé entre instances (TTL 24 h).
     """
     return await service.create(
         user.id,

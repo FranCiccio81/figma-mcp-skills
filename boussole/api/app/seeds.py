@@ -94,6 +94,19 @@ SOURCES: list[tuple[str, str, str, str, str | None]] = [
         "Lever Postings API — offres exposées publiquement par les employeurs (D04)",
         "https://github.com/lever/postings-api",
     ),
+    (
+        # Corpus de démonstration (D34) — offres FICTIVES. Sa fiche dit ce
+        # qu'il est, en toutes lettres : c'est ce texte que l'utilisateur voit
+        # sur la page des sources, et il ne doit laisser aucune ambiguïté.
+        "demo-corpus",
+        "Corpus de démonstration (offres fictives)",
+        "demo",
+        "Offres INVENTÉES pour éprouver la chaîne et mesurer le matching en "
+        "attendant l'homologation des sources réelles. Aucune ne correspond à "
+        "un poste existant ; les liens ne résolvent pas (TLD réservé .invalid). "
+        "La source refuse de s'activer hors développement.",
+        None,
+    ),
 ]
 
 

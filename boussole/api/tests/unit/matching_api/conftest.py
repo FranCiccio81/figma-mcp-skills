@@ -5,10 +5,18 @@ Fakes en mémoire (patterns du module jobs) : profils, préférences, cache
 moteur reste le vrai ``compute_match`` (déterministe), enveloppé d'un
 compteur d'appels ; le provider LLM est le :class:`FakeProvider` avec une
 sortie canned pilotable par test.
+
+⚠️ Ces tests tournent sur une configuration de scoring **calibrée** pour le
+provider d'embeddings actif, sans quoi ``title_similarity`` serait inconnue
+partout (la config livrée porte ``calibrated_for_model: null`` — N14) et le
+chemin « offre et profil ont tous deux un vecteur » ne serait jamais exercé.
+Le comportement de la config LIVRÉE est vérifié par
+``tests/unit/matching/test_shipped_config.py``.
 """
 
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -331,3 +339,23 @@ def client(
     overrides[get_match_engine] = lambda: counting_engine
     overrides[get_llm_provider] = lambda: llm_provider
     return client
+
+
+@pytest.fixture(autouse=True)
+def _calibrated_scoring_config(tmp_path_factory: pytest.TempPathFactory):
+    """Voir l'en-tête du module.
+
+    Portée FONCTION : en portée session, la substitution survivait à ce
+    dossier et polluait les suites suivantes — les tests d'évaluation, qui
+    doivent voir la config LIVRÉE, voyaient la calibrée.
+    """
+    import app.matching.config as config_module
+    from tests.unit.matching._calibration import write_calibrated_config
+
+    source = Path(config_module._DEFAULT_CONFIG_PATH)
+    calibree = write_calibrated_config(
+        source, tmp_path_factory.mktemp("scoring") / "scoring-config.json"
+    )
+    config_module._DEFAULT_CONFIG_PATH = calibree
+    yield
+    config_module._DEFAULT_CONFIG_PATH = source

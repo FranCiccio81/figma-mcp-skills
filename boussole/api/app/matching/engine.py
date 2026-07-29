@@ -7,7 +7,24 @@ score      = round( 100 × Σ(w·s·k) / Σ(w·k) )      # renormalisation sur l
 confidence = round( 100 × Σ(w·k·q) / Σ(w) )
 ```
 
-- `low_data = true` si Σ(w·k) < `min_known_weight_ratio` × Σ(w).
+``k`` est CONTINU dans ``[0, 1]`` (D38), pas binaire : ``k = 0`` reste la
+dimension inconnue, et au-dessus il vaut le ``weight_factor`` rendu par la
+dimension. Les dimensions de couverture l'atténuent au prorata du nombre
+d'exigences publiées — une offre qui n'exige qu'une compétence en dit moins
+qu'une offre qui en exige cinq, et son « 1 sur 1 » ne doit pas peser autant.
+Le sous-score, lui, n'est pas touché.
+
+Conséquence : c'est le poids EFFECTIF (``w × weight_factor``) qui circule
+dans l'agrégation, et il doit circuler jusqu'aux explications. Il ne le
+faisait pas : ``_build_explanations`` lisait le poids DÉCLARÉ, si bien que le
+moteur pouvait annoncer « compétences complémentaires » comme un point fort
+que le seuil de poids du front écartait ensuite.
+
+- `low_data = true` si Σ(w·k) < `min_known_weight_ratio` × Σ(w). Attention :
+  le membre de gauche est atténué, le membre de droite ne l'est pas — une
+  offre très peu détaillée peut donc être marquée `low_data` alors que
+  toutes ses dimensions sont connues. C'est voulu (06 §1) : le drapeau dit
+  « peu de matière pour juger », pas « peu de dimensions renseignées ».
 - Un bloquant ne met JAMAIS le score à zéro : signalé séparément (06 §1).
 - `scoring_version` estampillé depuis la config chargée.
 """
@@ -114,9 +131,21 @@ def compute_match(
     """
     cfg = config if config is not None else get_config()
 
+    # Le poids porté par ``outcomes`` est l'EFFECTIF (déclaré × atténuation
+    # par quantité de preuve, D38). Il l'était déjà pour le score, la
+    # confiance et le détail exposé ; il ne l'était PAS pour la couche
+    # d'explication, qui recevait le poids déclaré.
+    #
+    # Conséquence mesurée : une offre n'exigeant qu'UNE compétence souhaitée,
+    # satisfaite, voyait `skills_nice` annoncée comme une FORCE par le moteur
+    # (poids déclaré 10 ≥ seuil 6) alors que l'interface, qui lit le poids
+    # effectif (3,33 < 6), ne l'affichait pas. Deux moitiés du même écran se
+    # contredisaient — et sur le fond, appeler « force » une dimension qu'on
+    # vient de juger peu documentée contredit exactement D38.
     outcomes: list[tuple[str, float, DimensionOutcome]] = []
     for dim in cfg.dimensions:
-        outcomes.append((dim.name, dim.weight, score_dimension(dim, cfg, candidate, job)))
+        outcome = score_dimension(dim, cfg, candidate, job)
+        outcomes.append((dim.name, dim.weight * outcome.weight_factor, outcome))
 
     total_weight = cfg.total_weight
     known_weight = 0.0

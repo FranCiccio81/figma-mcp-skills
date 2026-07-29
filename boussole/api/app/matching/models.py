@@ -125,6 +125,11 @@ class JobInput:
     skill_embeddings: Mapping[str, Vector] = field(default_factory=dict)
     #: Embedding « intitulé + 1er paragraphe » (optionnel — absent → k=0).
     title_embedding: Vector | None = None
+    #: Modèle ayant produit ``title_embedding``. Comparé au
+    #: ``calibrated_for_model`` de la dimension : un cosinus n'a de sens
+    #: qu'avec les seuils calibrés pour la famille de vecteurs qui l'a
+    #: produit. Discordance ⇒ dimension INCONNUE, jamais un sous-score inventé.
+    title_embedding_model: str | None = None
     seniority: Confident | None = None
     experience_min: float | None = None
     experience_max: float | None = None

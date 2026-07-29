@@ -4,10 +4,12 @@ L'export asynchrone vit dans ``export_builder.py`` (exécuté par le worker) ;
 la purge planifiée dans ``purge_runner.py``.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from app.core.mail import Mailer, Message
 from app.core.security import SessionStore, verify_password, waste_time_like_verify
 from app.modules.auth.models import User
 from app.modules.privacy.repository import DeletionRecord, PrivacyRepository
@@ -23,10 +25,36 @@ class AccountDeletionOutcome:
     deletion: DeletionRecord
 
 
+#: Gabarit de la confirmation de suppression. Volontairement pauvre : aucune
+#: donnée du profil, du CV ou des candidatures n'y figure — la seule variable
+#: est la date de purge. Ce n'est pas une règle qu'on s'impose, c'est une
+#: propriété de la forme du message.
+DELETION_SUBJECT = "Votre demande de suppression de compte Boussole"
+DELETION_BODY = """Bonjour,
+
+Nous avons bien enregistré votre demande de suppression de compte.
+
+Votre compte est dès à présent inaccessible et toutes vos sessions ont été
+fermées. La suppression définitive de vos données interviendra le {date}.
+
+Si vous n'êtes pas à l'origine de cette demande, contactez-nous sans attendre.
+
+L'équipe Boussole
+"""
+
+
 class PrivacyService:
-    def __init__(self, repository: PrivacyRepository, sessions: SessionStore) -> None:
+    def __init__(
+        self,
+        repository: PrivacyRepository,
+        sessions: SessionStore,
+        mailer: Mailer | None = None,
+    ) -> None:
         self._repository = repository
         self._sessions = sessions
+        # Sans expéditeur, aucun e-mail : c'est le comportement d'avant, et il
+        # reste acceptable. Ce qui ne l'était pas, c'est qu'il soit invisible.
+        self._mailer = mailer
 
     async def delete_account(self, user: User, password: str) -> AccountDeletionOutcome | None:
         """Soft delete immédiat + planification de purge (AC-Q-1).
@@ -58,10 +86,38 @@ class PrivacyService:
         # immédiatement (RM-Q-1) — les dépendances d'auth rejettent par
         # ailleurs tout compte deleted_at non nul (repository auth).
         await self._sessions.delete_all_for_user(user.id)
-        # TODO(M5, 🟡) : e-mail de confirmation de suppression (date de purge)
-        # via le service e-mail — journalisé pour ne pas être un TODO silencieux.
-        logger.info(
-            "account_deletion_email_todo",
-            extra={"detail": "e-mail de confirmation de suppression à envoyer (TODO M5 🟡)"},
-        )
+        await self._send_deletion_confirmation(user, deletion)
         return AccountDeletionOutcome(deletion=deletion)
+
+    async def _send_deletion_confirmation(self, user: User, deletion: object) -> None:
+        """Confirme la demande — la seule trace que l'utilisateur en reçoit.
+
+        L'envoi ne peut pas faire échouer la suppression : elle est déjà
+        enregistrée et l'utilisateur y a droit. Un échec est journalisé en
+        ERROR par l'expéditeur, donc remonté par l'export d'erreurs.
+
+        ``to_thread`` : l'envoi SMTP fait des E/S bloquantes. Appelé
+        directement depuis cette coroutine, il gelait la boucle d'événements
+        — donc TOUTES les requêtes de TOUS les utilisateurs — pendant la
+        durée du timeout. Mesuré : 5,1 s de pause de boucle avec un serveur
+        SMTP muet, et le défaut vaut 10 s.
+        """
+        if self._mailer is None:
+            return
+        echeance = getattr(deletion, "purge_after", None)
+        try:
+            await asyncio.to_thread(
+                self._mailer.send,
+                Message(
+                    to=user.email,
+                    subject=DELETION_SUBJECT,
+                    body=DELETION_BODY.format(
+                        date=echeance.strftime("%d/%m/%Y") if echeance else "sous 30 jours"
+                    ),
+                ),
+            )
+        except Exception:
+            # Le contrat de ``Mailer`` dit « ne lève jamais » ; on ne s'y fie
+            # pas pour autant. Le droit à l'effacement ne peut pas dépendre du
+            # bon comportement d'un expéditeur.
+            logger.exception("account_deletion_email_failed")

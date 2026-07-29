@@ -23,6 +23,7 @@ from app.matching import (
 )
 from app.matching.dimensions import DimensionOutcome, score_dimension
 from app.matching.similarity import EARTH_RADIUS_KM
+from tests.unit.matching._calibration import TEST_EMBEDDING_MODEL
 
 PARIS_LAT, PARIS_LON = 48.8566, 2.3522
 E1 = (1.0, 0.0)
@@ -38,6 +39,18 @@ def vector_with_cosine(similarity: float) -> tuple[float, float]:
     return (similarity, math.sqrt(1.0 - similarity * similarity))
 
 
+def job_with_title_cosine(similarity: float) -> JobInput:
+    """Offre dont le vecteur d'intitulé fait `similarity` avec E1.
+
+    Déclare ``title_embedding_model`` : c'est son égalité avec le
+    ``calibrated_for_model`` de la config calibrée qui active la dimension.
+    """
+    return JobInput(
+        title_embedding=vector_with_cosine(similarity),
+        title_embedding_model=TEST_EMBEDDING_MODEL,
+    )
+
+
 def outcome(name: str, candidate: CandidateInput, job: JobInput) -> DimensionOutcome:
     """Calcule une seule dimension avec la config réelle."""
     config = get_config()
@@ -51,7 +64,13 @@ def dim(result: MatchResult, name: str) -> DimensionScore:
 
 def perfect_candidate() -> CandidateInput:
     return CandidateInput(
-        skills=("python", "fastapi", "docker"),
+        # Six compétences : le cas de référence UM-01 doit porter une preuve
+        # PLEINE des deux côtés. Depuis que ``k`` est continu (N15), une
+        # dimension calculée sur moins d'exigences que
+        # ``evidence_full_count`` est partiellement connue — et un cas
+        # « tout est connu » qui ne le serait qu'à 2/3 ne dirait plus ce
+        # qu'il annonce.
+        skills=("python", "fastapi", "docker", "sql", "git", "linux"),
         target_titles_embeddings=(E1,),
         seniority="senior",
         total_experience_years=5.0,
@@ -69,9 +88,10 @@ def perfect_candidate() -> CandidateInput:
 
 def perfect_job() -> JobInput:
     return JobInput(
-        skills_required=(JobSkill("python"), JobSkill("fastapi")),
-        skills_nice=(JobSkill("docker"),),
+        skills_required=(JobSkill("python"), JobSkill("fastapi"), JobSkill("sql")),
+        skills_nice=(JobSkill("docker"), JobSkill("git"), JobSkill("linux")),
         title_embedding=E1,
+        title_embedding_model=TEST_EMBEDDING_MODEL,
         seniority=Confident("senior"),
         experience_min=3.0,
         experience_max=8.0,
@@ -100,6 +120,7 @@ def um02_job(skill_confidence: float = 1.0, location_confidence: float = 1.0) ->
     return JobInput(
         skills_required=tuple(JobSkill(label, skill_confidence) for label in labels),
         title_embedding=E1,
+        title_embedding_model=TEST_EMBEDDING_MODEL,
         locations=(JobLocation(PARIS_LAT, PARIS_LON),),
         location_confidence=location_confidence,
     )
