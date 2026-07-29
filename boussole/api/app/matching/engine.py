@@ -127,7 +127,11 @@ def compute_match(
     blocking_codes: list[str] = []
     blocking_dimension: dict[str, str] = {}
 
-    for name, weight, outcome in outcomes:
+    for name, declared_weight, outcome in outcomes:
+        # Poids EFFECTIF : le poids déclaré, atténué par la quantité de preuve
+        # dont la dimension dispose pour cette paire (N15). Le poids exposé
+        # est l'effectif — l'utilisateur doit voir ce qui a réellement compté.
+        weight = declared_weight * outcome.weight_factor
         details = dict(outcome.details)
         if outcome.demoted_blockings:
             details["demoted_blockings"] = outcome.demoted_blockings

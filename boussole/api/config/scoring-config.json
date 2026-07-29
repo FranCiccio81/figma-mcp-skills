@@ -1,5 +1,5 @@
 {
-  "scoring_version": "1.1.0",
+  "scoring_version": "1.3.0",
   "description": "Configuration du moteur de matching déterministe Boussole. Toute modification exige un run d'évaluation (voir 06-matching-specification.md §5).",
   "min_known_weight_ratio": 0.4,
   "extraction_confidence_floor": 0.5,
@@ -10,14 +10,17 @@
       "method": "coverage",
       "exact_credit": 1.0,
       "related_credit": 0.5,
-      "related_similarity_threshold": 0.75
+      "related_similarity_threshold": 0.75,
+      "evidence_full_count": 3,
+      "evidence_full_count_note": "Nombre d'exigences a partir duquel la dimension pese son poids plein. En dessous, le poids est attenue au prorata : une offre qui n'exige qu'une competence dit moins qu'une offre qui en exige cinq, et ne doit pas peser autant. Le sous-score, lui, n'est pas touche."
     },
     "skills_nice": {
       "weight": 10,
       "method": "coverage",
       "exact_credit": 1.0,
       "related_credit": 0.5,
-      "related_similarity_threshold": 0.75
+      "related_similarity_threshold": 0.75,
+      "evidence_full_count": 3
     },
     "title_similarity": {
       "weight": 15,
@@ -97,7 +100,14 @@
           "hybrid": 0.8,
           "onsite": 1.0
         }
-      }
+      },
+      "blocking_policies": {
+        "required": [
+          "onsite",
+          "hybrid"
+        ]
+      },
+      "blocking_policies_note": "Politiques d'offre redhibitoires par preference candidat. « requis » designe une CONTRAINTE, pas un souhait — le vocabulaire distingue deja « prefere ». Un poste hybride impose une presence certains jours : il est aussi impossible a tenir qu'un poste sur site pour qui ne peut pas venir. L'offre reste VISIBLE et badgee, comme tout bloquant."
     },
     "languages": {
       "weight": 8,
@@ -134,7 +144,7 @@
     },
     {
       "code": "remote_required",
-      "description": "Candidat exige full-remote, offre sur site"
+      "description": "Candidat exigeant le full-remote, offre imposant une présence (sur site ou hybride)"
     },
     {
       "code": "language_missing",

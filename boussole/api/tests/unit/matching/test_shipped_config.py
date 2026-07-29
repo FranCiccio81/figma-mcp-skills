@@ -71,4 +71,4 @@ class TestLaVersionEstEstampilleeEtSuit:
         des scores calculés selon l'ancienne sémantique survivraient
         indéfiniment à côté des nouveaux.
         """
-        assert shipped.scoring_version == "1.1.0"
+        assert shipped.scoring_version == "1.3.0"

@@ -88,9 +88,15 @@ Chaque dimension définit : **normalisation · calcul · donnée manquante · ex
 
 **8. Télétravail (w=6)** — matrice préférence × politique :
 
+> **Révision (N13).** « Requis » désigne une **contrainte**, pas un souhait — le vocabulaire distingue déjà « préféré » pour le négociable. Un poste **hybride impose une présence** certains jours : pour qui ne peut pas venir, il est aussi impossible à tenir qu'un poste sur site. La version initiale ne bloquait que « sur site », si bien qu'un candidat recevait des offres hybrides **sans badge** et pouvait bâtir une candidature autour d'un poste inaccessible.
+>
+> Le sous-score hybride reste à **0,4** : l'offre n'est pas sans valeur — un arrangement se négocie parfois — elle doit être **signalée**. Un bloquant n'annule pas un score et ne masque pas l'offre (§1), il avertit.
+>
+> Les politiques rédhibitoires sont désormais **dans la configuration** (`remote.blocking_policies`), plus en dur dans le moteur.
+
 | candidat \ offre | full-remote | hybride | sur-site | inconnu |
 |---|---|---|---|---|
-| requis | 1,0 | 0,4 | 0 + **bloquant** `remote_required` | k=0 |
+| requis | 1,0 | 0,4 + **bloquant** `remote_required` | 0 + **bloquant** `remote_required` | k=0 |
 | préféré | 1,0 | 0,8 | 0,3 | k=0 |
 | indifférent | 1,0 | 1,0 | 1,0 | k=0 |
 | sur-site préféré | 0,5 | 0,8 | 1,0 | k=0 |
@@ -116,7 +122,7 @@ Chaque dimension définit : **normalisation · calcul · donnée manquante · ex
 | Code | Condition | Donnée requise des deux côtés |
 |---|---|---|
 | `location_incompatible` | sur-site strict et d > 2×rayon | oui |
-| `remote_required` | candidat exige full-remote, offre sur-site | oui |
+| `remote_required` | candidat exige full-remote, offre imposant une présence (sur-site **ou hybride**) | oui |
 | `language_missing` | langue requise absente ou ≥ 2 crans sous le niveau | oui |
 | `contract_excluded` | type refusé en mode strict | oui |
 | `salary_below_minimum` | max offre < minimum strict déclaré | oui |

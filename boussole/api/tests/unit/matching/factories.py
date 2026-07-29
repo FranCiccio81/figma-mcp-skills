@@ -64,7 +64,13 @@ def dim(result: MatchResult, name: str) -> DimensionScore:
 
 def perfect_candidate() -> CandidateInput:
     return CandidateInput(
-        skills=("python", "fastapi", "docker"),
+        # Six compétences : le cas de référence UM-01 doit porter une preuve
+        # PLEINE des deux côtés. Depuis que ``k`` est continu (N15), une
+        # dimension calculée sur moins d'exigences que
+        # ``evidence_full_count`` est partiellement connue — et un cas
+        # « tout est connu » qui ne le serait qu'à 2/3 ne dirait plus ce
+        # qu'il annonce.
+        skills=("python", "fastapi", "docker", "sql", "git", "linux"),
         target_titles_embeddings=(E1,),
         seniority="senior",
         total_experience_years=5.0,
@@ -82,8 +88,8 @@ def perfect_candidate() -> CandidateInput:
 
 def perfect_job() -> JobInput:
     return JobInput(
-        skills_required=(JobSkill("python"), JobSkill("fastapi")),
-        skills_nice=(JobSkill("docker"),),
+        skills_required=(JobSkill("python"), JobSkill("fastapi"), JobSkill("sql")),
+        skills_nice=(JobSkill("docker"), JobSkill("git"), JobSkill("linux")),
         title_embedding=E1,
         title_embedding_model=TEST_EMBEDDING_MODEL,
         seniority=Confident("senior"),

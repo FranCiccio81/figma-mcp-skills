@@ -262,5 +262,5 @@ def test_um18_scoring_version_stamped() -> None:
         compute_match(perfect_candidate(), perfect_job()),
         compute_match(CandidateInput(), JobInput()),
     ):
-        assert result.scoring_version == "1.1.0"
+        assert result.scoring_version == "1.3.0"
         assert result.scoring_version == get_config().scoring_version

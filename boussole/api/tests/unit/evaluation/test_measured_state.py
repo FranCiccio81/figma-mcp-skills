@@ -127,47 +127,63 @@ class TestConstatUnTitleSimilarityNestPlusInventee:
         assert max(confiances) <= 85
 
 
-class TestConstatDeuxUneOffreMaigreScoreHaut:
-    """`skills_required` en couverture récompense les offres peu exigeantes.
+class TestConstatDeuxLeBiaisDesOffresMaigresEstCorrige:
+    """N15, corrigée. ``skills_required`` récompensait les annonces vagues.
 
-    ``demo-003`` (« Développeur Python Junior », une seule compétence
-    requise : `python`) obtient 1,00 sur la dimension la plus lourde — 25 %
-    — pour un profil DevOps senior à qui ce poste ne convient pas. Une offre
-    pertinente mais listant cinq exigences dont le candidat en a quatre
-    plafonne à 0,80.
+    ``demo-003`` (« Développeur Python Junior », une seule exigence : `python`)
+    obtenait 1,00 sur la dimension la plus lourde — 25 % — pour un profil
+    DevOps senior à qui ce poste ne convient pas, pendant qu'une offre
+    pertinente listant cinq exigences dont quatre satisfaites plafonnait à
+    0,80. Vu aussi sur l'application réelle : le poste junior sortait en tête
+    du profil backend senior, devant l'offre exactement adaptée.
 
-    Conséquence mesurable : Spearman tombe à **0,526** sur ce profil, sous la
-    porte de 0,60. (0,570 avant la correction de N14 : retirer une dimension
-    constante n'est pas une transformation uniforme, puisque la
-    renormalisation dépend de l'ensemble des dimensions connues, qui varie
-    d'une paire à l'autre. La correction n'a pas dégradé le moteur — elle a
-    retiré une compression accidentelle qui flattait légèrement le
-    classement.) Voir 17-open-questions.md N15.
+    Depuis, ``k`` est continu : une dimension calculée sur moins de
+    ``evidence_full_count`` éléments pèse au prorata (D38). Le sous-score
+    n'est pas touché — la couverture est bien de 100 % — mais l'information
+    pèse ce qu'elle vaut.
+
+    =================  =======  =======
+    Porte Spearman     avant    après
+    =================  =======  =======
+    pire profil          0,526    0,714
+    NDCG@10 pire         0,907    0,956
+    =================  =======  =======
     """
 
-    def test_une_offre_a_une_seule_exigence_sature_la_dimension(self, dataset) -> None:
+    def test_la_couverture_complete_dune_offre_maigre_reste_vraie(
+        self, dataset
+    ) -> None:
+        """On n'a pas menti sur la couverture pour corriger le classement."""
         devops = next(c for c in dataset.cases if c.candidate_id == "cand-devops")
         maigre = compute_match(devops.candidate, dataset.jobs["demo-003"])
-        pertinente = compute_match(devops.candidate, dataset.jobs["demo-012"])
+        couverture = next(
+            d for d in maigre.dimension_scores if d.dimension == "skills_required"
+        )
+        assert couverture.subscore == 1.0
 
-        def couverture(resultat):
+    def test_mais_elle_ne_pese_plus_le_poids_plein(self, dataset) -> None:
+        devops = next(c for c in dataset.cases if c.candidate_id == "cand-devops")
+        maigre = compute_match(devops.candidate, dataset.jobs["demo-003"])
+        riche = compute_match(devops.candidate, dataset.jobs["demo-012"])
+
+        def poids(resultat):
             return next(
-                d.subscore for d in resultat.dimension_scores if d.dimension == "skills_required"
+                d.weight for d in resultat.dimension_scores
+                if d.dimension == "skills_required"
             )
 
-        assert couverture(maigre) == 1.0
-        assert couverture(pertinente) == 1.0
-        # Et l'offre hors sujet finit à un score global élevé pour ce qu'elle est.
-        assert maigre.score >= 55
+        assert poids(maigre) < poids(riche)
 
-    def test_la_porte_spearman_tombe_sur_le_profil_devops(self, report) -> None:
-        """Épinglé volontairement : c'est le constat, pas un objectif.
+    def test_toutes_les_portes_passent(self, report) -> None:
+        """Le verdict global. Il est passé d'ÉCHEC à succès sans qu'aucune
+        annotation ni aucun poids n'ait été retouché pour l'obtenir — seule
+        la sémantique de ``k`` a changé, et elle a été vérifiée sur toute la
+        plage 2–5 du paramètre."""
+        assert report.passed, [
+            (g.name, g.value, g.threshold) for g in report.gates if not g.passed
+        ]
 
-        Ne PAS faire passer ce test en retouchant les annotations ou les
-        poids — un jeu recalé sur la sortie du moteur ne mesure plus rien.
-        Il passera le jour où N15 sera traitée.
-        """
+    def test_le_pire_spearman_depasse_la_porte(self, report) -> None:
         porte = next(g for g in report.gates if g.name == "spearman_min")
-        assert not porte.passed
-        assert porte.detail == "pire profil : cand-devops"
-        assert 0.5 < porte.value < 0.6
+        assert porte.passed
+        assert porte.value > 0.70
