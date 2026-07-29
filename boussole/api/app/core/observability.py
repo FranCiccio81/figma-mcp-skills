@@ -48,6 +48,7 @@ import logging
 from typing import Any
 
 from app.core.config import Settings, get_settings
+from app.core.redaction import redact_message, strip_query
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,10 @@ def _scrub_request(requete: dict[str, Any]) -> dict[str, Any]:
     la requête de recherche d'emploi de la personne. Elle peut porter une
     information de santé, un handicap, une reconversion après un burn-out.
     Elle ne sort pas.
+
+    ``url`` est le même piège par une autre porte : selon l'intégration et la
+    version du SDK, il arrive complet, chaîne de requête comprise. On ne
+    dépend pas de la version installée — la requête est coupée ici.
     """
     entetes = requete.get("headers")
     propre: dict[str, Any] = {
@@ -87,6 +92,8 @@ def _scrub_request(requete: dict[str, Any]) -> dict[str, Any]:
         for cle, valeur in requete.items()
         if cle in {"method", "url"}
     }
+    if "url" in propre:
+        propre["url"] = strip_query(propre["url"])
     if isinstance(entetes, dict):
         propre["headers"] = {
             nom: valeur
@@ -97,14 +104,25 @@ def _scrub_request(requete: dict[str, Any]) -> dict[str, Any]:
 
 
 def _scrub_exception(exception: dict[str, Any]) -> dict[str, Any]:
-    """Retire les variables locales de chaque cadre de pile.
+    """Retire les variables locales, puis nettoie le message de l'exception.
 
-    Elles contiennent volontiers le texte en cours de traitement — un CV, une
-    lettre, un profil entier.
+    Les variables locales contiennent volontiers le texte en cours de
+    traitement — un CV, une lettre, un profil entier.
+
+    Le **message** était l'angle mort : la liste blanche gardait
+    ``exception.values[].value`` entier, et deux exceptions courantes y
+    mettent des données personnelles sans qu'on ait rien écrit.
+    ``SMTPRecipientsRefused`` porte le dictionnaire des destinataires, donc
+    l'adresse, à chaque rebond d'e-mail ; une violation d'unicité sur
+    ``users.email`` porte l'adresse dans le ``DETAIL:`` de PostgreSQL et les
+    paramètres liés dans le bloc ``[parameters:]`` de SQLAlchemy. Mesuré :
+    les deux traversaient ``scrub_event`` intacts.
     """
     for valeur in exception.get("values") or []:
         for frame in (valeur.get("stacktrace") or {}).get("frames") or []:
             frame.pop("vars", None)
+        if "value" in valeur:
+            valeur["value"] = redact_message(valeur["value"])
     return exception
 
 
@@ -113,8 +131,13 @@ def _scrub_logentry(logentry: dict[str, Any]) -> dict[str, Any]:
 
     ``"mail_envoi_echoue destinataire=%s"`` reste — c'est ce qui permet de
     diagnostiquer. ``"…destinataire=jean@exemple.fr"`` ne sort pas.
+
+    Le gabarit lui-même passe par le nettoyage : rien n'empêche d'écrire un
+    ``logger.error(f"echec pour {adresse}")``, et une barrière qui suppose la
+    discipline de l'appelant n'en est pas une.
     """
-    return {"message": logentry.get("message")} if logentry.get("message") else {}
+    message = redact_message(logentry.get("message"))
+    return {"message": message} if message else {}
 
 
 def scrub_event(event: dict[str, Any], _hint: Any = None) -> dict[str, Any] | None:

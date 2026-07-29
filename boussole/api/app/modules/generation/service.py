@@ -107,6 +107,43 @@ def _lift_anchoring(check: dict[str, Any] | None) -> dict[str, Any] | None:
     lifted.setdefault("pre_edit", deepcopy(check))
     return lifted
 
+
+def _anchoring_out(check: dict[str, Any] | None) -> AnchoringCheckOut | None:
+    """Verdict SERVI par l'API — ``None`` quand il ne décrit plus le texte.
+
+    ``AnchoringBadge`` (web) documente trois états, et le troisième n'était
+    jamais servi : ``check === null`` → « Contrôle non re-vérifié ». Après une
+    édition manuelle, l'API renvoyait toujours le verdict d'origine, donc
+    ``passed``, donc la coche verte « Ancrage vérifié » — sur un texte écrit à
+    la main et jamais contrôlé. Même faute que l'annonce hostile
+    (:mod:`app.ai.tasks.generate`) par une autre porte : le produit affiche
+    une garantie qu'il ne détient plus.
+
+    **La règle est asymétrique, délibérément.** Les deux verdicts ne disent
+    pas la même sorte de chose :
+
+    - ``passed`` affirme quelque chose sur le texte AFFICHÉ (« tout est relié
+      au profil »). Dès que le texte change à la main, l'affirmation est sans
+      objet — on se tait ;
+    - ``failed`` est un AVERTISSEMENT, et il porte la liste des affirmations à
+      corriger. C'est exactement ce dont on a besoin pendant l'édition : le
+      retirer priverait la personne de sa liste au moment où elle s'en sert.
+
+    Trop avertir coûte une relecture ; trop rassurer publie une invention.
+
+    Ne rien SERVIR n'est pas EFFACER : ``pre_edit`` garde le verdict intégral
+    en base, seule preuve que le contenu généré n'était pas ancré.
+    """
+    if not isinstance(check, dict):
+        return None
+    status = check.get("status", "failed")
+    if check.get("lifted_by_manual_edit") and status == "passed":
+        return None
+    return AnchoringCheckOut(
+        status=status,
+        unanchored_claims=list(check.get("unanchored_claims", [])),
+    )
+
 #: Fabrique d'enfilement de la tâche ``ai.generate`` — injectable (tests).
 Enqueuer = Callable[[uuid.UUID], None]
 
@@ -630,15 +667,7 @@ class GenerationService:
         content = document.content or None
         if status in ("pending", "failed"):
             content = None  # le contrat sert null tant que rien n'est prêt
-        check = document.anchoring_check
-        anchoring = (
-            AnchoringCheckOut(
-                status=check.get("status", "failed"),
-                unanchored_claims=list(check.get("unanchored_claims", [])),
-            )
-            if isinstance(check, dict)
-            else None
-        )
+        anchoring = _anchoring_out(document.anchoring_check)
         return GeneratedDocumentOut(
             id=document.id,
             doc_type=document.doc_type,  # type: ignore[arg-type]

@@ -27,6 +27,7 @@ from app.core.db import check_database
 from app.core.observability import configure_observability
 from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
+from app.core.redaction import redact_traceback, strip_query
 from app.core.redis import check_redis, get_redis_cache, get_redis_persistent
 from app.core.secrets import check_hardening_configuration, check_secrets_configuration
 from app.core.security import SessionStore, csrf_tokens_match
@@ -117,8 +118,53 @@ class JsonLogFormatter(logging.Formatter):
             if value is not None:
                 payload[field] = value
         if record.exc_info:
-            payload["exc_info"] = self.formatException(record.exc_info)
+            # La pile porte le message de l'exception, et deux exceptions
+            # courantes y mettent des données personnelles : le ``DETAIL:``
+            # de PostgreSQL sur une collision d'adresse, le dictionnaire des
+            # destinataires de ``SMTPRecipientsRefused``. Le journal local
+            # part chez un agrégateur : c'est une conservation, pas un
+            # affichage. Les cadres restent, les valeurs partent.
+            payload["exc_info"] = redact_traceback(
+                self.formatException(record.exc_info)
+            )
         return json.dumps(payload, ensure_ascii=False)
+
+
+class StripQueryStringFilter(logging.Filter):
+    """Retire la chaîne de requête du journal d'accès d'uvicorn.
+
+    Uvicorn tourne avec son journal d'accès actif (voir ``infra/Dockerfile.api``)
+    et écrit le chemin BRUT ::
+
+        GET /api/v1/jobs?q=teletravail+apres+burn-out HTTP/1.1
+        GET /api/v1/privacy/exports/{id}/download?expires=…&sig=9f3ac1… HTTP/1.1
+
+    La première ligne est exactement ce que le nettoyeur Sentry retire
+    explicitement — « une information de santé, un handicap, une reconversion
+    après un burn-out ». La barrière était posée du côté du sous-traitant
+    tiers et absente du côté de nos propres journaux, qui sont pourtant
+    conservés plus longtemps.
+
+    La seconde est pire et n'est pas une question de vie privée : ``sig`` est
+    la signature HMAC du lien de téléchargement d'export, valable sept jours.
+    Qui lit le journal peut retélécharger l'archive RGPD complète d'une
+    personne — toutes ses données, par construction.
+
+    **Filtrer plutôt que couper.** ``--no-access-log`` supprimerait la fuite
+    et le signal : le journal d'uvicorn porte l'adresse du pair, que le
+    ``TraceMiddleware`` ne journalise pas. Et un journal désactivé par un
+    drapeau de ligne de commande revient au premier changement d'image de
+    base, sans qu'aucun test ne puisse le voir. Le filtre, lui, est posé dans
+    le code et vérifié par la suite.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Gabarit d'uvicorn : ('%s - "%s %s HTTP/%s" %d', pair, methode,
+        # chemin_brut, version, statut). Le chemin est le 3ᵉ argument.
+        args = record.args
+        if isinstance(args, tuple) and len(args) >= 3 and isinstance(args[2], str):
+            record.args = (*args[:2], strip_query(args[2]), *args[3:])
+        return True
 
 
 def configure_logging() -> None:
@@ -127,6 +173,16 @@ def configure_logging() -> None:
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(logging.INFO)
+    # Posé sur le LOGGER et non sur un gestionnaire : ``uvicorn.access`` a ses
+    # propres gestionnaires et ``propagate = False``, donc il ne passe jamais
+    # par la racine. Un filtre de logger s'applique quoi qu'il en soit.
+    #
+    # Uvicorn configure SON journal avant d'importer l'application (``Config.load``
+    # appelle ``configure_logging`` puis ``import_from_string``) : le filtre
+    # arrive donc après, ce qui est le bon ordre.
+    acces = logging.getLogger("uvicorn.access")
+    if not any(isinstance(f, StripQueryStringFilter) for f in acces.filters):
+        acces.addFilter(StripQueryStringFilter())
 
 
 class TraceMiddleware(BaseHTTPMiddleware):
