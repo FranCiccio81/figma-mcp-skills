@@ -260,6 +260,54 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+#: Plafond de corps de requête, toutes routes confondues.
+#:
+#: Rien ne bornait la taille d'un corps — ni l'API, ni le proxy BFF. Mesuré en
+#: revue, API en production, RSS de base 129 Mo :
+#:
+#:     8 requêtes concurrentes de 100 Mo sur /auth/login (non authentifié)
+#:     → RSS max 1,73 Go, pic mémoire 1,94 Go
+#:
+#: Sur un conteneur limité à 512 Mo ou 1 Go, c'est un OOMKill déclenché par
+#: une ligne de shell, sans compte. Le plafond de 10 Mo de l'import de CV
+#: protégeait la base de données, pas l'infrastructure : il s'applique APRÈS
+#: réception complète (mesuré : un envoi de 300 Mo rendait bien 413, mais
+#: après avoir écrit 300 Mo sur le disque du conteneur).
+#:
+#: 12 Mo laisse la marge du plus gros usage légitime — un CV de 10 Mo plus
+#: l'enveloppe multipart — et rien de plus.
+MAX_REQUEST_BODY_BYTES = 12 * 1024 * 1024
+
+
+class BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    """Refuse un corps trop gros AVANT de le lire."""
+
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        declaree = request.headers.get("content-length")
+        if declaree is not None:
+            try:
+                taille = int(declaree)
+            except ValueError:
+                taille = 0
+            if taille > MAX_REQUEST_BODY_BYTES:
+                logger.warning(
+                    "request_body_too_large path=%s declared=%s", request.url.path, taille
+                )
+                return problem_response(
+                    request,
+                    status=413,
+                    code="payload_too_large",
+                    title="Requête trop volumineuse",
+                    detail=(
+                        "Le corps de la requête dépasse la limite de "
+                        f"{MAX_REQUEST_BODY_BYTES // (1024 * 1024)} Mo."
+                    ),
+                )
+        return await call_next(request)
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """En-têtes de sécurité de base côté API (le front/edge pose CSP/HSTS —
     12 §5) : anti-sniffing, anti-framing, référeur minimal."""
@@ -340,11 +388,26 @@ def create_app(
     check_secrets_configuration(settings)
     check_hardening_configuration(settings)
 
+    # Documentation interactive ET schéma : fermés dès que l'environnement est
+    # durci, staging compris.
+    #
+    # Deux écarts mesurés en revue avant déploiement. (1) `docs_url` était
+    # conditionnée à `is_production` alors que tous les autres garde-fous ont
+    # migré vers `is_hardened` : Swagger UI était **entièrement exposé en
+    # staging**. (2) `openapi_url` n'était conditionnée à rien — 73 Ko et 36
+    # routes servis sans authentification en production, docstrings comprises.
+    # Or ces docstrings sont franches sur ce qui n'est pas fini :
+    # « scan antivirus hors périmètre », « le jeton de session posé est un
+    # leurre invalide », « oracle de mot de passe pour quiconque a volé un
+    # cookie ». C'est la carte des faiblesses connues, offerte à qui la
+    # demande. Le contrat public vit dans `cv-job-matching/openapi.yaml`, qui
+    # est fait pour être lu.
+    expose_schema = not settings.is_hardened
     app = FastAPI(
         title="Boussole API",
         version="0.1.0",
-        openapi_url=f"{settings.api_prefix}/openapi.json",
-        docs_url=f"{settings.api_prefix}/docs" if not settings.is_production else None,
+        openapi_url=f"{settings.api_prefix}/openapi.json" if expose_schema else None,
+        docs_url=f"{settings.api_prefix}/docs" if expose_schema else None,
     )
 
     app.state.redis_cache_factory = redis_cache_factory or get_redis_cache
@@ -356,6 +419,9 @@ def create_app(
     # → le trace_id existe quand le CSRF répond 403.
     app.add_middleware(CsrfMiddleware)
     app.add_middleware(RateLimitMiddleware)
+    # Avant le rate limit dans l'empilement (donc évalué APRÈS lui à l'appel) :
+    # un corps énorme d'un client déjà limité n'a pas à être lu du tout.
+    app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(TraceMiddleware)
 

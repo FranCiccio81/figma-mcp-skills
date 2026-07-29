@@ -60,6 +60,17 @@ class InMemoryAuthRepository:
                 return user
         return None
 
+    async def email_taken(self, email: str) -> bool:
+        """Reproduit l'index unique RÉEL : il ignore ``deleted_at``.
+
+        Le fake filtrait les comptes supprimés partout, comme
+        ``get_user_by_email``. C'est justement l'écart qui a laissé passer le
+        défaut : se réinscrire après suppression rendait 500 en base réelle
+        (``UniqueViolationError``) et 201 ici.
+        """
+        needle = email.lower()
+        return any(u.email.lower() == needle for u in self.users_by_id.values())
+
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
         user = self.users_by_id.get(user_id)
         if user is None or user.deleted_at is not None:

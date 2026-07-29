@@ -14,6 +14,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, Query, Response
 from redis.asyncio import Redis
 
+from app.core.enqueue import enqueue as enqueue_task
 from app.core.redis import get_redis_cache
 from app.modules.auth.models import User
 from app.modules.auth.router import require_current_user
@@ -43,10 +44,9 @@ def get_generation_enqueuer() -> Enqueuer:
     ``send_task`` (par nom) évite d'importer ``app.workers`` dans le chemin
     API : le worker reste le seul à charger le code des tâches.
     """
-    from app.workers.celery_app import celery_app
-
     def enqueue(document_id: uuid.UUID) -> None:
-        celery_app.send_task("ai.generate", args=[str(document_id)], queue="ai")
+        # Voir ``app.core.enqueue`` : publication bornée, échec remonté.
+        enqueue_task("ai.generate", document_id, queue="ai")
 
     return enqueue
 

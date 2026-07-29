@@ -32,8 +32,9 @@ _DEV_DEFAULTS: tuple[tuple[str, str, str], ...] = (
     (
         "privacy_signing_key",
         "PRIVACY_SIGNING_KEY",
-        "les liens signés d'export RGPD deviennent forgeables : accès au dump "
-        "personnel complet de n'importe quel compte",
+        "le pseudonyme conservé dans audit_log après la purge d'un compte "
+        "devient recalculable sans secret : une personne supprimée est "
+        "ré-identifiable à partir d'une sauvegarde, en testant un UUID",
     ),
     (
         "s3_secret_key",
@@ -41,6 +42,39 @@ _DEV_DEFAULTS: tuple[tuple[str, str, str], ...] = (
         "les identifiants du stockage objet (CV, archives d'export) sont publics",
     ),
 )
+
+
+#: Longueur minimale d'un secret de signature. 32 caractères = 128 bits d'un
+#: aléa hexadécimal, l'ordre de grandeur de ce que produit ``openssl rand``.
+#: En dessous, la clé se devine.
+_LONGUEUR_MINIMALE = 32
+
+
+def _faiblesse(valeur: object, defaut: object) -> str | None:
+    """Pourquoi ce secret est inacceptable — ``None`` s'il est bon.
+
+    Le contrôle ne comparait QUE l'égalité stricte avec le défaut du dépôt.
+    Toute autre valeur passait, **y compris la chaîne vide** : mesuré en
+    revue, ``PRIVACY_SIGNING_KEY=`` démarrait en ``ENV=production``, et le
+    pseudonyme conservé dans ``audit_log`` après purge d'un compte devenait
+    recalculable sans aucun secret — donc la ré-identification d'une personne
+    supprimée, à partir d'une sauvegarde, en testant un UUID candidat. La
+    docstring de ``subject_key_for`` promet exactement l'inverse.
+
+    Cas réalistes, tous silencieux avant : secret monté mais vide, lecture de
+    vault qui échoue et laisse la variable à vide, clé absente d'un ``Secret``
+    Kubernetes.
+    """
+    if not isinstance(valeur, str):
+        return None
+    nettoyee = valeur.strip()
+    if not nettoyee:
+        return "vide"
+    if valeur == defaut:
+        return "défaut du dépôt"
+    if len(nettoyee) < _LONGUEUR_MINIMALE:
+        return f"trop court ({len(nettoyee)} caractères, minimum {_LONGUEUR_MINIMALE})"
+    return None
 
 
 def check_secrets_configuration(settings: Settings | None = None) -> None:
@@ -55,26 +89,27 @@ def check_secrets_configuration(settings: Settings | None = None) -> None:
     defaults = _default_values()
 
     faibles = [
-        (attribut, variable, risque)
+        (attribut, variable, risque, _faiblesse(getattr(settings, attribut, None),
+                                                defaults.get(attribut)))
         for attribut, variable, risque in _DEV_DEFAULTS
-        if getattr(settings, attribut, None) == defaults.get(attribut)
     ]
+    faibles = [item for item in faibles if item[3] is not None]
     if not faibles:
         return
 
     if not getattr(settings, "is_hardened", False):
         logger.info(
             "secrets_de_developpement_actifs variables=%s",
-            ",".join(variable for _, variable, _ in faibles),
+            ",".join(variable for _, variable, _, _ in faibles),
         )
         return
 
     env = getattr(settings, "env", "production")
     detail = " ; ".join(
-        f"{variable} (défaut du dépôt — {risque})" for _, variable, risque in faibles
+        f"{variable} ({motif} — {risque})" for _, variable, risque, motif in faibles
     )
     raise SecretConfigurationError(
-        f"Secret(s) de développement en {env} : {detail}. "
+        f"Secret(s) inacceptable(s) en {env} : {detail}. "
         "Fournir des valeurs issues du vault (D23) avant de démarrer."
     )
 
@@ -115,10 +150,17 @@ def check_hardening_configuration(settings: Settings | None = None) -> None:
         return
 
     manquements: list[str] = []
-    if conf.smtp_host.strip() and conf.smtp_username and not conf.smtp_starttls:
+    # La condition portait « ET une authentification est configurée ». Or un
+    # relais interne SANS auth est une configuration courante, et le motif du
+    # refus — « l'adresse de chaque destinataire transite EN CLAIR » —
+    # s'applique exactement pareil. Mesuré en revue, capture socket à l'appui :
+    # sujet « Votre demande de suppression de compte Boussole » et adresse du
+    # destinataire lisibles sur le fil, garde-fous passés en ENV=production.
+    if conf.smtp_host.strip() and not conf.smtp_starttls:
+        avec_auth = " le mot de passe SMTP et" if conf.smtp_username else ""
         manquements.append(
-            "SMTP_STARTTLS=false avec authentification : le mot de passe SMTP "
-            "et l'adresse de chaque destinataire transitent EN CLAIR"
+            f"SMTP_STARTTLS=false :{avec_auth} l'adresse de chaque destinataire "
+            "transitent EN CLAIR"
         )
     if conf.debug:
         manquements.append(

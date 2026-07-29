@@ -44,11 +44,35 @@ class TestSmtpEnClair:
             )
         )
 
-    def test_sans_authentification_le_controle_ne_sapplique_pas(self) -> None:
-        """Un relais interne sans mot de passe n'expose pas d'identifiant.
-        Le contenu reste en clair, mais ce n'est pas ce contrôle-ci."""
-        check_hardening_configuration(
-            _settings(env="production", smtp_host="relais.interne", smtp_username="")
+    def test_sans_authentification_le_controle_sapplique_AUSSI(self) -> None:
+        """Ce test disait l'inverse, et il avait tort.
+
+        Son raisonnement — « un relais interne sans mot de passe n'expose pas
+        d'identifiant, ce n'est pas ce contrôle-ci » — ne regardait que la
+        moitié du motif. L'autre moitié, écrite dans le message d'erreur
+        lui-même, est « l'adresse de chaque destinataire transite EN CLAIR »,
+        et elle s'applique exactement pareil sans authentification.
+
+        Mesuré en revue avant déploiement, capture socket sur un relais sans
+        auth, garde-fous passés en ``ENV=production`` :
+
+            mail FROM:<no-reply@boussole.example>
+            rcpt TO:<marie.dupont@exemple.fr>
+            Subject: Votre demande de suppression de compte Boussole
+            --- STARTTLS négocié ? False
+
+        Un relais interne sans auth est une configuration courante ; c'est
+        donc le cas fréquent qui n'était pas couvert.
+        """
+        with pytest.raises(SecretConfigurationError) as excinfo:
+            check_hardening_configuration(
+                _settings(env="production", smtp_host="relais.interne", smtp_username="")
+            )
+        message = str(excinfo.value)
+        assert "EN CLAIR" in message
+        assert "mot de passe" not in message, (
+            "sans authentification, il n'y a pas de mot de passe à exposer — "
+            "le message ne doit pas en inventer un"
         )
 
 

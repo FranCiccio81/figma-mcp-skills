@@ -22,8 +22,10 @@ def _settings(**overrides: object):
 
 
 REAL_SECRETS = {
-    "privacy_signing_key": "clé-issue-du-vault",
-    "s3_secret_key": "secret-s3-issu-du-vault",
+    # ≥ 32 caractères : le garde-fou refuse désormais aussi les secrets
+    # trop courts et les secrets VIDES, pas seulement le défaut du dépôt.
+    "privacy_signing_key": "cle-issue-du-vault-" + "x" * 20,
+    "s3_secret_key": "secret-s3-issu-du-vault-" + "y" * 20,
 }
 
 
@@ -42,7 +44,7 @@ class TestRefusEnProduction:
         with pytest.raises(SecretConfigurationError) as excinfo:
             check_secrets_configuration(_settings(env="production"))
         message = str(excinfo.value)
-        assert "export RGPD" in message
+        assert "audit_log" in message
         assert "vault" in message
 
     def test_secrets_fournis_autorisent_le_demarrage(self) -> None:
@@ -53,7 +55,7 @@ class TestRefusEnProduction:
         les identifiants du bucket (CV, archives) publics."""
         with pytest.raises(SecretConfigurationError) as excinfo:
             check_secrets_configuration(
-                _settings(env="production", privacy_signing_key="vault")
+                _settings(env="production", privacy_signing_key="v" * 40)
             )
         assert "S3_SECRET_KEY" in str(excinfo.value)
 

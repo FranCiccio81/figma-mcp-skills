@@ -14,10 +14,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.enqueue import EnqueueError
+
 logger = logging.getLogger("boussole.problems")
 
 PROBLEM_CONTENT_TYPE = "application/problem+json"
 ERROR_TYPE_BASE = "https://api.boussole.eu/errors/"
+
+
 
 
 class Problem(Exception):
@@ -118,7 +122,32 @@ _HTTP_CODES: dict[int, str] = {
 }
 
 
-async def _handle_problem(request: Request, exc: Exception) -> JSONResponse:
+def _handle_enqueue_error(request: Request, exc: Exception) -> JSONResponse:
+    """Courtier injoignable → 503, jamais 500.
+
+    La distinction n'est pas cosmétique : un 500 dit « bug », un 503 dit
+    « réessayez », et c'est le second qui est vrai. Le front peut proposer de
+    relancer l'import ; sur un 500 il ne peut que s'excuser. ``Retry-After``
+    borne la ré-émission pour ne pas transformer une panne de courtier en
+    tempête de requêtes.
+    """
+    logger.warning("enqueue_unavailable path=%s", request.url.path)
+    return _handle_problem(
+        request,
+        Problem(
+            status=503,
+            code="service_unavailable",
+            title="Traitement momentanément indisponible",
+            detail=(
+                "La demande n'a pas pu être mise en file de traitement. "
+                "Réessayez dans quelques instants — rien n'a été perdu."
+            ),
+            headers={"Retry-After": "30"},
+        ),
+    )
+
+
+def _handle_problem(request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, Problem)
     return problem_response(
         request,
@@ -178,6 +207,7 @@ async def _handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
 
 def register_problem_handlers(app: FastAPI) -> None:
     app.add_exception_handler(Problem, _handle_problem)
+    app.add_exception_handler(EnqueueError, _handle_enqueue_error)
     app.add_exception_handler(RequestValidationError, _handle_validation_error)
     app.add_exception_handler(StarletteHTTPException, _handle_http_exception)
     app.add_exception_handler(Exception, _handle_unexpected)

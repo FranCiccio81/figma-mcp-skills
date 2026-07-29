@@ -8,6 +8,7 @@ fichier, chargé une seule fois (cache par chemin) et estampillé
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -23,6 +24,25 @@ __all__ = [
 
 #: `<api>/config/scoring-config.json` (ce fichier est dans `<api>/app/matching/`).
 _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "scoring-config.json"
+
+#: Variable d'environnement qui prime sur le chemin ci-dessus.
+#:
+#: ``SCORING_CONFIG_PATH`` était déclarée dans ``Settings`` **et** dans
+#: ``.env.example``, et lue par personne : le chemin ci-dessus était en dur.
+#: Découvert quand l'image Docker s'est révélée ne pas copier ``config/`` —
+#: le moteur rendait 500 à la première recherche, et l'exploitant n'avait
+#: aucun moyen de contourner par configuration, malgré la variable annoncée.
+#:
+#: Lue via ``os.environ`` et non via ``app.core.config`` : ce paquet est pur
+#: (aucun import applicatif — ``tests/unit/matching/test_purity.py``), et cette
+#: propriété vaut plus que l'élégance d'un accès unifié aux réglages.
+_CONFIG_PATH_ENV = "SCORING_CONFIG_PATH"
+
+
+def default_config_path() -> Path:
+    """Chemin effectif de la configuration de scoring."""
+    surcharge = os.environ.get(_CONFIG_PATH_ENV, "").strip()
+    return Path(surcharge) if surcharge else _DEFAULT_CONFIG_PATH
 
 
 class ConfigError(RuntimeError):
@@ -189,4 +209,4 @@ def _load(path_str: str) -> ScoringConfig:
 
 def get_config(path: Path | None = None) -> ScoringConfig:
     """Retourne la configuration de scoring (chargée une fois, mise en cache)."""
-    return _load(str(path if path is not None else _DEFAULT_CONFIG_PATH))
+    return _load(str(path if path is not None else default_config_path()))

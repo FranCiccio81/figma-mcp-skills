@@ -48,11 +48,30 @@ class EngineOverrideError(RuntimeError):
     """``override_engine`` réentrant : substitution déjà active dans ce processus."""
 
 
+#: Les paramètres liés ne sortent JAMAIS dans le texte d'une erreur.
+#:
+#: Sans ça, le ``str()`` d'une ``IntegrityError`` embarque ``[SQL: …]`` **et**
+#: ``[parameters: …]`` — quel que soit ``echo``, quel que soit ``DEBUG``. Or
+#: ces paramètres sont le contenu du produit : intitulés de poste, employeurs,
+#: descriptions d'expérience. Mesuré en revue : une expérience portant « arrêt
+#: de travail longue durée suite à burn-out » ressortait en clair sur stdout en
+#: ``ENV=production``, sur une simple violation de clé étrangère — déclenchable
+#: à volonté par n'importe quel utilisateur authentifié — et repartait telle
+#: quelle vers Sentry, dans ``exception.values[].value`` que la liste blanche
+#: conserve par construction.
+#:
+#: ``check_hardening_configuration`` refuse ``DEBUG=true`` pour exactement ce
+#: motif. Il couvrait le cas nominal et ratait le cas d'erreur.
+_HIDE_PARAMETERS = True
+
+
 def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(settings.database_url, echo=settings.debug)
+        _engine = create_async_engine(
+            settings.database_url, echo=settings.debug, hide_parameters=_HIDE_PARAMETERS
+        )
     return _engine
 
 
@@ -77,7 +96,12 @@ def create_worker_engine() -> AsyncEngine:
     N'altère pas le moteur global de l'API (:func:`get_engine`).
     """
     settings = get_settings()
-    return create_async_engine(settings.database_url, echo=settings.debug, poolclass=NullPool)
+    return create_async_engine(
+        settings.database_url,
+        echo=settings.debug,
+        poolclass=NullPool,
+        hide_parameters=_HIDE_PARAMETERS,
+    )
 
 
 @contextmanager

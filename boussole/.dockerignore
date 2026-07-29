@@ -1,0 +1,30 @@
+# Contexte de build. Sans ce fichier il pesait 1,3 Go — dont 375 Mo de venv
+# Python, 736 Mo de node_modules et 119 Mo de .next, tous inutiles à l'image et
+# tous reconstruits dedans.
+#
+# Deux conséquences concrètes, pas seulement de la lenteur :
+#  - `Dockerfile.web` fait `npm ci` PUIS `COPY web/ ./` : le node_modules de
+#    l'hôte écrasait celui qui venait d'être installé pour la plateforme cible ;
+#  - le runbook demande `cp .env.example .env`, donc le .env local du
+#    développeur — avec ses secrets — entrait dans le contexte de build.
+
+**/.venv
+**/node_modules
+**/.next
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/htmlcov
+**/.coverage
+**/*.rdb
+
+# Secrets et configuration locale — jamais dans une image.
+**/.env
+**/.env.*
+!**/.env.example
+
+.git
+.github
+**/.DS_Store

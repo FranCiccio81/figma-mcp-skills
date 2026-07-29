@@ -16,6 +16,7 @@ COPY api/pyproject.toml ./
 # Installe les dépendances seules d'abord (cache de couche), puis le code.
 COPY api/app ./app
 COPY api/alembic ./alembic
+COPY api/config ./config
 RUN pip install .
 
 # ---------- Étape 2 : runtime minimal non-root ----------
@@ -31,6 +32,12 @@ WORKDIR /srv/boussole
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=boussole:boussole api/app ./app
 COPY --chown=boussole:boussole api/alembic ./alembic
+# `config/scoring-config.json` : le moteur de matching le résout en dur, en
+# remontant de `app/matching/` vers `<racine>/config/`. Il n'était pas copié.
+# L'image démarrait, répondait, servait les pages — et la PREMIÈRE recherche
+# d'un utilisateur rendait 500 (`ConfigError: scoring-config.json introuvable`).
+# La fonction centrale du produit, en panne dans l'image seulement.
+COPY --chown=boussole:boussole api/config ./config
 
 USER boussole
 

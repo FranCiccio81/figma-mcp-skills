@@ -8,10 +8,18 @@ Lancement (dev) :
     celery -A app.workers.celery_app worker -Q ingestion,ai,scoring,maintenance
 """
 
+import os
+
 from celery import Celery
 from celery.schedules import crontab
 from kombu import Queue
 
+# TOUS les modèles, sinon les métadonnées SQLAlchemy du processus worker sont
+# incomplètes et les clés étrangères qui les traversent ne se résolvent pas.
+# ``generated_documents.application_id`` référence ``applications`` : sans cet
+# import, TOUTE génération de contenu échouait au flush, dans le worker
+# seulement, et le document restait « en cours » indéfiniment côté utilisateur.
+from app import models_registry as _models  # noqa: F401
 from app.core.config import get_settings
 from app.core.observability import configure_observability
 from app.core.secrets import check_hardening_configuration, check_secrets_configuration
@@ -41,6 +49,25 @@ check_hardening_configuration(settings)
 # tâches Celery : sans export ici, elles n'atteindraient personne.
 configure_observability(settings)
 
+#: Emplacement du fichier d'état de ``celery beat`` — surchargeable, car
+#: ``/tmp`` peut être monté en lecture seule sur certaines plateformes.
+#: Perdre ce fichier est sans gravité : beat le reconstruit au démarrage.
+_BEAT_SCHEDULE_FILE = os.environ.get(
+    "CELERY_BEAT_SCHEDULE_FILE", "/tmp/boussole-celerybeat-schedule"
+)
+
+#: Bornes de durée d'une tâche. La plus longue du système est l'extraction de
+#: CV (appel LLM + retries bornés) ; 10 min laissent de la marge sans laisser
+#: un worker retenu indéfiniment. La limite douce lève une exception dans la
+#: tâche (nettoyage possible), la dure tue le processus.
+_SOFT_TIME_LIMIT_SECONDS = 600
+_HARD_TIME_LIMIT_SECONDS = 660
+
+#: Doit être STRICTEMENT supérieur à la limite dure : sinon le courtier rend
+#: le message à la file alors que la tâche tourne encore, et deux workers
+#: traitent le même CV.
+_VISIBILITY_TIMEOUT_SECONDS = 900
+
 celery_app = Celery(
     "boussole",
     broker=settings.redis_persistent_url,
@@ -58,6 +85,31 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_acks_late=True,  # D16 — re-livraison si le worker meurt
+    # ``acks_late`` seul ne suffit pas. Le message n'est rendu à la file
+    # qu'au bout du ``visibility_timeout`` de kombu-redis, dont le défaut est
+    # d'UNE HEURE. Mesuré en revue : worker tué net pendant un import de CV,
+    # un worker neuf relancé, message jamais redélivré après 105 s — et le
+    # document restait ``parsing`` en base, l'utilisateur devant une roue qui
+    # tourne. Aligné sur la durée réelle des tâches, temps limite compris.
+    broker_transport_options={"visibility_timeout": _VISIBILITY_TIMEOUT_SECONDS},
+    # Un worker perdu (OOM, nœud coupé) rend son message tout de suite au
+    # lieu d'attendre l'expiration ci-dessus.
+    task_reject_on_worker_lost=True,
+    # Sans borne, une tâche bloquée retient son worker indéfiniment : mesuré,
+    # un SIGTERM sur un worker occupé attend sans fin, la période de grâce de
+    # l'orchestrateur expire, et on retombe sur le kill -9.
+    task_soft_time_limit=_SOFT_TIME_LIMIT_SECONDS,
+    task_time_limit=_HARD_TIME_LIMIT_SECONDS,
+    # Fichier d'état de ``celery beat``, HORS du répertoire de travail.
+    #
+    # Le ``PersistentScheduler`` le crée dans le CWD. Dans l'image livrée, le
+    # CWD est `/srv/boussole`, créé root et non inscriptible par l'utilisateur
+    # `boussole` : beat sortait en code 1 IMMÉDIATEMENT
+    # (`_dbm.error: [Errno 13] Permission denied: 'celerybeat-schedule'`),
+    # donc en boucle de redémarrage, et **rien n'était jamais planifié** —
+    # `maintenance.purge_due_accounts` compris, c'est-à-dire l'engagement RGPD
+    # des 30 jours. Aucun healthcheck ne couvre `beat` : la panne était muette.
+    beat_schedule_filename=_BEAT_SCHEDULE_FILE,
     worker_prefetch_multiplier=1,
     task_default_queue="maintenance",
     task_queues=(

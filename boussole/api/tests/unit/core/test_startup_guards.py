@@ -97,8 +97,8 @@ class TestRefusDeDemarrageDuWorker:
             STORAGE_BACKEND="s3",
             S3_BUCKET="b",
             S3_SSE="AES256",
-            PRIVACY_SIGNING_KEY="cle-issue-du-vault",
-            S3_SECRET_KEY="secret-s3-issu-du-vault",
+            PRIVACY_SIGNING_KEY="cle-issue-du-vault-" + "x" * 20,
+            S3_SECRET_KEY="secret-s3-issu-du-vault-" + "y" * 20,
         )
 
         assert result.returncode == 0, result.stderr

@@ -1,0 +1,8 @@
+Dossier des ressources statiques servies telles quelles par Next.
+
+Vide, et suivi par git exprès : `infra/Dockerfile.web` fait
+`COPY /build/public ./public`, et Docker échoue sur un chemin source absent.
+Le dossier manquait — le build de l'image web s'arrêtait là, avant même
+d'avoir démarré quoi que ce soit.
+
+Git ne suit pas les dossiers vides, d'où ce fichier.

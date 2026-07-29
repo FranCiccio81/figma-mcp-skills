@@ -30,7 +30,7 @@ from typing import Annotated, Any
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from app.ai.providers.base import LLMProvider
+from app.ai.providers.base import LLMProvider, LLMProviderError
 from app.core.problems import Problem
 from app.modules.explanations.repository import ExplanationsRepository
 from app.modules.explanations.schemas import MatchExplanationOut
@@ -118,6 +118,20 @@ def _collect_numbers(value: object) -> set[float]:
     return numbers
 
 
+def _provider_unavailable() -> Problem:
+    """503 — la fonction est suspendue, le reste de l'écran reste juste."""
+    return Problem(
+        status=503,
+        code="ai_provider_unavailable",
+        title="Explication temporairement indisponible",
+        detail=(
+            "Le service de reformulation est momentanément indisponible. "
+            "Le score et les critères détaillés restent accessibles."
+        ),
+        headers={"Retry-After": "60"},
+    )
+
+
 def _generation_failed(detail: str) -> Problem:
     return Problem(
         status=502,
@@ -188,7 +202,21 @@ class ExplanationsService:
                     f"{prompt}\n\nTa précédente réponse était invalide :\n{last_error}\n"
                     "Corrige et renvoie un JSON strictement conforme."
                 )
-            raw = self._provider.complete_json(TASK, current_prompt, schema)
+            try:
+                raw = self._provider.complete_json(TASK, current_prompt, schema)
+            except LLMProviderError as exc:
+                # Timeout, 429 du fournisseur, réponse illisible, disjoncteur
+                # ouvert : tous héritent de ``LLMProviderError`` et remontaient
+                # BRUTS. L'utilisateur lisait « Erreur interne » (500) là où le
+                # message prévu — « la reformulation est momentanément
+                # indisponible, le score et les critères restent accessibles »
+                # — est à la fois vrai et rassurant. Et l'exploitant recevait
+                # une pile complète en ERROR à chaque hoquet du fournisseur,
+                # comme s'il s'agissait d'un bug.
+                #
+                # Le 503 existait, mais uniquement au MONTAGE de la dépendance
+                # (clé absente) : jamais pour un échec d'appel.
+                raise _provider_unavailable() from exc
             try:
                 payload = MatchExplanationPayload.model_validate(raw)
                 break

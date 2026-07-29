@@ -19,6 +19,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, UploadFile
 from redis.asyncio import Redis
 
+from app.core.enqueue import enqueue as enqueue_task
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import get_redis_cache
 from app.core.storage import ObjectStorage, get_object_storage
@@ -44,9 +45,11 @@ def get_parse_enqueuer() -> Callable[[uuid.UUID], None]:
     """
 
     def enqueue(cv_document_id: uuid.UUID) -> None:
-        from app.workers.celery_app import celery_app
-
-        celery_app.send_task("ai.parse_cv", args=[str(cv_document_id)], queue="ai")
+        # Passe par ``app.core.enqueue`` : ``send_task`` nu gelait la boucle
+        # d'événements 19 s sur un courtier qui traîne — toutes les requêtes
+        # de l'instance, pas seulement cet import. Et son échec DOIT remonter :
+        # un CV jamais enfilé reste `parsing` indéfiniment.
+        enqueue_task("ai.parse_cv", cv_document_id, queue="ai")
 
     return enqueue
 

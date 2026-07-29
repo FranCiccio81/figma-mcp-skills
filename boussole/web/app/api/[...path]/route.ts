@@ -10,9 +10,47 @@ import { type NextRequest, NextResponse } from "next/server";
  * - CORS reste fermé : le navigateur ne parle jamais directement à l'API.
  */
 
-const API_URL = process.env.API_URL ?? "http://localhost:8000";
+/**
+ * Adresse interne de l'API.
+ *
+ * Les DEUX noms sont acceptés, et c'est délibéré : le compose posait
+ * `API_INTERNAL_URL`, ce code lisait `API_URL`, et personne ne faisait le
+ * lien. Le front démarrait, la page s'affichait, et **chaque** appel API
+ * partait sur `http://localhost:8000` — inexistant dans le conteneur web —
+ * pour finir en 500. Toute l'application, pas une fonctionnalité.
+ *
+ * Corriger un seul des deux côtés aurait laissé l'autre nom en embuscade
+ * pour le prochain déploiement.
+ */
+const API_URL =
+  process.env.API_INTERNAL_URL ?? process.env.API_URL ?? "http://localhost:8000";
 
-/** En-têtes entrants explicitement transmis à l'API (liste blanche). */
+/**
+ * En-têtes entrants explicitement transmis à l'API (liste blanche).
+ *
+ * `x-forwarded-for` est la moitié manquante d'un correctif que l'API croyait
+ * complet. Elle lit cet en-tête pour identifier l'appelant anonyme, et
+ * `--forwarded-allow-ips` est bien passé à uvicorn — mais **personne ne
+ * l'émettait** : le proxy ne le transmettait pas. Résultat mesuré en revue,
+ * front réel devant l'API réelle : tout le trafic anonyme tombait dans UN
+ * SEUL seau de quota (`rl:global:ip:127.0.0.1:…`, l'IP du proxy). Un script
+ * à une requête par seconde suffisait à faire répondre 429 à **toutes** les
+ * connexions et **toutes** les inscriptions, pour tout le monde.
+ *
+ * Vérifié en exécution, faux API en écoute derrière le proxy réel :
+ *
+ *     curl -H "X-Forwarded-For: 203.0.113.7" …  → l'API reçoit 203.0.113.7
+ *     curl (sans en-tête)                       → l'API reçoit 127.0.0.1
+ *
+ * Le second cas est celui qui compte : quand rien n'arrive en amont, **Next
+ * pose lui-même l'en-tête avec l'adresse réelle du client**. La chaîne est
+ * donc complète avec ou sans reverse proxy devant — ce qui est la situation
+ * du `docker-compose` livré, où le front est le premier saut.
+ *
+ * Sa valeur n'est pas digne de confiance en soi — c'est pour ça que l'API
+ * n'écoute que les pairs listés dans `FORWARDED_ALLOW_IPS`. La transmettre
+ * sans cette liste blanche côté API laisserait n'importe qui usurper une IP.
+ */
 const FORWARDED_REQUEST_HEADERS = [
   "accept",
   "accept-language",
@@ -20,6 +58,7 @@ const FORWARDED_REQUEST_HEADERS = [
   "cookie",
   "idempotency-key",
   "x-csrf-token",
+  "x-forwarded-for",
 ] as const;
 
 /** En-têtes de transport recalculés par le runtime — jamais recopiés. */

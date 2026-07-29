@@ -45,8 +45,10 @@ class AuthService:
         « leurre » jamais stocké — donc invalide) et un e-mail « un compte
         existe déjà » doit être envoyé au titulaire.
         """
-        existing = await self._repository.get_user_by_email(data.email)
-        if existing is not None:
+        # ``email_taken`` et non ``get_user_by_email`` : l'index unique de
+        # ``users.email`` ignore ``deleted_at``, donc l'adresse d'un compte
+        # supprimé reste occupée jusqu'à sa purge (J+30).
+        if await self._repository.email_taken(data.email):
             # TODO(M2, E2) : envoyer l'e-mail « un compte existe déjà » via le
             # service e-mail (mailpit en dev). Journalisé pour ne pas être un
             # TODO silencieux — aucune information ne fuit vers le client.

@@ -1,5 +1,7 @@
 """Routes du module auth : /auth/register, /auth/login, /auth/logout, /me."""
 
+import logging
+
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
 from redis.asyncio import Redis
@@ -19,6 +21,8 @@ from app.modules.auth.schemas import (
     RegisterResponse,
 )
 from app.modules.auth.service import AuthCookies, AuthService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
 
@@ -109,13 +113,31 @@ async def login(
     settings = get_settings()
     client_ip = request.client.host if request.client else "unknown"
     limiter = FixedWindowRateLimiter(cache)
-    result = await limiter.hit(
-        "login",
-        f"{payload.email.lower()}:{client_ip}",
-        limit=settings.login_rate_limit,
-        window_seconds=settings.login_rate_window_seconds,
-    )
-    if not result.allowed:
+    try:
+        result = await limiter.hit(
+            "login",
+            f"{payload.email.lower()}:{client_ip}",
+            limit=settings.login_rate_limit,
+            window_seconds=settings.login_rate_window_seconds,
+        )
+    except Exception:
+        # Redis de cache injoignable : on LAISSE PASSER, comme le limiteur
+        # global (D18), au lieu de rendre 500.
+        #
+        # Le compteur n'était pas gardé : une panne du Redis volatile — dont
+        # D17 dit explicitement que la perte est acceptable — rendait la
+        # CONNEXION ENTIÈREMENT IMPOSSIBLE. Mesuré en revue : 12 tentatives,
+        # 12 × 500, pendant que le limiteur global partait en fail-open. Le
+        # pire des deux mondes : plus de protection anti-flood, et plus
+        # d'accès légitime.
+        #
+        # Laisser passer affaiblit la protection anti-force-brute le temps de
+        # la panne — mais le mot de passe reste haché, l'audit reste écrit, et
+        # une panne de cache ne doit pas devenir une panne d'authentification.
+        logger.warning("login_rate_limit_unavailable")
+        result = None
+
+    if result is not None and not result.allowed:
         raise Problem(
             status=429,
             code="rate_limited",
