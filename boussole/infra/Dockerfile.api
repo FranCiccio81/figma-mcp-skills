@@ -17,7 +17,15 @@ COPY api/pyproject.toml ./
 COPY api/app ./app
 COPY api/alembic ./alembic
 COPY api/config ./config
-RUN pip install .
+# L'extra `observability` (sentry-sdk) n'est PAS optionnel dans l'image.
+# `app/core/observability.py` refuse le démarrage si `SENTRY_DSN` est
+# renseigné sans le paquet — parti pris assumé : se croire observé est pire
+# que ne pas l'être. Mais le runbook recommande de renseigner ce DSN, et
+# l'image ne l'installait pas : suivre la documentation faisait échouer le
+# démarrage de l'API, du worker ET du beat (même image). Un extra qu'aucun
+# environnement réel n'installe n'est pas un extra, c'est une dépendance
+# absente. Sans DSN, le paquet est simplement inerte.
+RUN pip install ".[observability]"
 
 # ---------- Étape 2 : runtime minimal non-root ----------
 FROM python:3.12-slim AS runtime

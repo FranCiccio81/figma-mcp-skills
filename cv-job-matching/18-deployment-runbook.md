@@ -194,8 +194,12 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | `FEATURE_SOURCE_FRANCE_TRAVAIL` | Active le connecteur France Travail | `false` | **Voir §8.2** | Non |
 | `FEATURE_SOURCE_GREENHOUSE` | Active le connecteur Greenhouse | `false` | **Voir §8.2** | Non |
 | `FEATURE_SOURCE_LEVER` | Active le connecteur Lever | `false` | **Voir §8.2** | Non |
-| `SENTRY_DSN` | 🟡 **Déclaré, jamais lu par le code** — aucun effet | `""` | Sans effet | **Oui** si un jour branché |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | 🟡 **Déclaré, jamais lu par le code** — aucun effet | `""` | Sans effet | Non |
+> ℹ️ `SENTRY_DSN` est décrite **une seule fois**, au tableau §3. Cette section
+> en portait une seconde ligne disant « déclaré, jamais lu par le code —
+> aucun effet », vestige d'avant le branchement de l'observabilité et
+> contredisant frontalement la première. Un opérateur qui tombait sur celle-ci
+> concluait que la variable était sans risque. `OTEL_EXPORTER_OTLP_ENDPOINT`,
+> elle, a été **retirée du code** : elle n'a plus de ligne nulle part.
 | `INGESTION_FRANCE_TRAVAIL_CLIENT_ID` | OAuth2 client_credentials France Travail | `""` | Si source active | **Oui** |
 | `INGESTION_FRANCE_TRAVAIL_CLIENT_SECRET` | Secret OAuth2 | `""` | Si source active | **Oui** |
 | `INGESTION_GREENHOUSE_BOARDS` | `"token:Nom,token2:Nom2"` — boards activés **explicitement** | `""` | Si source active | Non |
@@ -259,7 +263,7 @@ Le seuil est `env != "development"` : **staging est couvert**, pas seulement pro
 
 ### 4.1 Migrations Alembic
 
-Six révisions, chaînées `0001 → 0006`. Toutes sont appliquées par un unique `upgrade head`.
+**Sept** révisions, chaînées `0001 → 0007`. Toutes sont appliquées par un unique `upgrade head`.
 
 | Rev | Objet réel |
 |---|---|
@@ -269,6 +273,7 @@ Six révisions, chaînées `0001 → 0006`. Toutes sont appliquées par un uniqu
 | `0004_generation_processing` | Colonnes applicatives de `generated_documents` : `processing_status` (`pending`/`processing`/`ready`/`failed` + CHECK), `error_code`, `anchoring_check` (jsonb), `manually_edited`, `options` (jsonb), et l'index keyset `idx_generated_docs_user_created`. Additif : l'enum SQL `generated_doc_status` n'est pas altéré |
 | `0005_privacy_exports` | Table `privacy_exports` (`status` ∈ `pending`/`ready`, `file_key`, `expires_at`, FK `ON DELETE CASCADE`) + index par utilisateur. Écart assumé : `initial-schema.sql` ne prévoyait aucune table pour les demandes d'export |
 | `0006_ai_calls` | **N'ajoute pas la table `ai_calls`** (elle vient de 0001). Ajoute la contrainte `ck_ai_calls_status` (`success`/`schema_retry`/`failed`) et l'index partiel `ix_ai_calls_user_id WHERE user_id IS NOT NULL`, nécessaire à la purge RGPD par utilisateur |
+| `0007_efficiency_indexes` | Onze index sur les chemins chauds, **mesurés contre un PostgreSQL peuplé et non supposés** : rétention `ai_calls` (`created_at` en tête — l'index existant a `task` devant et était inutilisable pour ce prédicat : 1,47 Go lus par lot sur 15 M lignes), pré-filtre du scoring paresseux, pagination keyset. Aucun de ces coûts n'est visible sur le corpus de démonstration (douze offres) ; tous croissent avec l'usage réel. Écrite en `CREATE INDEX CONCURRENTLY` dans un `autocommit_block`, avec reprise sur index laissé `INVALID` par un passage interrompu |
 
 **Commande** (depuis `boussole/`) :
 
