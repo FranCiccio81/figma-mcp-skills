@@ -77,7 +77,7 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | Variable | Rôle | Défaut | Prod | Secret |
 |---|---|---|---|---|
 | `ENV` | `development` \| `staging` \| `production`. **Vocabulaire fermé** : toute autre valeur fait échouer le démarrage | `development` | **Oui** | Non |
-| `DEBUG` | Indicateur applicatif | `false` | Recommandé `false` | Non |
+| `DEBUG` | Indicateur applicatif. **`true` fait échouer le démarrage dès `staging`** : SQLAlchemy journaliserait chaque requête avec ses paramètres liés — profils, adresses, extraits de CV | `false` | **Oui → `false`** | Non |
 | `API_PREFIX` | Préfixe des routes | `/api/v1` | Non | Non |
 | `FORWARDED_ALLOW_IPS` | Liste (virgules, pas de CIDR) des proxies de confiance pour `X-Forwarded-For`. Lue **deux fois** : par uvicorn (`--forwarded-allow-ips`) et par l'application | `127.0.0.1` | **Oui** | Non |
 
@@ -129,13 +129,45 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | `SMTP_HOST` | Hôte SMTP. Vide ⇒ aucun envoi, journalisé | `""` | **Oui** | Non |
 | `SMTP_PORT` | Port SMTP (`1025` mailpit, `587` avec STARTTLS) | `1025` | **Oui** | Non |
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | Authentification SMTP | `""` | Selon fournisseur | **Oui** |
-| `SMTP_STARTTLS` | STARTTLS après connexion | `false` | **Oui → `true`** | Non |
+| `SMTP_STARTTLS` | STARTTLS après connexion. **`false` avec un `SMTP_HOST` renseigné fait échouer le démarrage dès `staging`** : l'adresse de chaque destinataire — et le mot de passe SMTP s'il y en a un — transiteraient en clair | `false` | **Oui → `true`** | Non |
 | `MAIL_FROM` | Expéditeur affiché | `Boussole <no-reply@boussole.example>` | **Oui** | Non |
 | `FEATURE_SOURCE_DEMO` | Corpus de démonstration, offres **FICTIVES** (D34). Le connecteur refuse de s'activer dès `ENV=staging` — ce drapeau seul ne suffit pas | `false` | **Non — jamais** | Non |
 
 > ⚠️ **`PRIVACY_SIGNING_KEY` signe seule l'accès à `GET /privacy/exports/{id}/download`** — une archive contenant l'intégralité des données personnelles d'un compte. Sa valeur par défaut est dans le dépôt, donc publique : laissée en place, n'importe qui ayant lu le code peut forger un lien valide pour un `export_id` deviné.
 >
 > Depuis la finalisation, `app/core/secrets.py` **refuse le démarrage** hors développement tant que cette valeur (et `S3_SECRET_KEY`) n'a pas été remplacée — côté API comme côté workers, à l'import du module, avant qu'une seule tâche ne soit acceptée. Le remplacement lui-même reste un geste de déploiement (checklist §8), mais il ne peut plus être oublié en silence : le service ne démarre pas.
+
+### 2.4 ter — Tout ce qui empêche le démarrage : la liste complète
+
+Ces garde-fous sont délibérés : **refuser de démarrer vaut mieux que démarrer
+en trahissant une garantie**. Ils sont dispersés dans les tableaux ci-dessus
+parce que c'est là qu'on cherche une variable ; les voici rassemblés parce
+que c'est ce qu'on veut savoir avant un déploiement.
+
+Deux d'entre eux (`DEBUG`, `SMTP_STARTTLS`) ne figuraient nulle part comme
+bloquants : leur ligne disait « recommandé », pas « le service ne démarre
+pas ». Un opérateur prudent pouvait donc déployer une configuration qui
+refuse de se lever, sans avoir rien manqué dans la documentation.
+
+| Variable | Valeur qui bloque | Où | Portée |
+|---|---|---|---|
+| `ENV` | hors `development` / `staging` / `production` | `app/core/config.py` | toujours |
+| `PRIVACY_SIGNING_KEY` | laissée au défaut du dépôt | `app/core/secrets.py` | dès `staging` |
+| `S3_SECRET_KEY` | laissée au défaut du dépôt | `app/core/secrets.py` | dès `staging` |
+| `DEBUG` | `true` | `app/core/secrets.py` | dès `staging` |
+| `SMTP_STARTTLS` | `false` avec un `SMTP_HOST` renseigné | `app/core/secrets.py` | dès `staging` |
+| `STORAGE_BACKEND` | `local` | `app/core/storage.py` | dès `staging` |
+| `S3_SSE` | `none` | `app/core/storage.py` | dès `staging` |
+| `S3_BUCKET` | vide avec `STORAGE_BACKEND=s3` | `app/core/storage.py` | toujours |
+| `SENTRY_DSN` | renseigné sans l'extra `[observability]` | `app/core/observability.py` | toujours |
+
+Les quatre garde-fous marqués « dès `staging` » s'appliquent à l'**API comme
+aux workers** : ils sont évalués à l'import du module, avant qu'une seule
+tâche ne soit acceptée.
+
+> L'extra `[observability]` est installé par `infra/Dockerfile.api` et par
+> `make venv`. La dernière ligne du tableau ne devrait donc se produire que
+> sur une image construite autrement.
 
 ### 2.5 Providers LLM
 
@@ -394,7 +426,66 @@ Voir §6 — et §7.3 pour la conséquence RGPD s'il ne tourne pas.
 
 `/readyz` sonde le stockage objet pour de vrai (`HeadBucket`). Une instance dont les identifiants S3 sont mal injectés le dira ; une instance non sondée ne le dira pas.
 
-### 5.4 Ce qu'il **ne faut pas** faire après déploiement
+### 5.4 Un import de CV bloqué en `parsing`
+
+**Le symptôme, côté utilisateur** : une roue qui tourne, sans limite de temps
+et sans message. `cv_documents.status` reste `parsing`, la page profil
+attend un état qui n'arrivera pas. Rien n'échoue, donc rien n'alerte.
+
+**Ce qui l'empêche déjà.** Trois réglages, tous posés parce que le cas s'est
+produit en revue : `task_acks_late` (re-livraison si le worker meurt),
+`task_reject_on_worker_lost` (le message est rendu tout de suite au lieu
+d'attendre), et un `visibility_timeout` aligné sur la durée réelle des tâches
+— son défaut d'UNE HEURE laissait le document bloqué pendant tout ce temps.
+La tâche `ai.parse_cv` marque elle-même le document `failed` sur exception,
+plutôt que de le laisser en `parsing`.
+
+**Ce qui reste possible.** Un worker tué entre l'écriture de `parsing` et la
+fin du traitement, sans re-livraison aboutie. Aucune tâche planifiée ne
+balaie ce cas : c'est le trou connu de cette version.
+
+**Détection** — documents en cours depuis plus longtemps qu'une tâche ne
+peut durer :
+
+```sql
+SELECT id, user_id, filename, created_at, now() - created_at AS age
+FROM cv_documents
+WHERE status = 'parsing'
+  AND created_at < now() - interval '30 minutes'
+ORDER BY created_at;
+```
+
+**Reprise.** Deux gestes possibles, dans cet ordre de préférence :
+
+1. **Réenfiler** le parsing — le traitement est idempotent, il réécrit le
+   statut et les données extraites :
+
+   ```bash
+   celery -A app.workers.celery_app call ai.parse_cv --args '["<cv_document_id>"]'
+   ```
+
+2. **Marquer en échec** si le fichier est en cause (illisible, supprimé du
+   stockage). L'utilisateur voit alors un état honnête et peut réimporter,
+   au lieu d'attendre indéfiniment :
+
+   ```sql
+   UPDATE cv_documents
+   SET status = 'failed'
+   WHERE id = '<cv_document_id>' AND status = 'parsing';
+   ```
+
+> 🟡 **Correctif durable non livré** : une tâche `maintenance` qui balaie
+> périodiquement les documents `parsing` trop anciens et les bascule en
+> `failed`. Tant qu'elle n'existe pas, la requête de détection ci-dessus
+> doit figurer dans les contrôles d'exploitation — un document bloqué ne
+> produit aucune erreur et ne remontera jamais tout seul.
+>
+> Effet de bord utile depuis la correction de l'état d'onboarding : un
+> document en `parsing` n'est plus compté comme « CV importé » dans
+> `GET /me`, donc le tableau de bord n'affirme plus que le profil s'appuie
+> sur des informations extraites qui n'existent pas.
+
+### 5.5 Ce qu'il **ne faut pas** faire après déploiement
 
 - Ne pas exécuter `make seed-demo` (refusé en production, mais l'intention est déjà une erreur) ;
 - Ne pas exécuter `alembic downgrade` sur `0001` : sa fonction `downgrade()` fait `DROP SCHEMA public CASCADE` et est explicitement marquée **DEV-ONLY** (voir §9) ;

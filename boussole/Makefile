@@ -1,14 +1,34 @@
 # Boussole — commandes de développement (annexe Phase 10 §E).
-# Prérequis : Docker + Python 3.12 (venv dans api/.venv).
+#
+# Prérequis : Docker + Python 3.12. Premier passage sur un clone neuf :
+#
+#     make venv
+#
+# Toutes les cibles Python d'en dessous supposent `api/.venv` — l'en-tête le
+# disait déjà (« venv dans api/.venv ») mais AUCUNE cible ne le créait. Un
+# clone neuf tombait sur « .venv/bin/ruff: No such file or directory » dès le
+# premier `make lint`, sans que rien n'indique la commande manquante.
 
 COMPOSE := docker compose -f infra/docker-compose.dev.yml
 API_DIR := api
 PY := .venv/bin/python
 ALEMBIC := .venv/bin/alembic
 
-.PHONY: up down migrate seed seed-demo test test-integration evaluate demo lint typecheck api-dev openapi-gen
+.PHONY: venv up down migrate seed seed-demo test test-integration evaluate demo lint typecheck api-dev openapi-gen
 
-up: ## Démarre postgres, redis ×2, minio, mailpit, api, web
+venv: ## Crée api/.venv et installe l'API + ses outils de développement
+	@command -v python3.12 >/dev/null 2>&1 || { \
+	  echo "python3.12 introuvable — voir les prérequis en tête de ce fichier"; \
+	  exit 1; }
+	cd $(API_DIR) && python3.12 -m venv .venv
+	cd $(API_DIR) && .venv/bin/pip install --upgrade pip
+	# `observability` est installé ici comme dans l'image (infra/Dockerfile.api) :
+	# sans lui, poser SENTRY_DSN en local fait échouer le démarrage, et on
+	# cherche longtemps.
+	cd $(API_DIR) && .venv/bin/pip install -e ".[dev,observability]"
+	@echo "Prêt : make test, make lint, make typecheck."
+
+up: ## Démarre postgres, redis ×2, minio, mailpit, api, worker, beat, web
 	$(COMPOSE) up -d --build
 
 down: ## Arrête et supprime les conteneurs

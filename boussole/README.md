@@ -18,10 +18,19 @@ candidature → export / suppression RGPD.
 >   implémenté, ce qui est inactif par défaut et pourquoi, ce qui manque, et ce qui reste
 >   avant une alpha fermée.
 >
-> Trois points d'attention immédiats, détaillés dans le runbook : le `docker-compose.dev.yml`
-> **ne contient pas de service `celery beat`** (sans lui, aucune purge RGPD ne s'exécute) ;
-> `PRIVACY_SIGNING_KEY` a une valeur par défaut publique qu'**aucun garde-fou ne vérifie** ;
-> et le changement de tokenisation de M6 impose un **backfill forcé des embeddings**.
+> Deux points d'attention immédiats, détaillés dans le runbook : **exactement un**
+> processus `celery beat` doit tourner (deux dupliquent chaque tâche planifiée, purges
+> comprises), et le changement de tokenisation de M6 impose un **backfill forcé des
+> embeddings**.
+>
+> ⚠️ Ce bloc portait jusqu'ici trois avertissements dont **deux étaient faux** — et
+> faux dans le sens qui inquiète : « le compose ne contient pas de service `celery
+> beat` » (il en porte un depuis la finalisation) et « `PRIVACY_SIGNING_KEY` a une
+> valeur par défaut qu'aucun garde-fou ne vérifie » (`app/core/secrets.py` refuse le
+> démarrage hors développement). Le runbook disait l'inverse des deux. C'est le
+> document qu'on lit EN PREMIER qui était périmé, et il envoyait chercher des
+> problèmes résolus tout en laissant croire que la documentation d'exploitation était
+> approximative.
 
 ## Arborescence réelle
 
@@ -43,11 +52,11 @@ boussole/
 │   │   ├── workers/              # celery_app (files + beat_schedule) + tâches par domaine
 │   │   ├── seeds.py              # référentiels idempotents + données de démo
 │   │   └── main.py               # middlewares, /healthz, /readyz, montage des routers
-│   ├── alembic/versions/         # 0001 → 0006 (voir runbook §4.1)
+│   ├── alembic/versions/         # 0001 → 0007 (voir runbook §4.1)
 │   ├── config/scoring-config.json
 │   └── tests/
-│       ├── unit/                 # 1193 tests — sans Docker (repos en mémoire + fakeredis)
-│       └── integration/          # 66 tests — PostgreSQL 16 + pgvector RÉEL
+│       ├── unit/                 # suite rapide — sans Docker (repos en mémoire + fakeredis)
+│       └── integration/          # PostgreSQL 16 + pgvector RÉEL
 ├── web/                          # Next.js 15 (App Router), TypeScript, Tailwind
 │   ├── app/(auth)/               # inscription, connexion
 │   ├── app/(main)/               # tableau-de-bord, offres, profil, preferences,
@@ -94,7 +103,7 @@ local) qui avait masqué le fait que l'export RGPD répondait 404 en multi-conte
 ### 3. Schéma et référentiels
 
 ```bash
-make migrate       # alembic upgrade head — révisions 0001 → 0006
+make migrate       # alembic upgrade head — révisions 0001 → 0007
 make seed          # secteurs NACE, compétences + alias, prompt_versions, sources (inactives)
 make seed-demo     # 3 profils synthétiques — dev/staging uniquement, refusé si ENV=production
 ```
@@ -121,7 +130,7 @@ base, deux Redis, **et** joignabilité du stockage objet par `HeadBucket`).
 
 Deux suites, volontairement séparées.
 
-### Suite unitaire — 1193 tests, rapide, sans Docker
+### Suite unitaire — rapide, sans Docker
 
 ```bash
 make test                     # depuis boussole/
@@ -131,7 +140,7 @@ make test                     # depuis boussole/
 Aucune base de données : repositories en mémoire, `fakeredis`, stockage sur répertoire
 temporaire. ~86 s. C'est la suite qu'on lance en boucle.
 
-### Suite d'intégration — 61 tests, PostgreSQL 16 + pgvector **réel**
+### Suite d'intégration — PostgreSQL 16 + pgvector **réel**
 
 ```bash
 make test-integration         # depuis boussole/

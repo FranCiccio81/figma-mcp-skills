@@ -147,8 +147,15 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    # /readyz et NON /healthz. `web` démarre sur `condition: service_healthy` :
+    # c'est donc une décision de ROUTAGE, pas de vivacité. /healthz répond 200
+    # dès que le processus est levé — base injoignable ou migrations non
+    # passées comprises — et le front commençait à parler à une API qui ne
+    # pouvait pas lui répondre. /readyz vérifie base, Redis persistant et
+    # stockage ; ses dépendances sont déjà `service_healthy` ci-dessus, donc
+    # rien n'est plus lent, seulement plus juste.
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/readyz')\""]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -181,6 +188,16 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    # Un worker mort ne fait rien SAVOIR : il ne répond à personne, aucune
+    # requête n'échoue, les tâches s'accumulent simplement dans le broker.
+    # `inspect ping` interroge le worker par le broker et échoue s'il ne
+    # consomme plus — c'est le seul signal disponible de l'extérieur.
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ⚠️ SERVICE INDISPENSABLE — pas un confort de développement.
   #
@@ -215,6 +232,25 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    # Beat ne répond à AUCUNE sonde : il ne consomme pas de file, il publie.
+    # `inspect ping` ne l'atteint donc pas. Son seul signe de vie observable
+    # est la fraîcheur de son fichier d'état, qu'il réécrit à chaque
+    # échéance. Sans sonde, un beat mort est exactement le scénario décrit
+    # ci-dessus — silencieux, et la purge RGPD ne s'exécute plus.
+    #
+    # Le seuil est large (2 h) : la tâche la moins fréquente du calendrier
+    # dicte le rythme d'écriture, et une sonde plus serrée déclarerait mort
+    # un ordonnanceur qui n'a simplement rien à faire.
+    healthcheck:
+      # Chemin lu dans `celery_app.py` (`CELERY_BEAT_SCHEDULE_FILE`, défaut
+      # `/tmp/boussole-celerybeat-schedule`). Le motif est glob : le backend
+      # `dbm` peut suffixer le fichier (.db, .dir/.dat/.bak selon
+      # l'implémentation).
+      test: ["CMD-SHELL", "test $$(find /tmp -maxdepth 1 -name 'boussole-celerybeat-schedule*' -mmin -120 | wc -l) -gt 0"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
 
   web:
     build:

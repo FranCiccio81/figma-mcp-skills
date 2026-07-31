@@ -79,8 +79,16 @@ class Settings(BaseSettings):
     login_rate_window_seconds: int = 60
 
     # IA (D08) — clés via vault en prod (D23).
+    #
+    # ``FALLBACK_LLM_API_KEY`` a été RETIRÉE : déclarée ici, lue par personne.
+    # ``.env.example`` la donnait déjà pour retirée alors que le champ était
+    # toujours là — la documentation et le code se contredisaient, et c'est la
+    # documentation qui avait raison sur l'intention.
+    #
+    # Même règle que pour ``OTEL_EXPORTER_OTLP_ENDPOINT`` : une variable qui
+    # ne fait rien induit en erreur plus sûrement qu'une variable absente. On
+    # la renseigne en croyant activer un repli qui n'existe pas.
     anthropic_api_key: str = ""
-    fallback_llm_api_key: str = ""
     embeddings_model: str = "voyage-3-large"  # hypothèse 🟡 Q11
     embeddings_dim: int = 1024
 
