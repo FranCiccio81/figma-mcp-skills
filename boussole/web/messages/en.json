@@ -5,7 +5,39 @@
     "skipToContent": "Skip to main content"
   },
   "errors": {
-    "unexpected": "An unexpected error occurred. Please try again."
+    "unexpected": "An unexpected error occurred. Please try again.",
+    "generic": "Something went wrong. Please try again in a moment.",
+    "byCode": {
+      "ai_provider_unavailable": "The analysis service is temporarily unavailable. Please try again in a few minutes.",
+      "authentication_required": "Your session has expired. Sign in again to continue.",
+      "csrf_invalid": "Your session is no longer valid. Reload the page and try again.",
+      "cv_not_parsed": "Your CV has not been analysed yet. Wait for extraction to finish, or upload it again.",
+      "duplicate_language": "This language is already in your profile.",
+      "duplicate_skill": "This skill is already in your profile.",
+      "explanation_generation_failed": "The explanation could not be produced. Please try again.",
+      "export_expired": "This download link has expired. Request a new export.",
+      "extraction_failed": "Extracting your CV failed. Check the file and upload it again.",
+      "generation_invalid_state": "This document cannot move to the next step in its current state.",
+      "generation_not_anchored": "Some statements are not backed by your profile: correct the text before validating it.",
+      "generation_not_editable": "Only a draft can be edited.",
+      "generation_not_validated": "Review and validate this document before exporting it.",
+      "internal_error": "Something went wrong. Please try again in a moment.",
+      "invalid_credentials": "Incorrect email address or password.",
+      "invalid_cursor": "Pagination has expired. Start the search again.",
+      "job_expired": "This job posting has expired: no generation is possible.",
+      "not_found": "This resource could not be found.",
+      "not_implemented": "This feature is not available yet.",
+      "not_ready": "The service is temporarily unavailable. Please try again in a moment.",
+      "payload_too_large": "The file or content you sent is too large.",
+      "profile_incomplete": "Your profile must be completed before this action.",
+      "profile_not_validated": "Validate your profile before continuing.",
+      "quota_unavailable": "This feature is paused while we resolve a technical incident. Please try again in a few minutes.",
+      "rate_limited": "Too many requests in a short time. Please wait a moment before trying again.",
+      "service_unavailable": "The service is temporarily unavailable. Please try again in a moment.",
+      "too_large": "The file you sent is too large.",
+      "unsupported_format": "This file format is not accepted.",
+      "validation_error": "Some of the information entered is invalid. Please check the form."
+    }
   },
   "validation": {
     "required": "This field is required.",

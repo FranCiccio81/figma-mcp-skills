@@ -33,6 +33,7 @@ import { FormField, fieldDescribedBy } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { isApiProblem } from "@/lib/api/client";
 import { invalidateMatchDependentQueries } from "@/lib/api/matching";
+import { useProblemMessage } from "@/lib/api/problem-message";
 import {
   createEducation,
   createExperience,
@@ -98,15 +99,6 @@ function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 const selectClass =
   "h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-content focus:border-action-primary focus:shadow-input-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
-/** Message d'erreur générique d'une mutation (422 mappé en amont si possible). */
-function mutationErrorMessage(error: unknown, fallback: string): string {
-  if (isApiProblem(error)) {
-    if (error.errors.length > 0) return error.errors.map((e) => e.message).join(" ");
-    if (error.detail) return error.detail;
-  }
-  return fallback;
-}
-
 /** En-tête de section avec action « Ajouter » optionnelle. */
 function SectionCard({
   titleId,
@@ -148,6 +140,7 @@ function RootInfoSection({
 }) {
   const t = useTranslations("profile");
   const tJobs = useTranslations("jobs");
+  const messageErreur = useProblemMessage();
   const baseId = useId();
   const [editing, setEditing] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -189,7 +182,7 @@ function RootInfoSection({
       setServerError(null);
       onChanged("saved");
     },
-    onError: (error) => setServerError(mutationErrorMessage(error, t("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const headlineId = `${baseId}-headline`;
@@ -436,6 +429,7 @@ function ExperiencesSection({
 }) {
   const t = useTranslations("profile.experiences");
   const tProfile = useTranslations("profile");
+  const messageErreur = useProblemMessage();
   const locale = useLocale();
   const baseId = useId();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -452,7 +446,7 @@ function ExperiencesSection({
       setServerError(null);
       onChanged("saved");
     },
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const deleteMutation = useMutation({
@@ -461,7 +455,7 @@ function ExperiencesSection({
       setListError(null);
       onChanged("deleted");
     },
-    onError: (error) => setListError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setListError(messageErreur(error)),
   });
 
   const period = (experience: Experience) => {
@@ -700,6 +694,7 @@ function EducationsSection({
 }) {
   const t = useTranslations("profile.educations");
   const tProfile = useTranslations("profile");
+  const messageErreur = useProblemMessage();
   const baseId = useId();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -715,7 +710,7 @@ function EducationsSection({
       setServerError(null);
       onChanged("saved");
     },
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const deleteMutation = useMutation({
@@ -724,7 +719,7 @@ function EducationsSection({
       setListError(null);
       onChanged("deleted");
     },
-    onError: (error) => setListError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setListError(messageErreur(error)),
   });
 
   return (
@@ -834,6 +829,7 @@ function SkillsSection({
   const t = useTranslations("profile.skills");
   const tProfile = useTranslations("profile");
   const tv = useTranslations("validation");
+  const messageErreur = useProblemMessage();
   const baseId = useId();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -854,13 +850,13 @@ function SkillsSection({
       setServerError(null);
       onChanged("saved");
     },
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteSkill(id),
     onSuccess: () => onChanged("deleted"),
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const inputId = `${baseId}-skill`;
@@ -925,6 +921,7 @@ function LanguagesSection({
   const t = useTranslations("profile.languages");
   const tProfile = useTranslations("profile");
   const tv = useTranslations("validation");
+  const messageErreur = useProblemMessage();
   const baseId = useId();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -958,20 +955,20 @@ function LanguagesSection({
       setServerError(null);
       onChanged("saved");
     },
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const levelMutation = useMutation({
     mutationFn: ({ id, lang_code, level }: { id: string; lang_code: string; level: CefrLevel }) =>
       updateLanguage(id, { lang_code, level }),
     onSuccess: () => onChanged("saved"),
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteLanguage(id),
     onSuccess: () => onChanged("deleted"),
-    onError: (error) => setServerError(mutationErrorMessage(error, tProfile("actionError"))),
+    onError: (error) => setServerError(messageErreur(error)),
   });
 
   const codeId = `${baseId}-code`;
@@ -1100,6 +1097,7 @@ function OptimizeCvSection() {
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
+  const messageErreur = useProblemMessage();
   const queryClient = useQueryClient();
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [validateError, setValidateError] = useState<string | null>(null);
@@ -1137,7 +1135,7 @@ export default function ProfilePage() {
     onError: (error) => {
       // 409 : préconditions non remplies — messages ciblés de l'API.
       setValidated(false);
-      setValidateError(mutationErrorMessage(error, t("validate.errorFallback")));
+      setValidateError(messageErreur(error));
     },
   });
 

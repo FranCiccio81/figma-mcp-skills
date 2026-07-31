@@ -111,3 +111,67 @@ class TestLesTroisIndicateursSuiventLaBase:
 
         assert await repo.onboarding_state(avance) == (False, False, True)
         assert await repo.onboarding_state(neuf) == (False, False, False)
+
+
+class TestUnCvNonExtraitNestPasUnCvImporte:
+    """Défaut trouvé en revue avant déploiement.
+
+    L'``EXISTS`` ignorait le statut du document. Un CV dont l'extraction a
+    ÉCHOUÉ comptait donc comme importé, et la carte du tableau de bord
+    affichait, coche verte à l'appui :
+
+        « CV importé — votre profil s'appuie sur ses informations
+          extraites. »
+
+    C'est faux, et c'est la même faute que le badge « Ancrage vérifié »
+    conservé après une édition manuelle : le produit affirme une chose qu'il
+    n'a pas vérifiée. Pire ici — la personne dont l'import a échoué n'en est
+    pas informée, le tableau de bord lui dit que tout s'est bien passé.
+    """
+
+    @staticmethod
+    async def _cv(db_session, user_id: uuid.UUID, statut: str) -> None:
+        await db_session.execute(
+            text(
+                "INSERT INTO cv_documents (user_id, file_key, filename, mime_type, "
+                "size_bytes, status) "
+                "VALUES (:uid, :cle, 'cv.pdf', 'application/pdf', 1024, :st)"
+            ),
+            {"uid": user_id, "cle": f"cv/{uuid.uuid4()}.pdf", "st": statut},
+        )
+
+    @pytest.mark.parametrize("statut", ["uploaded", "parsing", "failed"])
+    async def test_un_cv_non_extrait_ne_compte_pas(
+        self, db_session, statut: str
+    ) -> None:
+        user_id = await _compte(db_session)
+        await self._cv(db_session, user_id, statut)
+        repo = SqlAlchemyAuthRepository(db_session)
+
+        cv, _profil, _prefs = await repo.onboarding_state(user_id)
+        assert cv is False, (
+            f"un CV en '{statut}' est annoncé importé : le tableau de bord "
+            "affirme que le profil s'appuie sur des informations extraites "
+            "qui n'existent pas"
+        )
+
+    async def test_un_echec_suivi_dune_reussite_compte(self, db_session) -> None:
+        """Le cas réel : on réimporte après un échec. C'est le document
+        RÉUSSI qui décide, pas le dernier arrivé ni le premier."""
+        user_id = await _compte(db_session)
+        await self._cv(db_session, user_id, "failed")
+        await self._cv(db_session, user_id, "parsed")
+        repo = SqlAlchemyAuthRepository(db_session)
+
+        cv, _profil, _prefs = await repo.onboarding_state(user_id)
+        assert cv is True
+
+    async def test_le_cv_dun_autre_compte_ne_compte_pas(self, db_session) -> None:
+        """Garde de cloisonnement : l'``EXISTS`` porte bien sur ``user_id``."""
+        moi = await _compte(db_session)
+        autre = await _compte(db_session)
+        await self._cv(db_session, autre, "parsed")
+        repo = SqlAlchemyAuthRepository(db_session)
+
+        cv, _profil, _prefs = await repo.onboarding_state(moi)
+        assert cv is False

@@ -292,18 +292,31 @@ class ExplanationsService:
                 "explanations:hour", str(user_id),
                 limit=QUOTA_PER_HOUR, window_seconds=3600,
             )
+            # Le verdict horaire est rendu AVANT de toucher au compteur du
+            # jour. L'ordre n'est pas cosmétique : les deux ``hit`` étaient
+            # faits d'affilée, donc un appel refusé à l'heure consommait
+            # quand même un jeton sur la journée. Mesuré, 40 tentatives dans
+            # l'heure sur des quotas 10/h et 40/j ::
+            #
+            #     10 explications servies, 39 jetons/jour consommés
+            #
+            # Autrement dit : quelqu'un qui atteint son plafond horaire et
+            # réessaie perd sa journée entière sans rien obtenir de plus. Le
+            # refus doit coûter le refus, pas le quota.
+            if not heure.allowed:
+                raise _rate_limited(heure.retry_after, f"{QUOTA_PER_HOUR} par heure")
             jour = await limiter.hit(
                 "explanations:day", str(user_id),
                 limit=QUOTA_PER_DAY, window_seconds=86400,
             )
+        except Problem:
+            raise  # un refus de quota est une réponse, pas une panne
         except Exception:
             # Redis volatile injoignable : on laisse passer, comme le limiteur
             # global (D18). Un quota indisponible ne doit pas suspendre une
             # fonction ; l'incident se voit dans les journaux.
             signal_degradation("quota_explications")
             return
-        if not heure.allowed:
-            raise _rate_limited(heure.retry_after, f"{QUOTA_PER_HOUR} par heure")
         if not jour.allowed:
             raise _rate_limited(jour.retry_after, f"{QUOTA_PER_DAY} par jour")
 

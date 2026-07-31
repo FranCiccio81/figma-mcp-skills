@@ -105,11 +105,32 @@ class SqlAlchemyAuthRepository:
 
         Trois ``EXISTS`` dans une requête plutôt que trois allers-retours :
         cette route est appelée à chaque chargement de page.
+
+        **``status = 'parsed'`` et non la simple existence d'une ligne.**
+        L'``EXISTS`` mentait dans l'autre sens : un CV dont l'extraction a
+        ÉCHOUÉ (``status = 'failed'``) ou qui est encore en cours
+        (``'uploaded'``, ``'parsing'``) comptait comme importé. La carte du
+        tableau de bord affichait alors, coche verte à l'appui :
+
+            « CV importé — votre profil s'appuie sur ses informations
+              extraites. »
+
+        C'est faux, et c'est la même faute que le badge « Ancrage vérifié »
+        conservé après une édition manuelle : le produit affirme une chose
+        qu'il n'a pas vérifiée. Pire ici — la personne dont l'import a échoué
+        n'en est pas informée, le tableau de bord lui dit que tout s'est bien
+        passé.
+
+        Contrepartie assumée : pendant l'extraction (quelques secondes), la
+        carte annonce « aucun CV importé ». Inexact aussi, mais dans le sens
+        qui n'affirme rien de faux et qui invite à l'action utile — la page
+        profil, elle, montre l'état réel du document.
         """
         resultat = await self._session.execute(
             text(
                 "SELECT "
-                " EXISTS (SELECT 1 FROM cv_documents WHERE user_id = :uid),"
+                " EXISTS (SELECT 1 FROM cv_documents WHERE user_id = :uid"
+                "         AND status = 'parsed'),"
                 " EXISTS (SELECT 1 FROM profiles WHERE user_id = :uid"
                 "         AND status = 'validated'),"
                 " EXISTS (SELECT 1 FROM preferences WHERE user_id = :uid)"

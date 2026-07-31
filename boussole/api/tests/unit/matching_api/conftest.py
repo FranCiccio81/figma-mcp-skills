@@ -205,6 +205,23 @@ class InMemoryMatchingRepository:
         jobs.sort(key=lambda job: (job.last_seen_at, job.id.int), reverse=True)
         return jobs[:limit]
 
+    async def list_recent_outside_contracts(
+        self, *, contracts: tuple[str, ...], limit: int
+    ) -> list[JobPosting]:
+        """Complément EXACT de ``list_recent_active`` — le contrat inconnu
+        appartient à l'ensemble préféré, jamais aux deux."""
+        if not contracts:
+            return []
+        jobs = [
+            job
+            for job in self.jobs.values()
+            if job.status == "active"
+            and job.contract is not None
+            and job.contract not in contracts
+        ]
+        jobs.sort(key=lambda job: (job.last_seen_at, job.id.int), reverse=True)
+        return jobs[:limit]
+
     def _record(self, name: str) -> None:
         self.calls[name] = self.calls.get(name, 0) + 1
 

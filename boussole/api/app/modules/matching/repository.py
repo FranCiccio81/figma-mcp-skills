@@ -40,6 +40,16 @@ class MatchingRepository(Protocol):
         aux ``limit`` plus récentes (``last_seen_at`` décroissant)."""
         ...
 
+    async def list_recent_outside_contracts(
+        self, *, contracts: Sequence[str], limit: int
+    ) -> list[JobPosting]:
+        """Offres actives dont le contrat est HORS des préférences.
+
+        Complément exact de :meth:`list_recent_active` : contrat renseigné et
+        absent de la liste. Sert l'élargissement borné quand la préférence de
+        contrat n'est pas stricte (voir ``MatchingService.search``)."""
+        ...
+
     async def skill_labels(self, skill_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, str]:
         """``skill_id`` → label canonique (table ``skills``)."""
         ...
@@ -126,6 +136,30 @@ class SqlAlchemyMatchingRepository:
         stmt = (
             select(JobPosting)
             .where(*conditions)
+            .order_by(JobPosting.last_seen_at.desc(), JobPosting.id.desc())
+            .limit(limit)
+            .options(*_JOB_RELATIONS)
+        )
+        return list((await self._session.execute(stmt)).scalars().all())
+
+    async def list_recent_outside_contracts(
+        self, *, contracts: Sequence[str], limit: int
+    ) -> list[JobPosting]:
+        """Complément exact de :meth:`list_recent_active`.
+
+        ``contract IS NOT NULL AND contract NOT IN (...)`` : le contrat inconnu
+        appartient à l'ensemble PRÉFÉRÉ (l'inconnu n'est pas un fait négatif),
+        il ne doit donc pas être compté deux fois ici.
+        """
+        if not contracts:
+            return []
+        stmt = (
+            select(JobPosting)
+            .where(
+                JobPosting.status == "active",
+                JobPosting.contract.is_not(None),
+                JobPosting.contract.not_in(list(contracts)),
+            )
             .order_by(JobPosting.last_seen_at.desc(), JobPosting.id.desc())
             .limit(limit)
             .options(*_JOB_RELATIONS)

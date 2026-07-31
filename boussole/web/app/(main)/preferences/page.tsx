@@ -26,6 +26,7 @@ import { isApiProblem } from "@/lib/api/client";
 import { invalidateMatchDependentQueries } from "@/lib/api/matching";
 import { getPreferences, preferencesKeys, putPreferences } from "@/lib/api/preferences";
 import type { ContractType, Preferences, RemotePreference } from "@/lib/api/types";
+import { useProblemMessage } from "@/lib/api/problem-message";
 
 const REMOTE_PREF_OPTIONS: RemotePreference[] = [
   "required",
@@ -79,6 +80,7 @@ function PreferencesForm({ initial }: { initial: Preferences | undefined }) {
   const t = useTranslations("preferences");
   const tJobs = useTranslations("jobs");
   const tv = useTranslations("validation");
+  const messageErreur = useProblemMessage();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -173,7 +175,7 @@ function PreferencesForm({ initial }: { initial: Preferences | undefined }) {
         }
         if (mapped) return;
       }
-      setServerError(isApiProblem(error) && error.detail ? error.detail : t("errorSave"));
+      setServerError(messageErreur(error));
       requestAnimationFrame(() => serverErrorRef.current?.focus());
     },
   });

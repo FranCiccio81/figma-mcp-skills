@@ -342,7 +342,7 @@ class TestListMatches:
         filtered = client.get(MATCHES_URL, params={"include_blocked": "false"}).json()
         assert [item["id"] for item in filtered["items"]] == [str(fine.id)]
 
-    def test_prefilter_excludes_refused_contracts_keeps_unknown(
+    def test_prefilter_keeps_unknown_and_drops_expired(
         self,
         client: TestClient,
         auth_repository: InMemoryAuthRepository,
@@ -350,6 +350,8 @@ class TestListMatches:
         preferences_repository: InMemoryPreferencesRepository,
         matching_repository: InMemoryMatchingRepository,
     ) -> None:
+        """Le contrat INCONNU reste (l'inconnu n'est pas un fait négatif) ;
+        une offre expirée part, quel que soit son contrat."""
         setup_validated_user(
             client, auth_repository, profiles_repository, preferences_repository
         )
@@ -357,11 +359,66 @@ class TestListMatches:
         unknown_contract = matching_repository.add(
             make_job(contract=None, **default_job_kwargs())
         )
-        matching_repository.add(make_job(contract="internship", **default_job_kwargs()))
-        matching_repository.add(make_job(status="expired", **default_job_kwargs()))
+        matching_repository.add(
+            make_job(status="expired", contract="internship", **default_job_kwargs())
+        )
 
         ids = {item["id"] for item in client.get(MATCHES_URL).json()["items"]}
         assert ids == {str(kept.id), str(unknown_contract.id)}
+
+    def test_a_non_strict_preference_still_sees_other_contracts(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        preferences_repository: InMemoryPreferencesRepository,
+        matching_repository: InMemoryMatchingRepository,
+    ) -> None:
+        """LE test qui aurait attrapé le défaut (voir ``MAX_WIDENED_JOBS``).
+
+        ``contract_strict`` vaut ``false`` par défaut en base : « je préfère
+        un CDI mais je reste ouvert ». Le pré-filtre SQL rendait cette option
+        inatteignable — la personne ne voyait jamais un seul CDD.
+        """
+        setup_validated_user(
+            client, auth_repository, profiles_repository, preferences_repository
+        )
+        user_id = uuid.UUID(client.get("/api/v1/me").json()["id"])
+        preferences_repository.by_user[user_id] = make_preferences(
+            contract_strict=False
+        )
+        autre_contrat = matching_repository.add(
+            make_job(contract="internship", **default_job_kwargs())
+        )
+
+        ids = {item["id"] for item in client.get(MATCHES_URL).json()["items"]}
+        assert str(autre_contrat.id) in ids, (
+            "l'offre est masquée alors que la préférence de contrat n'est pas "
+            "stricte : contract_strict n'a aucun effet observable"
+        )
+
+    def test_a_strict_preference_hides_other_contracts(
+        self,
+        client: TestClient,
+        auth_repository: InMemoryAuthRepository,
+        profiles_repository: InMemoryProfilesRepository,
+        preferences_repository: InMemoryPreferencesRepository,
+        matching_repository: InMemoryMatchingRepository,
+    ) -> None:
+        """La contrepartie, et c'est elle qui donne son sens à l'option :
+        « strict » veut dire « ne me montre que ça »."""
+        setup_validated_user(
+            client, auth_repository, profiles_repository, preferences_repository
+        )
+        user_id = uuid.UUID(client.get("/api/v1/me").json()["id"])
+        preferences_repository.by_user[user_id] = make_preferences(
+            contract_strict=True
+        )
+        garde = matching_repository.add(make_job(**default_job_kwargs()))
+        matching_repository.add(make_job(contract="internship", **default_job_kwargs()))
+
+        ids = {item["id"] for item in client.get(MATCHES_URL).json()["items"]}
+        assert ids == {str(garde.id)}
 
     def test_cursor_pagination_no_overlap(
         self,

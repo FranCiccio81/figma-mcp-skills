@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { apiFetch, isApiProblem } from "@/lib/api/client";
 import { getMe } from "@/lib/api/me";
 import type { RegisterInput } from "@/lib/api/types";
+import { useProblemMessage } from "@/lib/api/problem-message";
 import { CONSENT_PRIVACY_VERSION, CONSENT_TERMS_VERSION } from "@/lib/constants";
 
 /**
@@ -27,6 +28,7 @@ import { CONSENT_PRIVACY_VERSION, CONSENT_TERMS_VERSION } from "@/lib/constants"
  */
 export default function RegisterPage() {
   const t = useTranslations();
+  const messageErreur = useProblemMessage();
   const router = useRouter();
   const serverErrorRef = useRef<HTMLDivElement>(null);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -124,10 +126,10 @@ export default function RegisterPage() {
             }
           }
           if (!error.errors.some((e) => e.field === "email" || e.field === "password")) {
-            setServerError(error.detail ?? t("errors.unexpected"));
+            setServerError(messageErreur(error));
           }
         } else {
-          setServerError(error.detail ?? t("errors.unexpected"));
+          setServerError(messageErreur(error));
         }
       } else {
         setServerError(t("errors.unexpected"));

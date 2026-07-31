@@ -36,6 +36,8 @@ ce test qui la compare au contenu réel de ``app/modules/*/models.py``.
 """
 
 import ast
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -50,8 +52,18 @@ MODULES = API / "app" / "modules"
 
 
 def _modules_avec_modeles() -> set[str]:
-    """Modules qui déclarent des tables — la source de vérité, pas une liste."""
-    return {p.parent.name for p in MODULES.glob("*/models.py")}
+    """Modules qui déclarent des tables — la source de vérité, pas une liste.
+
+    ``rglob`` et chemin POINTÉ, pas ``glob`` et nom court. Le motif d'origine
+    (``*/models.py`` + ``p.parent.name``) ratait ``profiles/cv/models.py`` deux
+    fois : le glob ne descend pas d'un niveau, et même corrigé il aurait rendu
+    ``cv`` là où le registre importe ``profiles.cv``. Deux tables manquaient à
+    ``Base.metadata`` sans que la garde ne bronche.
+    """
+    return {
+        ".".join(chemin.parent.relative_to(MODULES).parts)
+        for chemin in MODULES.rglob("models.py")
+    }
 
 
 def _modules_du_registre() -> set[str]:
@@ -64,7 +76,7 @@ def _modules_du_registre() -> set[str]:
             if parties[:2] == ["app", "modules"] and any(
                 alias.name == "models" for alias in noeud.names
             ):
-                importes.add(parties[2])
+                importes.add(".".join(parties[2:]))
     return importes
 
 
@@ -156,3 +168,56 @@ class TestLaMigrationNeAttendPasUnVerrouIndefiniment:
         l'écrivain, c'est la file d'attente derrière l'ACCESS EXCLUSIVE que la
         migration réclame. Sans borne, l'attente est illimitée."""
         assert "SET lock_timeout" in ENV.read_text(encoding="utf-8")
+
+
+class TestLaMetadonneeEstReellementComplete:
+    """La garde qui ne peut pas être contournée par un motif de fichier.
+
+    Les vérifications ci-dessus comparent des LISTES : celle des modules sur
+    le disque et celle du registre. Elles reposent donc sur un motif de
+    chemin, et c'est précisément un motif de chemin qui a laissé passer
+    ``profiles/cv/models.py`` — ``app/modules/*/models.py`` ne descend pas
+    d'un niveau, et ``Base.metadata`` connaissait 32 tables au lieu de 34.
+
+    Celle-ci mesure la PROPRIÉTÉ : importer le registre doit suffire.
+
+    **En SOUS-PROCESSUS, et c'est le point.** Écrite dans le processus de
+    test, elle passait au vert sans rien prouver : les imports Python sont
+    globaux, et un test exécuté plus tôt avait déjà chargé les modules
+    manquants. Elle mesurait donc l'état accumulé de la suite, pas ce que
+    voit un worker Celery qui démarre. Deux interpréteurs neufs, un par
+    scénario, sont la seule façon de poser la vraie question.
+    """
+
+    @staticmethod
+    def _tables(imports: str) -> set[str]:
+        code = (
+            f"{imports}\n"
+            "from app.core.db import Base\n"
+            "print(' '.join(sorted(Base.metadata.tables)))"
+        )
+        resultat = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=API,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return set(resultat.stdout.split())
+
+    def test_importer_le_registre_suffit(self) -> None:
+        modules = sorted(
+            ".".join(chemin.relative_to(API).with_suffix("").parts)
+            for chemin in API.joinpath("app").rglob("models.py")
+        )
+        registre = self._tables("import app.models_registry")
+        tout = self._tables(
+            "import app.models_registry\n"
+            + "\n".join(f"import {module}" for module in modules)
+        )
+
+        assert tout - registre == set(), (
+            f"tables absentes de Base.metadata quand on n'importe QUE le "
+            f"registre : {sorted(tout - registre)} — tout processus qui s'y "
+            f"fie travaille avec une métadonnée incomplète"
+        )

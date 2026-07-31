@@ -73,6 +73,33 @@ MatchEngine = Callable[[CandidateInput, JobInput], EngineMatchResult]
 #: Plafond du calcul paresseux de GET /matches 🟡 (M3 — voir docstring module).
 MAX_LAZY_SCORED_JOBS = 200
 
+#: Élargissement borné hors préférences de contrat, quand celles-ci ne sont
+#: PAS strictes.
+#:
+#: **Ce que ça corrige.** ``list_recent_active`` filtre en SQL sur le type de
+#: contrat AVANT que le moteur ne voie quoi que ce soit. ``contract_strict``
+#: — « je préfère un CDI mais je reste ouvert », modélisé par le moteur et
+#: proposé par l'interface — était donc **inatteignable** : la personne ne
+#: voyait jamais un seul CDD, strict ou pas. Et ``contract_strict`` vaut
+#: ``false`` par défaut en base : le défaut touchait tout le monde.
+#:
+#: C'était en contradiction directe avec la règle déjà actée pour le
+#: télétravail : « un critère rédhibitoire n'est jamais masqué — l'offre
+#: reste visible, badgée ; la cacher priverait l'utilisateur d'un choix qui
+#: lui revient ». Deux dimensions de préférence, deux comportements opposés.
+#:
+#: **Pourquoi un quota borné et non la levée du filtre.** Le calcul paresseux
+#: ne score que les ``MAX_LAZY_SCORED_JOBS`` offres les plus RÉCENTES. Retirer
+#: le filtre ferait entrer les contrats non désirés dans ce plafond et en
+#: chasserait des offres pertinentes : quelqu'un qui cherche un CDI verrait sa
+#: liste envahie d'intérim mieux daté. Les deux ensembles sont donc plafonnés
+#: séparément — le pertinent garde ses 200 places, l'élargissement en ajoute
+#: au plus 50.
+#:
+#: Préférence STRICTE : le filtre dur reste. « Strict » veut dire « ne me
+#: montre que ça » ; l'élargir serait ignorer une consigne explicite.
+MAX_WIDENED_JOBS = 50
+
 #: Défaut produit du module preferences quand rien n'est enregistré 🟡.
 _DEFAULT_CONTRACTS: tuple[str, ...] = ("permanent",)
 
@@ -452,6 +479,10 @@ class MatchingService:
         jobs = await self._repository.list_recent_active(
             contracts=contracts, limit=MAX_LAZY_SCORED_JOBS
         )
+        if preferences is not None and not preferences.contract_strict:
+            jobs += await self._repository.list_recent_outside_contracts(
+                contracts=contracts, limit=MAX_WIDENED_JOBS
+            )
         cached = await self._repository.get_cached_many(profile.id, [job.id for job in jobs])
 
         entries: list[tuple[JobPosting, MatchData]] = []

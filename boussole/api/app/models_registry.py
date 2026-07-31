@@ -26,7 +26,17 @@ outil que ce qu'il ne voit pas n'existe plus.
 **La règle.** Tout processus qui manipule l'ORM importe ce module. Ajouter un
 module de modèles sans l'ajouter ici est rattrapé par
 ``tests/unit/core/test_models_registry.py``, qui compare cette liste au
-contenu réel de ``app/modules/*/models.py``.
+contenu réel de ``app/modules/**/models.py``.
+
+**Un troisième oubli, trouvé en revue avant déploiement.** Le module se disait
+« le seul endroit qui connaisse la liste » et il en manquait un :
+``app/modules/profiles/cv/models.py``, imbriqué d'un niveau de plus. Mesuré :
+``Base.metadata`` connaissait **32 tables au lieu de 34** — ``cv_documents``
+et ``extraction_runs`` absentes.
+
+Et la garde ne pouvait pas le voir : elle globait ``app/modules/*/models.py``,
+motif qui ne descend pas d'un niveau. Un filet qui ne couvre pas le cas où
+l'on tombe donne surtout de la confiance. Le motif est désormais récursif.
 """
 
 from app.modules.applications import models as applications
@@ -38,6 +48,7 @@ from app.modules.matching import models as matching
 from app.modules.preferences import models as preferences
 from app.modules.privacy import models as privacy
 from app.modules.profiles import models as profiles
+from app.modules.profiles.cv import models as profiles_cv
 from app.modules.referentials import models as referentials
 
 __all__ = [
@@ -50,5 +61,6 @@ __all__ = [
     "preferences",
     "privacy",
     "profiles",
+    "profiles_cv",
     "referentials",
 ]

@@ -140,6 +140,20 @@ class SearchFilters:
     radius_km: int = 30
     include_hidden: bool = False
     saved_only: bool = False
+    #: ``False`` retire les offres portant un critère rédhibitoire.
+    #:
+    #: Le paramètre existait sur la route depuis le M2, documenté « accepté
+    #: mais sans effet au M2 : les critères bloquants proviennent du scoring
+    #: (M3) ». Le M3 a livré le scoring ; le paramètre est resté décoratif —
+    #: il n'était même pas transmis au service.
+    #: ``GET /jobs?include_blocked=false`` renvoyait donc exactement la même
+    #: page que sans le paramètre : une API qui accepte une consigne et
+    #: l'ignore en silence.
+    #:
+    #: Le défaut ``True`` reste conforme à la règle produit : une offre
+    #: bloquée est badgée, jamais retirée d'office. C'est un choix qui revient
+    #: à l'utilisateur.
+    include_blocked: bool = True
     sort: str = "date"  # 'date' | 'relevance' (avec q obligatoirement)
 
 
@@ -327,6 +341,22 @@ def build_search_statement(
     else:
         sort_expr = JobPosting.last_seen_at
         order_by = (JobPosting.last_seen_at.desc(), JobPosting.id.desc())
+
+    if matching_joint and not filters.include_blocked:
+        # Filtré en SQL et non après coup : filtrer en Python après un
+        # ``LIMIT`` rendrait des pages incomplètes, et le curseur keyset
+        # sauterait des offres.
+        #
+        # ``blocking_criteria`` est un jsonb ; une offre SANS score calculé a
+        # la colonne à NULL et reste visible — on ne sait pas si elle est
+        # bloquée, et l'inconnu n'est pas un fait négatif (même règle que le
+        # salaire non communiqué).
+        conditions.append(
+            or_(
+                match.blocking_criteria.is_(None),
+                func.jsonb_array_length(match.blocking_criteria) == 0,
+            )
+        )
 
     if cursor is not None:
         # Keyset descendant : strictement « après » le dernier élément servi.

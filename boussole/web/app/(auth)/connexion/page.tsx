@@ -15,6 +15,7 @@ import { FormField, fieldDescribedBy } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { apiFetch, isApiProblem } from "@/lib/api/client";
 import type { LoginInput } from "@/lib/api/types";
+import { useProblemMessage } from "@/lib/api/problem-message";
 
 /**
  * SCR-01 — Connexion. `POST /auth/login` (204, cookie httpOnly) puis
@@ -23,6 +24,7 @@ import type { LoginInput } from "@/lib/api/types";
  */
 function LoginForm() {
   const t = useTranslations();
+  const messageErreur = useProblemMessage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const serverErrorRef = useRef<HTMLDivElement>(null);
@@ -66,7 +68,7 @@ function LoginForm() {
             t("auth.login.errors.rateLimited", { seconds: error.retryAfter ?? 60 }),
           );
         } else {
-          setServerError(error.detail ?? t("errors.unexpected"));
+          setServerError(messageErreur(error));
         }
       } else {
         setServerError(t("errors.unexpected"));

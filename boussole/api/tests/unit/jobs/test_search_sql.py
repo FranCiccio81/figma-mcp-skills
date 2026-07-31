@@ -141,3 +141,61 @@ class TestKeysetPagination:
         order = sql.split("ORDER BY", 1)[1]
         assert "job_postings.last_seen_at DESC" in order
         assert "job_postings.id DESC" in order
+
+
+class TestIncludeBlocked:
+    """``include_blocked=false`` retire les offres à critère rédhibitoire.
+
+    Le paramètre existait sur la route depuis le M2, documenté « accepté mais
+    sans effet au M2 : les critères bloquants proviennent du scoring (M3) ».
+    Le M3 a livré le scoring ; le paramètre est resté décoratif — il n'était
+    même pas transmis au service. ``GET /jobs?include_blocked=false``
+    renvoyait exactement la même page que sans le paramètre : une API qui
+    accepte une consigne et l'ignore en silence.
+    """
+
+    PROFIL = uuid.UUID("00000000-0000-0000-0000-0000000000aa")
+
+    def _sql(self, *, include_blocked: bool) -> str:
+        return compile_pg(
+            build_search_statement(
+                USER_ID,
+                SearchFilters(include_blocked=include_blocked),
+                20,
+                None,
+                profile_id=self.PROFIL,
+                scoring_version="1.3.0",
+                profile_version=3,
+            )
+        )
+
+    def test_false_ajoute_le_filtre_en_sql(self) -> None:
+        """En SQL et non après coup : filtrer en Python après un ``LIMIT``
+        rendrait des pages incomplètes et ferait sauter des offres au
+        curseur keyset."""
+        sql = self._sql(include_blocked=False)
+        assert "jsonb_array_length" in sql
+        assert "blocking_criteria" in sql
+
+    def test_true_najoute_rien(self) -> None:
+        """Défaut du contrat : une offre bloquée est badgée, jamais retirée
+        d'office — c'est un choix qui revient à l'utilisateur."""
+        assert "jsonb_array_length" not in self._sql(include_blocked=True)
+
+    def test_une_offre_sans_score_reste_visible(self) -> None:
+        """``blocking_criteria`` à NULL = pas de score calculé. On ne sait pas
+        si l'offre est bloquée, et l'inconnu n'est pas un fait négatif (même
+        règle que le salaire non communiqué)."""
+        sql = self._sql(include_blocked=False)
+        assert "IS NULL" in sql.upper()
+
+    def test_sans_profil_valide_le_filtre_ne_sapplique_pas(self) -> None:
+        """Sans jointure de matching, il n'y a aucun critère bloquant à
+        connaître : le filtre n'a rien à filtrer et ne doit pas vider la
+        page."""
+        sql = compile_pg(
+            build_search_statement(
+                USER_ID, SearchFilters(include_blocked=False), 20, None
+            )
+        )
+        assert "jsonb_array_length" not in sql

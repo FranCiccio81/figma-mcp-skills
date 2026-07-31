@@ -108,6 +108,7 @@ class JobsService:
         lon: float | None,
         radius_km: int,
         include_hidden: bool,
+        include_blocked: bool,
         saved_only: bool,
         sort: str,
         limit: int,
@@ -145,6 +146,7 @@ class JobsService:
             lon=lon,
             radius_km=radius_km,
             include_hidden=include_hidden,
+            include_blocked=include_blocked,
             saved_only=saved_only,
             sort=effective_sort,
         )

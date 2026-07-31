@@ -61,9 +61,12 @@ async def search_jobs(
     Notes M2 :
     - ``sort=match`` (défaut du contrat) retombe sur ``relevance`` tant que le
       scoring n'est pas livré (M3) — accepté sans erreur ;
-    - ``include_blocked`` est accepté mais sans effet au M2 : les critères
-      bloquants proviennent du scoring (M3). Défaut ``true`` conforme au
-      contrat (les offres bloquées seront badgées, jamais retirées) ;
+    - ``include_blocked=false`` retire les offres portant un critère
+      rédhibitoire. Le paramètre était accepté et IGNORÉ depuis le M2 (« sans
+      effet tant que le scoring n'est pas livré ») ; le scoring est livré
+      depuis le M3, le paramètre ne l'avait pas suivi. Défaut ``true``,
+      conforme à la règle produit : une offre bloquée est badgée, jamais
+      retirée d'office — c'est un choix qui revient à l'utilisateur ;
     - ``lat``/``lon`` vont ensemble (``radius_km`` défaut 30, §3 des contrats).
     """
     if (lat is None) != (lon is None):
@@ -95,6 +98,7 @@ async def search_jobs(
         lon=lon,
         radius_km=radius_km,
         include_hidden=include_hidden,
+        include_blocked=include_blocked,
         saved_only=saved_only,
         sort=sort,
         limit=limit,

@@ -5,7 +5,39 @@
     "skipToContent": "Aller au contenu principal"
   },
   "errors": {
-    "unexpected": "Une erreur inattendue est survenue. Réessayez."
+    "unexpected": "Une erreur inattendue est survenue. Réessayez.",
+    "generic": "Une erreur est survenue. Réessayez dans un instant.",
+    "byCode": {
+      "ai_provider_unavailable": "Le service d'analyse est momentanément indisponible. Réessayez dans quelques minutes.",
+      "authentication_required": "Votre session a expiré. Reconnectez-vous pour continuer.",
+      "csrf_invalid": "Votre session n'est plus valide. Rechargez la page et réessayez.",
+      "cv_not_parsed": "Votre CV n'a pas encore été analysé. Attendez la fin de l'extraction ou réimportez-le.",
+      "duplicate_language": "Cette langue figure déjà dans votre profil.",
+      "duplicate_skill": "Cette compétence figure déjà dans votre profil.",
+      "explanation_generation_failed": "L'explication n'a pas pu être produite. Réessayez.",
+      "export_expired": "Ce lien de téléchargement a expiré. Demandez un nouvel export.",
+      "extraction_failed": "L'extraction de votre CV a échoué. Vérifiez le fichier et réimportez-le.",
+      "generation_invalid_state": "Ce document ne peut pas passer à l'étape suivante dans son état actuel.",
+      "generation_not_anchored": "Des affirmations ne sont pas reliées à votre profil : corrigez le texte avant de le valider.",
+      "generation_not_editable": "Seul un brouillon peut être modifié.",
+      "generation_not_validated": "Relisez et validez ce document avant de l'exporter.",
+      "internal_error": "Une erreur inattendue est survenue. Réessayez dans un instant.",
+      "invalid_credentials": "Adresse e-mail ou mot de passe incorrect.",
+      "invalid_cursor": "La pagination a expiré. Relancez la recherche.",
+      "job_expired": "Cette offre est expirée : aucune génération n'est possible.",
+      "not_found": "Cette ressource est introuvable.",
+      "not_implemented": "Cette fonctionnalité n'est pas encore disponible.",
+      "not_ready": "Le service est momentanément indisponible. Réessayez dans un instant.",
+      "payload_too_large": "Le fichier ou le contenu envoyé est trop volumineux.",
+      "profile_incomplete": "Votre profil doit être complété avant cette action.",
+      "profile_not_validated": "Validez votre profil avant de poursuivre.",
+      "quota_unavailable": "Cette fonction est momentanément suspendue le temps d'un incident technique. Réessayez dans quelques minutes.",
+      "rate_limited": "Trop de demandes en peu de temps. Patientez un instant avant de réessayer.",
+      "service_unavailable": "Le service est momentanément indisponible. Réessayez dans un instant.",
+      "too_large": "Le fichier envoyé est trop volumineux.",
+      "unsupported_format": "Ce format de fichier n'est pas accepté.",
+      "validation_error": "Certaines informations saisies sont invalides. Vérifiez le formulaire."
+    }
   },
   "validation": {
     "required": "Ce champ est obligatoire.",
