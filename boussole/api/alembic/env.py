@@ -63,6 +63,17 @@ def _do_run_migrations(connection: Connection) -> None:
     #
     # Échouer vite est le bon comportement : le déploiement est rejoué, alors
     # qu'une indisponibilité en écriture ne se rattrape pas.
+    #
+    # ⚠️ PORTÉE. Ce raisonnement vaut pour ce qui prend un ACCESS EXCLUSIVE —
+    # ALTER TABLE, ADD CONSTRAINT. Il est FAUX pour ``CREATE INDEX
+    # CONCURRENTLY``, qui ne bloque aucune écriture (c'est sa raison d'être)
+    # mais attend la fin des transactions en cours, attente elle aussi
+    # soumise au lock_timeout. Mesuré en revue : un SELECT en lecture seule
+    # sur une table sans rapport, tenu 3 s, faisait échouer 0007 dès son
+    # premier index. Les migrations concurrentes lèvent donc la borne dans
+    # leur ``autocommit_block`` (voir ``_sans_lock_timeout`` dans
+    # ``0007_efficiency_indexes``) — ne pas la retirer d'ici pour autant :
+    # elle protège tout le reste.
     connection.exec_driver_sql("SET lock_timeout = '5s'")
     with context.begin_transaction():
         context.run_migrations()

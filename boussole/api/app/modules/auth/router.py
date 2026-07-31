@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from redis.asyncio import Redis
 
 from app.core.config import Settings, get_settings
+from app.core.degradation import signal_degradation
 from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.core.redis import get_redis_cache, get_redis_persistent
@@ -159,7 +160,7 @@ async def login(
         # Laisser passer affaiblit la protection anti-force-brute le temps de
         # la panne — mais le mot de passe reste haché, l'audit reste écrit, et
         # une panne de cache ne doit pas devenir une panne d'authentification.
-        logger.warning("login_rate_limit_unavailable")
+        signal_degradation("rate_limit_login")
         result = None
 
     if result is not None and not result.allowed:

@@ -66,7 +66,37 @@ class AuthService:
         strictement identique (201 + cookies de même forme, jeton de session
         « leurre » jamais stocké — donc invalide) et un e-mail « un compte
         existe déjà » doit être envoyé au titulaire.
+
+        **La réponse était neutre, sa DURÉE ne l'était pas.** Mesuré en revue
+        avant déploiement, médiane sur 12 tentatives ::
+
+            adresse déjà prise :   7,3 ms      ← retour avant tout hachage
+            adresse libre      : 108,0 ms      ← argon2 puis écriture
+            rapport            : ×14,8
+
+        Un facteur 15 se lit à l'œil nu, même à travers un réseau : le 201
+        neutre n'apprenait rien, le chronomètre disait tout. Et ce que
+        l'oracle révèle ici n'est pas anodin — « cette personne a un compte
+        sur une plateforme de recherche d'emploi » se teste adresse par
+        adresse, y compris par un employeur sur celles de ses salariés.
+
+        **Le correctif : hacher dans TOUS les cas.** Le coût dominant est la
+        dérivation argon2 ; en la plaçant avant l'embranchement, les deux
+        chemins la paient. Il reste l'écriture (INSERT + consentements +
+        session) que le chemin « adresse prise » ne fait pas — quelques
+        millisecondes sur plus de cent, sans commune mesure avec un facteur
+        15. L'égaliser complètement demanderait d'écrire des lignes factices
+        en base : le remède serait pire.
+
+        Le hachage systématique ne crée pas d'exposition nouvelle : inscrire
+        une adresse LIBRE le déclenchait déjà, et c'est le chemin le moins
+        cher pour qui veut consommer du CPU. Le limiteur global (60 req/min
+        par identité) couvre les deux de la même façon.
         """
+        # Avant l'embranchement, délibérément : c'est ce qui rend les deux
+        # chemins indistinguables au chronomètre.
+        password_hash = hash_password(data.password)
+
         # ``email_taken`` et non ``get_user_by_email`` : l'index unique de
         # ``users.email`` ignore ``deleted_at``, donc l'adresse d'un compte
         # supprimé reste occupée jusqu'à sa purge (J+30).
@@ -88,7 +118,7 @@ class AuthService:
 
         user = await self._repository.create_user(
             email=data.email,
-            password_hash=hash_password(data.password),
+            password_hash=password_hash,
             locale=data.locale,
             consents=[
                 ("terms", data.accepted_terms_version),

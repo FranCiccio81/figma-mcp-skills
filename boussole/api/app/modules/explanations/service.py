@@ -32,6 +32,7 @@ from redis.asyncio import Redis
 from starlette.concurrency import run_in_threadpool
 
 from app.ai.providers.base import LLMProvider, LLMProviderError
+from app.core.degradation import signal_degradation
 from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.modules.explanations.repository import ExplanationsRepository
@@ -299,7 +300,7 @@ class ExplanationsService:
             # Redis volatile injoignable : on laisse passer, comme le limiteur
             # global (D18). Un quota indisponible ne doit pas suspendre une
             # fonction ; l'incident se voit dans les journaux.
-            logger.warning("explanation_quota_unavailable")
+            signal_degradation("quota_explications")
             return
         if not heure.allowed:
             raise _rate_limited(heure.retry_after, f"{QUOTA_PER_HOUR} par heure")

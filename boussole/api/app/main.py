@@ -14,7 +14,8 @@ import os
 import sys
 import time
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
+from typing import Any
 
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -24,6 +25,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import Settings, get_settings
 from app.core.db import check_database
+from app.core.degradation import signal_degradation
 from app.core.observability import configure_observability
 from app.core.problems import problem_response, register_problem_handlers
 from app.core.ratelimit import FixedWindowRateLimiter
@@ -301,7 +303,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if result.allowed and request.method == "GET" and path == f"{settings.api_prefix}/jobs":
                 result = await limiter.hit("search", identity, limit=30, window_seconds=60)
         except Exception:  # fail-open volontaire (D18)
-            logger.warning("rate_limit_unavailable", extra={"path": path})
+            # ERROR étouffé plutôt que WARNING par requête : une limitation
+            # de débit qui s'efface doit réveiller quelqu'un (voir
+            # ``app/core/degradation``), sans noyer l'alerte sous mille
+            # copies d'elle-même.
+            signal_degradation("rate_limit_global", detail=path)
             return await call_next(request)
         if not result.allowed:
             response = problem_response(
@@ -335,12 +341,93 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 MAX_REQUEST_BODY_BYTES = 12 * 1024 * 1024
 
 
-class BodySizeLimitMiddleware(BaseHTTPMiddleware):
-    """Refuse un corps trop gros AVANT de le lire."""
+#: Dépendances SANS lesquelles l'instance ne peut pas servir correctement.
+#:
+#: ``redis_cache`` n'en fait délibérément PAS partie. D17 pose que sa perte
+#: est acceptable — il ne porte que du cache, de la limitation de débit et
+#: des quotas, rien de durable. Il figurait pourtant dans cette liste, et une
+#: readiness en échec retire l'instance du service : une panne de cache ne
+#: dégradait pas le service, elle le COUPAIT, sur toutes les instances à la
+#: fois. C'est très exactement la panne totale que le fail-open du limiteur
+#: de connexion existe pour éviter — son commentaire dit « une panne de cache
+#: ne doit pas devenir une panne d'authentification », et la sonde en faisait
+#: une panne de tout.
+DEPENDANCES_VITALES = ("database", "redis_persistent", "storage")
 
-    async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+
+def readiness_verdict(checks: Mapping[str, bool]) -> tuple[bool, str, list[str]]:
+    """(l'instance peut-elle servir, statut à publier, dépendances manquantes).
+
+    Fonction pure, extraite de la route : la règle « ce qui coupe le service »
+    est trop conséquente pour n'être vérifiable qu'à travers un serveur HTTP
+    disposant d'une vraie base de données.
+    """
+    manquantes = [nom for nom in DEPENDANCES_VITALES if not checks.get(nom, False)]
+    if manquantes:
+        return False, "not_ready", manquantes
+    return True, "ready" if checks.get("redis_cache", False) else "degraded", []
+
+
+def _payload_too_large(request: Request | None) -> JSONResponse:
+    return problem_response(
+        request,
+        status=413,
+        code="payload_too_large",
+        title="Requête trop volumineuse",
+        detail=(
+            "Le corps de la requête dépasse la limite de "
+            f"{MAX_REQUEST_BODY_BYTES // (1024 * 1024)} Mo."
+        ),
+    )
+
+
+class BodySizeLimitMiddleware:
+    """Refuse un corps trop gros — sur l'en-tête ET sur le flux réel.
+
+    **Ce que ça corrige.** La première version ne lisait que
+    ``Content-Length``. Or cet en-tête est *absent* d'une requête en
+    ``Transfer-Encoding: chunked``, et le middleware laissait alors passer un
+    corps de taille quelconque. Mesuré, sans authentification ::
+
+        Content-Length 12 Mo + 1 octet   → 413        (le cas testé)
+        chunked, 36 Mo, sans Content-Length → 422     ← reçu en entier
+                                           pic mémoire 108 Mo
+
+    C'est très exactement l'épuisement mémoire que ce middleware existe pour
+    empêcher, accessible par une option de la ligne de commande de curl. Le
+    contrôle vérifiait la DÉCLARATION du client, jamais ce qu'il envoyait :
+    il ne protégeait que d'un attaquant honnête.
+
+    **Pourquoi ce n'est plus un ``BaseHTTPMiddleware``.** Celui-ci ne donne
+    accès qu'à un ``Request`` déjà constitué ; borner un corps demande de
+    s'interposer sur ``receive`` pour compter les morceaux À MESURE et couper
+    avant que l'accumulation n'ait lieu. C'est une opération ASGI, pas une
+    opération HTTP — d'où l'écriture directe en middleware ASGI.
+
+    **Pourquoi le 413 est envoyé depuis ``receive`` et non par une exception.**
+    Premier essai : lever depuis le lecteur borné et rattraper plus haut. Il
+    rendait **400** et non 413 — FastAPI enveloppe *toute* exception survenue
+    pendant la lecture du corps dans un ``HTTPException(400, "There was an
+    error parsing the body")``, bien avant que l'exception ne remonte
+    jusqu'ici. On répond donc soi-même, puis on rend un ``http.disconnect``
+    pour débloquer l'application et on ignore ce qu'elle enverra ensuite :
+    le client a déjà sa réponse, et une seconde réponse sur la même requête
+    serait malformée.
+
+    Le plafond déclaré reste vérifié en premier : quand le client annonce sa
+    taille, on refuse sans lire un octet, et l'attaquant honnête n'occupe
+    jamais de mémoire du tout.
+    """
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
         declaree = request.headers.get("content-length")
         if declaree is not None:
             try:
@@ -351,17 +438,45 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
                 logger.warning(
                     "request_body_too_large path=%s declared=%s", request.url.path, taille
                 )
-                return problem_response(
-                    request,
-                    status=413,
-                    code="payload_too_large",
-                    title="Requête trop volumineuse",
-                    detail=(
-                        "Le corps de la requête dépasse la limite de "
-                        f"{MAX_REQUEST_BODY_BYTES // (1024 * 1024)} Mo."
-                    ),
-                )
-        return await call_next(request)
+                await _payload_too_large(request)(scope, receive, send)
+                return
+
+        recu = 0
+        depasse = False
+
+        async def receive_borne() -> Any:
+            nonlocal recu, depasse
+            if depasse:
+                return {"type": "http.disconnect"}
+            message = await receive()
+            if message["type"] == "http.request":
+                recu += len(message.get("body", b""))
+                if recu > MAX_REQUEST_BODY_BYTES:
+                    depasse = True
+                    logger.warning(
+                        "request_body_too_large path=%s streamed=%s",
+                        request.url.path,
+                        recu,
+                    )
+                    await _payload_too_large(request)(scope, receive, send)
+                    return {"type": "http.disconnect"}
+            return message
+
+        async def send_filtre(message: Any) -> None:
+            # Le 413 est parti : ce que l'application produit ensuite (un 400
+            # de FastAPI, un 500 de son gestionnaire d'erreurs) n'a plus de
+            # destinataire et écraserait une réponse déjà émise.
+            if not depasse:
+                await send(message)
+
+        try:
+            await self.app(scope, receive_borne, send_filtre)
+        except Exception:
+            # Une application interrompue en pleine lecture a le droit de
+            # lever ; la requête est déjà tranchée. Toute autre erreur suit
+            # son chemin normal.
+            if not depasse:
+                raise
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -506,17 +621,22 @@ def create_app(
         checks = {
             "database": await check_database(),
             "redis_persistent": await check_redis(app.state.redis_persistent_factory()),
-            "redis_cache": await check_redis(app.state.redis_cache_factory()),
             "storage": await _storage_ready(),
+            "redis_cache": await check_redis(app.state.redis_cache_factory()),
         }
-        if all(checks.values()):
-            return JSONResponse({"status": "ready", "checks": checks})
+        pret, statut, manquantes = readiness_verdict(checks)
+        if not checks["redis_cache"]:
+            signal_degradation(
+                "redis_cache", detail="limitation de débit et quotas inactifs"
+            )
+        if pret:
+            return JSONResponse({"status": statut, "checks": checks})
         return problem_response(
             request,
             status=503,
             code="not_ready",
             title="Service indisponible",
-            detail=f"Dépendances indisponibles : {[k for k, v in checks.items() if not v]}",
+            detail=f"Dépendances indisponibles : {manquantes}",
         )
 
     return app

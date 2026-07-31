@@ -56,6 +56,28 @@ depends_on = None
 _STATUS_CHECK = "status IN ('success', 'schema_retry', 'failed')"
 
 
+def _sans_lock_timeout() -> None:
+    """Lève le ``lock_timeout`` de 5 s posé par ``env.py``.
+
+    Même correctif que dans 0007, et trouvé de la même façon : le test
+    générique écrit pour 0007 (``tests/unit/core/test_migration_lock_policy``)
+    inspecte TOUTES les migrations qui font du ``CONCURRENTLY`` et a désigné
+    celle-ci aussitôt.
+
+    ``CREATE INDEX CONCURRENTLY`` attend la fin des transactions en cours, et
+    cette attente est soumise au ``lock_timeout``. Mesuré : un ``SELECT`` en
+    lecture seule sur une table sans rapport, tenu trois secondes, suffit à
+    faire échouer la création. La borne ne protégeait rien ici — un index
+    concurrent ne prend qu'un ``SHARE UPDATE EXCLUSIVE`` et ne bloque aucune
+    écriture ; elle ne coûtait que l'échec du déploiement.
+
+    Les étapes 1 et 2 de l'``upgrade``, elles, restent sous les 5 s : ce sont
+    des ``ALTER TABLE``, et c'est exactement ce que la borne existe pour
+    borner.
+    """
+    op.execute("SET lock_timeout = 0")
+
+
 def upgrade() -> None:
     # 1. Contrainte posée NOT VALID : verrou fort, mais instantané.
     op.execute(
@@ -69,6 +91,7 @@ def upgrade() -> None:
     op.execute(sa.text("ALTER TABLE ai_calls VALIDATE CONSTRAINT ck_ai_calls_status"))
     # 3. Index partiel CONCURRENTLY (hors transaction, d'où l'autocommit).
     with op.get_context().autocommit_block():
+        _sans_lock_timeout()
         op.create_index(
             "ix_ai_calls_user_id",
             "ai_calls",
@@ -82,6 +105,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     with op.get_context().autocommit_block():
+        _sans_lock_timeout()  # même attente, même raison qu'à l'aller
         op.drop_index(
             "ix_ai_calls_user_id",
             table_name="ai_calls",

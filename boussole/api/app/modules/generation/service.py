@@ -53,6 +53,7 @@ from app.ai.tasks.generate import (
     GenerationTaskError,
     run_generation_task,
 )
+from app.core.degradation import signal_degradation
 from app.core.problems import Problem
 from app.core.ratelimit import FixedWindowRateLimiter
 from app.modules.generation.models import GeneratedDocument, api_status
@@ -494,16 +495,55 @@ class GenerationService:
     async def _enforce_quotas(self, user_id: uuid.UUID) -> None:
         """Quotas 10/h puis 40/j (RM-L-4) — 429 + Retry-After, aucune tâche
         créée (AC-L-3). Un refus horaire ne consomme pas le compteur jour ;
-        l'inverse consomme un jeton horaire (fenêtres fixes, assumé 🟡)."""
+        l'inverse consomme un jeton horaire (fenêtres fixes, assumé 🟡).
+
+        **Ce quota échoue FERMÉ, contrairement aux autres gardes Redis.**
+        Le limiteur global, celui de connexion et le quota d'explications
+        laissent passer quand le Redis volatile tombe : ils protègent la
+        disponibilité, et une panne de cache ne doit pas devenir une panne de
+        service. Celui-ci protège autre chose — une **dépense réelle** chez
+        un fournisseur de LLM. Laisser passer, c'est supprimer le plafond de
+        coût pendant toute la durée de la panne, sans que personne ne l'ait
+        décidé.
+
+        Il échouait déjà fermé, mais par accident : l'exception n'était pas
+        gardée du tout et l'utilisateur recevait un **500** sans explication.
+        Le refus est désormais explicite — 503 ``quota_unavailable``, message
+        lisible, et la dégradation signalée à l'exploitation.
+        """
         limiter = FixedWindowRateLimiter(self._cache)
-        hour = await limiter.hit(
-            "generations:hour", str(user_id), limit=QUOTA_PER_HOUR, window_seconds=3600
-        )
-        if not hour.allowed:
-            raise _rate_limited(hour.retry_after, "10 par heure")
-        day = await limiter.hit(
-            "generations:day", str(user_id), limit=QUOTA_PER_DAY, window_seconds=86400
-        )
+        try:
+            hour = await limiter.hit(
+                "generations:hour",
+                str(user_id),
+                limit=QUOTA_PER_HOUR,
+                window_seconds=3600,
+            )
+            if not hour.allowed:
+                raise _rate_limited(hour.retry_after, "10 par heure")
+            day = await limiter.hit(
+                "generations:day",
+                str(user_id),
+                limit=QUOTA_PER_DAY,
+                window_seconds=86400,
+            )
+        except Problem:
+            raise  # un refus de quota est une réponse, pas une panne
+        except Exception as exc:
+            signal_degradation(
+                "quota_generation", detail="génération suspendue (plafond de coût)"
+            )
+            raise Problem(
+                status=503,
+                code="quota_unavailable",
+                title="Génération momentanément indisponible",
+                detail=(
+                    "Le décompte des générations est inaccessible : la "
+                    "fonction est suspendue le temps de l'incident pour ne "
+                    "pas dépasser vos quotas. Réessayez dans quelques minutes."
+                ),
+                headers={"Retry-After": "120"},
+            ) from exc
         if not day.allowed:
             raise _rate_limited(day.retry_after, "40 par jour")
 

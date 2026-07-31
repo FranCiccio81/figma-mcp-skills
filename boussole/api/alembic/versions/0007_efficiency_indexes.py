@@ -70,6 +70,9 @@ Deux pièges que la revue a reproduits sur 0006 et qu'on évite ici :
 - L'``autocommit_block`` casse l'atomicité : un échec en cours laisse une
   partie du travail commitée. Chaque étape est donc **rejouable** telle
   quelle.
+- ``env.py`` pose ``lock_timeout = 5s`` sur la connexion de migration. Cette
+  borne est **juste pour les migrations transactionnelles et fausse ici** :
+  voir :func:`_sans_lock_timeout`.
 """
 
 from alembic import op
@@ -178,8 +181,42 @@ def _drop_if_invalid(nom: str) -> None:
         op.execute(f"DROP INDEX CONCURRENTLY IF EXISTS {nom}")
 
 
+def _sans_lock_timeout() -> None:
+    """Lève le ``lock_timeout`` de 5 s pour la durée de ce bloc.
+
+    **Mesuré en revue avant déploiement, contre un PostgreSQL réel.** Un
+    simple ``SELECT`` **en lecture seule** sur ``users`` — une table sans
+    aucun rapport — tenu trois secondes suffisait à faire échouer cette
+    migration dès son PREMIER index ::
+
+        asyncpg.exceptions.LockNotAvailableError:
+          canceling statement due to lock timeout
+        [SQL: CREATE INDEX CONCURRENTLY ... ON ai_calls (created_at)]
+
+    La raison : ``CREATE INDEX CONCURRENTLY`` attend la fin des transactions
+    en cours au moment où il démarre, et cette attente est soumise au
+    ``lock_timeout``. Sur une base en production — un ``pg_dump``, une
+    requête analytique, un ``idle in transaction`` oublié — la condition est
+    permanente. Onze index à passer, chacun devant franchir la même porte.
+
+    **Et cette borne ne protégeait rien ici.** Le commentaire d'``env.py``
+    justifie les 5 s par « un lecteur long transforme une migration de 4 s en
+    58 s d'écritures bloquées ». C'est vrai d'un ``ALTER TABLE``, qui prend un
+    ``ACCESS EXCLUSIVE``. ``CREATE INDEX CONCURRENTLY`` ne prend qu'un
+    ``SHARE UPDATE EXCLUSIVE`` et **ne bloque aucune écriture** — c'est son
+    unique raison d'être. La borne n'évitait donc aucune indisponibilité et
+    ne coûtait que l'échec de la migration.
+
+    Le ``lock_timeout`` reste en vigueur partout ailleurs : c'est la portée
+    qui était fausse, pas le principe. ``statement_timeout`` n'est pas touché
+    non plus — s'il est posé côté serveur, il s'applique toujours.
+    """
+    op.execute("SET lock_timeout = 0")
+
+
 def upgrade() -> None:
     with op.get_context().autocommit_block():
+        _sans_lock_timeout()
         for nom, _table, sql in INDEXES:
             _drop_if_invalid(nom)
             op.execute(sql)
@@ -192,5 +229,6 @@ def downgrade() -> None:
     un index ne porte pas d'information qui n'existe pas ailleurs.
     """
     with op.get_context().autocommit_block():
+        _sans_lock_timeout()  # même attente, même raison qu'à l'aller
         for nom, _table, _sql in INDEXES:
             op.execute(f"DROP INDEX CONCURRENTLY IF EXISTS {nom}")
