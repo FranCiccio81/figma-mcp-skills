@@ -357,8 +357,15 @@ class MatchingService:
         preferences: PreferencesData | None,
         job: JobPosting,
         context: _ScoringContext,
+        *,
+        commit: bool = True,
     ) -> MatchData:
-        """Calcul synchrone (aucun réseau) + upsert dans ``match_results``."""
+        """Calcul synchrone (aucun réseau) + upsert dans ``match_results``.
+
+        ``commit=False`` est utilisé par ``search`` : voir
+        :meth:`MatchingRepository.upsert_result`, un commit par offre coûtait
+        6,8 s sur une page à froid.
+        """
         taxonomy = context.taxonomy
         skill_vectors = context.skill_vectors
 
@@ -406,7 +413,8 @@ class MatchingService:
                     "items": data.dimensions,
                 },
                 computed_at=datetime.now(UTC),
-            )
+            ),
+            commit=commit,
         )
         return data
 
@@ -487,6 +495,7 @@ class MatchingService:
 
         entries: list[tuple[JobPosting, MatchData]] = []
         context: _ScoringContext | None = None
+        calcules = 0
         for job in jobs:
             data = self._from_valid_cache(cached.get(job.id), profile)
             if data is None:
@@ -494,8 +503,16 @@ class MatchingService:
                 # une offre doit réellement être (re)calculée.
                 if context is None:
                     context = await self._load_context(profile, jobs)
-                data = await self._compute_and_store(profile, preferences, job, context)
+                data = await self._compute_and_store(
+                    profile, preferences, job, context, commit=False
+                )
+                calcules += 1
             entries.append((job, data))
+
+        if calcules:
+            # UN commit pour toute la page, et non un par offre. C'est tout
+            # l'écart entre 6,8 s et une réponse tenable à froid.
+            await self._repository.commit()
 
         if min_score is not None:
             entries = [entry for entry in entries if entry[1].score >= min_score]

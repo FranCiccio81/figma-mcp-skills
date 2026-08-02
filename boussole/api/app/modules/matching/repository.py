@@ -83,8 +83,16 @@ class MatchingRepository(Protocol):
         self, profile_id: uuid.UUID, job_ids: Sequence[uuid.UUID]
     ) -> dict[uuid.UUID, MatchResultRow]: ...
 
-    async def upsert_result(self, row: MatchResultRow) -> None:
-        """Upsert par (profile_id, job_posting_id) — remplace toutes les valeurs."""
+    async def upsert_result(self, row: MatchResultRow, *, commit: bool = True) -> None:
+        """Upsert par (profile_id, job_posting_id) — remplace toutes les valeurs.
+
+        ``commit=False`` laisse la transaction ouverte : ``GET /matches``
+        écrit une page entière puis valide UNE fois (voir l'implémentation —
+        un commit par offre coûtait 6,8 s sur une page à froid)."""
+        ...
+
+    async def commit(self) -> None:
+        """Valide un lot d'``upsert_result(commit=False)``."""
         ...
 
     async def delete_for_user(self, user_id: uuid.UUID) -> None:
@@ -214,7 +222,27 @@ class SqlAlchemyMatchingRepository:
             for row in (await self._session.execute(stmt)).scalars()
         }
 
-    async def upsert_result(self, row: MatchResultRow) -> None:
+    async def upsert_result(self, row: MatchResultRow, *, commit: bool = True) -> None:
+        """Écrit un résultat. ``commit=False`` laisse la transaction ouverte.
+
+        **Ce que ça corrige.** Le commit était inconditionnel, et
+        ``GET /matches`` appelle cette méthode UNE FOIS PAR OFFRE : scorer
+        250 offres ouvrait et validait 250 transactions, chacune avec son
+        aller-retour de synchronisation disque. Mesuré à froid sur un corpus
+        de 260 offres, PostgreSQL réel :
+
+            avant : 6 781 ms      après : voir tests/integration/
+                                          test_performance_deploiement.py
+
+        Le calcul lui-même n'y était pour presque rien — c'étaient les
+        commits. Personne ne l'avait vu parce qu'aucun test ne mesurait ce
+        chemin à froid, et que le chemin CHAUD (tout en cache) répond en
+        130 ms.
+
+        Le cas froid n'est pas rare : c'est la première visite, et surtout
+        CHAQUE changement de préférences, qui invalide tout le cache de
+        l'utilisateur (RM-D-4).
+        """
         values = {
             "scoring_version": row.scoring_version,
             "score": row.score,
@@ -236,6 +264,11 @@ class SqlAlchemyMatchingRepository:
             )
         )
         await self._session.execute(stmt)
+        if commit:
+            await self._session.commit()
+
+    async def commit(self) -> None:
+        """Valide le lot écrit avec ``upsert_result(commit=False)``."""
         await self._session.commit()
 
     async def delete_for_user(self, user_id: uuid.UUID) -> None:

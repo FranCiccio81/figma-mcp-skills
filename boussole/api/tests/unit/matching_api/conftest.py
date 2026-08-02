@@ -258,7 +258,11 @@ class InMemoryMatchingRepository:
                 found[job_id] = row
         return found
 
-    async def upsert_result(self, row: MatchResultRow) -> None:
+    async def commit(self) -> None:
+        """Le lot est validé en une fois — voir ``upsert_result``."""
+        return None
+
+    async def upsert_result(self, row: MatchResultRow, *, commit: bool = True) -> None:
         self.results[(row.profile_id, row.job_posting_id)] = row
 
     async def delete_for_user(self, user_id: uuid.UUID) -> None:
