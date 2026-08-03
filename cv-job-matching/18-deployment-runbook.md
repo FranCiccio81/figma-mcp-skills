@@ -79,6 +79,7 @@ Légende : **Prod** = doit être positionnée explicitement en production ; **Se
 | `ENV` | `development` \| `staging` \| `production`. **Vocabulaire fermé** : toute autre valeur fait échouer le démarrage | `development` | **Oui** | Non |
 | `DEBUG` | Indicateur applicatif. **`true` fait échouer le démarrage dès `staging`** : SQLAlchemy journaliserait chaque requête avec ses paramètres liés — profils, adresses, extraits de CV | `false` | **Oui → `false`** | Non |
 | `API_PREFIX` | Préfixe des routes | `/api/v1` | Non | Non |
+| `WEB_CONCURRENCY` | Workers uvicorn du conteneur (lu nativement par uvicorn — `Dockerfile.api` ne passe pas `--workers`). ~15 req/s et ~5 utilisateurs simultanés par worker (§5.5). Multiplie les connexions PostgreSQL | `1` | **Oui — à dimensionner** | Non |
 | `FORWARDED_ALLOW_IPS` | Liste (virgules, pas de CIDR) des proxies de confiance pour `X-Forwarded-For`. Lue **deux fois** : par uvicorn (`--forwarded-allow-ips`) et par l'application | `127.0.0.1` | **Oui** | Non |
 
 > ⚠️ `FORWARDED_ALLOW_IPS` mal réglée n'empêche pas le démarrage mais dégrade le rate limiting : soit tous les anonymes partagent un seul seau de 60 req/min (auto-DoS), soit — avec `*` — l'identité de limitation devient falsifiable par n'importe quel client.
@@ -485,7 +486,63 @@ ORDER BY created_at;
 > `GET /me`, donc le tableau de bord n'affirme plus que le profil s'appuie
 > sur des informations extraites qui n'existent pas.
 
-### 5.5 Ce qu'il **ne faut pas** faire après déploiement
+### 5.5 Capacité mesurée et dimensionnement
+
+**Mesuré**, pas estimé : `boussole/api/scripts/charge.py`, PostgreSQL réel,
+5 000 offres, comptes avec profil validé et préférences. Transport ASGI en
+processus — donc sans la pile réseau, mais avec le vrai SQL, le vrai moteur
+de matching et le **pool de connexions de production**.
+
+| Utilisateurs simultanés | `/jobs` p50 | `/matches` p50 | `/matches` p95 | Débit |
+|---|---|---|---|---|
+| 1  |  24 ms |   122 ms |   597 ms | — |
+| 5  | 100 ms |   436 ms | 2 324 ms | 14 req/s |
+| 20 | 795 ms | 1 490 ms | 9 520 ms | 15 req/s |
+
+**Aucune erreur** à 20 utilisateurs : ni 500, ni épuisement du pool, ni
+rejet. Le service ne casse pas, il ralentit.
+
+**La taille du corpus n'est pas le facteur.** À un utilisateur, 5 000 offres
+répondent en 24 ms — plus vite que 260 offres avant les index de 0007. Ce qui
+coûte, c'est la concurrence : le débit plafonne à ~15 req/s **quel que soit**
+le nombre d'utilisateurs, et la latence croît linéairement. Signature d'une
+sérialisation.
+
+**Pourquoi.** Le moteur de matching est du Python synchrone et gourmand en
+CPU, appelé jusqu'à 250 fois par `GET /matches`. Pendant ce calcul, la boucle
+d'événements ne fait rien d'autre : `/healthz`, qui répond en 1 ms à vide,
+monte à 162 ms p50 / 418 ms p99 sous charge.
+
+> Le déplacer dans un pool de fils a été essayé et **retiré** : le verrou
+> global de Python empêche tout parallélisme réel du calcul. Mesuré,
+> `/healthz` p99 passait de 418 à 289 ms, mais `/matches` p95 se dégradait de
+> 9,5 s à 10,5 s (surcoût de dispatch × 250 appels) et le débit ne bougeait
+> pas. Le remède coûtait plus qu'il ne rapportait, sur le chemin le plus
+> chaud.
+
+**Le levier est le nombre de processus.** `infra/Dockerfile.api` lance **un
+seul** worker uvicorn. Deux façons de dimensionner, au choix :
+
+| Variable | Effet |
+|---|---|
+| `WEB_CONCURRENCY` | Nombre de workers uvicorn dans le conteneur. Lu nativement par uvicorn quand `--workers` n'est pas passé — c'est le cas ici |
+| réplicas du conteneur | Même effet, sous le contrôle de l'orchestrateur |
+
+Compter **~15 req/s et ~5 utilisateurs simultanés confortables par
+processus**. Pour 100 utilisateurs actifs simultanés, prévoir de l'ordre de
+20 processus, répartis comme on veut entre workers et réplicas.
+
+> ⚠️ `WEB_CONCURRENCY > 1` multiplie aussi les connexions PostgreSQL : chaque
+> worker a son propre pool (5 + 10 de débordement). Vérifier que
+> `max_connections` du serveur couvre `workers × 15 × instances`, sans
+> oublier les workers Celery.
+
+**Le pic de `/matches` est un coût de démarrage à froid**, pas un régime
+permanent : il ne survient qu'à la première visite et après un changement de
+préférences, qui invalide le cache de l'utilisateur (RM-D-4). Une fois le
+cache chaud, la même page répond en ~130 ms.
+
+### 5.6 Ce qu'il **ne faut pas** faire après déploiement
 
 - Ne pas exécuter `make seed-demo` (refusé en production, mais l'intention est déjà une erreur) ;
 - Ne pas exécuter `alembic downgrade` sur `0001` : sa fonction `downgrade()` fait `DROP SCHEMA public CASCADE` et est explicitement marquée **DEV-ONLY** (voir §9) ;
