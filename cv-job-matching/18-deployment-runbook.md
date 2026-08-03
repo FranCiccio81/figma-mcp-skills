@@ -598,7 +598,19 @@ docker compose -f infra/docker-compose.prod.yml --env-file .env run --rm \
 
 ### 5bis.3 Vérifier que c'est réellement en ligne
 
-Dans cet ordre — chaque contrôle échoue pour une raison différente :
+**Une seule commande**, qui enchaîne les contrôles ci-dessous et rend un
+verdict lisible (sortie non nulle en cas d'échec) :
+
+```bash
+./scripts/verifier-deploiement.sh VOTRE_DOMAINE
+```
+
+Elle vérifie l'état des huit conteneurs, `/readyz` (en distinguant
+`degraded` de `not_ready`), HTTPS depuis l'extérieur, **l'absence de port
+interne exposé**, l'unicité de `beat`, et la révision Alembic appliquée.
+
+Le détail, si l'on préfère dérouler à la main — chaque contrôle échoue pour
+une raison différente :
 
 ```bash
 # a. Tous les conteneurs sains ? `beat` met jusqu'à 2 min (start_period).
