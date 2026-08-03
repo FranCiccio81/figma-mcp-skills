@@ -1,0 +1,54 @@
+# Boussole — terminaison TLS et bordure de confiance (VPS).
+#
+# Caddy fait deux choses, et la seconde compte autant que la première.
+#
+# 1. HTTPS automatique (Let's Encrypt). Les cookies de session et CSRF sont
+#    `Secure` : sans TLS, l'application ne fonctionne tout simplement pas.
+#
+# 2. **Il est la seule source autorisée de `X-Forwarded-For`.** C'est ce qui
+#    rend la limitation de débit par utilisateur possible.
+#
+# ## Pourquoi le point 2 n'est pas un détail
+#
+# Sans bordure faisant autorité, l'API voit l'adresse du conteneur `web` pour
+# TOUT le trafic anonyme : une seule identité, un seul seau de 60 req/min,
+# donc un unique visiteur bruyant bloque tout le monde. C'est le prérequis
+# d'infrastructure signalé en revue, et c'est ce fichier qui le lève.
+#
+# `header_up X-Forwarded-For {remote_host}` **remplace** l'en-tête au lieu de
+# l'ajouter. La valeur envoyée par le client est donc jetée : elle ne peut
+# pas servir à usurper l'identité de limitation. C'est cette ligne, et elle
+# seule, qui autorise le BFF à transmettre l'en-tête à l'API.
+#
+# ⚠️ Ne pas la retirer, et ne pas exposer `web` ou `api` directement : le
+# `docker-compose.prod.yml` ne publie de ports que sur CE service, ce qui
+# rend la garantie structurelle et pas seulement documentaire.
+
+{
+	email {$ACME_EMAIL}
+	# Journal d'accès Caddy : la chaîne de requête n'y a pas plus sa place
+	# qu'ailleurs (`?q=` porte la recherche d'emploi, `?sig=` la signature
+	# d'un export RGPD). Voir `StripQueryStringFilter` côté API.
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$PUBLIC_HOSTNAME} {
+	encode gzip zstd
+
+	# HSTS : l'API pose déjà anti-sniffing, anti-framing et Referrer-Policy
+	# (SecurityHeadersMiddleware) ; la couche transport se règle ici.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		# LA ligne. Remplace, n'ajoute pas : ce que le client a envoyé est
+		# écarté. Sans elle, n'importe qui forge son identité de limitation.
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}

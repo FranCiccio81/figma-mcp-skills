@@ -550,6 +550,117 @@ cache chaud, la même page répond en ~130 ms.
 
 ---
 
+## 5 bis. Déploiement sur un VPS (Docker + root SSH)
+
+Le chemin le plus court d'un VPS nu à une application en ligne. Artefacts :
+`infra/docker-compose.prod.yml`, `infra/Caddyfile`, `.env.production.example`.
+
+> ⚠️ **Ne jamais déployer `docker-compose.dev.yml`.** Il embarque *mailpit*,
+> qui avale tous les messages : personne ne recevrait jamais un e-mail et
+> rien ne le signalerait. Il embarque aussi MinIO sans chiffrement au repos,
+> refusé au démarrage hors développement.
+
+### 5bis.1 Décisions à prendre AVANT
+
+| Question | Pourquoi elle bloque |
+|---|---|
+| Quel stockage S3 ? | `STORAGE_BACKEND=local` et `S3_SSE=none` sont refusés au démarrage (D09). MinIO auto-hébergé ne sait pas chiffrer côté serveur sans KES : prévoir un fournisseur S3 **dans l'UE** (Scaleway, OVH, Backblaze). Les CV et les exports RGPD n'ont de toute façon pas leur place sur le disque unique d'un VPS sans réplication |
+| Quel SMTP ? | `SMTP_STARTTLS=false` avec un `SMTP_HOST` renseigné empêche le démarrage. Sans SMTP, la confirmation de suppression de compte ne part pas |
+| Le DNS pointe-t-il déjà ? | Caddy demande le certificat au premier boot ; sans enregistrement A/AAAA, il boucle sur des échecs ACME |
+| Combien de workers ? | ~15 req/s et ~5 utilisateurs simultanés par processus (§5.5). `WEB_CONCURRENCY × 15 + Celery` doit tenir sous `POSTGRES_MAX_CONNECTIONS` |
+
+### 5bis.2 Séquence
+
+```bash
+# 1. Le VPS — Docker et le pare-feu. Seuls 80, 443 et SSH sont ouverts :
+#    aucun service de la pile n'est joignable directement.
+curl -fsSL https://get.docker.com | sh
+ufw allow 22 && ufw allow 80 && ufw allow 443 && ufw enable
+
+# 2. Le code et la configuration
+git clone <dépôt> boussole && cd boussole
+cp .env.production.example .env
+openssl rand -base64 48   # → PRIVACY_SIGNING_KEY
+openssl rand -base64 32   # → POSTGRES_PASSWORD
+$EDITOR .env              # remplir, en particulier les lignes ⛔
+
+# 3. Construction et démarrage
+docker compose -f infra/docker-compose.prod.yml --env-file .env up -d --build
+
+# 4. Migrations — un job EXPLICITE : l'image ne les lance pas au démarrage
+docker compose -f infra/docker-compose.prod.yml --env-file .env run --rm \
+  api alembic -c alembic/alembic.ini upgrade head
+
+# 5. Référentiels (secteurs, compétences, versions de prompt, sources)
+docker compose -f infra/docker-compose.prod.yml --env-file .env run --rm \
+  api python -m app.seeds
+```
+
+### 5bis.3 Vérifier que c'est réellement en ligne
+
+Dans cet ordre — chaque contrôle échoue pour une raison différente :
+
+```bash
+# a. Tous les conteneurs sains ? `beat` met jusqu'à 2 min (start_period).
+docker compose -f infra/docker-compose.prod.yml ps
+
+# b. L'API se déclare-t-elle prête ? (base + Redis persistant + stockage)
+docker compose -f infra/docker-compose.prod.yml exec api \
+  python -c "import urllib.request,json; \
+    print(json.load(urllib.request.urlopen('http://localhost:8000/readyz')))"
+
+# c. TLS et bout en bout
+curl -sS -o /dev/null -w '%{http_code}\n' https://VOTRE_DOMAINE/
+
+# d. L'ordonnanceur tourne-t-il ? (sans lui, aucune purge RGPD — §6)
+docker compose -f infra/docker-compose.prod.yml logs beat | tail -20
+```
+
+> `status: "degraded"` au point (b) est **normal et voulu** si le Redis de
+> cache est tombé : l'instance reste en service, la limitation de débit et
+> les quotas sont inactifs le temps de l'incident. C'est `not_ready` qui
+> signale un vrai blocage.
+
+### 5bis.4 La chaîne d'identité du client
+
+Trois pièces, et elle ne vaut que si les trois tiennent — un test de la suite
+les vérifie ensemble (`TestLaChaineDeConfianceDeLIdentiteClient`) :
+
+1. **Caddy écrase** `X-Forwarded-For` (`header_up … {remote_host}`) : ce que
+   le client envoie est jeté ;
+2. **seul Caddy publie des ports** : `web` et `api` ne sont pas joignables
+   autrement, donc l'écrasement ne se contourne pas ;
+3. **le BFF ne transmet l'en-tête que si `TRUSTED_EDGE=true`** — déclaration
+   explicite, posée par le compose de production et absente en développement.
+
+Casser l'une des trois ne produit pas d'erreur : la limitation de débit
+devient simplement contournable, ou bien tout le trafic anonyme retombe dans
+un seau unique de 60 req/min (auto-DoS). D'où les tests.
+
+### 5bis.5 Sauvegardes — à mettre en place le jour du déploiement
+
+Les données vivent dans deux volumes Docker et chez le fournisseur S3 :
+
+| Volume | Contenu | Perte |
+|---|---|---|
+| `postgres-data` | tout — comptes, profils, offres, candidatures | irrécupérable |
+| `redis-persistent-data` | sessions + messages Celery en vol | déconnexion de tout le monde, tâches perdues |
+| bucket S3 | CV importés, archives d'export RGPD | irrécupérable |
+
+```bash
+# Sauvegarde PostgreSQL (à planifier, hors du VPS)
+docker compose -f infra/docker-compose.prod.yml exec -T postgres \
+  pg_dump -U boussole boussole | gzip > boussole-$(date +%F).sql.gz
+```
+
+> ⚠️ Un `pg_dump` ouvre une transaction longue. Il ne gêne pas
+> l'application, mais il **fait échouer une migration concurrente** si
+> celle-ci ne lève pas le `lock_timeout` — d'où `_sans_lock_timeout` dans les
+> migrations à index concurrents (§4.1). Ne pas déployer pendant une
+> sauvegarde reste plus simple.
+
+---
+
 ## 6. Planification beat réelle
 
 Lue dans `app/workers/celery_app.py` (`timezone="UTC"`, `enable_utc=True` — **toutes les heures ci-dessous sont UTC**).

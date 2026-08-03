@@ -53,12 +53,26 @@ const API_URL =
  * second gêne tout le monde de façon visible, le premier ne gêne que les
  * honnêtes gens.
  *
- * Le rétablir suppose une couche en amont (ingress, reverse proxy) qui pose
- * `X-Forwarded-For` de façon autoritaire ET **écrase** celui du client. C'est
- * une exigence d'infrastructure, pas une ligne de code ici : tant qu'elle
- * n'est pas remplie, l'auto-DoS grossier reste le moindre mal, et il est
- * consigné comme prérequis de déploiement.
+ * Le rétablir suppose une couche en amont qui pose `X-Forwarded-For` de façon
+ * autoritaire ET **écrase** celui du client.
+ *
+ * ## Cette couche existe désormais — et elle se déclare
+ *
+ * `infra/Caddyfile` fait exactement cela (`header_up X-Forwarded-For
+ * {remote_host}` : il REMPLACE, il n'ajoute pas), et
+ * `docker-compose.prod.yml` ne publie de ports que sur Caddy — `web` n'est
+ * joignable que par lui. La garantie est donc structurelle, pas seulement
+ * documentaire.
+ *
+ * Mais elle n'est vraie que dans CE montage. Le compose de développement n'a
+ * pas de Caddy, et y transmettre l'en-tête rendrait de nouveau l'identité de
+ * limitation forgeable. D'où un interrupteur explicite plutôt qu'un
+ * comportement implicite : on ne transmet que si l'exploitant DÉCLARE la
+ * bordure. Oublier la variable dégrade (seau partagé, auto-DoS grossier) ;
+ * la poser à tort est un geste conscient, pas un défaut de conception.
  */
+const TRUSTED_EDGE = process.env.TRUSTED_EDGE === "true";
+
 const FORWARDED_REQUEST_HEADERS = [
   "accept",
   "accept-language",
@@ -66,6 +80,9 @@ const FORWARDED_REQUEST_HEADERS = [
   "cookie",
   "idempotency-key",
   "x-csrf-token",
+  // Uniquement derrière une bordure qui l'écrase — voir ci-dessus.
+  // Uniquement derrière une bordure qui l'écrase — voir ci-dessus.
+  ...(TRUSTED_EDGE ? (["x-forwarded-for"] as const) : []),
 ] as const;
 
 /** En-têtes de transport recalculés par le runtime — jamais recopiés. */

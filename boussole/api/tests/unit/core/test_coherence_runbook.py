@@ -293,3 +293,119 @@ class TestLeReadmeNeContrediPasLeRunbook:
         derniere = _revisions()[-1][:4]
         contenu = LISEZMOI.read_text(encoding="utf-8")
         assert f"0001 → {derniere}" in contenu
+
+
+COMPOSE_PROD = RACINE / "boussole" / "infra" / "docker-compose.prod.yml"
+CADDYFILE = RACINE / "boussole" / "infra" / "Caddyfile"
+ENV_PROD = RACINE / "boussole" / ".env.production.example"
+BFF = RACINE / "boussole" / "web" / "app" / "api" / "[...path]" / "route.ts"
+
+
+@pytest.fixture(scope="module")
+def prod() -> dict:
+    import yaml
+
+    return yaml.safe_load(COMPOSE_PROD.read_text(encoding="utf-8"))
+
+
+class TestLaChaineDeConfianceDeLIdentiteClient:
+    """La limitation de débit anonyme repose sur trois pièces, et elle ne
+    vaut que si les TROIS tiennent ensemble.
+
+    Le BFF ne transmettait pas ``X-Forwarded-For`` — à raison : sans bordure
+    faisant autorité, un client forge son identité de limitation (mesuré :
+    500 tentatives de connexion, 0 rejet). Le rétablir supposait une couche
+    amont qui ÉCRASE l'en-tête du client.
+
+    Cette couche est maintenant livrée (Caddy). Ce test vérifie que la
+    chaîne entière tient : l'écrasement, l'isolement de ``web``, et la
+    déclaration explicite côté BFF. Chacune seule ne suffit pas.
+    """
+
+    def test_caddy_ecrase_len_tete_au_lieu_de_lajouter(self) -> None:
+        contenu = CADDYFILE.read_text(encoding="utf-8")
+        assert "header_up X-Forwarded-For {remote_host}" in contenu, (
+            "sans écrasement, Caddy AJOUTE à la chaîne et la valeur envoyée "
+            "par le client survit : l'identité de limitation redevient "
+            "forgeable"
+        )
+
+    def test_seul_caddy_est_exposé(self, prod: dict) -> None:
+        """C'est ce qui rend la garantie structurelle. Si ``web`` publiait un
+        port, on pourrait l'atteindre sans passer par Caddy et poser
+        l'en-tête soi-même."""
+        exposes = {
+            nom for nom, service in prod["services"].items() if service.get("ports")
+        }
+        assert exposes == {"caddy"}, f"services exposés : {sorted(exposes)}"
+
+    def test_le_bff_ne_transmet_que_sil_le_declare(self) -> None:
+        """Interrupteur explicite, pas comportement implicite : le compose de
+        développement n'a pas de Caddy, et y transmettre l'en-tête
+        rouvrirait la faille."""
+        contenu = BFF.read_text(encoding="utf-8")
+        assert 'process.env.TRUSTED_EDGE === "true"' in contenu
+        assert "TRUSTED_EDGE ?" in contenu, (
+            "``x-forwarded-for`` doit être conditionné, jamais inconditionnel"
+        )
+
+    def test_la_production_declare_la_bordure(self, prod: dict) -> None:
+        assert prod["services"]["web"]["environment"]["TRUSTED_EDGE"] == "true"
+
+    def test_le_developpement_ne_la_declare_PAS(self, compose: dict) -> None:
+        """La contrepartie qui donne son sens à l'interrupteur."""
+        env = compose["services"]["web"].get("environment") or {}
+        assert env.get("TRUSTED_EDGE") is None
+
+    def test_lapi_ne_fait_confiance_quau_conteneur_web(self, prod: dict) -> None:
+        """``*`` rendrait n'importe quel en-tête croyable."""
+        confiance = prod["services"]["api"]["environment"]["FORWARDED_ALLOW_IPS"]
+        epinglee = prod["services"]["web"]["networks"]["default"]["ipv4_address"]
+        assert confiance == epinglee, f"{confiance!r} ≠ {epinglee!r}"
+
+
+class TestLaProductionNemporteRienDuDeveloppement:
+    """Le compose de développement embarque MinIO, mailpit et le corpus
+    fictif. Déployé tel quel, personne ne recevrait jamais un e-mail."""
+
+    @pytest.mark.parametrize("indesirable", ["mailpit", "minio", "minio-init"])
+    def test_les_services_de_developpement_sont_absents(
+        self, prod: dict, indesirable: str
+    ) -> None:
+        assert indesirable not in prod["services"]
+
+    def test_le_corpus_fictif_nest_pas_active(self) -> None:
+        contenu = COMPOSE_PROD.read_text(encoding="utf-8")
+        assert "FEATURE_SOURCE_DEMO: \"true\"" not in contenu
+
+    def test_lenvironnement_est_production(self, prod: dict) -> None:
+        contenu = COMPOSE_PROD.read_text(encoding="utf-8")
+        assert "ENV: production" in contenu
+
+    def test_starttls_est_force(self, prod: dict) -> None:
+        """Garde-fou de démarrage : sans lui, l'adresse de chaque
+        destinataire transiterait en clair."""
+        contenu = COMPOSE_PROD.read_text(encoding="utf-8")
+        assert 'SMTP_STARTTLS: "true"' in contenu
+
+    def test_tous_les_processus_ont_une_sonde(self, prod: dict) -> None:
+        sans_sonde = {
+            nom
+            for nom, service in prod["services"].items()
+            if "healthcheck" not in service and nom not in {"caddy", "web"}
+        }
+        assert sans_sonde == set(), f"services sans sonde : {sorted(sans_sonde)}"
+
+
+class TestLeFichierDenvironnementNeLivreAucunSecret:
+    def test_les_variables_bloquantes_sont_vides_et_signalees(self) -> None:
+        """Un exemple qui porte une valeur par défaut plausible finit copié
+        tel quel. Celles-ci sont vides ET marquées."""
+        contenu = ENV_PROD.read_text(encoding="utf-8")
+        for variable in ("PRIVACY_SIGNING_KEY", "POSTGRES_PASSWORD", "S3_SECRET_KEY"):
+            assert f"{variable}=\n" in contenu, f"{variable} n'est pas vide"
+        assert "⛔" in contenu
+
+    def test_le_provider_ia_reste_factice_par_defaut(self) -> None:
+        contenu = ENV_PROD.read_text(encoding="utf-8")
+        assert "AI_PROVIDER=fake" in contenu
