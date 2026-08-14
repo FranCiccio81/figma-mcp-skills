@@ -306,24 +306,29 @@ button {
 .progress__fill { height: 100%; border-radius: var(--radius-pill); background: var(--color-action-accent); }
 
 /* Search screen */
+/* Search / Ask AI switch — the app's active state is a black pill, matching
+   the chip style used across the app (Watchlists, Overview, 1W…). */
 .seg-control {
   display: inline-flex;
-  background: var(--color-surface-muted);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-pill);
   padding: var(--space-2xs);
   gap: var(--space-2xs);
 }
 .seg-control__item {
-  padding: var(--space-2xs) var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-xl);
+  padding: 0 var(--space-md);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-caption);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
 }
 .seg-control__item[aria-selected='true'] {
-  background: var(--color-surface-default);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-card);
+  background: var(--color-action-primary);
+  color: var(--color-text-on-action);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -338,23 +343,47 @@ button {
   min-height: var(--size-touch-target);
 }
 
-.keyboard { background: var(--color-border-subtle); padding: var(--space-xs) var(--space-2xs) var(--space-md); user-select: none; }
-.keyboard__row { display: flex; justify-content: center; gap: var(--space-2xs); margin-bottom: var(--space-xs); }
+/* iOS-style keyboard replica. Letter keys share one flex unit per row;
+   the home row is inset by half a key; shift/backspace take 1.4 units;
+   the bottom row is 123 (2) · space (5.2) · return (2). */
+.keyboard {
+  background: var(--color-keyboard-bg);
+  padding: var(--space-xs) var(--space-2xs) 0;
+  user-select: none;
+}
+.keyboard__row { display: flex; gap: var(--space-2xs); margin-bottom: var(--space-xs); }
+.keyboard__row--inset { padding: 0 var(--space-md); }
 .keyboard__key {
   flex: 1;
-  max-width: var(--space-xl);
-  min-height: var(--space-xl);
+  min-width: 0;
+  height: var(--space-2xl);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-default);
-  box-shadow: var(--shadow-card);
+  background: var(--color-keyboard-key);
+  box-shadow: var(--shadow-keyboard-key);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-caption);
+  font-size: var(--font-size-heading);
+  color: var(--color-text-primary);
 }
-.keyboard__key--wide { max-width: none; flex: 5; }
-.keyboard__key--mod { background: var(--color-border-default); }
-.keyboard__key--edge { max-width: none; flex: 1.6; }
+.keyboard__key--mod { background: var(--color-keyboard-key-mod); flex: 1.4; font-size: var(--font-size-body); }
+.keyboard__key--sys { background: var(--color-keyboard-key-mod); flex: 2; font-size: var(--font-size-body); }
+.keyboard__key--space { flex: 5.2; font-size: var(--font-size-body); }
+.keyboard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2xs) var(--space-lg) var(--space-2xs);
+  font-size: var(--font-size-title);
+  color: var(--color-text-secondary);
+}
+.keyboard__home-indicator {
+  width: 34%;
+  height: var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: var(--color-text-primary);
+  margin: 0 auto var(--space-xs);
+}
 
 /* App-style quick actions: dark circular icon + caption underneath */
 .quick-action {

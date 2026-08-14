@@ -67,7 +67,8 @@ function Phone() {
       <StatusBar />
       {header}
       <div className="phone__scroll">{content}</div>
-      {!onBankSubScreen && <BottomNav active={nav.tab} onSelect={nav.setTab} />}
+      {/* The search screen is a full overlay in the app: keyboard up, no tab bar. */}
+      {!onBankSubScreen && nav.tab !== 'search' && <BottomNav active={nav.tab} onSelect={nav.setTab} />}
       <BuyingPowerSheet />
       <MarginCallModal />
       {/* Balance changes announced to screen readers (§7 accessibility). */}

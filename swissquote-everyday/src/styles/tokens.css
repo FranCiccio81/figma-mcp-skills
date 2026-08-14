@@ -31,6 +31,8 @@
   --core-amber-100: #fdf0e0;
   --core-red-500: #de3730;
   --core-red-100: #fdeae9;
+  --core-keyboard-bg: #d1d5db;      /* iOS keyboard chrome */
+  --core-keyboard-key-mod: #adb3be; /* iOS modifier keys */
   --core-scrim: rgba(23, 24, 28, 0.5);
   --core-overlay-light: rgba(255, 255, 255, 0.55);
   --core-overlay-light-soft: rgba(255, 255, 255, 0.28);
@@ -84,6 +86,10 @@
   --color-feedback-positive: var(--core-green-600);
 
   --color-focus-ring: var(--core-blue-600);
+
+  --color-keyboard-bg: var(--core-keyboard-bg);
+  --color-keyboard-key: var(--core-white);
+  --color-keyboard-key-mod: var(--core-keyboard-key-mod);
 
   /* Charts (portfolio-evolution style: blue line over a soft blue fill) */
   --color-chart-line: var(--core-blue-500);
@@ -139,6 +145,7 @@
 
   /* Elevation — app cards float on soft, wide shadows */
   --shadow-card: 0 2px 10px var(--core-shadow-soft);
+  --shadow-keyboard-key: 0 1px 0 var(--core-shadow-strong);
   --shadow-sheet: 0 -8px 32px var(--core-shadow-strong);
   --shadow-input-focus: 0 0 0 3px var(--core-blue-100);
 
