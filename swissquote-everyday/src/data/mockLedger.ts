@@ -116,10 +116,25 @@ export const INITIAL_AUTO_COVER: AutoCoverConfig = {
   minBalance: 2_000,
 };
 
-/** Scales synthetic card spend to the wealthy profile (~CHF 5'500 card spend
- * per month), keeping the computed buffer and the Auto Cover demo loop in
- * proportion with the CHF 21'000 salary. One calibration knob. */
-export const SPEND_SCALE = 4.2;
+/**
+ * Products that exist for the wealth overview but are outside the liquidity
+ * engine. Kept here so every screen reads the same numbers.
+ */
+/** Securities held in the Trading account (excludes uninvested trading cash). */
+export const TRADING_POSITIONS = 180_074.41;
+/** Pillar 3a retirement account. */
+export const PILLAR_3A = 42_180.0;
+export const PILLAR_3A_PAID_IN = 5_148;
+export const PILLAR_3A_ALLOWANCE = 7_056; // ⟨annual maximum TO CONFIRM for the tax year⟩
+/** Trading-account performance shown on the wealth overview. */
+export const TRADING_DAY_CHANGE_PCT = 0.87;
+export const TRADING_PERIOD_GAIN = 12_854.41; // 1-week absolute performance
+/** Cash reserved for open orders is unavailable to trade or transfer. */
+export const INVEST_EASY_PERF_PCT = 0.45;
+export const PILLAR_3A_PERF_PCT = 7.83;
+
+/** Fine calibration of synthetic card spend; merchant ranges carry the profile. */
+export const SPEND_SCALE = 1.1;
 
 interface MerchantSpec {
   label: string;
@@ -129,20 +144,26 @@ interface MerchantSpec {
   weight: number;
 }
 
-/** Lausanne-flavoured merchant pool — no lorem ipsum, no placeholder merchants. */
+/**
+ * Lausanne merchant pool, priced the way this client actually lives: everyday
+ * purchases stay at ordinary Swiss prices (a bakery is a bakery), and the
+ * higher monthly total comes from bigger-ticket merchants, not from inflating
+ * a coffee. No lorem ipsum, no placeholder merchants.
+ */
 const MERCHANTS: MerchantSpec[] = [
-  { label: 'Coop Lausanne St-François', category: 'groceries', min: 12, max: 85, weight: 5 },
-  { label: 'Migros Lausanne Flon', category: 'groceries', min: 9, max: 70, weight: 5 },
-  { label: 'Denner Lausanne Gare', category: 'groceries', min: 8, max: 40, weight: 2 },
-  { label: 'SBB CFF FFS', category: 'transport', min: 3.6, max: 46, weight: 3 },
-  { label: 'TL Lausanne', category: 'transport', min: 3.6, max: 9.8, weight: 2 },
-  { label: 'Boulangerie Saint-Pierre', category: 'dining', min: 4.2, max: 14, weight: 3 },
-  { label: 'Café de Grancy', category: 'dining', min: 6.5, max: 26, weight: 2 },
-  { label: 'Holy Cow! Lausanne', category: 'dining', min: 14, max: 34, weight: 2 },
-  { label: 'Restaurant du Théâtre', category: 'dining', min: 32, max: 96, weight: 1 },
-  { label: 'Pharmacie Amavita Gare', category: 'health', min: 12, max: 58, weight: 1 },
-  { label: 'Galaxus', category: 'shopping', min: 24, max: 130, weight: 1 },
-  { label: 'TWINT · P2P payment', category: 'transfer', min: 10, max: 60, weight: 2 },
+  { label: 'Coop Lausanne St-François', category: 'groceries', min: 24, max: 180, weight: 10 },
+  { label: 'Migros Lausanne Flon', category: 'groceries', min: 18, max: 140, weight: 8 },
+  { label: 'Boulangerie Saint-Pierre', category: 'dining', min: 6, max: 24, weight: 6 },
+  { label: 'Café de Grancy', category: 'dining', min: 12, max: 48, weight: 6 },
+  { label: 'Beau-Rivage Palace', category: 'dining', min: 120, max: 420, weight: 4 },
+  { label: 'Holy Cow! Lausanne', category: 'dining', min: 25, max: 70, weight: 4 },
+  { label: 'SBB CFF FFS · 1st class', category: 'transport', min: 18, max: 320, weight: 4 },
+  { label: 'Socar Lausanne', category: 'transport', min: 70, max: 150, weight: 3 },
+  { label: 'Bongénie Lausanne', category: 'shopping', min: 120, max: 900, weight: 3 },
+  { label: 'Galaxus', category: 'shopping', min: 60, max: 600, weight: 2 },
+  { label: 'Pharmacie Amavita Gare', category: 'health', min: 15, max: 90, weight: 2 },
+  { label: 'TWINT · P2P payment', category: 'transfer', min: 20, max: 200, weight: 4 },
+  { label: 'Lausanne Palace Spa', category: 'leisure', min: 90, max: 260, weight: 1 },
 ];
 
 interface RecurringSpec {

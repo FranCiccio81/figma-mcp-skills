@@ -6,8 +6,12 @@
  * (not on the card screen) because adding Apple Pay is a payment setup task.
  */
 import { money, swissNumber } from '../../lib/format';
-import { FX } from '../../data/mockLedger';
+import { FX, RECURRING_DEBITS } from '../../data/mockLedger';
 import { useStore } from '../../state/store';
+
+/** Which recurring debits are paid how — so the counts here match the ledger. */
+const STANDING_ORDER_LABELS = ['Rent — Régie du Léman', 'Country Club Lausanne'];
+const EBILL_LABELS = ['Sanitas — health insurance', 'Swisscom'];
 
 interface Row {
   label: string;
@@ -38,6 +42,11 @@ export function PayHub() {
   const { state, card } = useStore();
   const a = state.accounts;
 
+  const standingOrders = RECURRING_DEBITS.filter((r) => STANDING_ORDER_LABELS.includes(r.label));
+  const ebills = RECURRING_DEBITS.filter((r) => EBILL_LABELS.includes(r.label));
+  const standingTotal = standingOrders.reduce((s, r) => s + r.amount, 0);
+  const ebillTotal = ebills.reduce((s, r) => s + r.amount, 0);
+
   return (
     <div className="screen">
       <p className="caption m-0">
@@ -50,8 +59,16 @@ export function PayHub() {
           { label: 'Standard payment', hint: 'Arrives in 1–2 business days', meta: 'Free' },
           { label: 'Instant payment', hint: 'Arrives in seconds, 24/7' },
           { label: 'Scan a QR-bill', hint: 'Pay a Swiss QR invoice with your camera' },
-          { label: 'Standing orders', hint: 'Rent, savings and other repeating payments', meta: '2 active' },
-          { label: 'eBill', hint: 'Invoices delivered straight to the app', meta: '1 pending' },
+          {
+            label: 'Standing orders',
+            hint: `${standingOrders.map((r) => r.label.split(' — ')[0]).join(', ')} · ${money(standingTotal, 'CHF', 0)}/month`,
+            meta: `${standingOrders.length} active`,
+          },
+          {
+            label: 'eBill',
+            hint: `${ebills.map((r) => r.label.split(' — ')[0]).join(', ')} · ${money(ebillTotal, 'CHF', 0)}/month`,
+            meta: `${ebills.length} due`,
+          },
         ]}
       />
 

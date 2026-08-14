@@ -725,16 +725,17 @@ function advanceDay(prev: EngineState): EngineState {
   const roll = rng();
   const count = roll < 0.25 ? 0 : roll < 0.6 ? 1 : roll < 0.9 ? 2 : 3;
   const pool: { label: string; category: Txn['category']; min: number; max: number }[] = [
-    { label: 'Coop Lausanne St-François', category: 'groceries', min: 12, max: 85 },
-    { label: 'Migros Lausanne Flon', category: 'groceries', min: 9, max: 70 },
-    { label: 'SBB CFF FFS', category: 'transport', min: 3.6, max: 46 },
-    { label: 'Boulangerie Saint-Pierre', category: 'dining', min: 4.2, max: 14 },
-    { label: 'Café de Grancy', category: 'dining', min: 6.5, max: 26 },
-    { label: 'TWINT · P2P payment', category: 'transfer', min: 10, max: 60 },
+    { label: 'Coop Lausanne St-François', category: 'groceries', min: 24, max: 180 },
+    { label: 'Migros Lausanne Flon', category: 'groceries', min: 18, max: 140 },
+    { label: 'SBB CFF FFS · 1st class', category: 'transport', min: 18, max: 320 },
+    { label: 'Boulangerie Saint-Pierre', category: 'dining', min: 6, max: 24 },
+    { label: 'Café de Grancy', category: 'dining', min: 12, max: 48 },
+    { label: 'Beau-Rivage Palace', category: 'dining', min: 120, max: 420 },
+    { label: 'Bongénie Lausanne', category: 'shopping', min: 120, max: 900 },
+    { label: 'TWINT · P2P payment', category: 'transfer', min: 20, max: 200 },
   ];
-  // The sim pool skews to smaller everyday merchants than the history pool;
-  // the extra factor keeps simulated card spend at the same ≈CHF 1'800/month.
-  const SIM_POOL_FACTOR = 1.25;
+  // Same pricing as the history pool, so simulated days look like past days.
+  const SIM_POOL_FACTOR = 1;
   for (let i = 0; i < count; i += 1) {
     const m = pool[Math.floor(rng() * pool.length)];
     const amount = Math.round((m.min + rng() * (m.max - m.min)) * SPEND_SCALE * SIM_POOL_FACTOR * 20) / 20;
