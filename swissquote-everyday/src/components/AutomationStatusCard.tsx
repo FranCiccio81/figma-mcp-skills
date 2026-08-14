@@ -83,7 +83,7 @@ export function AutomationStatusCard() {
       )}
       {autoCover.enabled && !paused && (
         <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-sm)' }}>
-          Auto Cover is on — below {money(autoCover.minBalance, 'CHF', 0)}, Everyday tops up from your sources.
+          Auto Cover is on — if a payment needs more than Everyday holds, we bring it back from your sources.
         </p>
       )}
       <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-md)' }}>

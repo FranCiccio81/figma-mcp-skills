@@ -4,7 +4,13 @@
  */
 import { createContext, useContext, useMemo, useReducer, useState, type ReactNode } from 'react';
 
-import { FX } from '../data/mockLedger';
+import {
+  FX,
+  LOMBARD_RATE_PA,
+  PENDING_CARD_RESERVED,
+  SAVE_EASY_PENALTY_FREE,
+  TRADING_ORDERS_RESERVED,
+} from '../data/mockLedger';
 import { computeForecast, type Forecast } from './forecast';
 import { initialState, reduce, type EngineAction } from './liquidityEngine';
 import type { EngineState } from './types';
@@ -34,21 +40,49 @@ export interface Nav {
   setBuyingPowerOpen: (open: boolean) => void;
 }
 
-/** One Buying Power segment. Own funds and credit are NEVER summed together. */
+/**
+ * One liquidity source. `class` is the spec's liquidity classification (§16):
+ * available now / transferable / conditional / credit — never an opaque discount.
+ */
 export interface BuyingPowerSegment {
   key: 'cash' | 'fx' | 'save' | 'trading' | 'credit';
   label: string;
   amountChf: number;
+  liquidityClass: 'now' | 'transferable' | 'conditional' | 'credit';
   availability: string;
+  /** Amounts held back before this counts as available (§18–§22). */
+  reserved?: { label: string; amount: number }[];
   cost: string | null;
   indicative: boolean;
   isCredit: boolean;
 }
 
 export interface BuyingPower {
+  /** Immediately spendable from Everyday, after authorised card transactions. */
+  availableNow: number;
+  /** Own cash sitting in other Swissquote products that can be moved. */
+  accessibleElsewhere: number;
   ownSegments: BuyingPowerSegment[];
-  credit: BuyingPowerSegment;
+  /** Own accessible cash — always exposed independently of credit (FR-10). */
   ownTotal: number;
+  /** AI Budgeting's protected liquidity, identified separately, never deducted invisibly. */
+  protectedLiquidity: number;
+  /** Own cash above the protected amount. */
+  flexible: number;
+  credit: BuyingPowerSegment;
+  /** Own cash + usable credit — a maximum, shown only as a secondary figure. */
+  maximum: number;
+  /** Invested money that is deliberately NOT liquidity (§6.3/BR-02). */
+  notIncluded: { label: string; amountChf: number; reason: string }[];
+}
+
+/** Which sources the client lets Buying Power aggregate (§64/FR-20). */
+export interface BuyingPowerSettings {
+  includeTrading: boolean;
+  includeSaveEasy: boolean;
+  includeWallets: boolean;
+  /** Lombard must be an explicit choice — off by default (FR-13). */
+  showLombard: boolean;
 }
 
 interface Store {
@@ -59,41 +93,124 @@ interface Store {
   nav: Nav;
   card: CardSettings;
   setCard: (patch: Partial<CardSettings>) => void;
+  bpSettings: BuyingPowerSettings;
+  setBpSettings: (patch: Partial<BuyingPowerSettings>) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
 
-export function computeBuyingPower(state: EngineState): BuyingPower {
+/**
+ * Everyday Buying Power — the spec's liquidity model (§7/§17/§56).
+ *
+ * Own cash and credit are computed and displayed separately; invested money is
+ * excluded entirely; reservations (authorised card transactions, open orders)
+ * are deducted before anything is called available; AI Budgeting's protected
+ * amount is identified rather than silently subtracted.
+ */
+export function computeBuyingPower(
+  state: EngineState,
+  protectedLiquidity: number,
+  settings: BuyingPowerSettings,
+): BuyingPower {
   const a = state.accounts;
-  const fxChf = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+
+  // Layer 1 — available now: booked balance minus authorised card transactions.
+  const availableNow = Math.max(0, a.everyday - PENDING_CARD_RESERVED);
+
   const ownSegments: BuyingPowerSegment[] = [
-    { key: 'cash', label: 'Everyday cash', amountChf: a.everyday, availability: 'Instant', cost: null, indicative: false, isCredit: false },
-    { key: 'fx', label: 'Other currencies', amountChf: fxChf, availability: 'Instant', cost: `FX spread ≈ ${FX.spreadPct}%`, indicative: true, isCredit: false },
-    { key: 'save', label: 'Save Easy', amountChf: a.saveEasy, availability: 'Instant', cost: null, indicative: false, isCredit: false },
     {
-      key: 'trading',
-      label: 'Trading cash',
-      amountChf: a.tradingCash,
-      availability: state.flags.marketClosed ? 'Unavailable — market closed' : 'Same day',
+      key: 'cash',
+      label: 'Everyday',
+      amountChf: availableNow,
+      liquidityClass: 'now',
+      availability: 'Available now',
+      reserved: [{ label: 'Authorised card payments', amount: PENDING_CARD_RESERVED }],
       cost: null,
       indicative: false,
       isCredit: false,
     },
   ];
+
+  // Layer 2 — accessible cash elsewhere.
+  if (settings.includeTrading) {
+    const free = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
+    ownSegments.push({
+      key: 'trading',
+      label: 'Trading cash',
+      amountChf: state.flags.tradingUnavailable ? 0 : free,
+      liquidityClass: 'transferable',
+      availability: state.flags.tradingUnavailable
+        ? 'Temporarily unavailable'
+        : 'Transferable to Everyday',
+      reserved: [{ label: 'Reserved for open orders', amount: TRADING_ORDERS_RESERVED }],
+      cost: null,
+      indicative: false,
+      isCredit: false,
+    });
+  }
+  if (settings.includeSaveEasy) {
+    const penaltyFree = Math.min(a.saveEasy, SAVE_EASY_PENALTY_FREE);
+    ownSegments.push({
+      key: 'save',
+      label: 'Save Easy',
+      amountChf: penaltyFree,
+      liquidityClass: 'conditional',
+      availability: 'Accessible — withdrawal conditions apply',
+      reserved:
+        a.saveEasy > penaltyFree
+          ? [{ label: 'Above the penalty-free limit', amount: a.saveEasy - penaltyFree }]
+          : undefined,
+      cost: null,
+      indicative: false,
+      isCredit: false,
+    });
+  }
+  if (settings.includeWallets) {
+    const fxChf = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+    ownSegments.push({
+      key: 'fx',
+      label: 'Other currencies',
+      amountChf: fxChf,
+      liquidityClass: 'conditional',
+      availability: 'Needs conversion to CHF',
+      cost: `FX spread ≈ ${FX.spreadPct}%`,
+      indicative: true,
+      isCredit: false,
+    });
+  }
+
+  const ownTotal = ownSegments.reduce((s, x) => s + x.amountChf, 0);
+  const accessibleElsewhere = ownTotal - availableNow;
+  const flexible = Math.max(0, ownTotal - protectedLiquidity);
+
   const credit: BuyingPowerSegment = {
     key: 'credit',
     label: 'Lombard available',
-    amountChf: a.lombardAvailable,
-    availability: state.autoCover.lombardEnabled ? 'Instant · opt-in active' : 'Opt-in required',
-    cost: '4.25% p.a. interest',
+    amountChf: settings.showLombard ? a.lombardAvailable : 0,
+    liquidityClass: 'credit',
+    availability: settings.showLombard ? `Up to ${a.lombardAvailable} currently drawable` : 'Not shown',
+    cost: `${LOMBARD_RATE_PA}% p.a. interest`,
     indicative: false,
     isCredit: true,
   };
-  // NOTE: §10 states an own-funds total of 22'517.00, which does not equal the
-  // sum of its own listed parts (21'916.90). The engine computes the true sum —
-  // a hardcoded figure would drift the moment the simulation advances a day.
-  const ownTotal = ownSegments.reduce((s, x) => s + x.amountChf, 0);
-  return { ownSegments, credit, ownTotal };
+
+  // Invested money is not liquidity — stated explicitly rather than hidden.
+  const notIncluded = [
+    { label: 'Invest Easy', amountChf: a.investEasy, reason: 'Invested — would need to be sold' },
+    { label: 'Global ETF Saving Plan', amountChf: a.savingPlan, reason: 'Invested — would need to be sold' },
+  ];
+
+  return {
+    availableNow,
+    accessibleElsewhere,
+    ownSegments,
+    ownTotal,
+    protectedLiquidity,
+    flexible,
+    credit,
+    maximum: ownTotal + credit.amountChf,
+    notIncluded,
+  };
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -109,8 +226,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     contactlessLimit: 100,
   });
 
+  const [bpSettings, setBpSettingsState] = useState<BuyingPowerSettings>({
+    includeTrading: true,
+    includeSaveEasy: true,
+    includeWallets: true,
+    showLombard: true, // on in the demo; the product default is off until opted in
+  });
+
   const forecast = useMemo(() => computeForecast(state), [state]);
-  const buyingPower = useMemo(() => computeBuyingPower(state), [state]);
+  const buyingPower = useMemo(
+    () => computeBuyingPower(state, forecast.keep, bpSettings),
+    [state, forecast.keep, bpSettings],
+  );
 
   const nav: Nav = {
     tab,
@@ -143,6 +270,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     nav,
     card,
     setCard: (patch) => setCardState((c) => ({ ...c, ...patch })),
+    bpSettings,
+    setBpSettings: (patch) => setBpSettingsState((c) => ({ ...c, ...patch })),
   };
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;

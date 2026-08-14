@@ -23,7 +23,21 @@ export const FX = {
   spreadPct: 0.95, // conversion cost shown before any FX top-up ⟨TO CONFIRM⟩
 };
 
-export const LOMBARD_RATE_PA = 4.25; // §10 ⟨rate TO CONFIRM⟩
+export const LOMBARD_RATE_PA = 4.25; // ⟨rate TO CONFIRM⟩
+
+/**
+ * Operational reservations — Buying Power §18–§22 and FR-02/FR-04.
+ * These amounts exist in the product but are NOT spendable liquidity, so they
+ * are deducted before anything is called "available".
+ */
+/** Card transactions authorised but not yet booked. */
+export const PENDING_CARD_RESERVED = 1_240;
+/** Trading cash committed to open limit orders. */
+export const TRADING_ORDERS_RESERVED = 6_000;
+/** Save Easy amount withdrawable without notice period or penalty ⟨TO CONFIRM⟩. */
+export const SAVE_EASY_PENALTY_FREE = 25_000;
+/** Lombard contractual limit; `lombardAvailable` is the currently drawable part. */
+export const LOMBARD_LIMIT = 150_000;
 
 export const INITIAL_ACCOUNTS: Accounts = {
   everyday: 165_880.5, // 1'880.10 + 1'000 Auto Cover + 163'000.40 annual bonus (day 0)
@@ -43,7 +57,10 @@ export const INITIAL_ALLOCATION: AllocationRule = {
   skipNext: false,
   mode: 'automatic',
   bufferMode: 'ai',
-  manualBuffer: 11_400,
+  manualBuffer: 12_000, // fixed liquidity fallback (§16/§43)
+  safetyLevel: 'balanced',
+  minKeep: 6_000,
+  maxKeep: 20_000,
   basis: 'excess',
   // Spec §14/§28 example plan: Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20.
   splits: [
@@ -71,16 +88,30 @@ export const INITIAL_ALLOCATION: AllocationRule = {
 };
 
 export const INITIAL_AUTO_COVER: AutoCoverConfig = {
-  enabled: true, // pre-enabled in the demo so the recent Auto Cover exists; product default is OFF
-  minBalance: 2_000,
-  waterfall: ['saveEasy', 'tradingCash', 'investEasy', 'eurWallet', 'usdWallet'],
+  // Pre-enabled in the demo so the 14 August cover exists; the product default is OFF.
+  enabled: true,
+  paused: false,
+  coverMode: 'buffer',
+  bufferAmount: 1_000,
+  perTransactionMax: 25_000,
+  monthlyCap: 40_000,
+  usedThisMonth: 1_000, // the 14 August cover
+  // Invest Easy is deliberately absent: Auto Cover never sells investments (§6.3/FR-26).
+  sources: [
+    { source: 'saveEasy', enabled: true, monthlyLimit: 25_000, usedThisMonth: 1_000 },
+    { source: 'tradingCash', enabled: true, monthlyLimit: 15_000, usedThisMonth: 0 },
+    { source: 'eurWallet', enabled: false, monthlyLimit: 5_000, usedThisMonth: 0 },
+    { source: 'usdWallet', enabled: false, monthlyLimit: 5_000, usedThisMonth: 0 },
+  ],
+  tradingReserve: 10_000,
   lombardEnabled: false,
   lombardAcknowledged: false,
-  topUpIncrement: 1_000,
-  monthlyCap: 6_000,
-  cooldownDays: 1,
-  usedThisMonth: 1_000, // the 14 August top-up
+  lombardPerCoverMax: 5_000,
+  lombardMonthlyMax: 10_000,
+  lombardUsedThisMonth: 0,
   lastTopUpDay: 0,
+  keepMinimumEnabled: true, // advanced §31 mode, on in the demo so the loop is visible
+  minBalance: 2_000,
 };
 
 /** Scales synthetic card spend to the wealthy profile (~CHF 5'500 card spend

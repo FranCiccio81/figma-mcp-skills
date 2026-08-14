@@ -1,123 +1,253 @@
 /**
- * §5.4 AI Budgeting — simplified to a glance, like the allocation screen.
+ * AI Budgeting — predicts the liquidity needed before the next salary, so
+ * Smart Salary Allocation knows how much is genuinely surplus.
  *
- * One hero card (the 30-day range + projection chart), one action card (the
- * buffer, with its consequence shown live), and the mandatory "How this is
- * calculated" panel present but collapsed behind a disclosure — transparency
- * on demand, not as a wall of text. Probabilistic language throughout.
+ * Kept to a glance: the KEEP / GROW split (§59) with the forecast horizon,
+ * the projection, and one control (safety level). The calculation breakdown,
+ * boundaries and planned expenses sit behind "Adjust forecast" (§41).
  */
 import { useState } from 'react';
-import { money } from '../../lib/format';
+import { money, shortDate, swissNumber } from '../../lib/format';
 import { LiquidityForecastChart } from '../../components/LiquidityForecastChart';
 import { useStore } from '../../state/store';
+import type { SafetyLevel } from '../../state/types';
+
+const SAFETY_LABELS: Record<SafetyLevel, { title: string; blurb: string }> = {
+  efficient: { title: 'Efficient', blurb: 'Smaller cash reserve' },
+  balanced: { title: 'Balanced', blurb: 'Recommended' },
+  cautious: { title: 'Cautious', blurb: 'Larger cash reserve' },
+};
 
 export function AiBudgeting() {
-  const { state, dispatch, forecast } = useStore();
-  const [showFactors, setShowFactors] = useState(false);
+  const { state, dispatch, forecast, buyingPower } = useStore();
+  const [adjusting, setAdjusting] = useState(false);
   const rule = state.allocation;
-  const activeBuffer = rule.bufferMode === 'ai' ? forecast.buffer : rule.manualBuffer;
-  const delta = activeBuffer - forecast.buffer;
   const f = forecast.factors;
 
-  const factors: { label: string; value: string }[] = [
-    {
-      label: 'Recurring debits',
-      value: `${f.recurring
-        .slice(0, 3)
-        .map((r) => r.label.split(' — ')[0])
-        .join(', ')}${f.recurring.length > 3 ? '…' : ''} — ${money(f.recurringMonthlyTotal, 'CHF', 0)}/month. Largest weight.`,
-    },
-    {
-      label: 'Card spend',
-      value: `≈ ${money(Math.round(f.avgDailyCardSpend * 30), 'CHF', 0)}/month over the last ${f.monthsOfHistory} months, varying ±${money(Math.round(f.dailyStdDev), 'CHF', 0)} per day.`,
-    },
-    {
-      label: 'One-offs excluded',
-      value:
-        f.oneOffsExcluded.length > 0
-          ? `${f.oneOffsExcluded.map((o) => `${o.label} (${money(o.amount, 'CHF', 0)})`).join(', ')} — single large payments don't inflate the estimate.`
-          : 'None in this period.',
-    },
-    {
-      label: 'Seasonal effects',
-      value: f.seasonalNote ?? 'None right now — December and holiday periods raise the estimate.',
-    },
-  ];
+  const grow = Math.max(0, buyingPower.availableNow - forecast.keep);
 
   return (
     <div className="screen">
-      {/* Hero — the estimate and the projection, one card */}
-      <section className="card" aria-label="30-day liquidity estimate">
-        <p className="caption m-0">Liquidity you'll likely need, next 30 days</p>
-        <p className="m-0 amount" style={{ fontSize: 'var(--font-size-display)', fontWeight: 'var(--font-weight-bold)', lineHeight: 'var(--line-height-tight)' }}>
-          {money(forecast.bufferLow, 'CHF', 0)} – {money(forecast.bufferHigh, 'CHF', 0)}
-        </p>
-        <p className="caption m-0" style={{ marginBottom: 'var(--space-sm)' }}>
-          Best estimate {money(forecast.buffer, 'CHF', 0)} · based on your last 3 months, not a guarantee.
-          {f.widened && ' Your income is irregular, so the range is wider than usual.'}
-        </p>
-        <LiquidityForecastChart forecast={forecast} minBalance={state.autoCover.minBalance} />
-        <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-          Shaded band = typical to high-spend scenario · marked points: rent, insurance, salary.
-        </p>
-      </section>
-
-      {/* The one control — your buffer */}
-      <section className="card" aria-label="Your buffer">
+      {/* KEEP / GROW — the whole idea in one card (§59) */}
+      <section className="card" aria-label="Keep and grow">
         <div className="flex items-baseline justify-between">
-          <h2 className="section-title m-0">Your buffer</h2>
-          <span className="caption">
-            {rule.bufferMode === 'ai' ? 'Following the estimate' : delta === 0 ? 'Equal to the estimate' : delta > 0 ? `${money(delta, 'CHF', 0)} above` : `${money(-delta, 'CHF', 0)} below`}
+          <span className="section-title">
+            {shortDate(forecast.horizonStart)} → {shortDate(forecast.horizonEnd)}
+          </span>
+          <span className={`status-pill status-pill--${forecast.confidence === 'high' ? 'healthy' : forecast.confidence === 'medium' ? 'approachingMinimum' : 'autoCoverFailed'}`}>
+            <span className="status-pill__dot" aria-hidden="true" />
+            {forecast.confidence === 'high' ? 'Predictable' : forecast.confidence === 'medium' ? 'Varies' : 'Less predictable'}
           </span>
         </div>
-        <p className="m-0 amount" style={{ fontSize: 'var(--font-size-title)', fontWeight: 'var(--font-weight-bold)' }}>
-          {money(activeBuffer, 'CHF', 0)}
-        </p>
-        <input
-          type="range"
-          className="slider"
-          min={4000}
-          max={24000}
-          step={100}
-          value={activeBuffer}
-          onChange={(e) => dispatch({ type: 'setBufferMode', mode: 'manual', manualBuffer: Number(e.target.value) })}
-          aria-label="Buffer override"
-        />
-        <p className="caption m-0" aria-live="polite">
-          {delta < 0
-            ? 'Lower buffer → more gets invested, and Auto Cover is more likely to trigger.'
-            : delta > 0
-              ? 'Higher buffer → more cash stays idle, and Auto Cover is less likely to trigger.'
-              : 'Smart Salary Allocation keeps this amount in Banking each month.'}
-        </p>
-        {rule.bufferMode === 'manual' && (
-          <button type="button" className="btn btn--ghost" onClick={() => dispatch({ type: 'setBufferMode', mode: 'ai' })}>
-            Follow the AI estimate again
-          </button>
-        )}
-      </section>
 
-      {/* Mandatory explainability — present, but on demand */}
-      <section className="card" aria-label="How this is calculated">
-        <button type="button" className="disclosure" aria-expanded={showFactors} onClick={() => setShowFactors((v) => !v)}>
-          How this is calculated
-          <span className="disclosure__chevron" aria-hidden="true">›</span>
-        </button>
-        {showFactors && (
-          <div style={{ marginTop: 'var(--space-2xs)' }}>
-            {factors.map((row) => (
-              <div key={row.label} className="factor-row" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
-                <span className="factor-row__label">{row.label}</span>
-                <span className="factor-row__value">{row.value}</span>
-              </div>
-            ))}
-            <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-              The estimate uses only your Swissquote account and card history — that data stays within Swissquote.
-              Turn AI Budgeting off in settings at any time; your buffer then becomes a fixed amount you choose.
-            </p>
+        <div className="keep-grow" style={{ marginTop: 'var(--space-sm)' }}>
+          <div className="keep-grow__side">
+            <span className="keep-grow__label">Keep</span>
+            <span className="keep-grow__value amount">CHF {swissNumber(forecast.keep, 0)}</span>
+            <span className="caption">For spending &amp; safety until your next salary</span>
+          </div>
+          <div className="keep-grow__side keep-grow__side--grow">
+            <span className="keep-grow__label">Grow</span>
+            <span className="keep-grow__value amount">CHF {swissNumber(grow, 0)}</span>
+            <span className="caption">Available for your financial plan</span>
+          </div>
+        </div>
+
+        <p className="caption m-0" style={{ marginTop: 'var(--space-sm)' }}>
+          We expect about {money(forecast.expectedRequirement, 'CHF', 0)} of spending before{' '}
+          {shortDate(forecast.horizonEnd)} and added a {money(forecast.safetyMargin, 'CHF', 0)} safety margin.
+          {forecast.confidence !== 'high' && ` ${forecast.confidenceNote}`}
+        </p>
+        {forecast.liftedByMin && (
+          <p className="caption m-0" style={{ marginTop: 'var(--space-2xs)', color: 'var(--color-text-primary)' }}>
+            Your own minimum of {money(rule.minKeep, 'CHF', 0)} applies — it is higher than the{' '}
+            {money(forecast.keepRaw, 'CHF', 0)} we predicted.
+          </p>
+        )}
+        {forecast.aboveMax && (
+          <div className="notice notice--warning" style={{ marginTop: 'var(--space-xs)' }}>
+            Your predicted expenses are above your preferred maximum of {money(rule.maxKeep, 'CHF', 0)}. We're keeping
+            the higher amount so your payments are covered — review the forecast before your next allocation.
+          </div>
+        )}
+        {forecast.fallbackUsed && (
+          <div className="notice notice--info" style={{ marginTop: 'var(--space-xs)' }}>
+            Using your fixed buffer of {money(rule.manualBuffer, 'CHF', 0)} instead of the prediction.
           </div>
         )}
       </section>
+
+      {/* The projection */}
+      <section className="card" aria-label="Projected balance">
+        <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>
+          Until your next salary
+        </h2>
+        <LiquidityForecastChart forecast={forecast} minBalance={forecast.keep} />
+      </section>
+
+      {/* One control by default; everything else behind Adjust */}
+      {!adjusting ? (
+        <button type="button" className="btn btn--secondary" onClick={() => setAdjusting(true)}>
+          Adjust forecast
+        </button>
+      ) : (
+        <>
+          <section className="card" aria-label="Safety level">
+            <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>
+              How careful should we be?
+            </h2>
+            <div className="flex flex-col" style={{ gap: 'var(--space-xs)' }} role="radiogroup" aria-label="Safety level">
+              {(Object.keys(SAFETY_LABELS) as SafetyLevel[]).map((level) => {
+                // Show what each level would keep, in francs — never labels alone (§17).
+                const factor = level === 'efficient' ? 0.08 : level === 'balanced' ? 0.16 : 0.3;
+                const preview = Math.round((forecast.expectedRequirement * (1 + factor)) / 50) * 50;
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    className="choice-row"
+                    role="radio"
+                    aria-checked={rule.safetyLevel === level}
+                    onClick={() => dispatch({ type: 'setSafetyLevel', level })}
+                  >
+                    <span className="choice-row__dot" aria-hidden="true" />
+                    <span className="flex-1 min-w-0">
+                      <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                        {SAFETY_LABELS[level].title}
+                      </span>
+                      <span className="caption block">{SAFETY_LABELS[level].blurb}</span>
+                    </span>
+                    <span className="amount" style={{ fontWeight: 'var(--font-weight-semibold)' }}>
+                      {swissNumber(Math.max(preview, rule.minKeep), 0)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="card" aria-label="Your limits">
+            <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Your limits</h2>
+            <label className="block" style={{ marginBottom: 'var(--space-sm)' }}>
+              <span className="caption">Never keep less than <strong className="amount">{money(rule.minKeep, 'CHF', 0)}</strong></span>
+              <input
+                type="range"
+                className="slider"
+                min={2000}
+                max={20000}
+                step={500}
+                value={rule.minKeep}
+                onChange={(e) => dispatch({ type: 'setKeepBoundaries', min: Number(e.target.value) })}
+                aria-label="Minimum cash to keep"
+              />
+            </label>
+            <label className="block">
+              <span className="caption">Normal maximum <strong className="amount">{money(rule.maxKeep, 'CHF', 0)}</strong></span>
+              <input
+                type="range"
+                className="slider"
+                min={5000}
+                max={40000}
+                step={500}
+                value={rule.maxKeep}
+                onChange={(e) => dispatch({ type: 'setKeepBoundaries', max: Number(e.target.value) })}
+                aria-label="Preferred maximum cash to keep"
+              />
+            </label>
+            <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+              <button
+                type="button"
+                className={`btn ${rule.bufferMode === 'ai' ? 'btn--primary' : 'btn--secondary'}`}
+                onClick={() => dispatch({ type: 'setBufferMode', mode: 'ai' })}
+              >
+                Predict it
+              </button>
+              <button
+                type="button"
+                className={`btn ${rule.bufferMode === 'manual' ? 'btn--primary' : 'btn--secondary'}`}
+                onClick={() => dispatch({ type: 'setBufferMode', mode: 'manual', manualBuffer: forecast.keepRaw })}
+              >
+                Fixed amount
+              </button>
+            </div>
+          </section>
+
+          <section className="card" aria-label="Planned expenses">
+            <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Planned expenses</h2>
+            <p className="caption m-0" style={{ marginBottom: 'var(--space-xs)' }}>
+              Tell us about spending we can't see in your history yet — we'll protect it.
+            </p>
+            {state.plannedExpenses.map((p) => (
+              <div key={p.id} className="settings-row">
+                <span className="flex-1">{p.label}</span>
+                <span className="amount">{money(p.amount, 'CHF', 0)}</span>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => dispatch({ type: 'removePlannedExpense', id: p.id })}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <div className="flex flex-wrap" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-xs)' }}>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => dispatch({ type: 'addPlannedExpense', label: 'Summer holiday', amount: 8_000 })}
+              >
+                + Holiday 8'000
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => dispatch({ type: 'addPlannedExpense', label: 'Cantonal taxes', amount: 24_000 })}
+              >
+                + Taxes 24'000
+              </button>
+            </div>
+          </section>
+
+          <button type="button" className="btn btn--primary" onClick={() => setAdjusting(false)}>
+            Done
+          </button>
+        </>
+      )}
+
+      {/* Explainability — always reachable, never in the way (§54) */}
+      <details className="card">
+        <summary className="disclosure" style={{ listStyle: 'none', cursor: 'pointer' }}>
+          How we calculated {money(forecast.keep, 'CHF', 0)}
+          <span className="disclosure__chevron" aria-hidden="true">›</span>
+        </summary>
+        <div style={{ marginTop: 'var(--space-xs)' }}>
+          {[
+            { label: 'Confirmed upcoming', value: forecast.confirmedUpcoming, note: `incl. ${money(forecast.pendingCard, 'CHF', 0)} authorised card payments` },
+            { label: 'Recurring bills', value: forecast.recurringPredicted, note: f.recurring.filter((r) => r.dueInCycle).map((r) => r.label.split(' — ')[0]).join(', ') || 'none due this cycle' },
+            { label: 'Everyday spending', value: forecast.variablePredicted, note: `${money(Math.round(f.avgDailyCardSpend), 'CHF', 0)}/day over ${forecast.horizonDays} days` },
+            { label: 'Safety margin', value: forecast.safetyMargin, note: `${SAFETY_LABELS[rule.safetyLevel].title} level` },
+          ].map((row) => (
+            <div key={row.label} className="factor-row" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+              <span className="factor-row__label">{row.label}</span>
+              <span className="factor-row__value">
+                <strong className="amount">{money(row.value, 'CHF', 0)}</strong>
+                <span className="micro block">{row.note}</span>
+              </span>
+            </div>
+          ))}
+          <div className="factor-row" style={{ borderTop: '1px solid var(--color-border-default)' }}>
+            <span className="factor-row__label" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Recommended</span>
+            <span className="factor-row__value amount" style={{ fontWeight: 'var(--font-weight-bold)' }}>
+              {money(forecast.keep, 'CHF', 0)}
+            </span>
+          </div>
+          <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
+            An estimate from your Swissquote account and card history only — that data stays within Swissquote.
+            {f.oneOffsExcluded.length > 0 &&
+              ` One-off payments (${f.oneOffsExcluded.map((o) => o.label).join(', ')}) are excluded so they don't inflate it.`}
+          </p>
+        </div>
+      </details>
     </div>
   );
 }

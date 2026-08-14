@@ -20,15 +20,17 @@ const SWATCH_CLASS: Record<string, string> = {
 export function BuyingPowerBar({ onOpen }: { onOpen: () => void }) {
   const { buyingPower } = useStore();
   const { ownSegments, credit, ownTotal } = buyingPower;
-  const scale = ownTotal + credit.amountChf;
+  const scale = ownTotal + credit.amountChf || 1;
 
   return (
     <button type="button" className="bp-bar" onClick={onOpen} aria-haspopup="dialog">
       <span className="sr-only">
-        Buying power breakdown.{' '}
-        {ownSegments.map((s) => `${s.label} ${money(s.amountChf)}. `).join('')}
-        Own funds total {money(ownTotal)}. Separately: {credit.label} {money(credit.amountChf)},
-        borrowing against your portfolio. Opens details.
+        Everyday Buying Power.{' '}
+        {ownSegments.map((s) => `${s.label} ${money(s.amountChf)}, ${s.availability}. `).join('')}
+        Your accessible cash totals {money(ownTotal)}.
+        {credit.amountChf > 0 &&
+          ` Separately, ${credit.label} ${money(credit.amountChf)} — credit, not your money.`}{' '}
+        Opens details.
       </span>
       <span className="bp-bar__track" aria-hidden="true">
         {ownSegments.map((s, i) => (
@@ -52,11 +54,14 @@ export function BuyingPowerBar({ onOpen }: { onOpen: () => void }) {
       </span>
       <span className="flex items-baseline justify-between" style={{ marginTop: 'var(--space-2xs)' }} aria-hidden="true">
         <span className="caption">
-          Own funds <strong className="amount" style={{ color: 'var(--color-text-primary)' }}>CHF {swissNumber(ownTotal)}</strong>
+          Your cash{' '}
+          <strong className="amount" style={{ color: 'var(--color-text-primary)' }}>CHF {swissNumber(ownTotal, 0)}</strong>
         </span>
-        <span className="caption">
-          Lombard <span className="amount">CHF {swissNumber(credit.amountChf)}</span> · credit
-        </span>
+        {credit.amountChf > 0 && (
+          <span className="caption">
+            Lombard <span className="amount">+ {swissNumber(credit.amountChf, 0)}</span> · credit
+          </span>
+        )}
       </span>
       <span className="bp-legend" style={{ marginTop: 'var(--space-2xs)' }} aria-hidden="true">
         {[...ownSegments, credit].map((s) => (

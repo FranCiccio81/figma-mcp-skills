@@ -382,6 +382,33 @@ button {
 }
 .settings-row:last-child { border-bottom: none; }
 
+/* KEEP / GROW split — the core AI Budgeting idea in one row */
+.keep-grow { display: flex; align-items: stretch; gap: var(--space-md); }
+.keep-grow__side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2xs); }
+.keep-grow__side--grow { border-left: 1px solid var(--color-border-subtle); padding-left: var(--space-md); }
+.keep-grow__label {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.keep-grow__side--grow .keep-grow__label { color: var(--color-text-accent); }
+.keep-grow__value { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+
+/* Liquidity-class chip on Buying Power rows */
+.class-chip {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2xs);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.class-chip--now { background: var(--color-surface-positive-subtle); color: var(--color-text-positive); }
+.class-chip--credit { background: var(--color-surface-warning-subtle); color: var(--color-text-warning); }
+
 /* Disclosure row — collapsed detail sections ("How this is calculated") */
 .disclosure {
   display: flex;

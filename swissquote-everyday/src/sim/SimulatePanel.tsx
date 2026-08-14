@@ -16,6 +16,7 @@ const FLAG_LABELS: { flag: keyof SimFlags; label: string }[] = [
   { flag: 'irregularIncome', label: 'Irregular income (Marc)' },
   { flag: 'sourcesExhausted', label: 'Sources exhausted' },
   { flag: 'savingPlanOutage', label: 'Saving Plan outage' },
+  { flag: 'tradingUnavailable', label: 'Trading unavailable' },
 ];
 
 export function SimulatePanel({ onReset }: { onReset: () => void }) {
@@ -36,6 +37,19 @@ export function SimulatePanel({ onReset }: { onReset: () => void }) {
         <button type="button" className="btn btn--secondary" onClick={() => advance(7)}>+7 days</button>
         <button type="button" className="btn btn--secondary" onClick={() => advance(daysToAllocation)}>
           To salary + allocation
+        </button>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          onClick={() =>
+            dispatch({
+              type: 'simulateLargePayment',
+              label: 'Kitchen renovation — Cuisines Léman SA',
+              amount: Math.round((state.accounts.everyday + 9_000) / 100) * 100,
+            })
+          }
+        >
+          Payment bigger than balance
         </button>
         <button type="button" className="btn btn--secondary" onClick={() => dispatch({ type: 'triggerMarginCall' })}>
           Force margin call

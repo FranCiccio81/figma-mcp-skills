@@ -99,15 +99,22 @@ export interface PendingAllocation {
   anomaly: string | null;
 }
 
+/** AI Budgeting conservativeness — §17: shown as CHF values, never labels alone. */
+export type SafetyLevel = 'efficient' | 'balanced' | 'cautious';
+
 export interface AllocationRule {
   enabled: boolean;
   paused: boolean;
   skipNext: boolean;
   /** Execution preference — §20: allocate automatically, or prepare and ask. */
   mode: 'automatic' | 'review';
-  /** `ai` = use the forecast buffer; `manual` = client override. */
+  /** `ai` = AI Budgeting predicts the keep amount; `manual` = fixed liquidity fallback. */
   bufferMode: 'ai' | 'manual';
   manualBuffer: number;
+  /** AI Budgeting settings — safety level and the client's hard corridor (§17/§18). */
+  safetyLevel: SafetyLevel;
+  minKeep: number;
+  maxKeep: number;
   /** `excess` = split what is above the buffer; `percentOfReceived` = irregular-income mode. */
   basis: 'excess' | 'percentOfReceived';
   splits: AllocationSplit[];
@@ -124,21 +131,39 @@ export interface AllocationRule {
   lastRun: { day: number; moved: { destination: AllocationDestination; amount: number }[] } | null;
 }
 
-export interface AutoCoverConfig {
-  /** Off by default — same pattern as Auto FX. */
+/** A client-authorised Auto Cover funding source, with its own monthly cap (§33). */
+export interface AutoCoverSource {
+  source: Extract<MoneySource, 'saveEasy' | 'tradingCash' | 'eurWallet' | 'usdWallet'>;
   enabled: boolean;
-  /** Balance below this triggers a top-up (or an incoming debit that would breach it). */
-  minBalance: number;
-  /** Client-ordered sources. Lombard is pinned last and gated separately. */
-  waterfall: Exclude<MoneySource, 'everyday' | 'lombard'>[];
+  monthlyLimit: number;
+  usedThisMonth: number;
+}
+
+export interface AutoCoverConfig {
+  /** Off by default — opt-in only, same pattern as Auto FX (§6.1). */
+  enabled: boolean;
+  paused: boolean;
+  /** Exact shortfall, or shortfall + a buffer left in Everyday afterwards (§29). */
+  coverMode: 'exact' | 'buffer';
+  bufferAmount: number;
+  /** Guardrails — §32. */
+  perTransactionMax: number;
+  monthlyCap: number;
+  usedThisMonth: number;
+  /** Client-ordered own-cash sources; Lombard is separate and always last. */
+  sources: AutoCoverSource[];
+  /** Keep at least this much in Trading for tactical use (§23). */
+  tradingReserve: number;
+  /** Lombard is opted into separately, behind an explicit acknowledgement (§34–36). */
   lombardEnabled: boolean;
   lombardAcknowledged: boolean;
-  /** Guardrails — §5.5, displayed on screen. */
-  topUpIncrement: number;
-  monthlyCap: number;
-  cooldownDays: number;
-  usedThisMonth: number;
+  lombardPerCoverMax: number;
+  lombardMonthlyMax: number;
+  lombardUsedThisMonth: number;
   lastTopUpDay: number | null;
+  /** Advanced: keep Everyday topped up to this balance (§31 Use Case B). */
+  keepMinimumEnabled: boolean;
+  minBalance: number;
 }
 
 /** Prototype-only levers to force each §6 edge case. Not part of the product surface. */
@@ -151,6 +176,8 @@ export interface SimFlags {
   marginCall: boolean;
   /** Forces the Saving Plan destination to fail — §35 partial-failure demo. */
   savingPlanOutage: boolean;
+  /** Makes Trading cash temporarily untransferable — Auto Cover §66. */
+  tradingUnavailable: boolean;
 }
 
 export interface PendingSettlement {
@@ -181,6 +208,8 @@ export interface EngineState {
   pendingSettlements: PendingSettlement[];
   /** Prepared allocation awaiting the client's approval (review mode / anomaly). */
   pendingAllocation: PendingAllocation | null;
+  /** Client-declared future spending the forecast must protect (§32 / FR-14). */
+  plannedExpenses: { id: string; label: string; amount: number }[];
   notices: EngineNotice[];
   /** Day the last Auto Cover attempt failed with sources exhausted; cleared once the balance recovers. */
   coverFailedDay: number | null;

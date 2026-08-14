@@ -17,7 +17,10 @@ import {
   INITIAL_ALLOCATION,
   INITIAL_AUTO_COVER,
   LOMBARD_RATE_PA,
+  PENDING_CARD_RESERVED,
   RECURRING_DEBITS,
+  SAVE_EASY_PENALTY_FREE,
+  TRADING_ORDERS_RESERVED,
   generateHistory,
   salaryCreditDay,
 } from '../data/mockLedger';
@@ -28,6 +31,7 @@ import type {
   EngineNotice,
   EngineState,
   MoneySource,
+  SafetyLevel,
   SimFlags,
   Txn,
 } from './types';
@@ -50,7 +54,7 @@ export function initialState(): EngineState {
     txns: generateHistory(),
     status: 'healthy',
     allocation: { ...INITIAL_ALLOCATION, splits: INITIAL_ALLOCATION.splits.map((s) => ({ ...s })) },
-    autoCover: { ...INITIAL_AUTO_COVER, waterfall: [...INITIAL_AUTO_COVER.waterfall] },
+    autoCover: { ...INITIAL_AUTO_COVER, sources: INITIAL_AUTO_COVER.sources.map((x) => ({ ...x })) },
     flags: {
       marketClosed: false,
       salaryDelayed: false,
@@ -59,9 +63,11 @@ export function initialState(): EngineState {
       sourcesExhausted: false,
       marginCall: false,
       savingPlanOutage: false,
+      tradingUnavailable: false,
     },
     pendingSettlements: [],
     pendingAllocation: null,
+    plannedExpenses: [],
     notices: [],
     coverFailedDay: null,
     announcement: '',
@@ -80,6 +86,19 @@ export type EngineAction =
   | { type: 'setMinBalance'; value: number }
   | { type: 'moveWaterfallSource'; index: number; direction: -1 | 1 }
   | { type: 'setLombard'; enabled: boolean; acknowledged: boolean }
+  /* Auto Cover — spec configuration */
+  | { type: 'toggleCoverSource'; source: MoneySource; enabled: boolean }
+  | { type: 'setCoverMode'; mode: 'exact' | 'buffer'; bufferAmount?: number }
+  | { type: 'setPerTransactionMax'; value: number }
+  | { type: 'setCoverMonthlyCap'; value: number }
+  | { type: 'setTradingReserve'; value: number }
+  | { type: 'setLombardCoverLimits'; perCover?: number; monthly?: number }
+  | { type: 'setKeepMinimum'; enabled: boolean }
+  /* AI Budgeting — spec configuration */
+  | { type: 'setSafetyLevel'; level: SafetyLevel }
+  | { type: 'setKeepBoundaries'; min?: number; max?: number }
+  | { type: 'addPlannedExpense'; label: string; amount: number }
+  | { type: 'removePlannedExpense'; id: string }
   | { type: 'setAllocationPaused'; paused: boolean }
   | { type: 'skipNextAllocation' }
   | { type: 'setBufferMode'; mode: 'ai' | 'manual'; manualBuffer?: number }
@@ -90,6 +109,8 @@ export type EngineAction =
   | { type: 'resolveMarginCall' }
   | { type: 'dismissNotice'; id: string }
   | { type: 'manualTransferIn'; amount: number }
+  /** Prototype rig: a payment that Everyday alone cannot fund (Auto Cover §7 Use Case A). */
+  | { type: 'simulateLargePayment'; label: string; amount: number }
   | { type: 'pauseAll' }
   | { type: 'resumeAll' };
 
@@ -103,9 +124,10 @@ function draft(state: EngineState): EngineState {
     accounts: { ...state.accounts },
     txns: [...state.txns],
     allocation: { ...state.allocation, splits: state.allocation.splits.map((s) => ({ ...s })) },
-    autoCover: { ...state.autoCover, waterfall: [...state.autoCover.waterfall] },
+    autoCover: { ...state.autoCover, sources: state.autoCover.sources.map((x) => ({ ...x })) },
     flags: { ...state.flags },
     pendingSettlements: [...state.pendingSettlements],
+    plannedExpenses: [...state.plannedExpenses],
     notices: [...state.notices],
   };
 }
@@ -156,196 +178,251 @@ function deriveStatus(s: EngineState): void {
   s.status = 'healthy';
 }
 
-interface DrawResult {
-  drawn: number;
-  parts: { source: MoneySource; amount: number; pending: boolean; fxCost?: number }[];
-  skipped: { source: MoneySource; reason: string }[];
+export interface CoverPart {
+  source: MoneySource;
+  /** CHF credited to Everyday, after any conversion cost. */
+  amount: number;
+  fxCost?: number;
+  isCredit?: boolean;
 }
 
-/** Walk the client-ordered waterfall and draw up to `needed` CHF. */
-function drawFromWaterfall(s: EngineState, needed: number): DrawResult {
-  const res: DrawResult = { drawn: 0, parts: [], skipped: [] };
-  const order: MoneySource[] = [...s.autoCover.waterfall];
-  if (s.autoCover.lombardEnabled && s.autoCover.lombardAcknowledged) order.push('lombard');
-
-  for (const source of order) {
-    if (res.drawn >= needed) break;
-    const want = needed - res.drawn;
-    const exhausted = s.flags.sourcesExhausted;
-
-    if (source === 'saveEasy') {
-      const avail = exhausted ? 0 : s.accounts.saveEasy;
-      const take = Math.min(want, avail);
-      if (take <= 0) { res.skipped.push({ source, reason: 'No balance available' }); continue; }
-      s.accounts.saveEasy -= take;
-      res.parts.push({ source, amount: take, pending: false });
-      res.drawn += take;
-    } else if (source === 'tradingCash') {
-      if (s.flags.marketClosed) {
-        res.skipped.push({ source, reason: 'Market closed — Trading cash cannot be moved right now' });
-        continue;
-      }
-      const avail = exhausted ? 0 : s.accounts.tradingCash;
-      const take = Math.min(want, avail);
-      if (take <= 0) { res.skipped.push({ source, reason: 'No balance available' }); continue; }
-      s.accounts.tradingCash -= take;
-      res.parts.push({ source, amount: take, pending: false });
-      res.drawn += take;
-    } else if (source === 'investEasy') {
-      const avail = exhausted ? 0 : s.accounts.investEasy;
-      const take = Math.min(want, avail);
-      if (take <= 0) { res.skipped.push({ source, reason: 'No positions available to sell' }); continue; }
-      // A sale settles T+2 — the cash is pending, never shown as spendable early.
-      s.accounts.investEasy -= take;
-      res.parts.push({ source, amount: take, pending: true });
-      res.drawn += take;
-    } else if (source === 'eurWallet' || source === 'usdWallet') {
-      const rate = source === 'eurWallet' ? FX.eurToChf : FX.usdToChf;
-      const balance = exhausted ? 0 : s.accounts[source];
-      const availChf = balance * rate;
-      const takeChf = Math.min(want, availChf);
-      if (takeChf <= 0) { res.skipped.push({ source, reason: 'No balance available' }); continue; }
-      const fxCost = Math.round(takeChf * (FX.spreadPct / 100) * 100) / 100;
-      s.accounts[source] -= takeChf / rate;
-      res.parts.push({ source, amount: takeChf - fxCost, pending: false, fxCost });
-      res.drawn += takeChf - fxCost;
-    } else if (source === 'lombard') {
-      const avail = exhausted ? 0 : s.accounts.lombardAvailable;
-      const take = Math.min(want, avail);
-      if (take <= 0) { res.skipped.push({ source, reason: 'No credit line available' }); continue; }
-      s.accounts.lombardAvailable -= take;
-      s.accounts.lombardDrawn += take;
-      res.parts.push({ source, amount: take, pending: false });
-      res.drawn += take;
-    }
-  }
-  return res;
+export interface CoverPlan {
+  parts: CoverPart[];
+  total: number;
+  /** Amount the authorised sources could NOT provide. */
+  missing: number;
+  skipped: { source: MoneySource; reason: string }[];
+  usesLombard: boolean;
 }
 
 /**
- * Auto Cover — triggered when the balance falls below the minimum or an
- * incoming debit would breach it. Applies the §5.5 guardrails, then draws
- * from the waterfall. Returns true if the shortfall was (or will be) covered.
+ * What a single source can contribute right now, after product conditions
+ * (open orders, penalty-free limits, market hours) and the client's own
+ * limits (trading reserve, per-source monthly cap). Pure — no mutation.
  */
-function attemptAutoCover(s: EngineState, projectedBalance: number): boolean {
-  const cfg = s.autoCover;
-  if (!cfg.enabled) return false;
+export function sourceCoverCapacity(s: EngineState, source: MoneySource): { amount: number; reason?: string } {
+  return sourceCapacity(s, source);
+}
 
-  const shortfall = cfg.minBalance - projectedBalance;
+/** Total Auto Cover capacity, own cash and credit kept apart (§13/§84). */
+export function coverCapacity(s: EngineState): { own: number; credit: number } {
+  const own = s.autoCover.sources.reduce((sum, x) => sum + sourceCapacity(s, x.source).amount, 0);
+  const credit = sourceCapacity(s, 'lombard').amount;
+  return { own: Math.round(own), credit: Math.round(credit) };
+}
+
+function sourceCapacity(s: EngineState, source: MoneySource): { amount: number; reason?: string } {
+  const cfg = s.autoCover;
+  const exhausted = s.flags.sourcesExhausted;
+  const cfgSource = cfg.sources.find((x) => x.source === source);
+
+  if (source === 'lombard') {
+    if (!cfg.lombardEnabled || !cfg.lombardAcknowledged) {
+      return { amount: 0, reason: 'Automatic borrowing is off' };
+    }
+    const monthLeft = cfg.lombardMonthlyMax - cfg.lombardUsedThisMonth;
+    const amount = Math.max(
+      0,
+      Math.min(exhausted ? 0 : s.accounts.lombardAvailable, cfg.lombardPerCoverMax, monthLeft),
+    );
+    return amount > 0 ? { amount } : { amount: 0, reason: 'Borrowing limit reached' };
+  }
+
+  if (!cfgSource || !cfgSource.enabled) return { amount: 0, reason: 'Not authorised for Auto Cover' };
+  const monthLeft = cfgSource.monthlyLimit - cfgSource.usedThisMonth;
+  if (monthLeft <= 0) return { amount: 0, reason: 'Monthly limit for this source reached' };
+
+  if (source === 'saveEasy') {
+    // Only the amount withdrawable without a notice period or penalty (§20).
+    const penaltyFree = Math.max(0, SAVE_EASY_PENALTY_FREE - cfgSource.usedThisMonth);
+    const amount = Math.max(0, Math.min(exhausted ? 0 : s.accounts.saveEasy, penaltyFree, monthLeft));
+    return amount > 0 ? { amount } : { amount: 0, reason: 'No penalty-free balance available' };
+  }
+
+  if (source === 'tradingCash') {
+    if (s.flags.marketClosed || s.flags.tradingUnavailable) {
+      return { amount: 0, reason: 'Temporarily unavailable — Auto Cover will skip this source' };
+    }
+    // Open orders and the client's own trading reserve are never touched (§22/§23).
+    const free = s.accounts.tradingCash - TRADING_ORDERS_RESERVED - cfg.tradingReserve;
+    const amount = Math.max(0, Math.min(exhausted ? 0 : free, monthLeft));
+    return amount > 0 ? { amount } : { amount: 0, reason: 'Reserved for open orders and your Trading reserve' };
+  }
+
+  if (source === 'eurWallet' || source === 'usdWallet') {
+    const rate = source === 'eurWallet' ? FX.eurToChf : FX.usdToChf;
+    const grossChf = (exhausted ? 0 : s.accounts[source]) * rate;
+    const netChf = grossChf * (1 - FX.spreadPct / 100);
+    const amount = Math.max(0, Math.min(netChf, monthLeft));
+    return amount > 0 ? { amount } : { amount: 0, reason: 'No balance available' };
+  }
+
+  return { amount: 0, reason: 'Not eligible' };
+}
+
+/**
+ * Build the complete funding plan BEFORE moving anything (§55 pre-check).
+ * Own cash first, in the client's order; Lombard only ever last.
+ */
+function planCover(s: EngineState, needed: number): CoverPlan {
+  const cfg = s.autoCover;
+  const plan: CoverPlan = { parts: [], total: 0, missing: 0, skipped: [], usesLombard: false };
+
+  // Global ceilings: per transaction and what remains of the monthly cap.
+  const budget = Math.min(needed, cfg.perTransactionMax, Math.max(0, cfg.monthlyCap - cfg.usedThisMonth));
+
+  const order: MoneySource[] = [...cfg.sources.map((x) => x.source), 'lombard'];
+  for (const source of order) {
+    if (plan.total >= budget - 0.005) break;
+    const { amount, reason } = sourceCapacity(s, source);
+    if (amount <= 0) {
+      if (reason) plan.skipped.push({ source, reason });
+      continue;
+    }
+    const take = Math.min(amount, budget - plan.total);
+    const isCredit = source === 'lombard';
+    const fxCost =
+      source === 'eurWallet' || source === 'usdWallet'
+        ? Math.round(take * (FX.spreadPct / 100) * 100) / 100
+        : undefined;
+    plan.parts.push({ source, amount: take, fxCost, isCredit });
+    plan.total += take;
+    if (isCredit) plan.usesLombard = true;
+  }
+  plan.missing = Math.max(0, needed - plan.total);
+  return plan;
+}
+
+
+/**
+ * Auto Cover — brings authorised liquidity back to Everyday when a payment
+ * needs more than the account holds (transaction cover, the spec's MVP), or
+ * when the optional keep-minimum mode is on.
+ *
+ * All-or-nothing: the full funding plan is computed first, and if the
+ * authorised sources cannot cover the whole shortfall, nothing is moved
+ * (§54/§55) — no transfers that fail to solve the problem.
+ */
+function attemptAutoCover(s: EngineState, shortfall: number, trigger: string): boolean {
+  const cfg = s.autoCover;
+  if (!cfg.enabled || cfg.paused) return false;
   if (shortfall <= 0) return true;
 
-  // Guardrail: cooldown between top-ups.
-  if (cfg.lastTopUpDay !== null && s.day - cfg.lastTopUpDay < cfg.cooldownDays) {
+  // Cover the exact shortfall, plus a buffer if the client configured one (§29).
+  const needed = cfg.coverMode === 'buffer' ? shortfall + cfg.bufferAmount : shortfall;
+  const plan = planCover(s, needed);
+
+  // All-or-nothing: unless the plan clears the whole shortfall, nothing moves —
+  // a partial transfer would not solve the problem it was meant to solve (§54).
+  if (plan.total + 0.005 < shortfall) {
+    s.coverFailedDay = s.day;
+    const monthlyLeft = cfg.monthlyCap - cfg.usedThisMonth;
+    const limitReached = monthlyLeft <= 0 || shortfall > cfg.perTransactionMax;
     addNotice(s, {
-      kind: 'warning',
-      title: 'Auto Cover on cooldown',
-      body: `A top-up already ran on ${shortDate(cfg.lastTopUpDay)}. The next one can run after ${cfg.cooldownDays} day(s). You can move money manually at any time.`,
+      kind: 'error',
+      title: limitReached ? 'Auto Cover limit reached' : "We couldn't cover this payment",
+      shortfall: shortfall - plan.total,
+      body: limitReached
+        ? `This would need ${money(shortfall)}, above your ${money(cfg.perTransactionMax)} per-payment limit or your ${money(cfg.monthlyCap)} monthly limit (${money(cfg.usedThisMonth)} used). Auto Cover stays on but won't move more until you change the limits.`
+        : `${money(shortfall)} was required, but your authorised sources could provide ${money(plan.total)}. ` +
+          (plan.skipped.length
+            ? `${plan.skipped.map((k) => `${SOURCE_LABELS[k.source]}: ${k.reason.toLowerCase()}`).join('; ')}. `
+            : '') +
+          (!cfg.lombardEnabled && s.accounts.lombardAvailable > 0
+            ? 'You have Lombard capacity available, but automatic borrowing is off. '
+            : '') +
+          'No money was moved.',
     });
+    announce(s, `Auto Cover could not cover ${money(shortfall)}.`);
     return false;
   }
 
-  // Guardrail: monthly cap.
-  const capLeft = cfg.monthlyCap - cfg.usedThisMonth;
-  if (capLeft < cfg.topUpIncrement) {
-    addNotice(s, {
-      kind: 'warning',
-      title: 'Auto Cover monthly cap reached',
-      body: `Top-ups this month have used ${money(cfg.usedThisMonth)} of your ${money(cfg.monthlyCap)} cap. Move money manually, or raise the cap in Auto Cover settings.`,
-    });
-    return false;
-  }
-
-  // Top-ups run in increments of the configured size.
-  const increments = Math.ceil(shortfall / cfg.topUpIncrement);
-  const needed = Math.min(increments * cfg.topUpIncrement, capLeft);
-
+  // Execute the plan.
   const before = s.accounts.everyday;
-  const result = drawFromWaterfall(s, needed);
+  for (const part of plan.parts) {
+    if (part.source === 'saveEasy') s.accounts.saveEasy -= part.amount;
+    else if (part.source === 'tradingCash') s.accounts.tradingCash -= part.amount;
+    else if (part.source === 'eurWallet') s.accounts.eurWallet -= (part.amount + (part.fxCost ?? 0)) / FX.eurToChf;
+    else if (part.source === 'usdWallet') s.accounts.usdWallet -= (part.amount + (part.fxCost ?? 0)) / FX.usdToChf;
+    else if (part.source === 'lombard') {
+      s.accounts.lombardAvailable -= part.amount;
+      s.accounts.lombardDrawn += part.amount;
+      cfg.lombardUsedThisMonth += part.amount;
+    }
+    const cfgSource = cfg.sources.find((x) => x.source === part.source);
+    if (cfgSource) cfgSource.usedThisMonth += part.amount;
 
-  for (const part of result.parts) {
-    const settlesOnDay = part.pending ? s.day + 2 : undefined;
-    if (!part.pending) s.accounts.everyday += part.amount;
-    const after = s.accounts.everyday;
-    const txn = addTxn(s, {
+    s.accounts.everyday += part.amount;
+    addTxn(s, {
       day: s.day,
-      label: `Auto Cover · from ${SOURCE_LABELS[part.source]}`,
+      label: part.isCredit
+        ? 'Auto Cover · borrowed through Lombard'
+        : `Auto Cover · from ${SOURCE_LABELS[part.source]}`,
       category: 'smart-liquidity',
       amount: part.amount,
       currency: 'CHF',
-      status: part.pending ? 'pending' : 'booked',
+      status: 'booked',
       smart: {
         engine: 'autoCover',
-        title: `Auto Cover · from ${SOURCE_LABELS[part.source]}`,
+        title: part.isCredit
+          ? 'Auto Cover · borrowed through Lombard'
+          : `Auto Cover · from ${SOURCE_LABELS[part.source]}`,
         source: part.source,
         destination: 'everyday',
-        reason: buildCoverReason(s, before, part.source, part.amount, part.pending, part.fxCost),
+        reason: buildCoverReason(s, trigger, shortfall, plan, part),
         balanceBefore: before,
-        balanceAfter: after,
-        settlesOnDay,
+        balanceAfter: s.accounts.everyday,
         fxCostChf: part.fxCost,
-        interestRatePa: part.source === 'lombard' ? LOMBARD_RATE_PA : undefined,
+        interestRatePa: part.isCredit ? LOMBARD_RATE_PA : undefined,
       },
     });
-    if (part.pending && settlesOnDay !== undefined) {
-      s.pendingSettlements.push({ source: part.source, amount: part.amount, settlesOnDay, txnId: txn.id });
-    }
   }
 
-  if (result.drawn > 0) {
-    cfg.usedThisMonth += result.drawn;
-    cfg.lastTopUpDay = s.day;
-    const instant = result.parts.filter((p) => !p.pending).reduce((a, p) => a + p.amount, 0);
-    if (instant > 0) {
-      addNotice(s, {
-        kind: 'info',
-        title: 'Auto Cover executed',
-        body: `${money(instant)} moved to Everyday (${result.parts.filter((p) => !p.pending).map((p) => SOURCE_LABELS[p.source]).join(', ')}). Balance is now ${money(s.accounts.everyday)}.`,
-      });
-      announce(s, `Auto Cover executed. Everyday balance ${money(s.accounts.everyday)}.`);
-    }
-    const pendingSum = result.parts.filter((p) => p.pending).reduce((a, p) => a + p.amount, 0);
-    if (pendingSum > 0) {
-      addNotice(s, {
-        kind: 'info',
-        title: 'Auto Cover pending settlement',
-        body: `${money(pendingSum)} from an Invest Easy sale settles in 2 business days (T+2). It is not spendable until it settles.`,
-      });
-    }
-  }
+  cfg.usedThisMonth += plan.total;
+  cfg.lastTopUpDay = s.day;
 
-  if (result.drawn + 0.005 < needed) {
-    const remaining = cfg.minBalance - s.accounts.everyday;
-    if (remaining > 0 && result.parts.length === 0) {
-      s.coverFailedDay = s.day;
-      addNotice(s, {
-        kind: 'error',
-        title: 'Auto Cover could not top up',
-        shortfall: remaining,
-        body:
-          `Every source in your list was unavailable` +
-          (result.skipped.length ? ` (${result.skipped.map((k) => `${SOURCE_LABELS[k.source]}: ${k.reason.toLowerCase()}`).join('; ')})` : '') +
-          `. Your balance is ${money(remaining)} below your minimum. You can transfer money in, or sell positions manually.`,
-      });
-      announce(s, `Auto Cover could not top up. Shortfall ${money(remaining)}.`);
-      return false;
-    }
-  }
+  const ownCash = plan.parts.filter((p) => !p.isCredit).reduce((a, p) => a + p.amount, 0);
+  const borrowed = plan.parts.filter((p) => p.isCredit).reduce((a, p) => a + p.amount, 0);
+  addNotice(s, {
+    kind: borrowed > 0 ? 'warning' : 'info',
+    title: borrowed > 0 ? 'Lombard Auto Cover was used' : 'Payment covered automatically',
+    body:
+      (borrowed > 0
+        ? `${money(ownCash)} came from your own cash and ${money(borrowed)} was borrowed through your Lombard facility — your borrowing has increased by ${money(borrowed)}. `
+        : `We moved ${money(plan.total)} from ${plan.parts.map((p) => SOURCE_LABELS[p.source]).join(' and ')} so your ${trigger} could go through. `) +
+      `Everyday balance is now ${money(s.accounts.everyday)}.`,
+  });
+  announce(s, `Auto Cover moved ${money(plan.total)}. Everyday balance ${money(s.accounts.everyday)}.`);
   return true;
 }
 
+/** §63 explainability — why it ran, why this source, why this amount. */
 function buildCoverReason(
   s: EngineState,
-  balanceBefore: number,
-  source: MoneySource,
-  amount: number,
-  pending: boolean,
-  fxCost?: number,
+  trigger: string,
+  shortfall: number,
+  plan: CoverPlan,
+  part: CoverPart,
 ): string {
-  const base = `Your Everyday balance fell to ${money(balanceBefore)}, below your minimum of ${money(s.autoCover.minBalance)}. Auto Cover drew ${money(amount)} from ${SOURCE_LABELS[source]}, following your source order.`;
-  if (pending) return `${base} The sale settles in 2 business days (T+2) — the cash is pending until then.`;
-  if (fxCost !== undefined) return `${base} Conversion cost of ${money(fxCost)} (shown before execution) is included.`;
-  if (source === 'lombard') return `${base} This is borrowing against your portfolio at ${LOMBARD_RATE_PA}% p.a.`;
-  return base;
+  const cfg = s.autoCover;
+  const position = plan.parts.indexOf(part) + 1;
+  const why =
+    part.source === 'lombard'
+      ? 'Your own cash sources could not cover the whole amount, so Lombard — your last authorised source — was used.'
+      : position === 1
+        ? `${SOURCE_LABELS[part.source]} is your first Auto Cover source and had eligible cash available.`
+        : `${SOURCE_LABELS[part.source]} is next in your source order; the previous source could not cover the whole amount.`;
+  const amountWhy =
+    cfg.coverMode === 'buffer'
+      ? `You chose to cover the shortfall plus a ${money(cfg.bufferAmount)} buffer, so ${money(plan.total)} was moved in total.`
+      : `You chose Exact Cover, so only the ${money(shortfall)} shortfall was moved.`;
+  const extra =
+    part.fxCost !== undefined
+      ? ` The conversion cost of ${money(part.fxCost)} is included.`
+      : part.source === 'lombard'
+        ? ` Interest applies to borrowed amounts at ${LOMBARD_RATE_PA}% p.a. This is credit, not your own cash.`
+        : '';
+  return `Your Everyday balance was ${money(shortfall)} short for ${trigger}. ${why} ${amountWhy}${extra}`;
 }
 
 /**
@@ -525,12 +602,22 @@ function runAllocation(s: EngineState): void {
   executeAllocation(s, calc);
 }
 
-/** Apply one debit against Everyday, with pre-emptive Auto Cover (§5.5). */
+/**
+ * Apply one debit against Everyday. Auto Cover runs BEFORE the payment when
+ * the available balance (booked minus authorised card transactions) cannot
+ * fund it — transaction cover, the spec's primary trigger (§7 Use Case A).
+ */
 function applyDebit(s: EngineState, t: Omit<Txn, 'id' | 'status'>, isDirectDebit: boolean): void {
   const amount = -t.amount; // positive cost
-  const projected = s.accounts.everyday - amount;
-  if (projected < s.autoCover.minBalance) {
-    attemptAutoCover(s, projected);
+  const cfg = s.autoCover;
+  const available = s.accounts.everyday - PENDING_CARD_RESERVED;
+  // Use Case A: the payment itself is short. Use Case B (advanced): the
+  // payment would take the balance below the client's minimum.
+  const paymentShortfall = amount - available;
+  const minimumShortfall = cfg.keepMinimumEnabled ? cfg.minBalance - (available - amount) : 0;
+  const shortfall = Math.max(paymentShortfall, minimumShortfall);
+  if (shortfall > 0) {
+    attemptAutoCover(s, Math.ceil(shortfall), `your ${money(amount)} ${isDirectDebit ? 'payment' : 'card payment'} to ${t.label}`);
   }
   if (s.accounts.everyday - amount < 0) {
     // Not enough even after cover: a card payment is declined; a direct debit fails.
@@ -553,7 +640,12 @@ function advanceDay(prev: EngineState): EngineState {
   const s = draft(prev);
   s.day += 1;
   const dom = new Date(Date.UTC(2026, 7, 14) + s.day * 86_400_000).getUTCDate();
-  if (dom === 1) s.autoCover.usedThisMonth = 0; // monthly cap resets
+  if (dom === 1) {
+    // Monthly caps reset — overall, per source, and Lombard.
+    s.autoCover.usedThisMonth = 0;
+    s.autoCover.lombardUsedThisMonth = 0;
+    s.autoCover.sources = s.autoCover.sources.map((x) => ({ ...x, usedThisMonth: 0 }));
+  }
 
   // 1 — settle due T+2 sales: the pending cash becomes spendable now.
   const due = s.pendingSettlements.filter((p) => p.settlesOnDay <= s.day);
@@ -653,9 +745,12 @@ function advanceDay(prev: EngineState): EngineState {
     );
   }
 
-  // 6 — safety net: end-of-day balance check (a debit may have slipped through).
-  if (s.accounts.everyday < s.autoCover.minBalance) {
-    attemptAutoCover(s, s.accounts.everyday);
+  // 6 — advanced keep-minimum mode: top Everyday back up at the end of the day.
+  if (s.autoCover.keepMinimumEnabled) {
+    const available = s.accounts.everyday - PENDING_CARD_RESERVED;
+    if (available < s.autoCover.minBalance) {
+      attemptAutoCover(s, Math.ceil(s.autoCover.minBalance - available), 'your minimum Everyday balance');
+    }
   }
 
   deriveStatus(s);
@@ -685,10 +780,75 @@ export function reduce(prev: EngineState, action: EngineAction): EngineState {
     }
     case 'moveWaterfallSource': {
       const s = draft(prev);
-      const w = s.autoCover.waterfall;
+      const w = s.autoCover.sources;
       const j = action.index + action.direction;
       if (action.index < 0 || action.index >= w.length || j < 0 || j >= w.length) return prev;
       [w[action.index], w[j]] = [w[j], w[action.index]];
+      return s;
+    }
+    case 'toggleCoverSource': {
+      const s = draft(prev);
+      const src = s.autoCover.sources.find((x) => x.source === action.source);
+      if (!src) return prev;
+      src.enabled = action.enabled;
+      return s;
+    }
+    case 'setCoverMode': {
+      const s = draft(prev);
+      s.autoCover.coverMode = action.mode;
+      if (action.bufferAmount !== undefined) s.autoCover.bufferAmount = Math.max(0, action.bufferAmount);
+      return s;
+    }
+    case 'setPerTransactionMax': {
+      const s = draft(prev);
+      s.autoCover.perTransactionMax = Math.max(0, action.value);
+      return s;
+    }
+    case 'setCoverMonthlyCap': {
+      const s = draft(prev);
+      s.autoCover.monthlyCap = Math.max(0, action.value);
+      return s;
+    }
+    case 'setTradingReserve': {
+      const s = draft(prev);
+      s.autoCover.tradingReserve = Math.max(0, action.value);
+      return s;
+    }
+    case 'setLombardCoverLimits': {
+      const s = draft(prev);
+      if (action.perCover !== undefined) s.autoCover.lombardPerCoverMax = Math.max(0, action.perCover);
+      if (action.monthly !== undefined) s.autoCover.lombardMonthlyMax = Math.max(0, action.monthly);
+      return s;
+    }
+    case 'setKeepMinimum': {
+      const s = draft(prev);
+      s.autoCover.keepMinimumEnabled = action.enabled;
+      deriveStatus(s);
+      return s;
+    }
+    case 'setSafetyLevel': {
+      const s = draft(prev);
+      s.allocation.safetyLevel = action.level;
+      return s;
+    }
+    case 'setKeepBoundaries': {
+      const s = draft(prev);
+      if (action.min !== undefined) s.allocation.minKeep = Math.max(0, action.min);
+      if (action.max !== undefined) s.allocation.maxKeep = Math.max(0, action.max);
+      if (s.allocation.maxKeep < s.allocation.minKeep) s.allocation.maxKeep = s.allocation.minKeep;
+      return s;
+    }
+    case 'addPlannedExpense': {
+      const s = draft(prev);
+      s.plannedExpenses = [
+        ...s.plannedExpenses,
+        { id: nextId(s, 'plan'), label: action.label, amount: Math.max(0, action.amount) },
+      ];
+      return s;
+    }
+    case 'removePlannedExpense': {
+      const s = draft(prev);
+      s.plannedExpenses = s.plannedExpenses.filter((p) => p.id !== action.id);
       return s;
     }
     case 'setLombard': {
@@ -817,6 +977,16 @@ export function reduce(prev: EngineState, action: EngineAction): EngineState {
         status: 'booked',
       });
       announce(s, `Money moved. Everyday balance ${money(s.accounts.everyday)}.`);
+      deriveStatus(s);
+      return s;
+    }
+    case 'simulateLargePayment': {
+      const s = draft(prev);
+      applyDebit(
+        s,
+        { day: s.day, label: action.label, category: 'transfer', amount: -action.amount, currency: 'CHF' },
+        true,
+      );
       deriveStatus(s);
       return s;
     }
