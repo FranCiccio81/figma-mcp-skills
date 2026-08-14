@@ -60,6 +60,13 @@ export function BuyingPowerSheet() {
           </span>
           <span className="amount">CHF {swissNumber(state.accounts.investEasy)}</span>
         </div>
+        <div className="flex items-start justify-between" style={{ gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+          <span className="flex-1">
+            <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Global ETF Saving Plan</span>
+            <span className="caption block">Invested via your plan · product withdrawal conditions apply</span>
+          </span>
+          <span className="amount">CHF {swissNumber(state.accounts.savingPlan)}</span>
+        </div>
       </div>
 
       <div className="lombard-block" style={{ marginTop: 'var(--space-md)' }}>

@@ -53,6 +53,7 @@
   --core-dv-blue-deep: #2a5cc0;
   --core-dv-green: #0f9d63;
   --core-dv-blue: #3d7ff5;
+  --core-dv-magenta: #b4438f; /* Saving Plan in the allocation plan bar */
   --core-dv-credit: #3f434a;
 
   /* ---------------------------------------------------------------- */
@@ -115,6 +116,8 @@
   --color-dataviz-fx: var(--core-dv-blue-deep);
   --color-dataviz-save: var(--core-dv-green);
   --color-dataviz-trading: var(--core-dv-blue);
+  --color-dataviz-invest: var(--core-dv-blue-deep);
+  --color-dataviz-plan: var(--core-dv-magenta);
   --color-dataviz-credit: var(--core-dv-credit);
   --color-dataviz-band: var(--core-blue-100);
   --color-dataviz-line: var(--core-blue-600);

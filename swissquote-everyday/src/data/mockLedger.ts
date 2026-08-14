@@ -32,6 +32,7 @@ export const INITIAL_ACCOUNTS: Accounts = {
   saveEasy: 86_400.0,
   tradingCash: 24_260.0,
   investEasy: 428_900.0,
+  savingPlan: 24_500.0,
   lombardAvailable: 118_600.0,
   lombardDrawn: 0,
 };
@@ -40,20 +41,31 @@ export const INITIAL_ALLOCATION: AllocationRule = {
   enabled: true,
   paused: false,
   skipNext: false,
+  mode: 'automatic',
   bufferMode: 'ai',
-  manualBuffer: 4_150,
+  manualBuffer: 11_400,
   basis: 'excess',
+  // Spec §14/§28 example plan: Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20.
   splits: [
-    // §10 ratio: 2'300 → Invest Easy, 950 → Save Easy ≈ 70/29 of the surplus.
-    { destination: 'investEasy', label: 'Invest Easy', percent: 70 },
-    { destination: 'saveEasy', label: 'Save Easy', percent: 29 },
+    { destination: 'saveEasy', label: 'Save Easy', percent: 30 },
+    { destination: 'investEasy', label: 'Invest Easy', percent: 40 },
+    { destination: 'tradingCash', label: 'Trading', percent: 10 },
+    { destination: 'savingPlan', label: 'Global ETF Saving Plan', percent: 20 },
   ],
+  // Guardrails — §19, scaled to the CHF 21'000 salary.
+  maxPerSalary: 25_000,
+  minAllocation: 500,
+  askOnVariance: true,
+  variancePct: 20,
   scheduledForDay: null,
+  lastReceived: 0,
   lastRun: {
     day: -18, // Monday 27 July — salary landed Friday 24 July (25th was a Saturday)
     moved: [
-      { destination: 'investEasy', amount: 14_800 },
-      { destination: 'saveEasy', amount: 6_100 },
+      { destination: 'saveEasy', amount: 2_800 },
+      { destination: 'investEasy', amount: 3_700 },
+      { destination: 'tradingCash', amount: 900 },
+      { destination: 'savingPlan', amount: 1_900 },
     ],
   },
 };
@@ -172,45 +184,39 @@ export function generateHistory(): Txn[] {
       });
     }
 
-    // Smart Salary Allocation runs from history (26 May, 26 June, 27 July).
+    // Smart Salary Allocation runs from history (26 May, 26 June, 27 July) —
+    // the §14 example plan: Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20.
     if (day === -80 || day === -49 || day === -18) {
-      const pairs: [number, number] =
-        day === -18 ? [14_800, 6_100] : day === -49 ? [13_900, 5_700] : [14_200, 5_900];
-      const before = 33_000 + Math.round(rng() * 2_000);
-      push({
-        day,
-        label: 'Smart Salary Allocation · to Invest Easy',
-        category: 'smart-liquidity',
-        amount: -pairs[0],
-        currency: 'CHF',
-        status: 'booked',
-        smart: {
-          engine: 'allocation',
-          title: 'Smart Salary Allocation · to Invest Easy',
-          source: 'everyday',
-          destination: 'investEasy',
-          reason: `Salary recognised from ${CLIENT.employer}. Your rule keeps the AI buffer in Everyday and moves 70% of the rest to Invest Easy.`,
-          balanceBefore: before,
-          balanceAfter: before - pairs[0],
-        },
-      });
-      push({
-        day,
-        label: 'Smart Salary Allocation · to Save Easy',
-        category: 'smart-liquidity',
-        amount: -pairs[1],
-        currency: 'CHF',
-        status: 'booked',
-        smart: {
-          engine: 'allocation',
-          title: 'Smart Salary Allocation · to Save Easy',
-          source: 'everyday',
-          destination: 'saveEasy',
-          reason: `Salary recognised from ${CLIENT.employer}. Your rule moves 29% of the amount above the buffer to Save Easy.`,
-          balanceBefore: before - pairs[0],
-          balanceAfter: before - pairs[0] - pairs[1],
-        },
-      });
+      const total = day === -18 ? 9_300 : day === -49 ? 8_400 : 8_900;
+      const received = 21_000 + (day === -18 ? 214.4 : 0);
+      const plan: { destination: 'saveEasy' | 'investEasy' | 'tradingCash' | 'savingPlan'; label: string; percent: number }[] = [
+        { destination: 'saveEasy', label: 'Save Easy', percent: 30 },
+        { destination: 'investEasy', label: 'Invest Easy', percent: 40 },
+        { destination: 'tradingCash', label: 'Trading', percent: 10 },
+        { destination: 'savingPlan', label: 'Global ETF Saving Plan', percent: 20 },
+      ];
+      let before = 33_000 + Math.round(rng() * 2_000);
+      for (const p of plan) {
+        const amount = Math.round((total * p.percent) / 100 / 10) * 10;
+        push({
+          day,
+          label: `Smart Salary Allocation · to ${p.label}`,
+          category: 'smart-liquidity',
+          amount: -amount,
+          currency: 'CHF',
+          status: 'booked',
+          smart: {
+            engine: 'allocation',
+            title: `Smart Salary Allocation · to ${p.label}`,
+            source: 'everyday',
+            destination: p.destination,
+            reason: `CHF ${received.toFixed(2)} was received from ${CLIENT.employer}. Your plan keeps your Cash Safety Buffer available in Banking; the allocatable amount was distributed by your plan — ${p.percent}% to ${p.label}.`,
+            balanceBefore: before,
+            balanceAfter: before - amount,
+          },
+        });
+        before -= amount;
+      }
     }
 
     // One-off large item (excluded from the forecast's recurring detection).

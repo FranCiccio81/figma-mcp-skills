@@ -15,6 +15,7 @@ const FLAG_LABELS: { flag: keyof SimFlags; label: string }[] = [
   { flag: 'salaryMissing', label: 'Salary missing' },
   { flag: 'irregularIncome', label: 'Irregular income (Marc)' },
   { flag: 'sourcesExhausted', label: 'Sources exhausted' },
+  { flag: 'savingPlanOutage', label: 'Saving Plan outage' },
 ];
 
 export function SimulatePanel({ onReset }: { onReset: () => void }) {

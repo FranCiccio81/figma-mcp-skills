@@ -15,7 +15,10 @@ export function AutomationStatusCard() {
   const paused = allocation.paused;
 
   const buffer = allocation.bufferMode === 'ai' ? forecast.buffer : allocation.manualBuffer;
-  const surplus = Math.max(0, CLIENT.salaryNet - buffer);
+  const estTotal = Math.min(
+    Math.max(0, state.accounts.everyday + CLIENT.salaryNet - buffer),
+    allocation.maxPerSalary,
+  );
   const nextRunDay = allocation.scheduledForDay ?? nextSalaryDayAfter(state.day) + 1;
 
   let line: string;
@@ -24,24 +27,27 @@ export function AutomationStatusCard() {
     line = 'All automations are paused. Nothing moves until you resume.';
   } else if (status === 'autoCoverFailed') {
     line = 'Auto Cover could not top up your balance — action needed below.';
+  } else if (state.pendingAllocation) {
+    line = state.pendingAllocation.anomaly
+      ? 'Your salary looked different than usual — the allocation is waiting for your review.'
+      : `${money(state.pendingAllocation.total)} is ready to allocate — waiting for your approval.`;
   } else if (state.pendingSettlements.length > 0) {
     const p = state.pendingSettlements[0];
     line = `${money(p.amount)} from a sale settles on ${shortDate(p.settlesOnDay)} — not spendable until then.`;
   } else if (allocation.enabled) {
     line =
       allocation.scheduledForDay !== null
-        ? 'Salary received. Your rule runs one business day later.'
+        ? 'Salary received. Your plan runs one business day later.'
         : 'Your salary lands, the buffer stays, the rest goes to work.';
     stats = [
       { label: 'Next run', value: shortDate(nextRunDay) },
-      ...allocation.splits.map((s) => ({
-        label: s.label,
-        value: `≈ ${swissNumber(roundTo((surplus * s.percent) / 100, 50), 0)}`,
-      })),
+      { label: 'Keep in Banking', value: `≥ ${swissNumber(buffer, 0)}` },
+      { label: 'Allocate excess', value: `≈ ${swissNumber(roundTo(estTotal, 50), 0)}` },
     ];
   } else {
     line = 'Smart Salary Allocation is off. Your salary stays in Everyday.';
   }
+  const destinations = allocation.splits.map((s) => s.label.replace('Global ETF ', 'ETF ')).join(' · ');
 
   return (
     <section className="sl-card" aria-label="Smart Liquidity status">
@@ -61,6 +67,11 @@ export function AutomationStatusCard() {
             </div>
           ))}
         </div>
+      )}
+      {stats && (
+        <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-xs)' }}>
+          Allocate excess to {destinations}.
+        </p>
       )}
       {autoCover.enabled && !paused && (
         <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-sm)' }}>

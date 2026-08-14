@@ -12,6 +12,7 @@ export type MoneySource =
   | 'saveEasy'
   | 'tradingCash'
   | 'investEasy'
+  | 'savingPlan'
   | 'lombard';
 
 export interface Accounts {
@@ -22,6 +23,8 @@ export interface Accounts {
   saveEasy: number;
   tradingCash: number;
   investEasy: number;
+  /** Global ETF Saving Plan — funded by allocation, invested by the plan itself. */
+  savingPlan: number;
   lombardAvailable: number;
   lombardDrawn: number;
 }
@@ -77,27 +80,47 @@ export type EngineStatus =
   | 'autoCoverFailed'
   | 'rulesPaused';
 
-export type AllocationDestination = 'tradingCash' | 'investEasy' | 'saveEasy' | 'goal';
+export type AllocationDestination = 'tradingCash' | 'investEasy' | 'saveEasy' | 'savingPlan' | 'goal';
 
 export interface AllocationSplit {
   destination: AllocationDestination;
   label: string;
-  /** Share of the amount above the buffer, in percent. All splits total ≤ 100; the remainder stays in Everyday. */
+  /** Share of the allocatable amount, in percent. All splits total ≤ 100; the remainder stays in Banking. */
   percent: number;
+}
+
+/** A prepared allocation waiting for the client (review mode or salary anomaly). */
+export interface PendingAllocation {
+  preparedDay: number;
+  received: number;
+  total: number;
+  amounts: { destination: AllocationDestination; label: string; amount: number }[];
+  /** Set when the salary differed from the expected amount beyond the variance guardrail. */
+  anomaly: string | null;
 }
 
 export interface AllocationRule {
   enabled: boolean;
   paused: boolean;
   skipNext: boolean;
+  /** Execution preference — §20: allocate automatically, or prepare and ask. */
+  mode: 'automatic' | 'review';
   /** `ai` = use the forecast buffer; `manual` = client override. */
   bufferMode: 'ai' | 'manual';
   manualBuffer: number;
   /** `excess` = split what is above the buffer; `percentOfReceived` = irregular-income mode. */
   basis: 'excess' | 'percentOfReceived';
   splits: AllocationSplit[];
+  /** Guardrails — §19/§22. */
+  maxPerSalary: number;
+  minAllocation: number;
+  /** Ask first when the salary differs from the expected amount by more than variancePct. */
+  askOnVariance: boolean;
+  variancePct: number;
   /** Set when salary is recognised; allocation executes on the next business day. */
   scheduledForDay: number | null;
+  /** Amount of the salary credit that scheduled the current run. */
+  lastReceived: number;
   lastRun: { day: number; moved: { destination: AllocationDestination; amount: number }[] } | null;
 }
 
@@ -126,6 +149,8 @@ export interface SimFlags {
   irregularIncome: boolean;
   sourcesExhausted: boolean;
   marginCall: boolean;
+  /** Forces the Saving Plan destination to fail — §35 partial-failure demo. */
+  savingPlanOutage: boolean;
 }
 
 export interface PendingSettlement {
@@ -154,6 +179,8 @@ export interface EngineState {
   autoCover: AutoCoverConfig;
   flags: SimFlags;
   pendingSettlements: PendingSettlement[];
+  /** Prepared allocation awaiting the client's approval (review mode / anomaly). */
+  pendingAllocation: PendingAllocation | null;
   notices: EngineNotice[];
   /** Day the last Auto Cover attempt failed with sources exhausted; cleared once the balance recovers. */
   coverFailedDay: number | null;

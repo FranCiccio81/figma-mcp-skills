@@ -39,6 +39,7 @@ export const SOURCE_LABELS: Record<MoneySource, string> = {
   saveEasy: 'Save Easy',
   tradingCash: 'Trading cash',
   investEasy: 'Invest Easy',
+  savingPlan: 'Global ETF Saving Plan',
   lombard: 'Lombard credit',
 };
 
@@ -57,8 +58,10 @@ export function initialState(): EngineState {
       irregularIncome: false,
       sourcesExhausted: false,
       marginCall: false,
+      savingPlanOutage: false,
     },
     pendingSettlements: [],
+    pendingAllocation: null,
     notices: [],
     coverFailedDay: null,
     announcement: '',
@@ -68,6 +71,11 @@ export function initialState(): EngineState {
 
 export type EngineAction =
   | { type: 'advanceDay' }
+  | { type: 'setAllocationMode'; mode: 'automatic' | 'review' }
+  | { type: 'setMaxPerSalary'; value: number }
+  | { type: 'setAskOnVariance'; value: boolean }
+  | { type: 'approvePendingAllocation' }
+  | { type: 'skipPendingAllocation' }
   | { type: 'setAutoCoverEnabled'; enabled: boolean }
   | { type: 'setMinBalance'; value: number }
   | { type: 'moveWaterfallSource'; index: number; direction: -1 | 1 }
@@ -340,69 +348,181 @@ function buildCoverReason(
   return base;
 }
 
-/** Smart Salary Allocation — executes on income + 1 business day (§5.3). */
+/**
+ * §22 — allocatable liquidity, never a blind percentage of salary:
+ * available balance − Cash Safety Buffer, capped by the client's
+ * maximum per salary. Zero or below the minimum allocation → nothing moves.
+ */
+function computeAllocationAmounts(s: EngineState): {
+  buffer: number;
+  allocatable: number;
+  total: number;
+  amounts: { destination: AllocationRule['splits'][number]['destination']; label: string; amount: number }[];
+} {
+  const rule = s.allocation;
+  const buffer = rule.bufferMode === 'ai' ? computeForecast(s).buffer : rule.manualBuffer;
+  const base =
+    rule.basis === 'percentOfReceived' ? Math.max(rule.lastReceived, 0) : Number.POSITIVE_INFINITY;
+  const allocatable = Math.min(Math.max(0, s.accounts.everyday - buffer), base);
+  const total = Math.min(allocatable, rule.maxPerSalary);
+  const amounts = rule.splits
+    .map((split) => ({
+      destination: split.destination,
+      label: split.label,
+      amount: Math.round((total * split.percent) / 100 / 10) * 10,
+    }))
+    .filter((a) => a.amount > 0);
+  return { buffer, allocatable, total, amounts };
+}
+
+/** §31 explainability — the calculation, spelled out. */
+function buildAllocationReason(
+  s: EngineState,
+  buffer: number,
+  allocatable: number,
+  total: number,
+  split: { label: string; amount: number },
+  percent: number,
+): string {
+  const rule = s.allocation;
+  const capped = total < allocatable - 1;
+  return (
+    `${money(rule.lastReceived)} was received from ${CLIENT.employer}. ` +
+    `Your plan keeps at least ${money(buffer)} available in Banking (${rule.bufferMode === 'ai' ? 'recommended Cash Safety Buffer' : 'your Cash Safety Buffer'}), leaving ${money(allocatable)} allocatable. ` +
+    (capped ? `Your maximum of ${money(rule.maxPerSalary)} per salary applied, so ${money(total)} was distributed. ` : `${money(total)} was distributed according to your plan. `) +
+    `${percent}% went to ${split.label}: ${money(split.amount)}.`
+  );
+}
+
+/** Move the approved amounts. Destinations fail independently — §35/FR-17/FR-18. */
+function executeAllocation(
+  s: EngineState,
+  calc: ReturnType<typeof computeAllocationAmounts>,
+): void {
+  const rule = s.allocation;
+  const moved: { destination: AllocationRule['splits'][number]['destination']; amount: number }[] = [];
+  let failedAmount = 0;
+  for (const part of calc.amounts) {
+    const percent = rule.splits.find((x) => x.destination === part.destination)?.percent ?? 0;
+    const before = s.accounts.everyday;
+    // §36 — an unavailable destination keeps its share in Banking, never redirected.
+    if (part.destination === 'savingPlan' && s.flags.savingPlanOutage) {
+      failedAmount += part.amount;
+      addTxn(s, {
+        day: s.day,
+        label: `Smart Salary Allocation · to ${part.label}`,
+        category: 'smart-liquidity',
+        amount: -part.amount,
+        currency: 'CHF',
+        status: 'failed',
+        smart: {
+          engine: 'allocation',
+          title: `Smart Salary Allocation · to ${part.label}`,
+          source: 'everyday',
+          destination: part.destination,
+          reason: `${buildAllocationReason(s, calc.buffer, calc.allocatable, calc.total, part, percent)} The Saving Plan could not accept the transfer, so this amount stayed in Banking. It was not redirected to any other product.`,
+          balanceBefore: before,
+          balanceAfter: before,
+        },
+      });
+      continue;
+    }
+    s.accounts.everyday -= part.amount;
+    if (part.destination === 'investEasy') s.accounts.investEasy += part.amount;
+    else if (part.destination === 'saveEasy') s.accounts.saveEasy += part.amount;
+    else if (part.destination === 'tradingCash') s.accounts.tradingCash += part.amount;
+    else if (part.destination === 'savingPlan') s.accounts.savingPlan += part.amount;
+    addTxn(s, {
+      day: s.day,
+      label: `Smart Salary Allocation · to ${part.label}`,
+      category: 'smart-liquidity',
+      amount: -part.amount,
+      currency: 'CHF',
+      status: 'booked',
+      smart: {
+        engine: 'allocation',
+        title: `Smart Salary Allocation · to ${part.label}`,
+        source: 'everyday',
+        destination: part.destination === 'goal' ? 'saveEasy' : part.destination,
+        reason: buildAllocationReason(s, calc.buffer, calc.allocatable, calc.total, part, percent),
+        balanceBefore: before,
+        balanceAfter: s.accounts.everyday,
+      },
+    });
+    moved.push({ destination: part.destination, amount: part.amount });
+  }
+  rule.lastRun = { day: s.day, moved };
+  const okTotal = moved.reduce((a, m) => a + m.amount, 0);
+  if (failedAmount > 0) {
+    addNotice(s, {
+      kind: 'warning',
+      title: 'Most of your salary plan was completed',
+      body: `${money(okTotal)} was allocated, but ${money(failedAmount)} could not be sent to your Saving Plan and stayed in Banking. It was not moved to any other product. You can try again or keep it in Banking.`,
+    });
+  } else {
+    addNotice(s, {
+      kind: 'info',
+      title: 'Your salary is working',
+      body: `${money(okTotal)} was allocated: ${moved.map((m) => `${money(m.amount)} → ${rule.splits.find((x) => x.destination === m.destination)?.label ?? m.destination}`).join(', ')}. ${money(calc.buffer)} stays available in Banking.`,
+    });
+  }
+  announce(s, `Allocation executed. ${money(okTotal)} moved. Banking balance ${money(s.accounts.everyday)}.`);
+}
+
+/** Smart Salary Allocation — runs on income + 1 business day. */
 function runAllocation(s: EngineState): void {
   const rule = s.allocation;
   rule.scheduledForDay = null;
   if (!rule.enabled || rule.paused) return;
   if (rule.skipNext) {
     rule.skipNext = false;
-    addNotice(s, { kind: 'info', title: 'Allocation skipped', body: 'This month’s Smart Salary Allocation was skipped, as you asked. The next salary will schedule a new one.' });
-    return;
-  }
-
-  const buffer = rule.bufferMode === 'ai' ? computeForecast(s).buffer : rule.manualBuffer;
-  const base =
-    rule.basis === 'percentOfReceived'
-      ? CLIENT.salaryNet
-      : Math.max(0, s.accounts.everyday - buffer);
-  const movable = Math.min(base, Math.max(0, s.accounts.everyday - buffer));
-
-  if (movable < 50) {
     addNotice(s, {
       kind: 'info',
-      title: 'Nothing to allocate',
-      body: `After keeping your ${money(buffer)} buffer in Everyday, there was no surplus to move this month.`,
+      title: 'Allocation skipped',
+      body: 'This salary allocation was skipped, as you asked. The plan resumes with your next salary.',
     });
     return;
   }
 
-  const moved: { destination: AllocationRule['splits'][number]['destination']; amount: number }[] = [];
-  for (const split of rule.splits) {
-    const amount = Math.round((movable * split.percent) / 100 / 10) * 10;
-    if (amount <= 0) continue;
-    const before = s.accounts.everyday;
-    s.accounts.everyday -= amount;
-    if (split.destination === 'investEasy') s.accounts.investEasy += amount;
-    else if (split.destination === 'saveEasy') s.accounts.saveEasy += amount;
-    else if (split.destination === 'tradingCash') s.accounts.tradingCash += amount;
-    addTxn(s, {
-      day: s.day,
-      label: `Smart Salary Allocation · to ${split.label}`,
-      category: 'smart-liquidity',
-      amount: -amount,
-      currency: 'CHF',
-      status: 'booked',
-      smart: {
-        engine: 'allocation',
-        title: `Smart Salary Allocation · to ${split.label}`,
-        source: 'everyday',
-        destination: split.destination === 'goal' ? 'saveEasy' : split.destination,
-        reason: `Salary recognised from ${CLIENT.employer}. Your rule keeps ${money(buffer)} in Everyday (${rule.bufferMode === 'ai' ? 'AI-forecast buffer' : 'your manual buffer'}) and moves ${split.percent}% of the ${rule.basis === 'percentOfReceived' ? 'received amount' : 'surplus'} to ${split.label}.`,
-        balanceBefore: before,
-        balanceAfter: s.accounts.everyday,
-      },
+  const calc = computeAllocationAmounts(s);
+
+  // §37 — below the minimum allocation, nothing moves and the client is told why.
+  if (calc.total < rule.minAllocation) {
+    addNotice(s, {
+      kind: 'info',
+      title: 'Your salary stayed in Banking',
+      body: `There wasn't enough excess liquidity above your ${money(calc.buffer)} safety buffer (minimum allocation ${money(rule.minAllocation)}). No action is required.`,
     });
-    moved.push({ destination: split.destination, amount });
+    return;
   }
-  rule.lastRun = { day: s.day, moved };
-  const total = moved.reduce((a, m) => a + m.amount, 0);
-  addNotice(s, {
-    kind: 'info',
-    title: 'Smart Salary Allocation executed',
-    body: `${money(total)} moved out of Everyday: ${moved.map((m) => `${money(m.amount)} to ${rule.splits.find((x) => x.destination === m.destination)?.label ?? m.destination}`).join(', ')}. ${money(buffer)} stays as your buffer.`,
-  });
-  announce(s, `Allocation executed. ${money(total)} moved. Everyday balance ${money(s.accounts.everyday)}.`);
+
+  // §19/§26 — an unusual salary pauses the automation and asks first.
+  const expected = CLIENT.salaryNet;
+  const variance = expected > 0 ? Math.abs(rule.lastReceived - expected) / expected : 0;
+  const anomaly =
+    rule.askOnVariance && variance > rule.variancePct / 100
+      ? `${money(rule.lastReceived)} arrived from your salary payer — significantly ${rule.lastReceived > expected ? 'above' : 'below'} your usual ${money(expected)}. The allocation was paused for your review.`
+      : null;
+
+  // §20 — review mode prepares the allocation and asks for approval.
+  if (rule.mode === 'review' || anomaly) {
+    s.pendingAllocation = {
+      preparedDay: s.day,
+      received: rule.lastReceived,
+      total: calc.total,
+      amounts: calc.amounts.map((a) => ({ ...a })),
+      anomaly,
+    };
+    addNotice(s, {
+      kind: anomaly ? 'warning' : 'info',
+      title: anomaly ? 'This payment looks different' : 'Your salary plan is ready',
+      body: anomaly ?? `${money(calc.total)} can be allocated according to your plan. Approve it, or it lapses with your next salary.`,
+    });
+    announce(s, anomaly ?? `Salary plan ready. ${money(calc.total)} awaiting your approval.`);
+    return;
+  }
+
+  executeAllocation(s, calc);
 }
 
 /** Apply one debit against Everyday, with pre-emptive Auto Cover (§5.5). */
@@ -480,6 +600,16 @@ function advanceDay(prev: EngineState): EngineState {
       currency: 'CHF',
       status: 'booked',
     });
+    // A prepared-but-unapproved allocation lapses when the next salary arrives (§20).
+    if (s.pendingAllocation) {
+      s.pendingAllocation = null;
+      addNotice(s, {
+        kind: 'info',
+        title: 'Previous salary plan lapsed',
+        body: 'The prepared allocation was not approved before this salary arrived, so no transfer occurred.',
+      });
+    }
+    s.allocation.lastReceived = amount;
     s.allocation.scheduledForDay = nextBusinessDay(s.day);
     addNotice(s, {
       kind: 'info',
@@ -566,6 +696,51 @@ export function reduce(prev: EngineState, action: EngineAction): EngineState {
       // Lombard can only be enabled with an explicit risk acknowledgement.
       s.autoCover.lombardEnabled = action.enabled && action.acknowledged;
       s.autoCover.lombardAcknowledged = action.acknowledged;
+      return s;
+    }
+    case 'setAllocationMode': {
+      const s = draft(prev);
+      s.allocation.mode = action.mode;
+      return s;
+    }
+    case 'setMaxPerSalary': {
+      const s = draft(prev);
+      s.allocation.maxPerSalary = Math.max(0, action.value);
+      return s;
+    }
+    case 'setAskOnVariance': {
+      const s = draft(prev);
+      s.allocation.askOnVariance = action.value;
+      return s;
+    }
+    case 'approvePendingAllocation': {
+      if (!prev.pendingAllocation) return prev;
+      const s = draft(prev);
+      s.pendingAllocation = null;
+      // Recompute at approval time — the balance may have moved since preparation.
+      const calc = computeAllocationAmounts(s);
+      if (calc.total < s.allocation.minAllocation) {
+        addNotice(s, {
+          kind: 'info',
+          title: 'Nothing left to allocate',
+          body: `Since the plan was prepared, your available liquidity fell below the ${money(s.allocation.minAllocation)} minimum. Your money stayed in Banking.`,
+        });
+        deriveStatus(s);
+        return s;
+      }
+      executeAllocation(s, calc);
+      deriveStatus(s);
+      return s;
+    }
+    case 'skipPendingAllocation': {
+      if (!prev.pendingAllocation) return prev;
+      const s = draft(prev);
+      s.pendingAllocation = null;
+      addNotice(s, {
+        kind: 'info',
+        title: 'Allocation skipped',
+        body: 'The prepared allocation was skipped. Your money stays in Banking; the plan resumes with your next salary.',
+      });
       return s;
     }
     case 'setAllocationPaused': {

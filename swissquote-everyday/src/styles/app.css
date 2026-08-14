@@ -304,6 +304,41 @@ button {
   color: var(--color-text-link);
 }
 
+/* ------------------------------------------------------------------ */
+/* Allocation plan visual (§28) — keep first, then allocate the excess */
+/* ------------------------------------------------------------------ */
+.plan-bar { display: flex; align-items: stretch; height: var(--space-sm); }
+.plan-bar__segment { min-width: var(--space-2xs); border-radius: var(--radius-sm); box-shadow: var(--shadow-bar-gloss); }
+.plan-bar__segment + .plan-bar__segment { margin-left: 2px; }
+.plan-bar__segment--keep { background: var(--color-dataviz-cash); }
+.plan-bar__segment--saveEasy { background: var(--color-dataviz-save); }
+.plan-bar__segment--investEasy { background: var(--color-dataviz-invest); }
+.plan-bar__segment--tradingCash { background: var(--color-dataviz-trading); }
+.plan-bar__segment--savingPlan { background: var(--color-dataviz-plan); }
+.plan-row { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-2xs) 0; }
+.plan-row__swatch { width: 10px; height: 10px; border-radius: var(--radius-sm); flex: none; }
+
+/* Execution preference (§20) — radio card rows */
+.choice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  width: 100%;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+.choice-row[aria-checked='true'] { border-color: var(--color-action-primary); background: var(--color-surface-muted); }
+.choice-row__dot {
+  width: var(--space-md);
+  height: var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-border-default);
+  margin-top: var(--space-2xs);
+  flex: none;
+}
+.choice-row[aria-checked='true'] .choice-row__dot { border-color: var(--color-action-primary); box-shadow: inset 0 0 0 3px var(--color-surface-default); background: var(--color-action-primary); }
+
 /* Status pill — §6 state machine, visible */
 .status-pill {
   display: inline-flex;
