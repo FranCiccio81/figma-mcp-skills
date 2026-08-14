@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { money, shortDate, swissNumber } from '../../lib/format';
 import { LiquidityForecastChart } from '../../components/LiquidityForecastChart';
+import { PLAN_SWATCH } from '../../components/PlanBar';
 import { keepForSafetyLevel } from '../../state/forecast';
 import { useStore } from '../../state/store';
 import type { SafetyLevel } from '../../state/types';
@@ -18,6 +19,123 @@ const SAFETY_LABELS: Record<SafetyLevel, { title: string; blurb: string }> = {
   balanced: { title: 'Balanced', blurb: 'Recommended' },
   cautious: { title: 'Cautious', blurb: 'Larger cash reserve' },
 };
+
+/**
+ * "Put it to work" — the action the GROW figure implies.
+ *
+ * It deploys through the allocation plan the client already approved, so the
+ * app proposes an amount, never a product or a weighting: no new investment
+ * decision is made here, and the protected liquidity is never touched.
+ */
+function PutToWorkCard({ grow }: { grow: number }) {
+  const { state, dispatch, nav } = useStore();
+  const rule = state.allocation;
+  const [amount, setAmount] = useState(() => Math.floor(grow / 1_000) * 1_000);
+  const [adjusting, setAdjusting] = useState(false);
+
+  // Confirm what just happened before offering to do it again.
+  const doneToday = state.txns.filter(
+    (t) => t.day === state.day && t.smart?.title.startsWith('Surplus put to work'),
+  );
+  if (doneToday.length > 0) {
+    const total = doneToday.reduce((s, t) => s + -t.amount, 0);
+    return (
+      <section className="card" aria-label="Surplus put to work">
+        <div className="flex items-baseline justify-between" style={{ marginBottom: 'var(--space-2xs)' }}>
+          <h2 className="section-title m-0">Done today</h2>
+          <span className="status-pill status-pill--healthy">
+            <span className="status-pill__dot" aria-hidden="true" />
+            Working
+          </span>
+        </div>
+        <p className="m-0">
+          <strong className="amount">{money(total, 'CHF', 0)}</strong> went to work through your plan across{' '}
+          {doneToday.length} destinations. {money(grow, 'CHF', 0)} of flexible cash remains.
+        </p>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          style={{ marginTop: 'var(--space-sm)' }}
+          onClick={() => nav.go('transactions')}
+        >
+          See the movements
+        </button>
+      </section>
+    );
+  }
+
+  // Keep the proposal within what is actually flexible as the balance moves.
+  const capped = Math.min(amount, Math.floor(grow / 100) * 100);
+  const splitTotal = rule.splits.reduce((s, x) => s + x.percent, 0) || 100;
+  const step = grow > 50_000 ? 1_000 : 100;
+
+  return (
+    <section className="card" aria-label="Put your surplus to work">
+      <div className="flex items-baseline justify-between" style={{ marginBottom: 'var(--space-2xs)' }}>
+        <h2 className="section-title m-0">Put it to work</h2>
+        <span className="caption">Your plan · unchanged</span>
+      </div>
+      <p className="m-0" style={{ marginBottom: 'var(--space-sm)' }}>
+        {money(grow, 'CHF', 0)} is sitting above what you'll likely need. Your plan would send it here:
+      </p>
+
+      {rule.splits.map((s) => (
+        <div key={s.destination} className="plan-row" style={{ padding: 'var(--space-2xs) 0' }}>
+          <span className={`plan-row__swatch ${PLAN_SWATCH[s.destination]}`} aria-hidden="true" />
+          <span className="flex-1 caption" style={{ color: 'var(--color-text-primary)' }}>{s.label}</span>
+          <span className="caption amount">{s.percent}%</span>
+          <span
+            className="amount caption"
+            style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', minWidth: 'var(--space-2xl)', textAlign: 'right' }}
+          >
+            {swissNumber(Math.round((capped * s.percent) / splitTotal / 10) * 10, 0)}
+          </span>
+        </div>
+      ))}
+
+      {adjusting && (
+        <label className="block" style={{ marginTop: 'var(--space-xs)' }}>
+          <span className="caption">Amount: {money(capped, 'CHF', 0)}</span>
+          <input
+            type="range"
+            className="slider"
+            min={Math.min(rule.minAllocation, capped)}
+            max={Math.floor(grow / 100) * 100}
+            step={step}
+            value={capped}
+            onChange={(e) => setAmount(Number(e.target.value))}
+            aria-label="Amount to put to work"
+          />
+        </label>
+      )}
+
+      <div className="flex items-center flex-wrap" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => dispatch({ type: 'allocateSurplusNow', amount: capped })}
+        >
+          Put {money(capped, 'CHF', 0)} to work
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={() => setAdjusting((v) => !v)}>
+          {adjusting ? 'Done' : 'Change amount'}
+        </button>
+      </div>
+      <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
+        Moves cash through the plan you already set — it doesn't choose investments for you, and the{' '}
+        <button
+          type="button"
+          className="link micro"
+          style={{ padding: 0 }}
+          onClick={() => nav.go('allocation')}
+        >
+          plan is editable
+        </button>{' '}
+        at any time. Nothing happens automatically until your next salary.
+      </p>
+    </section>
+  );
+}
 
 export function AiBudgeting() {
   const { state, dispatch, forecast, buyingPower } = useStore();
@@ -77,6 +195,9 @@ export function AiBudgeting() {
           </div>
         )}
       </section>
+
+      {/* The action GROW implies — the client's own plan, one tap away */}
+      {grow >= rule.minAllocation && <PutToWorkCard grow={grow} />}
 
       {/* The projection */}
       <section className="card" aria-label="Projected balance">

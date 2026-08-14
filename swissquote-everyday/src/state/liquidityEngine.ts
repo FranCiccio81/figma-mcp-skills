@@ -99,6 +99,8 @@ export type EngineAction =
   | { type: 'setKeepBoundaries'; min?: number; max?: number }
   | { type: 'addPlannedExpense'; label: string; amount: number }
   | { type: 'removePlannedExpense'; id: string }
+  /** Client-initiated: deploy flexible cash now, through their existing plan. */
+  | { type: 'allocateSurplusNow'; amount: number }
   | { type: 'setAllocationPaused'; paused: boolean }
   | { type: 'skipNextAllocation' }
   | { type: 'setBufferMode'; mode: 'ai' | 'manual'; manualBuffer?: number }
@@ -978,6 +980,61 @@ export function reduce(prev: EngineState, action: EngineAction): EngineState {
         status: 'booked',
       });
       announce(s, `Money moved. Everyday balance ${money(s.accounts.everyday)}.`);
+      deriveStatus(s);
+      return s;
+    }
+    /**
+     * Put surplus to work now. This is the client pressing a button, not the
+     * engine acting on its own — AI Budgeting never invests mid-cycle by
+     * itself (§35). It routes through the plan the client already approved,
+     * so no new investment decision is made here, and it can never dip into
+     * the protected liquidity the forecast says they need.
+     */
+    case 'allocateSurplusNow': {
+      const s = draft(prev);
+      const rule = s.allocation;
+      const keep = computeForecast(s).keep;
+      const flexible = Math.max(0, s.accounts.everyday - PENDING_CARD_RESERVED - keep);
+      const total = Math.min(action.amount, flexible);
+      if (total < rule.minAllocation) return prev;
+
+      const splitTotal = rule.splits.reduce((sum, x) => sum + x.percent, 0) || 100;
+      const moved: { destination: AllocationRule['splits'][number]['destination']; amount: number }[] = [];
+      for (const split of rule.splits) {
+        const amount = Math.round((total * split.percent) / splitTotal / 10) * 10;
+        if (amount <= 0) continue;
+        const before = s.accounts.everyday;
+        s.accounts.everyday -= amount;
+        if (split.destination === 'investEasy') s.accounts.investEasy += amount;
+        else if (split.destination === 'saveEasy') s.accounts.saveEasy += amount;
+        else if (split.destination === 'tradingCash') s.accounts.tradingCash += amount;
+        else if (split.destination === 'savingPlan') s.accounts.savingPlan += amount;
+        addTxn(s, {
+          day: s.day,
+          label: `Surplus put to work · to ${split.label}`,
+          category: 'smart-liquidity',
+          amount: -amount,
+          currency: 'CHF',
+          status: 'booked',
+          smart: {
+            engine: 'allocation',
+            title: `Surplus put to work · to ${split.label}`,
+            source: 'everyday',
+            destination: split.destination === 'goal' ? 'saveEasy' : split.destination,
+            reason: `You chose to put ${money(total)} of your flexible cash to work. AI Budgeting expects you to need ${money(keep)} before your next salary, and that stays in Banking. The amount was split by your existing plan — ${split.percent}% to ${split.label}.`,
+            balanceBefore: before,
+            balanceAfter: s.accounts.everyday,
+          },
+        });
+        moved.push({ destination: split.destination, amount });
+      }
+      const okTotal = moved.reduce((sum, m) => sum + m.amount, 0);
+      addNotice(s, {
+        kind: 'info',
+        title: 'Your surplus is working',
+        body: `${money(okTotal)} was allocated by your plan: ${moved.map((m) => `${money(m.amount)} → ${rule.splits.find((x) => x.destination === m.destination)?.label ?? m.destination}`).join(', ')}. ${money(keep)} stays available in Banking.`,
+      });
+      announce(s, `${money(okTotal)} put to work. Banking balance ${money(s.accounts.everyday)}.`);
       deriveStatus(s);
       return s;
     }
