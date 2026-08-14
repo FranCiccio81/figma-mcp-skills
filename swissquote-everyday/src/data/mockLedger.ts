@@ -59,7 +59,9 @@ export const INITIAL_ALLOCATION: AllocationRule = {
   bufferMode: 'ai',
   manualBuffer: 12_000, // fixed liquidity fallback (§16/§43)
   safetyLevel: 'balanced',
-  minKeep: 6_000,
+  // An absolute floor, deliberately below the usual prediction so the AI —
+  // not the floor — normally decides how much is kept.
+  minKeep: 3_000,
   maxKeep: 20_000,
   basis: 'excess',
   // Spec §14/§28 example plan: Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20.

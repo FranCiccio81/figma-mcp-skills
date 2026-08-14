@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { money, shortDate, swissNumber } from '../../lib/format';
 import { LiquidityForecastChart } from '../../components/LiquidityForecastChart';
+import { keepForSafetyLevel } from '../../state/forecast';
 import { useStore } from '../../state/store';
 import type { SafetyLevel } from '../../state/types';
 
@@ -98,9 +99,9 @@ export function AiBudgeting() {
             </h2>
             <div className="flex flex-col" style={{ gap: 'var(--space-xs)' }} role="radiogroup" aria-label="Safety level">
               {(Object.keys(SAFETY_LABELS) as SafetyLevel[]).map((level) => {
-                // Show what each level would keep, in francs — never labels alone (§17).
-                const factor = level === 'efficient' ? 0.08 : level === 'balanced' ? 0.16 : 0.3;
-                const preview = Math.round((forecast.expectedRequirement * (1 + factor)) / 50) * 50;
+                // Exactly what each level would protect — the engine's own
+                // arithmetic, so the comparison is real (§17).
+                const preview = keepForSafetyLevel(forecast, level, rule.minKeep);
                 return (
                   <button
                     key={level}
@@ -117,13 +118,24 @@ export function AiBudgeting() {
                       </span>
                       <span className="caption block">{SAFETY_LABELS[level].blurb}</span>
                     </span>
-                    <span className="amount" style={{ fontWeight: 'var(--font-weight-semibold)' }}>
-                      {swissNumber(Math.max(preview, rule.minKeep), 0)}
+                    <span className="text-right">
+                      <span className="block amount" style={{ fontWeight: 'var(--font-weight-semibold)' }}>
+                        {swissNumber(preview.amount, 0)}
+                      </span>
+                      {preview.clampedByMin && <span className="micro block">your minimum</span>}
                     </span>
                   </button>
                 );
               })}
             </div>
+            {(['efficient', 'balanced', 'cautious'] as SafetyLevel[]).every(
+              (l) => keepForSafetyLevel(forecast, l, rule.minKeep).clampedByMin,
+            ) && (
+              <p className="caption m-0" style={{ marginTop: 'var(--space-xs)' }}>
+                All three land on your {money(rule.minKeep, 'CHF', 0)} minimum right now — we predict less than that
+                before your next salary. Lower your minimum below to let the estimate decide.
+              </p>
+            )}
           </section>
 
           <section className="card" aria-label="Your limits">

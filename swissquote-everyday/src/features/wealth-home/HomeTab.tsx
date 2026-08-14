@@ -98,14 +98,17 @@ export function HomeTab() {
       </section>
 
       <ProductCard name="Cash account 123456" amount={24_837.5}>
-        <div className="flex" style={{ gap: 'var(--space-md)', marginTop: 'var(--space-xs)' }}>
+        <div className="flex" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
           {[
             { flag: '🇨🇭', code: 'CHF', value: "18'542.30" },
             { flag: '🇪🇺', code: 'EUR', value: "3'876.40" },
             { flag: '🇺🇸', code: 'USD', value: "2'418.80" },
           ].map((c) => (
-            <span key={c.code} className="caption amount flex items-center" style={{ gap: 'var(--space-2xs)' }}>
-              <span aria-hidden="true">{c.flag}</span> {c.code} {c.value}
+            <span key={c.code} className="currency-cell">
+              <span className="currency-cell__code">
+                <span aria-hidden="true">{c.flag}</span> {c.code}
+              </span>
+              <span className="currency-cell__value">{c.value}</span>
             </span>
           ))}
         </div>

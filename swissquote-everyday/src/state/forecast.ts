@@ -96,11 +96,31 @@ export interface Forecast {
 }
 
 /** Safety level → share of the expected requirement held back as margin (§17). */
-const MARGIN_FACTOR: Record<SafetyLevel, number> = {
-  efficient: 0.08,
+export const MARGIN_FACTOR: Record<SafetyLevel, number> = {
+  efficient: 0.06,
   balanced: 0.16,
-  cautious: 0.3,
+  cautious: 0.32,
 };
+
+/** Extra margin added when the forecast is less certain (§19/§20). */
+export function confidenceUplift(confidence: Confidence): number {
+  return confidence === 'high' ? 0 : confidence === 'medium' ? 0.06 : 0.15;
+}
+
+/**
+ * What each safety level would protect — the same arithmetic the engine uses,
+ * so the choices a client compares are the amounts they would actually get.
+ * `clampedByMin` means the client's own floor, not the prediction, decides it.
+ */
+export function keepForSafetyLevel(
+  f: Pick<Forecast, 'expectedRequirement' | 'confidence'>,
+  level: SafetyLevel,
+  minKeep: number,
+): { amount: number; raw: number; clampedByMin: boolean } {
+  const margin = Math.round((f.expectedRequirement * (MARGIN_FACTOR[level] + confidenceUplift(f.confidence))) / 50) * 50;
+  const raw = Math.round((f.expectedRequirement + margin) / 50) * 50;
+  return { amount: Math.max(raw, minKeep), raw, clampedByMin: raw < minKeep };
+}
 
 /* Above this, a single debit is treated as a one-off, not routine spend. */
 const ONE_OFF_THRESHOLD = 1_500;
@@ -230,10 +250,10 @@ export function computeForecast(state: EngineState): Forecast {
 
   /* ---- 6. safety margin (§19) — level + uncertainty; uncertainty rises as confidence falls ---- */
   const expectedRequirement = confirmedUpcoming + recurringPredicted + variablePredicted;
-  const confidenceUplift = confidence === 'high' ? 0 : confidence === 'medium' ? 0.06 : 0.15;
-  const safetyMargin = Math.round(
-    (expectedRequirement * (MARGIN_FACTOR[allocation.safetyLevel] + confidenceUplift)) / 50,
-  ) * 50;
+  const safetyMargin =
+    Math.round(
+      (expectedRequirement * (MARGIN_FACTOR[allocation.safetyLevel] + confidenceUplift(confidence))) / 50,
+    ) * 50;
 
   /* ---- 7. protected liquidity, clamped to the client's corridor (§18/BR-02) ---- */
   const round50 = (v: number) => Math.round(v / 50) * 50;
