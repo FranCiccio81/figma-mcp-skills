@@ -1,0 +1,198 @@
+/*
+ * Design tokens — the single place to restyle this prototype.
+ * Loaded after app.css, so anything you change here wins.
+ */
+
+/**
+ * Swissquote Everyday — token bridge, reskinned to the production app's
+ * visual language (light surfaces, white radius-16 cards, orange accent,
+ * blue charts, black pill CTAs, green/red deltas).
+ *
+ * THE ONLY FILE IN THE PROJECT ALLOWED TO CONTAIN RAW VALUES.
+ * Tier 1 values are sampled from the app screenshots provided as reference —
+ * swap this file for the real Bridge DTCG export in one edit.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- */
+  /* Tier 1 — core primitives (never referenced by components)        */
+  /* ---------------------------------------------------------------- */
+  --core-ink-900: #17181c;
+  --core-ink-700: #3f434a;
+  --core-ink-600: #6e747e; /* 4.7:1 on white */
+  --core-grey-400: #a8b0b9; /* NEVER for text on white */
+  --core-grey-300: #dddfe3;
+  --core-grey-200: #ecedef;
+  --core-grey-100: #f6f6f7; /* app background */
+  --core-white: #ffffff;
+  --core-brand-500: #ee4d22; /* Swissquote accent orange ⟨sampled⟩ */
+  --core-brand-100: #fdece6;
+  --core-blue-600: #2c66d9; /* links / focus (4.6:1 on white) */
+  --core-blue-500: #3d7ff5; /* chart line */
+  --core-blue-100: #e8f0fe;
+  --core-green-600: #17864b;
+  --core-green-100: #e4f4ea;
+  --core-amber-600: #b25e09;
+  --core-amber-100: #fdf0e0;
+  --core-red-500: #de3730;
+  --core-red-100: #fdeae9;
+  --core-ink-surface: #17181c;      /* dark feature-card ground */
+  --core-ink-surface-high: #2c3040; /* dark feature-card highlight */
+  --core-on-ink: #ffffff;
+  --core-on-ink-muted: rgba(255, 255, 255, 0.72);
+  --core-on-ink-faint: rgba(255, 255, 255, 0.16);
+  --core-blue-050: #f3f7ff;         /* AI-card gradient start */
+  --core-keyboard-bg: #d1d5db;      /* iOS keyboard chrome */
+  --core-keyboard-key-mod: #adb3be; /* iOS modifier keys */
+  --core-scrim: rgba(23, 24, 28, 0.5);
+  --core-overlay-light: rgba(255, 255, 255, 0.55);
+  --core-overlay-light-soft: rgba(255, 255, 255, 0.28);
+  --core-shadow-soft: rgba(23, 24, 28, 0.07);
+  --core-shadow-strong: rgba(23, 24, 28, 0.22);
+
+  /* Dataviz primitives — Swissquote-brand categorical set for the Buying
+     Power own-funds segments (CVD + contrast checks passed; do not
+     re-order). Credit is deliberately outside this set: ink + hatch, a
+     different encoding class after the structural divider. */
+  --core-dv-orange: #ee4d22; /* = brand accent — Everyday cash, the hero */
+  --core-dv-blue-deep: #2a5cc0;
+  --core-dv-green: #0f9d63;
+  --core-dv-blue: #3d7ff5;
+  --core-dv-magenta: #b4438f; /* Saving Plan in the allocation plan bar */
+  --core-dv-credit: #3f434a;
+
+  /* ---------------------------------------------------------------- */
+  /* Tier 2 — semantic aliases (what components consume)              */
+  /* ---------------------------------------------------------------- */
+  --color-text-primary: var(--core-ink-900);
+  --color-text-secondary: var(--core-ink-600);
+  --color-text-disabled: var(--core-grey-400);
+  --color-text-on-action: var(--core-white);
+  --color-text-positive: var(--core-green-600);
+  --color-text-warning: var(--core-amber-600);
+  --color-text-error: var(--core-red-500);
+  --color-text-link: var(--core-blue-600);
+  --color-text-accent: var(--core-brand-500);
+
+  --color-surface-default: var(--core-white);
+  --color-surface-app: var(--core-grey-100);
+  --color-surface-muted: var(--core-grey-100);
+  --color-surface-raised: var(--core-white);
+  --color-surface-brand-subtle: var(--core-brand-100);
+  --color-surface-info-subtle: var(--core-blue-100);
+  --color-surface-positive-subtle: var(--core-green-100);
+  --color-surface-warning-subtle: var(--core-amber-100);
+  --color-surface-error-subtle: var(--core-red-100);
+  --color-surface-scrim: var(--core-scrim);
+
+  --color-border-default: var(--core-grey-300);
+  --color-border-subtle: var(--core-grey-200);
+  --color-border-strong: var(--core-ink-600);
+  --color-border-error: var(--core-red-500);
+
+  /* App CTAs are near-black pills ("Exchange"); accent marks the active tab,
+     brand moments and the annual-allowance progress. */
+  --color-action-primary: var(--core-ink-900);
+  --color-action-primary-hover: #000000;
+  --color-action-accent: var(--core-brand-500);
+  --color-feedback-error: var(--core-red-500);
+  --color-feedback-warning: var(--core-amber-600);
+  --color-feedback-positive: var(--core-green-600);
+
+  --color-focus-ring: var(--core-blue-600);
+
+  --color-keyboard-bg: var(--core-keyboard-bg);
+  --color-keyboard-key: var(--core-white);
+  --color-keyboard-key-mod: var(--core-keyboard-key-mod);
+
+  /* Feature cards (Smart Liquidity, AI Budgeting) */
+  --gradient-card-inverse: linear-gradient(140deg, var(--core-ink-surface) 20%, var(--core-ink-surface-high) 100%);
+  --gradient-card-ai: linear-gradient(160deg, var(--core-blue-050) 20%, var(--core-blue-100) 100%);
+  --color-surface-inverse: var(--core-ink-surface);
+  --color-text-on-inverse: var(--core-on-ink);
+  --color-text-on-inverse-muted: var(--core-on-ink-muted);
+  --color-border-on-inverse: var(--core-on-ink-faint);
+
+  /* Charts (portfolio-evolution style: blue line over a soft blue fill) */
+  --color-chart-line: var(--core-blue-500);
+  --color-chart-fill: var(--core-blue-100);
+
+  --color-dataviz-cash: var(--core-dv-orange);
+  --color-dataviz-fx: var(--core-dv-blue-deep);
+  --color-dataviz-save: var(--core-dv-green);
+  --color-dataviz-trading: var(--core-dv-blue);
+  --color-dataviz-invest: var(--core-dv-blue-deep);
+  --color-dataviz-plan: var(--core-dv-magenta);
+  --color-dataviz-credit: var(--core-dv-credit);
+  --color-dataviz-band: var(--core-blue-100);
+  --color-dataviz-line: var(--core-blue-600);
+  --color-dataviz-grid: var(--core-grey-200);
+  --color-dataviz-pattern-overlay: var(--core-overlay-light);
+  --color-dataviz-pattern-overlay-soft: var(--core-overlay-light-soft);
+
+  /* ---------------------------------------------------------------- */
+  /* Type                                                              */
+  /* ---------------------------------------------------------------- */
+  --font-family-default: 'Inter', 'Inter var', -apple-system, system-ui,
+    'Segoe UI', Roboto, sans-serif;
+  --font-size-display: 1.75rem;   /* 28 — headline amounts, app-style */
+  --font-size-title: 1.1875rem;   /* 19 */
+  --font-size-heading: 1rem;      /* 16 */
+  --font-size-body: 0.9375rem;    /* 15 */
+  --font-size-caption: 0.8125rem; /* 13 */
+  --font-size-micro: 0.6875rem;   /* 11 — labels/badges only */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-default: 1.45;
+  --font-feature-numeric: 'tnum' 1;
+
+  /* ---------------------------------------------------------------- */
+  /* Spacing — 8pt base, 4pt inline                                   */
+  /* ---------------------------------------------------------------- */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Radii — app cards are 16, chips are pills, the phone is 28 */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;  /* 10 */
+  --radius-lg: 1rem;      /* 16 — cards */
+  --radius-xl: 1.75rem;   /* 28 — phone frame & sheets */
+  --radius-pill: 999px;
+
+  /* Elevation — app cards float on soft, wide shadows */
+  --shadow-card: 0 2px 10px var(--core-shadow-soft);
+  --shadow-keyboard-key: 0 1px 0 var(--core-shadow-strong);
+  /* Soft top highlight that gives the Buying Power segments their sheen */
+  --shadow-bar-gloss: inset 0 4px 6px -2px var(--core-overlay-light);
+
+  /* Buying Power bar geometry */
+  --size-bp-bar: 1.25rem; /* 20px */
+  --shadow-sheet: 0 -8px 32px var(--core-shadow-strong);
+  --shadow-input-focus: 0 0 0 3px var(--core-blue-100);
+
+  /* Motion */
+  --motion-duration-fast: 120ms;
+  --motion-duration-default: 200ms;
+  --motion-duration-orchestrated: 600ms;
+  --motion-easing-default: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout */
+  --size-touch-target: 44px;
+  --size-viewport-ref: 390px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0ms;
+    --motion-duration-default: 0ms;
+    --motion-duration-orchestrated: 0ms;
+  }
+}

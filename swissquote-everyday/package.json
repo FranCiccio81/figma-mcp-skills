@@ -2,13 +2,14 @@
   "name": "swissquote-everyday",
   "private": true,
   "version": "0.1.0",
-  "description": "Swissquote Everyday / Smart Liquidity — interactive concept prototype. Concept — not a product commitment.",
+  "description": "Swissquote Everyday / Smart Liquidity \u2014 interactive concept prototype. Concept \u2014 not a product commitment.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "export": "npm run build && node scripts/export.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

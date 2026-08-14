@@ -13,7 +13,27 @@ spacing, radius and motion value resolves to a Bridge-token custom property.
 npm install
 npm run dev        # → http://localhost:5173
 npm run build      # typecheck + production build
+npm run export     # → export/ (see below)
 ```
+
+## Export it
+
+`npm run export` produces two ready-to-hand-over artefacts. Both are fully
+self-contained: no build step, no server, no network calls at runtime.
+
+| Output | Use it for |
+|---|---|
+| `export/swissquote-everyday.html` | One file. Double-click to open, email it, drop it anywhere. |
+| `export/claude-design/` | **Claude Design.** Four flat files — `index.html`, `tokens.css`, `app.css`, `app.js` — that the tool can open, serve and edit. |
+
+In the Claude Design folder, `tokens.css` is loaded *after* `app.css`, so it is
+the single place to restyle the prototype: change `--color-action-accent` and
+every accent follows; change `--radius-lg` and every card does. Swapping in the
+real Bridge DTCG export is an edit to that one file. `app.js` is unminified with
+original function names kept, so the engine stays readable (`computeForecast`,
+`attemptAutoCover`, `runAllocation`).
+
+For real iteration, edit the TypeScript in `src/` and re-run `npm run export`.
 
 The **Simulate** rig next to the phone advances time. The full acceptance loop
 (§11): press **To salary + allocation**, then keep pressing **+1 day** — salary

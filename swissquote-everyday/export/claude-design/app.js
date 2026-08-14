@@ -1,0 +1,11941 @@
+"use strict";
+(() => {
+  var __create = Object.create;
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __getProtoOf = Object.getPrototypeOf;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+  var __commonJS = (cb, mod) => function __require() {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+    // If the importer is in node compatibility mode or this is not an ESM
+    // file that has been converted to a CommonJS file using a Babel-
+    // compatible transform (i.e. "__esModule" has not been set), then set
+    // "default" to the CommonJS "module.exports" for node compatibility.
+    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+    mod
+  ));
+
+  // node_modules/react/cjs/react.production.min.js
+  var require_react_production_min = __commonJS({
+    "node_modules/react/cjs/react.production.min.js"(exports) {
+      "use strict";
+      var l = Symbol.for("react.element");
+      var n = Symbol.for("react.portal");
+      var p = Symbol.for("react.fragment");
+      var q = Symbol.for("react.strict_mode");
+      var r = Symbol.for("react.profiler");
+      var t = Symbol.for("react.provider");
+      var u = Symbol.for("react.context");
+      var v = Symbol.for("react.forward_ref");
+      var w = Symbol.for("react.suspense");
+      var x = Symbol.for("react.memo");
+      var y = Symbol.for("react.lazy");
+      var z = Symbol.iterator;
+      function A(a) {
+        if (null === a || "object" !== typeof a) return null;
+        a = z && a[z] || a["@@iterator"];
+        return "function" === typeof a ? a : null;
+      }
+      __name(A, "A");
+      var B = { isMounted: /* @__PURE__ */ __name(function() {
+        return false;
+      }, "isMounted"), enqueueForceUpdate: /* @__PURE__ */ __name(function() {
+      }, "enqueueForceUpdate"), enqueueReplaceState: /* @__PURE__ */ __name(function() {
+      }, "enqueueReplaceState"), enqueueSetState: /* @__PURE__ */ __name(function() {
+      }, "enqueueSetState") };
+      var C = Object.assign;
+      var D = {};
+      function E(a, b, e) {
+        this.props = a;
+        this.context = b;
+        this.refs = D;
+        this.updater = e || B;
+      }
+      __name(E, "E");
+      E.prototype.isReactComponent = {};
+      E.prototype.setState = function(a, b) {
+        if ("object" !== typeof a && "function" !== typeof a && null != a) throw Error("setState(...): takes an object of state variables to update or a function which returns an object of state variables.");
+        this.updater.enqueueSetState(this, a, b, "setState");
+      };
+      E.prototype.forceUpdate = function(a) {
+        this.updater.enqueueForceUpdate(this, a, "forceUpdate");
+      };
+      function F() {
+      }
+      __name(F, "F");
+      F.prototype = E.prototype;
+      function G(a, b, e) {
+        this.props = a;
+        this.context = b;
+        this.refs = D;
+        this.updater = e || B;
+      }
+      __name(G, "G");
+      var H2 = G.prototype = new F();
+      H2.constructor = G;
+      C(H2, E.prototype);
+      H2.isPureReactComponent = true;
+      var I = Array.isArray;
+      var J = Object.prototype.hasOwnProperty;
+      var K = { current: null };
+      var L = { key: true, ref: true, __self: true, __source: true };
+      function M(a, b, e) {
+        var d, c = {}, k = null, h = null;
+        if (null != b) for (d in void 0 !== b.ref && (h = b.ref), void 0 !== b.key && (k = "" + b.key), b) J.call(b, d) && !L.hasOwnProperty(d) && (c[d] = b[d]);
+        var g = arguments.length - 2;
+        if (1 === g) c.children = e;
+        else if (1 < g) {
+          for (var f = Array(g), m = 0; m < g; m++) f[m] = arguments[m + 2];
+          c.children = f;
+        }
+        if (a && a.defaultProps) for (d in g = a.defaultProps, g) void 0 === c[d] && (c[d] = g[d]);
+        return { $$typeof: l, type: a, key: k, ref: h, props: c, _owner: K.current };
+      }
+      __name(M, "M");
+      function N(a, b) {
+        return { $$typeof: l, type: a.type, key: b, ref: a.ref, props: a.props, _owner: a._owner };
+      }
+      __name(N, "N");
+      function O(a) {
+        return "object" === typeof a && null !== a && a.$$typeof === l;
+      }
+      __name(O, "O");
+      function escape(a) {
+        var b = { "=": "=0", ":": "=2" };
+        return "$" + a.replace(/[=:]/g, function(a2) {
+          return b[a2];
+        });
+      }
+      __name(escape, "escape");
+      var P = /\/+/g;
+      function Q(a, b) {
+        return "object" === typeof a && null !== a && null != a.key ? escape("" + a.key) : b.toString(36);
+      }
+      __name(Q, "Q");
+      function R(a, b, e, d, c) {
+        var k = typeof a;
+        if ("undefined" === k || "boolean" === k) a = null;
+        var h = false;
+        if (null === a) h = true;
+        else switch (k) {
+          case "string":
+          case "number":
+            h = true;
+            break;
+          case "object":
+            switch (a.$$typeof) {
+              case l:
+              case n:
+                h = true;
+            }
+        }
+        if (h) return h = a, c = c(h), a = "" === d ? "." + Q(h, 0) : d, I(c) ? (e = "", null != a && (e = a.replace(P, "$&/") + "/"), R(c, b, e, "", function(a2) {
+          return a2;
+        })) : null != c && (O(c) && (c = N(c, e + (!c.key || h && h.key === c.key ? "" : ("" + c.key).replace(P, "$&/") + "/") + a)), b.push(c)), 1;
+        h = 0;
+        d = "" === d ? "." : d + ":";
+        if (I(a)) for (var g = 0; g < a.length; g++) {
+          k = a[g];
+          var f = d + Q(k, g);
+          h += R(k, b, e, f, c);
+        }
+        else if (f = A(a), "function" === typeof f) for (a = f.call(a), g = 0; !(k = a.next()).done; ) k = k.value, f = d + Q(k, g++), h += R(k, b, e, f, c);
+        else if ("object" === k) throw b = String(a), Error("Objects are not valid as a React child (found: " + ("[object Object]" === b ? "object with keys {" + Object.keys(a).join(", ") + "}" : b) + "). If you meant to render a collection of children, use an array instead.");
+        return h;
+      }
+      __name(R, "R");
+      function S(a, b, e) {
+        if (null == a) return a;
+        var d = [], c = 0;
+        R(a, d, "", "", function(a2) {
+          return b.call(e, a2, c++);
+        });
+        return d;
+      }
+      __name(S, "S");
+      function T(a) {
+        if (-1 === a._status) {
+          var b = a._result;
+          b = b();
+          b.then(function(b2) {
+            if (0 === a._status || -1 === a._status) a._status = 1, a._result = b2;
+          }, function(b2) {
+            if (0 === a._status || -1 === a._status) a._status = 2, a._result = b2;
+          });
+          -1 === a._status && (a._status = 0, a._result = b);
+        }
+        if (1 === a._status) return a._result.default;
+        throw a._result;
+      }
+      __name(T, "T");
+      var U = { current: null };
+      var V = { transition: null };
+      var W2 = { ReactCurrentDispatcher: U, ReactCurrentBatchConfig: V, ReactCurrentOwner: K };
+      function X() {
+        throw Error("act(...) is not supported in production builds of React.");
+      }
+      __name(X, "X");
+      exports.Children = { map: S, forEach: /* @__PURE__ */ __name(function(a, b, e) {
+        S(a, function() {
+          b.apply(this, arguments);
+        }, e);
+      }, "forEach"), count: /* @__PURE__ */ __name(function(a) {
+        var b = 0;
+        S(a, function() {
+          b++;
+        });
+        return b;
+      }, "count"), toArray: /* @__PURE__ */ __name(function(a) {
+        return S(a, function(a2) {
+          return a2;
+        }) || [];
+      }, "toArray"), only: /* @__PURE__ */ __name(function(a) {
+        if (!O(a)) throw Error("React.Children.only expected to receive a single React element child.");
+        return a;
+      }, "only") };
+      exports.Component = E;
+      exports.Fragment = p;
+      exports.Profiler = r;
+      exports.PureComponent = G;
+      exports.StrictMode = q;
+      exports.Suspense = w;
+      exports.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = W2;
+      exports.act = X;
+      exports.cloneElement = function(a, b, e) {
+        if (null === a || void 0 === a) throw Error("React.cloneElement(...): The argument must be a React element, but you passed " + a + ".");
+        var d = C({}, a.props), c = a.key, k = a.ref, h = a._owner;
+        if (null != b) {
+          void 0 !== b.ref && (k = b.ref, h = K.current);
+          void 0 !== b.key && (c = "" + b.key);
+          if (a.type && a.type.defaultProps) var g = a.type.defaultProps;
+          for (f in b) J.call(b, f) && !L.hasOwnProperty(f) && (d[f] = void 0 === b[f] && void 0 !== g ? g[f] : b[f]);
+        }
+        var f = arguments.length - 2;
+        if (1 === f) d.children = e;
+        else if (1 < f) {
+          g = Array(f);
+          for (var m = 0; m < f; m++) g[m] = arguments[m + 2];
+          d.children = g;
+        }
+        return { $$typeof: l, type: a.type, key: c, ref: k, props: d, _owner: h };
+      };
+      exports.createContext = function(a) {
+        a = { $$typeof: u, _currentValue: a, _currentValue2: a, _threadCount: 0, Provider: null, Consumer: null, _defaultValue: null, _globalName: null };
+        a.Provider = { $$typeof: t, _context: a };
+        return a.Consumer = a;
+      };
+      exports.createElement = M;
+      exports.createFactory = function(a) {
+        var b = M.bind(null, a);
+        b.type = a;
+        return b;
+      };
+      exports.createRef = function() {
+        return { current: null };
+      };
+      exports.forwardRef = function(a) {
+        return { $$typeof: v, render: a };
+      };
+      exports.isValidElement = O;
+      exports.lazy = function(a) {
+        return { $$typeof: y, _payload: { _status: -1, _result: a }, _init: T };
+      };
+      exports.memo = function(a, b) {
+        return { $$typeof: x, type: a, compare: void 0 === b ? null : b };
+      };
+      exports.startTransition = function(a) {
+        var b = V.transition;
+        V.transition = {};
+        try {
+          a();
+        } finally {
+          V.transition = b;
+        }
+      };
+      exports.unstable_act = X;
+      exports.useCallback = function(a, b) {
+        return U.current.useCallback(a, b);
+      };
+      exports.useContext = function(a) {
+        return U.current.useContext(a);
+      };
+      exports.useDebugValue = function() {
+      };
+      exports.useDeferredValue = function(a) {
+        return U.current.useDeferredValue(a);
+      };
+      exports.useEffect = function(a, b) {
+        return U.current.useEffect(a, b);
+      };
+      exports.useId = function() {
+        return U.current.useId();
+      };
+      exports.useImperativeHandle = function(a, b, e) {
+        return U.current.useImperativeHandle(a, b, e);
+      };
+      exports.useInsertionEffect = function(a, b) {
+        return U.current.useInsertionEffect(a, b);
+      };
+      exports.useLayoutEffect = function(a, b) {
+        return U.current.useLayoutEffect(a, b);
+      };
+      exports.useMemo = function(a, b) {
+        return U.current.useMemo(a, b);
+      };
+      exports.useReducer = function(a, b, e) {
+        return U.current.useReducer(a, b, e);
+      };
+      exports.useRef = function(a) {
+        return U.current.useRef(a);
+      };
+      exports.useState = function(a) {
+        return U.current.useState(a);
+      };
+      exports.useSyncExternalStore = function(a, b, e) {
+        return U.current.useSyncExternalStore(a, b, e);
+      };
+      exports.useTransition = function() {
+        return U.current.useTransition();
+      };
+      exports.version = "18.3.1";
+    }
+  });
+
+  // node_modules/react/index.js
+  var require_react = __commonJS({
+    "node_modules/react/index.js"(exports, module) {
+      "use strict";
+      if (true) {
+        module.exports = require_react_production_min();
+      } else {
+        module.exports = null;
+      }
+    }
+  });
+
+  // node_modules/scheduler/cjs/scheduler.production.min.js
+  var require_scheduler_production_min = __commonJS({
+    "node_modules/scheduler/cjs/scheduler.production.min.js"(exports) {
+      "use strict";
+      function f(a, b) {
+        var c = a.length;
+        a.push(b);
+        a: for (; 0 < c; ) {
+          var d = c - 1 >>> 1, e = a[d];
+          if (0 < g(e, b)) a[d] = b, a[c] = e, c = d;
+          else break a;
+        }
+      }
+      __name(f, "f");
+      function h(a) {
+        return 0 === a.length ? null : a[0];
+      }
+      __name(h, "h");
+      function k(a) {
+        if (0 === a.length) return null;
+        var b = a[0], c = a.pop();
+        if (c !== b) {
+          a[0] = c;
+          a: for (var d = 0, e = a.length, w = e >>> 1; d < w; ) {
+            var m = 2 * (d + 1) - 1, C = a[m], n = m + 1, x = a[n];
+            if (0 > g(C, c)) n < e && 0 > g(x, C) ? (a[d] = x, a[n] = c, d = n) : (a[d] = C, a[m] = c, d = m);
+            else if (n < e && 0 > g(x, c)) a[d] = x, a[n] = c, d = n;
+            else break a;
+          }
+        }
+        return b;
+      }
+      __name(k, "k");
+      function g(a, b) {
+        var c = a.sortIndex - b.sortIndex;
+        return 0 !== c ? c : a.id - b.id;
+      }
+      __name(g, "g");
+      if ("object" === typeof performance && "function" === typeof performance.now) {
+        l = performance;
+        exports.unstable_now = function() {
+          return l.now();
+        };
+      } else {
+        p = Date, q = p.now();
+        exports.unstable_now = function() {
+          return p.now() - q;
+        };
+      }
+      var l;
+      var p;
+      var q;
+      var r = [];
+      var t = [];
+      var u = 1;
+      var v = null;
+      var y = 3;
+      var z = false;
+      var A = false;
+      var B = false;
+      var D = "function" === typeof setTimeout ? setTimeout : null;
+      var E = "function" === typeof clearTimeout ? clearTimeout : null;
+      var F = "undefined" !== typeof setImmediate ? setImmediate : null;
+      "undefined" !== typeof navigator && void 0 !== navigator.scheduling && void 0 !== navigator.scheduling.isInputPending && navigator.scheduling.isInputPending.bind(navigator.scheduling);
+      function G(a) {
+        for (var b = h(t); null !== b; ) {
+          if (null === b.callback) k(t);
+          else if (b.startTime <= a) k(t), b.sortIndex = b.expirationTime, f(r, b);
+          else break;
+          b = h(t);
+        }
+      }
+      __name(G, "G");
+      function H2(a) {
+        B = false;
+        G(a);
+        if (!A) if (null !== h(r)) A = true, I(J);
+        else {
+          var b = h(t);
+          null !== b && K(H2, b.startTime - a);
+        }
+      }
+      __name(H2, "H");
+      function J(a, b) {
+        A = false;
+        B && (B = false, E(L), L = -1);
+        z = true;
+        var c = y;
+        try {
+          G(b);
+          for (v = h(r); null !== v && (!(v.expirationTime > b) || a && !M()); ) {
+            var d = v.callback;
+            if ("function" === typeof d) {
+              v.callback = null;
+              y = v.priorityLevel;
+              var e = d(v.expirationTime <= b);
+              b = exports.unstable_now();
+              "function" === typeof e ? v.callback = e : v === h(r) && k(r);
+              G(b);
+            } else k(r);
+            v = h(r);
+          }
+          if (null !== v) var w = true;
+          else {
+            var m = h(t);
+            null !== m && K(H2, m.startTime - b);
+            w = false;
+          }
+          return w;
+        } finally {
+          v = null, y = c, z = false;
+        }
+      }
+      __name(J, "J");
+      var N = false;
+      var O = null;
+      var L = -1;
+      var P = 5;
+      var Q = -1;
+      function M() {
+        return exports.unstable_now() - Q < P ? false : true;
+      }
+      __name(M, "M");
+      function R() {
+        if (null !== O) {
+          var a = exports.unstable_now();
+          Q = a;
+          var b = true;
+          try {
+            b = O(true, a);
+          } finally {
+            b ? S() : (N = false, O = null);
+          }
+        } else N = false;
+      }
+      __name(R, "R");
+      var S;
+      if ("function" === typeof F) S = /* @__PURE__ */ __name(function() {
+        F(R);
+      }, "S");
+      else if ("undefined" !== typeof MessageChannel) {
+        T = new MessageChannel(), U = T.port2;
+        T.port1.onmessage = R;
+        S = /* @__PURE__ */ __name(function() {
+          U.postMessage(null);
+        }, "S");
+      } else S = /* @__PURE__ */ __name(function() {
+        D(R, 0);
+      }, "S");
+      var T;
+      var U;
+      function I(a) {
+        O = a;
+        N || (N = true, S());
+      }
+      __name(I, "I");
+      function K(a, b) {
+        L = D(function() {
+          a(exports.unstable_now());
+        }, b);
+      }
+      __name(K, "K");
+      exports.unstable_IdlePriority = 5;
+      exports.unstable_ImmediatePriority = 1;
+      exports.unstable_LowPriority = 4;
+      exports.unstable_NormalPriority = 3;
+      exports.unstable_Profiling = null;
+      exports.unstable_UserBlockingPriority = 2;
+      exports.unstable_cancelCallback = function(a) {
+        a.callback = null;
+      };
+      exports.unstable_continueExecution = function() {
+        A || z || (A = true, I(J));
+      };
+      exports.unstable_forceFrameRate = function(a) {
+        0 > a || 125 < a ? console.error("forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported") : P = 0 < a ? Math.floor(1e3 / a) : 5;
+      };
+      exports.unstable_getCurrentPriorityLevel = function() {
+        return y;
+      };
+      exports.unstable_getFirstCallbackNode = function() {
+        return h(r);
+      };
+      exports.unstable_next = function(a) {
+        switch (y) {
+          case 1:
+          case 2:
+          case 3:
+            var b = 3;
+            break;
+          default:
+            b = y;
+        }
+        var c = y;
+        y = b;
+        try {
+          return a();
+        } finally {
+          y = c;
+        }
+      };
+      exports.unstable_pauseExecution = function() {
+      };
+      exports.unstable_requestPaint = function() {
+      };
+      exports.unstable_runWithPriority = function(a, b) {
+        switch (a) {
+          case 1:
+          case 2:
+          case 3:
+          case 4:
+          case 5:
+            break;
+          default:
+            a = 3;
+        }
+        var c = y;
+        y = a;
+        try {
+          return b();
+        } finally {
+          y = c;
+        }
+      };
+      exports.unstable_scheduleCallback = function(a, b, c) {
+        var d = exports.unstable_now();
+        "object" === typeof c && null !== c ? (c = c.delay, c = "number" === typeof c && 0 < c ? d + c : d) : c = d;
+        switch (a) {
+          case 1:
+            var e = -1;
+            break;
+          case 2:
+            e = 250;
+            break;
+          case 5:
+            e = 1073741823;
+            break;
+          case 4:
+            e = 1e4;
+            break;
+          default:
+            e = 5e3;
+        }
+        e = c + e;
+        a = { id: u++, callback: b, priorityLevel: a, startTime: c, expirationTime: e, sortIndex: -1 };
+        c > d ? (a.sortIndex = c, f(t, a), null === h(r) && a === h(t) && (B ? (E(L), L = -1) : B = true, K(H2, c - d))) : (a.sortIndex = e, f(r, a), A || z || (A = true, I(J)));
+        return a;
+      };
+      exports.unstable_shouldYield = M;
+      exports.unstable_wrapCallback = function(a) {
+        var b = y;
+        return function() {
+          var c = y;
+          y = b;
+          try {
+            return a.apply(this, arguments);
+          } finally {
+            y = c;
+          }
+        };
+      };
+    }
+  });
+
+  // node_modules/scheduler/index.js
+  var require_scheduler = __commonJS({
+    "node_modules/scheduler/index.js"(exports, module) {
+      "use strict";
+      if (true) {
+        module.exports = require_scheduler_production_min();
+      } else {
+        module.exports = null;
+      }
+    }
+  });
+
+  // node_modules/react-dom/cjs/react-dom.production.min.js
+  var require_react_dom_production_min = __commonJS({
+    "node_modules/react-dom/cjs/react-dom.production.min.js"(exports) {
+      "use strict";
+      var aa = require_react();
+      var ca = require_scheduler();
+      function p(a) {
+        for (var b = "https://reactjs.org/docs/error-decoder.html?invariant=" + a, c = 1; c < arguments.length; c++) b += "&args[]=" + encodeURIComponent(arguments[c]);
+        return "Minified React error #" + a + "; visit " + b + " for the full message or use the non-minified dev environment for full errors and additional helpful warnings.";
+      }
+      __name(p, "p");
+      var da = /* @__PURE__ */ new Set();
+      var ea = {};
+      function fa(a, b) {
+        ha(a, b);
+        ha(a + "Capture", b);
+      }
+      __name(fa, "fa");
+      function ha(a, b) {
+        ea[a] = b;
+        for (a = 0; a < b.length; a++) da.add(b[a]);
+      }
+      __name(ha, "ha");
+      var ia = !("undefined" === typeof window || "undefined" === typeof window.document || "undefined" === typeof window.document.createElement);
+      var ja = Object.prototype.hasOwnProperty;
+      var ka = /^[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$/;
+      var la = {};
+      var ma = {};
+      function oa(a) {
+        if (ja.call(ma, a)) return true;
+        if (ja.call(la, a)) return false;
+        if (ka.test(a)) return ma[a] = true;
+        la[a] = true;
+        return false;
+      }
+      __name(oa, "oa");
+      function pa(a, b, c, d) {
+        if (null !== c && 0 === c.type) return false;
+        switch (typeof b) {
+          case "function":
+          case "symbol":
+            return true;
+          case "boolean":
+            if (d) return false;
+            if (null !== c) return !c.acceptsBooleans;
+            a = a.toLowerCase().slice(0, 5);
+            return "data-" !== a && "aria-" !== a;
+          default:
+            return false;
+        }
+      }
+      __name(pa, "pa");
+      function qa(a, b, c, d) {
+        if (null === b || "undefined" === typeof b || pa(a, b, c, d)) return true;
+        if (d) return false;
+        if (null !== c) switch (c.type) {
+          case 3:
+            return !b;
+          case 4:
+            return false === b;
+          case 5:
+            return isNaN(b);
+          case 6:
+            return isNaN(b) || 1 > b;
+        }
+        return false;
+      }
+      __name(qa, "qa");
+      function v(a, b, c, d, e, f, g) {
+        this.acceptsBooleans = 2 === b || 3 === b || 4 === b;
+        this.attributeName = d;
+        this.attributeNamespace = e;
+        this.mustUseProperty = c;
+        this.propertyName = a;
+        this.type = b;
+        this.sanitizeURL = f;
+        this.removeEmptyString = g;
+      }
+      __name(v, "v");
+      var z = {};
+      "children dangerouslySetInnerHTML defaultValue defaultChecked innerHTML suppressContentEditableWarning suppressHydrationWarning style".split(" ").forEach(function(a) {
+        z[a] = new v(a, 0, false, a, null, false, false);
+      });
+      [["acceptCharset", "accept-charset"], ["className", "class"], ["htmlFor", "for"], ["httpEquiv", "http-equiv"]].forEach(function(a) {
+        var b = a[0];
+        z[b] = new v(b, 1, false, a[1], null, false, false);
+      });
+      ["contentEditable", "draggable", "spellCheck", "value"].forEach(function(a) {
+        z[a] = new v(a, 2, false, a.toLowerCase(), null, false, false);
+      });
+      ["autoReverse", "externalResourcesRequired", "focusable", "preserveAlpha"].forEach(function(a) {
+        z[a] = new v(a, 2, false, a, null, false, false);
+      });
+      "allowFullScreen async autoFocus autoPlay controls default defer disabled disablePictureInPicture disableRemotePlayback formNoValidate hidden loop noModule noValidate open playsInline readOnly required reversed scoped seamless itemScope".split(" ").forEach(function(a) {
+        z[a] = new v(a, 3, false, a.toLowerCase(), null, false, false);
+      });
+      ["checked", "multiple", "muted", "selected"].forEach(function(a) {
+        z[a] = new v(a, 3, true, a, null, false, false);
+      });
+      ["capture", "download"].forEach(function(a) {
+        z[a] = new v(a, 4, false, a, null, false, false);
+      });
+      ["cols", "rows", "size", "span"].forEach(function(a) {
+        z[a] = new v(a, 6, false, a, null, false, false);
+      });
+      ["rowSpan", "start"].forEach(function(a) {
+        z[a] = new v(a, 5, false, a.toLowerCase(), null, false, false);
+      });
+      var ra = /[\-:]([a-z])/g;
+      function sa(a) {
+        return a[1].toUpperCase();
+      }
+      __name(sa, "sa");
+      "accent-height alignment-baseline arabic-form baseline-shift cap-height clip-path clip-rule color-interpolation color-interpolation-filters color-profile color-rendering dominant-baseline enable-background fill-opacity fill-rule flood-color flood-opacity font-family font-size font-size-adjust font-stretch font-style font-variant font-weight glyph-name glyph-orientation-horizontal glyph-orientation-vertical horiz-adv-x horiz-origin-x image-rendering letter-spacing lighting-color marker-end marker-mid marker-start overline-position overline-thickness paint-order panose-1 pointer-events rendering-intent shape-rendering stop-color stop-opacity strikethrough-position strikethrough-thickness stroke-dasharray stroke-dashoffset stroke-linecap stroke-linejoin stroke-miterlimit stroke-opacity stroke-width text-anchor text-decoration text-rendering underline-position underline-thickness unicode-bidi unicode-range units-per-em v-alphabetic v-hanging v-ideographic v-mathematical vector-effect vert-adv-y vert-origin-x vert-origin-y word-spacing writing-mode xmlns:xlink x-height".split(" ").forEach(function(a) {
+        var b = a.replace(
+          ra,
+          sa
+        );
+        z[b] = new v(b, 1, false, a, null, false, false);
+      });
+      "xlink:actuate xlink:arcrole xlink:role xlink:show xlink:title xlink:type".split(" ").forEach(function(a) {
+        var b = a.replace(ra, sa);
+        z[b] = new v(b, 1, false, a, "http://www.w3.org/1999/xlink", false, false);
+      });
+      ["xml:base", "xml:lang", "xml:space"].forEach(function(a) {
+        var b = a.replace(ra, sa);
+        z[b] = new v(b, 1, false, a, "http://www.w3.org/XML/1998/namespace", false, false);
+      });
+      ["tabIndex", "crossOrigin"].forEach(function(a) {
+        z[a] = new v(a, 1, false, a.toLowerCase(), null, false, false);
+      });
+      z.xlinkHref = new v("xlinkHref", 1, false, "xlink:href", "http://www.w3.org/1999/xlink", true, false);
+      ["src", "href", "action", "formAction"].forEach(function(a) {
+        z[a] = new v(a, 1, false, a.toLowerCase(), null, true, true);
+      });
+      function ta(a, b, c, d) {
+        var e = z.hasOwnProperty(b) ? z[b] : null;
+        if (null !== e ? 0 !== e.type : d || !(2 < b.length) || "o" !== b[0] && "O" !== b[0] || "n" !== b[1] && "N" !== b[1]) qa(b, c, e, d) && (c = null), d || null === e ? oa(b) && (null === c ? a.removeAttribute(b) : a.setAttribute(b, "" + c)) : e.mustUseProperty ? a[e.propertyName] = null === c ? 3 === e.type ? false : "" : c : (b = e.attributeName, d = e.attributeNamespace, null === c ? a.removeAttribute(b) : (e = e.type, c = 3 === e || 4 === e && true === c ? "" : "" + c, d ? a.setAttributeNS(d, b, c) : a.setAttribute(b, c)));
+      }
+      __name(ta, "ta");
+      var ua = aa.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+      var va = Symbol.for("react.element");
+      var wa = Symbol.for("react.portal");
+      var ya = Symbol.for("react.fragment");
+      var za = Symbol.for("react.strict_mode");
+      var Aa = Symbol.for("react.profiler");
+      var Ba = Symbol.for("react.provider");
+      var Ca = Symbol.for("react.context");
+      var Da = Symbol.for("react.forward_ref");
+      var Ea = Symbol.for("react.suspense");
+      var Fa = Symbol.for("react.suspense_list");
+      var Ga = Symbol.for("react.memo");
+      var Ha = Symbol.for("react.lazy");
+      Symbol.for("react.scope");
+      Symbol.for("react.debug_trace_mode");
+      var Ia = Symbol.for("react.offscreen");
+      Symbol.for("react.legacy_hidden");
+      Symbol.for("react.cache");
+      Symbol.for("react.tracing_marker");
+      var Ja = Symbol.iterator;
+      function Ka(a) {
+        if (null === a || "object" !== typeof a) return null;
+        a = Ja && a[Ja] || a["@@iterator"];
+        return "function" === typeof a ? a : null;
+      }
+      __name(Ka, "Ka");
+      var A = Object.assign;
+      var La;
+      function Ma(a) {
+        if (void 0 === La) try {
+          throw Error();
+        } catch (c) {
+          var b = c.stack.trim().match(/\n( *(at )?)/);
+          La = b && b[1] || "";
+        }
+        return "\n" + La + a;
+      }
+      __name(Ma, "Ma");
+      var Na = false;
+      function Oa(a, b) {
+        if (!a || Na) return "";
+        Na = true;
+        var c = Error.prepareStackTrace;
+        Error.prepareStackTrace = void 0;
+        try {
+          if (b) if (b = /* @__PURE__ */ __name(function() {
+            throw Error();
+          }, "b"), Object.defineProperty(b.prototype, "props", { set: /* @__PURE__ */ __name(function() {
+            throw Error();
+          }, "set") }), "object" === typeof Reflect && Reflect.construct) {
+            try {
+              Reflect.construct(b, []);
+            } catch (l) {
+              var d = l;
+            }
+            Reflect.construct(a, [], b);
+          } else {
+            try {
+              b.call();
+            } catch (l) {
+              d = l;
+            }
+            a.call(b.prototype);
+          }
+          else {
+            try {
+              throw Error();
+            } catch (l) {
+              d = l;
+            }
+            a();
+          }
+        } catch (l) {
+          if (l && d && "string" === typeof l.stack) {
+            for (var e = l.stack.split("\n"), f = d.stack.split("\n"), g = e.length - 1, h = f.length - 1; 1 <= g && 0 <= h && e[g] !== f[h]; ) h--;
+            for (; 1 <= g && 0 <= h; g--, h--) if (e[g] !== f[h]) {
+              if (1 !== g || 1 !== h) {
+                do
+                  if (g--, h--, 0 > h || e[g] !== f[h]) {
+                    var k = "\n" + e[g].replace(" at new ", " at ");
+                    a.displayName && k.includes("<anonymous>") && (k = k.replace("<anonymous>", a.displayName));
+                    return k;
+                  }
+                while (1 <= g && 0 <= h);
+              }
+              break;
+            }
+          }
+        } finally {
+          Na = false, Error.prepareStackTrace = c;
+        }
+        return (a = a ? a.displayName || a.name : "") ? Ma(a) : "";
+      }
+      __name(Oa, "Oa");
+      function Pa(a) {
+        switch (a.tag) {
+          case 5:
+            return Ma(a.type);
+          case 16:
+            return Ma("Lazy");
+          case 13:
+            return Ma("Suspense");
+          case 19:
+            return Ma("SuspenseList");
+          case 0:
+          case 2:
+          case 15:
+            return a = Oa(a.type, false), a;
+          case 11:
+            return a = Oa(a.type.render, false), a;
+          case 1:
+            return a = Oa(a.type, true), a;
+          default:
+            return "";
+        }
+      }
+      __name(Pa, "Pa");
+      function Qa(a) {
+        if (null == a) return null;
+        if ("function" === typeof a) return a.displayName || a.name || null;
+        if ("string" === typeof a) return a;
+        switch (a) {
+          case ya:
+            return "Fragment";
+          case wa:
+            return "Portal";
+          case Aa:
+            return "Profiler";
+          case za:
+            return "StrictMode";
+          case Ea:
+            return "Suspense";
+          case Fa:
+            return "SuspenseList";
+        }
+        if ("object" === typeof a) switch (a.$$typeof) {
+          case Ca:
+            return (a.displayName || "Context") + ".Consumer";
+          case Ba:
+            return (a._context.displayName || "Context") + ".Provider";
+          case Da:
+            var b = a.render;
+            a = a.displayName;
+            a || (a = b.displayName || b.name || "", a = "" !== a ? "ForwardRef(" + a + ")" : "ForwardRef");
+            return a;
+          case Ga:
+            return b = a.displayName || null, null !== b ? b : Qa(a.type) || "Memo";
+          case Ha:
+            b = a._payload;
+            a = a._init;
+            try {
+              return Qa(a(b));
+            } catch (c) {
+            }
+        }
+        return null;
+      }
+      __name(Qa, "Qa");
+      function Ra(a) {
+        var b = a.type;
+        switch (a.tag) {
+          case 24:
+            return "Cache";
+          case 9:
+            return (b.displayName || "Context") + ".Consumer";
+          case 10:
+            return (b._context.displayName || "Context") + ".Provider";
+          case 18:
+            return "DehydratedFragment";
+          case 11:
+            return a = b.render, a = a.displayName || a.name || "", b.displayName || ("" !== a ? "ForwardRef(" + a + ")" : "ForwardRef");
+          case 7:
+            return "Fragment";
+          case 5:
+            return b;
+          case 4:
+            return "Portal";
+          case 3:
+            return "Root";
+          case 6:
+            return "Text";
+          case 16:
+            return Qa(b);
+          case 8:
+            return b === za ? "StrictMode" : "Mode";
+          case 22:
+            return "Offscreen";
+          case 12:
+            return "Profiler";
+          case 21:
+            return "Scope";
+          case 13:
+            return "Suspense";
+          case 19:
+            return "SuspenseList";
+          case 25:
+            return "TracingMarker";
+          case 1:
+          case 0:
+          case 17:
+          case 2:
+          case 14:
+          case 15:
+            if ("function" === typeof b) return b.displayName || b.name || null;
+            if ("string" === typeof b) return b;
+        }
+        return null;
+      }
+      __name(Ra, "Ra");
+      function Sa(a) {
+        switch (typeof a) {
+          case "boolean":
+          case "number":
+          case "string":
+          case "undefined":
+            return a;
+          case "object":
+            return a;
+          default:
+            return "";
+        }
+      }
+      __name(Sa, "Sa");
+      function Ta(a) {
+        var b = a.type;
+        return (a = a.nodeName) && "input" === a.toLowerCase() && ("checkbox" === b || "radio" === b);
+      }
+      __name(Ta, "Ta");
+      function Ua(a) {
+        var b = Ta(a) ? "checked" : "value", c = Object.getOwnPropertyDescriptor(a.constructor.prototype, b), d = "" + a[b];
+        if (!a.hasOwnProperty(b) && "undefined" !== typeof c && "function" === typeof c.get && "function" === typeof c.set) {
+          var e = c.get, f = c.set;
+          Object.defineProperty(a, b, { configurable: true, get: /* @__PURE__ */ __name(function() {
+            return e.call(this);
+          }, "get"), set: /* @__PURE__ */ __name(function(a2) {
+            d = "" + a2;
+            f.call(this, a2);
+          }, "set") });
+          Object.defineProperty(a, b, { enumerable: c.enumerable });
+          return { getValue: /* @__PURE__ */ __name(function() {
+            return d;
+          }, "getValue"), setValue: /* @__PURE__ */ __name(function(a2) {
+            d = "" + a2;
+          }, "setValue"), stopTracking: /* @__PURE__ */ __name(function() {
+            a._valueTracker = null;
+            delete a[b];
+          }, "stopTracking") };
+        }
+      }
+      __name(Ua, "Ua");
+      function Va(a) {
+        a._valueTracker || (a._valueTracker = Ua(a));
+      }
+      __name(Va, "Va");
+      function Wa(a) {
+        if (!a) return false;
+        var b = a._valueTracker;
+        if (!b) return true;
+        var c = b.getValue();
+        var d = "";
+        a && (d = Ta(a) ? a.checked ? "true" : "false" : a.value);
+        a = d;
+        return a !== c ? (b.setValue(a), true) : false;
+      }
+      __name(Wa, "Wa");
+      function Xa(a) {
+        a = a || ("undefined" !== typeof document ? document : void 0);
+        if ("undefined" === typeof a) return null;
+        try {
+          return a.activeElement || a.body;
+        } catch (b) {
+          return a.body;
+        }
+      }
+      __name(Xa, "Xa");
+      function Ya(a, b) {
+        var c = b.checked;
+        return A({}, b, { defaultChecked: void 0, defaultValue: void 0, value: void 0, checked: null != c ? c : a._wrapperState.initialChecked });
+      }
+      __name(Ya, "Ya");
+      function Za(a, b) {
+        var c = null == b.defaultValue ? "" : b.defaultValue, d = null != b.checked ? b.checked : b.defaultChecked;
+        c = Sa(null != b.value ? b.value : c);
+        a._wrapperState = { initialChecked: d, initialValue: c, controlled: "checkbox" === b.type || "radio" === b.type ? null != b.checked : null != b.value };
+      }
+      __name(Za, "Za");
+      function ab(a, b) {
+        b = b.checked;
+        null != b && ta(a, "checked", b, false);
+      }
+      __name(ab, "ab");
+      function bb(a, b) {
+        ab(a, b);
+        var c = Sa(b.value), d = b.type;
+        if (null != c) if ("number" === d) {
+          if (0 === c && "" === a.value || a.value != c) a.value = "" + c;
+        } else a.value !== "" + c && (a.value = "" + c);
+        else if ("submit" === d || "reset" === d) {
+          a.removeAttribute("value");
+          return;
+        }
+        b.hasOwnProperty("value") ? cb(a, b.type, c) : b.hasOwnProperty("defaultValue") && cb(a, b.type, Sa(b.defaultValue));
+        null == b.checked && null != b.defaultChecked && (a.defaultChecked = !!b.defaultChecked);
+      }
+      __name(bb, "bb");
+      function db(a, b, c) {
+        if (b.hasOwnProperty("value") || b.hasOwnProperty("defaultValue")) {
+          var d = b.type;
+          if (!("submit" !== d && "reset" !== d || void 0 !== b.value && null !== b.value)) return;
+          b = "" + a._wrapperState.initialValue;
+          c || b === a.value || (a.value = b);
+          a.defaultValue = b;
+        }
+        c = a.name;
+        "" !== c && (a.name = "");
+        a.defaultChecked = !!a._wrapperState.initialChecked;
+        "" !== c && (a.name = c);
+      }
+      __name(db, "db");
+      function cb(a, b, c) {
+        if ("number" !== b || Xa(a.ownerDocument) !== a) null == c ? a.defaultValue = "" + a._wrapperState.initialValue : a.defaultValue !== "" + c && (a.defaultValue = "" + c);
+      }
+      __name(cb, "cb");
+      var eb = Array.isArray;
+      function fb(a, b, c, d) {
+        a = a.options;
+        if (b) {
+          b = {};
+          for (var e = 0; e < c.length; e++) b["$" + c[e]] = true;
+          for (c = 0; c < a.length; c++) e = b.hasOwnProperty("$" + a[c].value), a[c].selected !== e && (a[c].selected = e), e && d && (a[c].defaultSelected = true);
+        } else {
+          c = "" + Sa(c);
+          b = null;
+          for (e = 0; e < a.length; e++) {
+            if (a[e].value === c) {
+              a[e].selected = true;
+              d && (a[e].defaultSelected = true);
+              return;
+            }
+            null !== b || a[e].disabled || (b = a[e]);
+          }
+          null !== b && (b.selected = true);
+        }
+      }
+      __name(fb, "fb");
+      function gb(a, b) {
+        if (null != b.dangerouslySetInnerHTML) throw Error(p(91));
+        return A({}, b, { value: void 0, defaultValue: void 0, children: "" + a._wrapperState.initialValue });
+      }
+      __name(gb, "gb");
+      function hb(a, b) {
+        var c = b.value;
+        if (null == c) {
+          c = b.children;
+          b = b.defaultValue;
+          if (null != c) {
+            if (null != b) throw Error(p(92));
+            if (eb(c)) {
+              if (1 < c.length) throw Error(p(93));
+              c = c[0];
+            }
+            b = c;
+          }
+          null == b && (b = "");
+          c = b;
+        }
+        a._wrapperState = { initialValue: Sa(c) };
+      }
+      __name(hb, "hb");
+      function ib(a, b) {
+        var c = Sa(b.value), d = Sa(b.defaultValue);
+        null != c && (c = "" + c, c !== a.value && (a.value = c), null == b.defaultValue && a.defaultValue !== c && (a.defaultValue = c));
+        null != d && (a.defaultValue = "" + d);
+      }
+      __name(ib, "ib");
+      function jb(a) {
+        var b = a.textContent;
+        b === a._wrapperState.initialValue && "" !== b && null !== b && (a.value = b);
+      }
+      __name(jb, "jb");
+      function kb(a) {
+        switch (a) {
+          case "svg":
+            return "http://www.w3.org/2000/svg";
+          case "math":
+            return "http://www.w3.org/1998/Math/MathML";
+          default:
+            return "http://www.w3.org/1999/xhtml";
+        }
+      }
+      __name(kb, "kb");
+      function lb(a, b) {
+        return null == a || "http://www.w3.org/1999/xhtml" === a ? kb(b) : "http://www.w3.org/2000/svg" === a && "foreignObject" === b ? "http://www.w3.org/1999/xhtml" : a;
+      }
+      __name(lb, "lb");
+      var mb;
+      var nb = (function(a) {
+        return "undefined" !== typeof MSApp && MSApp.execUnsafeLocalFunction ? function(b, c, d, e) {
+          MSApp.execUnsafeLocalFunction(function() {
+            return a(b, c, d, e);
+          });
+        } : a;
+      })(function(a, b) {
+        if ("http://www.w3.org/2000/svg" !== a.namespaceURI || "innerHTML" in a) a.innerHTML = b;
+        else {
+          mb = mb || document.createElement("div");
+          mb.innerHTML = "<svg>" + b.valueOf().toString() + "</svg>";
+          for (b = mb.firstChild; a.firstChild; ) a.removeChild(a.firstChild);
+          for (; b.firstChild; ) a.appendChild(b.firstChild);
+        }
+      });
+      function ob(a, b) {
+        if (b) {
+          var c = a.firstChild;
+          if (c && c === a.lastChild && 3 === c.nodeType) {
+            c.nodeValue = b;
+            return;
+          }
+        }
+        a.textContent = b;
+      }
+      __name(ob, "ob");
+      var pb = {
+        animationIterationCount: true,
+        aspectRatio: true,
+        borderImageOutset: true,
+        borderImageSlice: true,
+        borderImageWidth: true,
+        boxFlex: true,
+        boxFlexGroup: true,
+        boxOrdinalGroup: true,
+        columnCount: true,
+        columns: true,
+        flex: true,
+        flexGrow: true,
+        flexPositive: true,
+        flexShrink: true,
+        flexNegative: true,
+        flexOrder: true,
+        gridArea: true,
+        gridRow: true,
+        gridRowEnd: true,
+        gridRowSpan: true,
+        gridRowStart: true,
+        gridColumn: true,
+        gridColumnEnd: true,
+        gridColumnSpan: true,
+        gridColumnStart: true,
+        fontWeight: true,
+        lineClamp: true,
+        lineHeight: true,
+        opacity: true,
+        order: true,
+        orphans: true,
+        tabSize: true,
+        widows: true,
+        zIndex: true,
+        zoom: true,
+        fillOpacity: true,
+        floodOpacity: true,
+        stopOpacity: true,
+        strokeDasharray: true,
+        strokeDashoffset: true,
+        strokeMiterlimit: true,
+        strokeOpacity: true,
+        strokeWidth: true
+      };
+      var qb = ["Webkit", "ms", "Moz", "O"];
+      Object.keys(pb).forEach(function(a) {
+        qb.forEach(function(b) {
+          b = b + a.charAt(0).toUpperCase() + a.substring(1);
+          pb[b] = pb[a];
+        });
+      });
+      function rb(a, b, c) {
+        return null == b || "boolean" === typeof b || "" === b ? "" : c || "number" !== typeof b || 0 === b || pb.hasOwnProperty(a) && pb[a] ? ("" + b).trim() : b + "px";
+      }
+      __name(rb, "rb");
+      function sb(a, b) {
+        a = a.style;
+        for (var c in b) if (b.hasOwnProperty(c)) {
+          var d = 0 === c.indexOf("--"), e = rb(c, b[c], d);
+          "float" === c && (c = "cssFloat");
+          d ? a.setProperty(c, e) : a[c] = e;
+        }
+      }
+      __name(sb, "sb");
+      var tb = A({ menuitem: true }, { area: true, base: true, br: true, col: true, embed: true, hr: true, img: true, input: true, keygen: true, link: true, meta: true, param: true, source: true, track: true, wbr: true });
+      function ub(a, b) {
+        if (b) {
+          if (tb[a] && (null != b.children || null != b.dangerouslySetInnerHTML)) throw Error(p(137, a));
+          if (null != b.dangerouslySetInnerHTML) {
+            if (null != b.children) throw Error(p(60));
+            if ("object" !== typeof b.dangerouslySetInnerHTML || !("__html" in b.dangerouslySetInnerHTML)) throw Error(p(61));
+          }
+          if (null != b.style && "object" !== typeof b.style) throw Error(p(62));
+        }
+      }
+      __name(ub, "ub");
+      function vb(a, b) {
+        if (-1 === a.indexOf("-")) return "string" === typeof b.is;
+        switch (a) {
+          case "annotation-xml":
+          case "color-profile":
+          case "font-face":
+          case "font-face-src":
+          case "font-face-uri":
+          case "font-face-format":
+          case "font-face-name":
+          case "missing-glyph":
+            return false;
+          default:
+            return true;
+        }
+      }
+      __name(vb, "vb");
+      var wb = null;
+      function xb(a) {
+        a = a.target || a.srcElement || window;
+        a.correspondingUseElement && (a = a.correspondingUseElement);
+        return 3 === a.nodeType ? a.parentNode : a;
+      }
+      __name(xb, "xb");
+      var yb = null;
+      var zb = null;
+      var Ab = null;
+      function Bb(a) {
+        if (a = Cb(a)) {
+          if ("function" !== typeof yb) throw Error(p(280));
+          var b = a.stateNode;
+          b && (b = Db(b), yb(a.stateNode, a.type, b));
+        }
+      }
+      __name(Bb, "Bb");
+      function Eb(a) {
+        zb ? Ab ? Ab.push(a) : Ab = [a] : zb = a;
+      }
+      __name(Eb, "Eb");
+      function Fb() {
+        if (zb) {
+          var a = zb, b = Ab;
+          Ab = zb = null;
+          Bb(a);
+          if (b) for (a = 0; a < b.length; a++) Bb(b[a]);
+        }
+      }
+      __name(Fb, "Fb");
+      function Gb(a, b) {
+        return a(b);
+      }
+      __name(Gb, "Gb");
+      function Hb() {
+      }
+      __name(Hb, "Hb");
+      var Ib = false;
+      function Jb(a, b, c) {
+        if (Ib) return a(b, c);
+        Ib = true;
+        try {
+          return Gb(a, b, c);
+        } finally {
+          if (Ib = false, null !== zb || null !== Ab) Hb(), Fb();
+        }
+      }
+      __name(Jb, "Jb");
+      function Kb(a, b) {
+        var c = a.stateNode;
+        if (null === c) return null;
+        var d = Db(c);
+        if (null === d) return null;
+        c = d[b];
+        a: switch (b) {
+          case "onClick":
+          case "onClickCapture":
+          case "onDoubleClick":
+          case "onDoubleClickCapture":
+          case "onMouseDown":
+          case "onMouseDownCapture":
+          case "onMouseMove":
+          case "onMouseMoveCapture":
+          case "onMouseUp":
+          case "onMouseUpCapture":
+          case "onMouseEnter":
+            (d = !d.disabled) || (a = a.type, d = !("button" === a || "input" === a || "select" === a || "textarea" === a));
+            a = !d;
+            break a;
+          default:
+            a = false;
+        }
+        if (a) return null;
+        if (c && "function" !== typeof c) throw Error(p(231, b, typeof c));
+        return c;
+      }
+      __name(Kb, "Kb");
+      var Lb = false;
+      if (ia) try {
+        Mb = {};
+        Object.defineProperty(Mb, "passive", { get: /* @__PURE__ */ __name(function() {
+          Lb = true;
+        }, "get") });
+        window.addEventListener("test", Mb, Mb);
+        window.removeEventListener("test", Mb, Mb);
+      } catch (a) {
+        Lb = false;
+      }
+      var Mb;
+      function Nb(a, b, c, d, e, f, g, h, k) {
+        var l = Array.prototype.slice.call(arguments, 3);
+        try {
+          b.apply(c, l);
+        } catch (m) {
+          this.onError(m);
+        }
+      }
+      __name(Nb, "Nb");
+      var Ob = false;
+      var Pb = null;
+      var Qb = false;
+      var Rb = null;
+      var Sb = { onError: /* @__PURE__ */ __name(function(a) {
+        Ob = true;
+        Pb = a;
+      }, "onError") };
+      function Tb(a, b, c, d, e, f, g, h, k) {
+        Ob = false;
+        Pb = null;
+        Nb.apply(Sb, arguments);
+      }
+      __name(Tb, "Tb");
+      function Ub(a, b, c, d, e, f, g, h, k) {
+        Tb.apply(this, arguments);
+        if (Ob) {
+          if (Ob) {
+            var l = Pb;
+            Ob = false;
+            Pb = null;
+          } else throw Error(p(198));
+          Qb || (Qb = true, Rb = l);
+        }
+      }
+      __name(Ub, "Ub");
+      function Vb(a) {
+        var b = a, c = a;
+        if (a.alternate) for (; b.return; ) b = b.return;
+        else {
+          a = b;
+          do
+            b = a, 0 !== (b.flags & 4098) && (c = b.return), a = b.return;
+          while (a);
+        }
+        return 3 === b.tag ? c : null;
+      }
+      __name(Vb, "Vb");
+      function Wb(a) {
+        if (13 === a.tag) {
+          var b = a.memoizedState;
+          null === b && (a = a.alternate, null !== a && (b = a.memoizedState));
+          if (null !== b) return b.dehydrated;
+        }
+        return null;
+      }
+      __name(Wb, "Wb");
+      function Xb(a) {
+        if (Vb(a) !== a) throw Error(p(188));
+      }
+      __name(Xb, "Xb");
+      function Yb(a) {
+        var b = a.alternate;
+        if (!b) {
+          b = Vb(a);
+          if (null === b) throw Error(p(188));
+          return b !== a ? null : a;
+        }
+        for (var c = a, d = b; ; ) {
+          var e = c.return;
+          if (null === e) break;
+          var f = e.alternate;
+          if (null === f) {
+            d = e.return;
+            if (null !== d) {
+              c = d;
+              continue;
+            }
+            break;
+          }
+          if (e.child === f.child) {
+            for (f = e.child; f; ) {
+              if (f === c) return Xb(e), a;
+              if (f === d) return Xb(e), b;
+              f = f.sibling;
+            }
+            throw Error(p(188));
+          }
+          if (c.return !== d.return) c = e, d = f;
+          else {
+            for (var g = false, h = e.child; h; ) {
+              if (h === c) {
+                g = true;
+                c = e;
+                d = f;
+                break;
+              }
+              if (h === d) {
+                g = true;
+                d = e;
+                c = f;
+                break;
+              }
+              h = h.sibling;
+            }
+            if (!g) {
+              for (h = f.child; h; ) {
+                if (h === c) {
+                  g = true;
+                  c = f;
+                  d = e;
+                  break;
+                }
+                if (h === d) {
+                  g = true;
+                  d = f;
+                  c = e;
+                  break;
+                }
+                h = h.sibling;
+              }
+              if (!g) throw Error(p(189));
+            }
+          }
+          if (c.alternate !== d) throw Error(p(190));
+        }
+        if (3 !== c.tag) throw Error(p(188));
+        return c.stateNode.current === c ? a : b;
+      }
+      __name(Yb, "Yb");
+      function Zb(a) {
+        a = Yb(a);
+        return null !== a ? $b(a) : null;
+      }
+      __name(Zb, "Zb");
+      function $b(a) {
+        if (5 === a.tag || 6 === a.tag) return a;
+        for (a = a.child; null !== a; ) {
+          var b = $b(a);
+          if (null !== b) return b;
+          a = a.sibling;
+        }
+        return null;
+      }
+      __name($b, "$b");
+      var ac = ca.unstable_scheduleCallback;
+      var bc = ca.unstable_cancelCallback;
+      var cc = ca.unstable_shouldYield;
+      var dc = ca.unstable_requestPaint;
+      var B = ca.unstable_now;
+      var ec = ca.unstable_getCurrentPriorityLevel;
+      var fc = ca.unstable_ImmediatePriority;
+      var gc = ca.unstable_UserBlockingPriority;
+      var hc = ca.unstable_NormalPriority;
+      var ic = ca.unstable_LowPriority;
+      var jc = ca.unstable_IdlePriority;
+      var kc = null;
+      var lc = null;
+      function mc(a) {
+        if (lc && "function" === typeof lc.onCommitFiberRoot) try {
+          lc.onCommitFiberRoot(kc, a, void 0, 128 === (a.current.flags & 128));
+        } catch (b) {
+        }
+      }
+      __name(mc, "mc");
+      var oc = Math.clz32 ? Math.clz32 : nc;
+      var pc = Math.log;
+      var qc = Math.LN2;
+      function nc(a) {
+        a >>>= 0;
+        return 0 === a ? 32 : 31 - (pc(a) / qc | 0) | 0;
+      }
+      __name(nc, "nc");
+      var rc = 64;
+      var sc = 4194304;
+      function tc(a) {
+        switch (a & -a) {
+          case 1:
+            return 1;
+          case 2:
+            return 2;
+          case 4:
+            return 4;
+          case 8:
+            return 8;
+          case 16:
+            return 16;
+          case 32:
+            return 32;
+          case 64:
+          case 128:
+          case 256:
+          case 512:
+          case 1024:
+          case 2048:
+          case 4096:
+          case 8192:
+          case 16384:
+          case 32768:
+          case 65536:
+          case 131072:
+          case 262144:
+          case 524288:
+          case 1048576:
+          case 2097152:
+            return a & 4194240;
+          case 4194304:
+          case 8388608:
+          case 16777216:
+          case 33554432:
+          case 67108864:
+            return a & 130023424;
+          case 134217728:
+            return 134217728;
+          case 268435456:
+            return 268435456;
+          case 536870912:
+            return 536870912;
+          case 1073741824:
+            return 1073741824;
+          default:
+            return a;
+        }
+      }
+      __name(tc, "tc");
+      function uc(a, b) {
+        var c = a.pendingLanes;
+        if (0 === c) return 0;
+        var d = 0, e = a.suspendedLanes, f = a.pingedLanes, g = c & 268435455;
+        if (0 !== g) {
+          var h = g & ~e;
+          0 !== h ? d = tc(h) : (f &= g, 0 !== f && (d = tc(f)));
+        } else g = c & ~e, 0 !== g ? d = tc(g) : 0 !== f && (d = tc(f));
+        if (0 === d) return 0;
+        if (0 !== b && b !== d && 0 === (b & e) && (e = d & -d, f = b & -b, e >= f || 16 === e && 0 !== (f & 4194240))) return b;
+        0 !== (d & 4) && (d |= c & 16);
+        b = a.entangledLanes;
+        if (0 !== b) for (a = a.entanglements, b &= d; 0 < b; ) c = 31 - oc(b), e = 1 << c, d |= a[c], b &= ~e;
+        return d;
+      }
+      __name(uc, "uc");
+      function vc(a, b) {
+        switch (a) {
+          case 1:
+          case 2:
+          case 4:
+            return b + 250;
+          case 8:
+          case 16:
+          case 32:
+          case 64:
+          case 128:
+          case 256:
+          case 512:
+          case 1024:
+          case 2048:
+          case 4096:
+          case 8192:
+          case 16384:
+          case 32768:
+          case 65536:
+          case 131072:
+          case 262144:
+          case 524288:
+          case 1048576:
+          case 2097152:
+            return b + 5e3;
+          case 4194304:
+          case 8388608:
+          case 16777216:
+          case 33554432:
+          case 67108864:
+            return -1;
+          case 134217728:
+          case 268435456:
+          case 536870912:
+          case 1073741824:
+            return -1;
+          default:
+            return -1;
+        }
+      }
+      __name(vc, "vc");
+      function wc(a, b) {
+        for (var c = a.suspendedLanes, d = a.pingedLanes, e = a.expirationTimes, f = a.pendingLanes; 0 < f; ) {
+          var g = 31 - oc(f), h = 1 << g, k = e[g];
+          if (-1 === k) {
+            if (0 === (h & c) || 0 !== (h & d)) e[g] = vc(h, b);
+          } else k <= b && (a.expiredLanes |= h);
+          f &= ~h;
+        }
+      }
+      __name(wc, "wc");
+      function xc(a) {
+        a = a.pendingLanes & -1073741825;
+        return 0 !== a ? a : a & 1073741824 ? 1073741824 : 0;
+      }
+      __name(xc, "xc");
+      function yc() {
+        var a = rc;
+        rc <<= 1;
+        0 === (rc & 4194240) && (rc = 64);
+        return a;
+      }
+      __name(yc, "yc");
+      function zc(a) {
+        for (var b = [], c = 0; 31 > c; c++) b.push(a);
+        return b;
+      }
+      __name(zc, "zc");
+      function Ac(a, b, c) {
+        a.pendingLanes |= b;
+        536870912 !== b && (a.suspendedLanes = 0, a.pingedLanes = 0);
+        a = a.eventTimes;
+        b = 31 - oc(b);
+        a[b] = c;
+      }
+      __name(Ac, "Ac");
+      function Bc(a, b) {
+        var c = a.pendingLanes & ~b;
+        a.pendingLanes = b;
+        a.suspendedLanes = 0;
+        a.pingedLanes = 0;
+        a.expiredLanes &= b;
+        a.mutableReadLanes &= b;
+        a.entangledLanes &= b;
+        b = a.entanglements;
+        var d = a.eventTimes;
+        for (a = a.expirationTimes; 0 < c; ) {
+          var e = 31 - oc(c), f = 1 << e;
+          b[e] = 0;
+          d[e] = -1;
+          a[e] = -1;
+          c &= ~f;
+        }
+      }
+      __name(Bc, "Bc");
+      function Cc(a, b) {
+        var c = a.entangledLanes |= b;
+        for (a = a.entanglements; c; ) {
+          var d = 31 - oc(c), e = 1 << d;
+          e & b | a[d] & b && (a[d] |= b);
+          c &= ~e;
+        }
+      }
+      __name(Cc, "Cc");
+      var C = 0;
+      function Dc(a) {
+        a &= -a;
+        return 1 < a ? 4 < a ? 0 !== (a & 268435455) ? 16 : 536870912 : 4 : 1;
+      }
+      __name(Dc, "Dc");
+      var Ec;
+      var Fc;
+      var Gc;
+      var Hc;
+      var Ic;
+      var Jc = false;
+      var Kc = [];
+      var Lc = null;
+      var Mc = null;
+      var Nc = null;
+      var Oc = /* @__PURE__ */ new Map();
+      var Pc = /* @__PURE__ */ new Map();
+      var Qc = [];
+      var Rc = "mousedown mouseup touchcancel touchend touchstart auxclick dblclick pointercancel pointerdown pointerup dragend dragstart drop compositionend compositionstart keydown keypress keyup input textInput copy cut paste click change contextmenu reset submit".split(" ");
+      function Sc(a, b) {
+        switch (a) {
+          case "focusin":
+          case "focusout":
+            Lc = null;
+            break;
+          case "dragenter":
+          case "dragleave":
+            Mc = null;
+            break;
+          case "mouseover":
+          case "mouseout":
+            Nc = null;
+            break;
+          case "pointerover":
+          case "pointerout":
+            Oc.delete(b.pointerId);
+            break;
+          case "gotpointercapture":
+          case "lostpointercapture":
+            Pc.delete(b.pointerId);
+        }
+      }
+      __name(Sc, "Sc");
+      function Tc(a, b, c, d, e, f) {
+        if (null === a || a.nativeEvent !== f) return a = { blockedOn: b, domEventName: c, eventSystemFlags: d, nativeEvent: f, targetContainers: [e] }, null !== b && (b = Cb(b), null !== b && Fc(b)), a;
+        a.eventSystemFlags |= d;
+        b = a.targetContainers;
+        null !== e && -1 === b.indexOf(e) && b.push(e);
+        return a;
+      }
+      __name(Tc, "Tc");
+      function Uc(a, b, c, d, e) {
+        switch (b) {
+          case "focusin":
+            return Lc = Tc(Lc, a, b, c, d, e), true;
+          case "dragenter":
+            return Mc = Tc(Mc, a, b, c, d, e), true;
+          case "mouseover":
+            return Nc = Tc(Nc, a, b, c, d, e), true;
+          case "pointerover":
+            var f = e.pointerId;
+            Oc.set(f, Tc(Oc.get(f) || null, a, b, c, d, e));
+            return true;
+          case "gotpointercapture":
+            return f = e.pointerId, Pc.set(f, Tc(Pc.get(f) || null, a, b, c, d, e)), true;
+        }
+        return false;
+      }
+      __name(Uc, "Uc");
+      function Vc(a) {
+        var b = Wc(a.target);
+        if (null !== b) {
+          var c = Vb(b);
+          if (null !== c) {
+            if (b = c.tag, 13 === b) {
+              if (b = Wb(c), null !== b) {
+                a.blockedOn = b;
+                Ic(a.priority, function() {
+                  Gc(c);
+                });
+                return;
+              }
+            } else if (3 === b && c.stateNode.current.memoizedState.isDehydrated) {
+              a.blockedOn = 3 === c.tag ? c.stateNode.containerInfo : null;
+              return;
+            }
+          }
+        }
+        a.blockedOn = null;
+      }
+      __name(Vc, "Vc");
+      function Xc(a) {
+        if (null !== a.blockedOn) return false;
+        for (var b = a.targetContainers; 0 < b.length; ) {
+          var c = Yc(a.domEventName, a.eventSystemFlags, b[0], a.nativeEvent);
+          if (null === c) {
+            c = a.nativeEvent;
+            var d = new c.constructor(c.type, c);
+            wb = d;
+            c.target.dispatchEvent(d);
+            wb = null;
+          } else return b = Cb(c), null !== b && Fc(b), a.blockedOn = c, false;
+          b.shift();
+        }
+        return true;
+      }
+      __name(Xc, "Xc");
+      function Zc(a, b, c) {
+        Xc(a) && c.delete(b);
+      }
+      __name(Zc, "Zc");
+      function $c() {
+        Jc = false;
+        null !== Lc && Xc(Lc) && (Lc = null);
+        null !== Mc && Xc(Mc) && (Mc = null);
+        null !== Nc && Xc(Nc) && (Nc = null);
+        Oc.forEach(Zc);
+        Pc.forEach(Zc);
+      }
+      __name($c, "$c");
+      function ad(a, b) {
+        a.blockedOn === b && (a.blockedOn = null, Jc || (Jc = true, ca.unstable_scheduleCallback(ca.unstable_NormalPriority, $c)));
+      }
+      __name(ad, "ad");
+      function bd(a) {
+        function b(b2) {
+          return ad(b2, a);
+        }
+        __name(b, "b");
+        if (0 < Kc.length) {
+          ad(Kc[0], a);
+          for (var c = 1; c < Kc.length; c++) {
+            var d = Kc[c];
+            d.blockedOn === a && (d.blockedOn = null);
+          }
+        }
+        null !== Lc && ad(Lc, a);
+        null !== Mc && ad(Mc, a);
+        null !== Nc && ad(Nc, a);
+        Oc.forEach(b);
+        Pc.forEach(b);
+        for (c = 0; c < Qc.length; c++) d = Qc[c], d.blockedOn === a && (d.blockedOn = null);
+        for (; 0 < Qc.length && (c = Qc[0], null === c.blockedOn); ) Vc(c), null === c.blockedOn && Qc.shift();
+      }
+      __name(bd, "bd");
+      var cd = ua.ReactCurrentBatchConfig;
+      var dd = true;
+      function ed(a, b, c, d) {
+        var e = C, f = cd.transition;
+        cd.transition = null;
+        try {
+          C = 1, fd(a, b, c, d);
+        } finally {
+          C = e, cd.transition = f;
+        }
+      }
+      __name(ed, "ed");
+      function gd(a, b, c, d) {
+        var e = C, f = cd.transition;
+        cd.transition = null;
+        try {
+          C = 4, fd(a, b, c, d);
+        } finally {
+          C = e, cd.transition = f;
+        }
+      }
+      __name(gd, "gd");
+      function fd(a, b, c, d) {
+        if (dd) {
+          var e = Yc(a, b, c, d);
+          if (null === e) hd(a, b, d, id, c), Sc(a, d);
+          else if (Uc(e, a, b, c, d)) d.stopPropagation();
+          else if (Sc(a, d), b & 4 && -1 < Rc.indexOf(a)) {
+            for (; null !== e; ) {
+              var f = Cb(e);
+              null !== f && Ec(f);
+              f = Yc(a, b, c, d);
+              null === f && hd(a, b, d, id, c);
+              if (f === e) break;
+              e = f;
+            }
+            null !== e && d.stopPropagation();
+          } else hd(a, b, d, null, c);
+        }
+      }
+      __name(fd, "fd");
+      var id = null;
+      function Yc(a, b, c, d) {
+        id = null;
+        a = xb(d);
+        a = Wc(a);
+        if (null !== a) if (b = Vb(a), null === b) a = null;
+        else if (c = b.tag, 13 === c) {
+          a = Wb(b);
+          if (null !== a) return a;
+          a = null;
+        } else if (3 === c) {
+          if (b.stateNode.current.memoizedState.isDehydrated) return 3 === b.tag ? b.stateNode.containerInfo : null;
+          a = null;
+        } else b !== a && (a = null);
+        id = a;
+        return null;
+      }
+      __name(Yc, "Yc");
+      function jd(a) {
+        switch (a) {
+          case "cancel":
+          case "click":
+          case "close":
+          case "contextmenu":
+          case "copy":
+          case "cut":
+          case "auxclick":
+          case "dblclick":
+          case "dragend":
+          case "dragstart":
+          case "drop":
+          case "focusin":
+          case "focusout":
+          case "input":
+          case "invalid":
+          case "keydown":
+          case "keypress":
+          case "keyup":
+          case "mousedown":
+          case "mouseup":
+          case "paste":
+          case "pause":
+          case "play":
+          case "pointercancel":
+          case "pointerdown":
+          case "pointerup":
+          case "ratechange":
+          case "reset":
+          case "resize":
+          case "seeked":
+          case "submit":
+          case "touchcancel":
+          case "touchend":
+          case "touchstart":
+          case "volumechange":
+          case "change":
+          case "selectionchange":
+          case "textInput":
+          case "compositionstart":
+          case "compositionend":
+          case "compositionupdate":
+          case "beforeblur":
+          case "afterblur":
+          case "beforeinput":
+          case "blur":
+          case "fullscreenchange":
+          case "focus":
+          case "hashchange":
+          case "popstate":
+          case "select":
+          case "selectstart":
+            return 1;
+          case "drag":
+          case "dragenter":
+          case "dragexit":
+          case "dragleave":
+          case "dragover":
+          case "mousemove":
+          case "mouseout":
+          case "mouseover":
+          case "pointermove":
+          case "pointerout":
+          case "pointerover":
+          case "scroll":
+          case "toggle":
+          case "touchmove":
+          case "wheel":
+          case "mouseenter":
+          case "mouseleave":
+          case "pointerenter":
+          case "pointerleave":
+            return 4;
+          case "message":
+            switch (ec()) {
+              case fc:
+                return 1;
+              case gc:
+                return 4;
+              case hc:
+              case ic:
+                return 16;
+              case jc:
+                return 536870912;
+              default:
+                return 16;
+            }
+          default:
+            return 16;
+        }
+      }
+      __name(jd, "jd");
+      var kd = null;
+      var ld = null;
+      var md = null;
+      function nd() {
+        if (md) return md;
+        var a, b = ld, c = b.length, d, e = "value" in kd ? kd.value : kd.textContent, f = e.length;
+        for (a = 0; a < c && b[a] === e[a]; a++) ;
+        var g = c - a;
+        for (d = 1; d <= g && b[c - d] === e[f - d]; d++) ;
+        return md = e.slice(a, 1 < d ? 1 - d : void 0);
+      }
+      __name(nd, "nd");
+      function od(a) {
+        var b = a.keyCode;
+        "charCode" in a ? (a = a.charCode, 0 === a && 13 === b && (a = 13)) : a = b;
+        10 === a && (a = 13);
+        return 32 <= a || 13 === a ? a : 0;
+      }
+      __name(od, "od");
+      function pd() {
+        return true;
+      }
+      __name(pd, "pd");
+      function qd() {
+        return false;
+      }
+      __name(qd, "qd");
+      function rd(a) {
+        function b(b2, d, e, f, g) {
+          this._reactName = b2;
+          this._targetInst = e;
+          this.type = d;
+          this.nativeEvent = f;
+          this.target = g;
+          this.currentTarget = null;
+          for (var c in a) a.hasOwnProperty(c) && (b2 = a[c], this[c] = b2 ? b2(f) : f[c]);
+          this.isDefaultPrevented = (null != f.defaultPrevented ? f.defaultPrevented : false === f.returnValue) ? pd : qd;
+          this.isPropagationStopped = qd;
+          return this;
+        }
+        __name(b, "b");
+        A(b.prototype, { preventDefault: /* @__PURE__ */ __name(function() {
+          this.defaultPrevented = true;
+          var a2 = this.nativeEvent;
+          a2 && (a2.preventDefault ? a2.preventDefault() : "unknown" !== typeof a2.returnValue && (a2.returnValue = false), this.isDefaultPrevented = pd);
+        }, "preventDefault"), stopPropagation: /* @__PURE__ */ __name(function() {
+          var a2 = this.nativeEvent;
+          a2 && (a2.stopPropagation ? a2.stopPropagation() : "unknown" !== typeof a2.cancelBubble && (a2.cancelBubble = true), this.isPropagationStopped = pd);
+        }, "stopPropagation"), persist: /* @__PURE__ */ __name(function() {
+        }, "persist"), isPersistent: pd });
+        return b;
+      }
+      __name(rd, "rd");
+      var sd = { eventPhase: 0, bubbles: 0, cancelable: 0, timeStamp: /* @__PURE__ */ __name(function(a) {
+        return a.timeStamp || Date.now();
+      }, "timeStamp"), defaultPrevented: 0, isTrusted: 0 };
+      var td = rd(sd);
+      var ud = A({}, sd, { view: 0, detail: 0 });
+      var vd = rd(ud);
+      var wd;
+      var xd;
+      var yd;
+      var Ad = A({}, ud, { screenX: 0, screenY: 0, clientX: 0, clientY: 0, pageX: 0, pageY: 0, ctrlKey: 0, shiftKey: 0, altKey: 0, metaKey: 0, getModifierState: zd, button: 0, buttons: 0, relatedTarget: /* @__PURE__ */ __name(function(a) {
+        return void 0 === a.relatedTarget ? a.fromElement === a.srcElement ? a.toElement : a.fromElement : a.relatedTarget;
+      }, "relatedTarget"), movementX: /* @__PURE__ */ __name(function(a) {
+        if ("movementX" in a) return a.movementX;
+        a !== yd && (yd && "mousemove" === a.type ? (wd = a.screenX - yd.screenX, xd = a.screenY - yd.screenY) : xd = wd = 0, yd = a);
+        return wd;
+      }, "movementX"), movementY: /* @__PURE__ */ __name(function(a) {
+        return "movementY" in a ? a.movementY : xd;
+      }, "movementY") });
+      var Bd = rd(Ad);
+      var Cd = A({}, Ad, { dataTransfer: 0 });
+      var Dd = rd(Cd);
+      var Ed = A({}, ud, { relatedTarget: 0 });
+      var Fd = rd(Ed);
+      var Gd = A({}, sd, { animationName: 0, elapsedTime: 0, pseudoElement: 0 });
+      var Hd = rd(Gd);
+      var Id = A({}, sd, { clipboardData: /* @__PURE__ */ __name(function(a) {
+        return "clipboardData" in a ? a.clipboardData : window.clipboardData;
+      }, "clipboardData") });
+      var Jd = rd(Id);
+      var Kd = A({}, sd, { data: 0 });
+      var Ld = rd(Kd);
+      var Md = {
+        Esc: "Escape",
+        Spacebar: " ",
+        Left: "ArrowLeft",
+        Up: "ArrowUp",
+        Right: "ArrowRight",
+        Down: "ArrowDown",
+        Del: "Delete",
+        Win: "OS",
+        Menu: "ContextMenu",
+        Apps: "ContextMenu",
+        Scroll: "ScrollLock",
+        MozPrintableKey: "Unidentified"
+      };
+      var Nd = {
+        8: "Backspace",
+        9: "Tab",
+        12: "Clear",
+        13: "Enter",
+        16: "Shift",
+        17: "Control",
+        18: "Alt",
+        19: "Pause",
+        20: "CapsLock",
+        27: "Escape",
+        32: " ",
+        33: "PageUp",
+        34: "PageDown",
+        35: "End",
+        36: "Home",
+        37: "ArrowLeft",
+        38: "ArrowUp",
+        39: "ArrowRight",
+        40: "ArrowDown",
+        45: "Insert",
+        46: "Delete",
+        112: "F1",
+        113: "F2",
+        114: "F3",
+        115: "F4",
+        116: "F5",
+        117: "F6",
+        118: "F7",
+        119: "F8",
+        120: "F9",
+        121: "F10",
+        122: "F11",
+        123: "F12",
+        144: "NumLock",
+        145: "ScrollLock",
+        224: "Meta"
+      };
+      var Od = { Alt: "altKey", Control: "ctrlKey", Meta: "metaKey", Shift: "shiftKey" };
+      function Pd(a) {
+        var b = this.nativeEvent;
+        return b.getModifierState ? b.getModifierState(a) : (a = Od[a]) ? !!b[a] : false;
+      }
+      __name(Pd, "Pd");
+      function zd() {
+        return Pd;
+      }
+      __name(zd, "zd");
+      var Qd = A({}, ud, { key: /* @__PURE__ */ __name(function(a) {
+        if (a.key) {
+          var b = Md[a.key] || a.key;
+          if ("Unidentified" !== b) return b;
+        }
+        return "keypress" === a.type ? (a = od(a), 13 === a ? "Enter" : String.fromCharCode(a)) : "keydown" === a.type || "keyup" === a.type ? Nd[a.keyCode] || "Unidentified" : "";
+      }, "key"), code: 0, location: 0, ctrlKey: 0, shiftKey: 0, altKey: 0, metaKey: 0, repeat: 0, locale: 0, getModifierState: zd, charCode: /* @__PURE__ */ __name(function(a) {
+        return "keypress" === a.type ? od(a) : 0;
+      }, "charCode"), keyCode: /* @__PURE__ */ __name(function(a) {
+        return "keydown" === a.type || "keyup" === a.type ? a.keyCode : 0;
+      }, "keyCode"), which: /* @__PURE__ */ __name(function(a) {
+        return "keypress" === a.type ? od(a) : "keydown" === a.type || "keyup" === a.type ? a.keyCode : 0;
+      }, "which") });
+      var Rd = rd(Qd);
+      var Sd = A({}, Ad, { pointerId: 0, width: 0, height: 0, pressure: 0, tangentialPressure: 0, tiltX: 0, tiltY: 0, twist: 0, pointerType: 0, isPrimary: 0 });
+      var Td = rd(Sd);
+      var Ud = A({}, ud, { touches: 0, targetTouches: 0, changedTouches: 0, altKey: 0, metaKey: 0, ctrlKey: 0, shiftKey: 0, getModifierState: zd });
+      var Vd = rd(Ud);
+      var Wd = A({}, sd, { propertyName: 0, elapsedTime: 0, pseudoElement: 0 });
+      var Xd = rd(Wd);
+      var Yd = A({}, Ad, {
+        deltaX: /* @__PURE__ */ __name(function(a) {
+          return "deltaX" in a ? a.deltaX : "wheelDeltaX" in a ? -a.wheelDeltaX : 0;
+        }, "deltaX"),
+        deltaY: /* @__PURE__ */ __name(function(a) {
+          return "deltaY" in a ? a.deltaY : "wheelDeltaY" in a ? -a.wheelDeltaY : "wheelDelta" in a ? -a.wheelDelta : 0;
+        }, "deltaY"),
+        deltaZ: 0,
+        deltaMode: 0
+      });
+      var Zd = rd(Yd);
+      var $d = [9, 13, 27, 32];
+      var ae = ia && "CompositionEvent" in window;
+      var be = null;
+      ia && "documentMode" in document && (be = document.documentMode);
+      var ce = ia && "TextEvent" in window && !be;
+      var de = ia && (!ae || be && 8 < be && 11 >= be);
+      var ee = String.fromCharCode(32);
+      var fe = false;
+      function ge(a, b) {
+        switch (a) {
+          case "keyup":
+            return -1 !== $d.indexOf(b.keyCode);
+          case "keydown":
+            return 229 !== b.keyCode;
+          case "keypress":
+          case "mousedown":
+          case "focusout":
+            return true;
+          default:
+            return false;
+        }
+      }
+      __name(ge, "ge");
+      function he(a) {
+        a = a.detail;
+        return "object" === typeof a && "data" in a ? a.data : null;
+      }
+      __name(he, "he");
+      var ie = false;
+      function je(a, b) {
+        switch (a) {
+          case "compositionend":
+            return he(b);
+          case "keypress":
+            if (32 !== b.which) return null;
+            fe = true;
+            return ee;
+          case "textInput":
+            return a = b.data, a === ee && fe ? null : a;
+          default:
+            return null;
+        }
+      }
+      __name(je, "je");
+      function ke(a, b) {
+        if (ie) return "compositionend" === a || !ae && ge(a, b) ? (a = nd(), md = ld = kd = null, ie = false, a) : null;
+        switch (a) {
+          case "paste":
+            return null;
+          case "keypress":
+            if (!(b.ctrlKey || b.altKey || b.metaKey) || b.ctrlKey && b.altKey) {
+              if (b.char && 1 < b.char.length) return b.char;
+              if (b.which) return String.fromCharCode(b.which);
+            }
+            return null;
+          case "compositionend":
+            return de && "ko" !== b.locale ? null : b.data;
+          default:
+            return null;
+        }
+      }
+      __name(ke, "ke");
+      var le = { color: true, date: true, datetime: true, "datetime-local": true, email: true, month: true, number: true, password: true, range: true, search: true, tel: true, text: true, time: true, url: true, week: true };
+      function me(a) {
+        var b = a && a.nodeName && a.nodeName.toLowerCase();
+        return "input" === b ? !!le[a.type] : "textarea" === b ? true : false;
+      }
+      __name(me, "me");
+      function ne(a, b, c, d) {
+        Eb(d);
+        b = oe(b, "onChange");
+        0 < b.length && (c = new td("onChange", "change", null, c, d), a.push({ event: c, listeners: b }));
+      }
+      __name(ne, "ne");
+      var pe = null;
+      var qe = null;
+      function re(a) {
+        se(a, 0);
+      }
+      __name(re, "re");
+      function te(a) {
+        var b = ue(a);
+        if (Wa(b)) return a;
+      }
+      __name(te, "te");
+      function ve(a, b) {
+        if ("change" === a) return b;
+      }
+      __name(ve, "ve");
+      var we = false;
+      if (ia) {
+        if (ia) {
+          ye = "oninput" in document;
+          if (!ye) {
+            ze = document.createElement("div");
+            ze.setAttribute("oninput", "return;");
+            ye = "function" === typeof ze.oninput;
+          }
+          xe = ye;
+        } else xe = false;
+        we = xe && (!document.documentMode || 9 < document.documentMode);
+      }
+      var xe;
+      var ye;
+      var ze;
+      function Ae() {
+        pe && (pe.detachEvent("onpropertychange", Be), qe = pe = null);
+      }
+      __name(Ae, "Ae");
+      function Be(a) {
+        if ("value" === a.propertyName && te(qe)) {
+          var b = [];
+          ne(b, qe, a, xb(a));
+          Jb(re, b);
+        }
+      }
+      __name(Be, "Be");
+      function Ce(a, b, c) {
+        "focusin" === a ? (Ae(), pe = b, qe = c, pe.attachEvent("onpropertychange", Be)) : "focusout" === a && Ae();
+      }
+      __name(Ce, "Ce");
+      function De(a) {
+        if ("selectionchange" === a || "keyup" === a || "keydown" === a) return te(qe);
+      }
+      __name(De, "De");
+      function Ee(a, b) {
+        if ("click" === a) return te(b);
+      }
+      __name(Ee, "Ee");
+      function Fe(a, b) {
+        if ("input" === a || "change" === a) return te(b);
+      }
+      __name(Fe, "Fe");
+      function Ge(a, b) {
+        return a === b && (0 !== a || 1 / a === 1 / b) || a !== a && b !== b;
+      }
+      __name(Ge, "Ge");
+      var He = "function" === typeof Object.is ? Object.is : Ge;
+      function Ie(a, b) {
+        if (He(a, b)) return true;
+        if ("object" !== typeof a || null === a || "object" !== typeof b || null === b) return false;
+        var c = Object.keys(a), d = Object.keys(b);
+        if (c.length !== d.length) return false;
+        for (d = 0; d < c.length; d++) {
+          var e = c[d];
+          if (!ja.call(b, e) || !He(a[e], b[e])) return false;
+        }
+        return true;
+      }
+      __name(Ie, "Ie");
+      function Je(a) {
+        for (; a && a.firstChild; ) a = a.firstChild;
+        return a;
+      }
+      __name(Je, "Je");
+      function Ke(a, b) {
+        var c = Je(a);
+        a = 0;
+        for (var d; c; ) {
+          if (3 === c.nodeType) {
+            d = a + c.textContent.length;
+            if (a <= b && d >= b) return { node: c, offset: b - a };
+            a = d;
+          }
+          a: {
+            for (; c; ) {
+              if (c.nextSibling) {
+                c = c.nextSibling;
+                break a;
+              }
+              c = c.parentNode;
+            }
+            c = void 0;
+          }
+          c = Je(c);
+        }
+      }
+      __name(Ke, "Ke");
+      function Le(a, b) {
+        return a && b ? a === b ? true : a && 3 === a.nodeType ? false : b && 3 === b.nodeType ? Le(a, b.parentNode) : "contains" in a ? a.contains(b) : a.compareDocumentPosition ? !!(a.compareDocumentPosition(b) & 16) : false : false;
+      }
+      __name(Le, "Le");
+      function Me() {
+        for (var a = window, b = Xa(); b instanceof a.HTMLIFrameElement; ) {
+          try {
+            var c = "string" === typeof b.contentWindow.location.href;
+          } catch (d) {
+            c = false;
+          }
+          if (c) a = b.contentWindow;
+          else break;
+          b = Xa(a.document);
+        }
+        return b;
+      }
+      __name(Me, "Me");
+      function Ne(a) {
+        var b = a && a.nodeName && a.nodeName.toLowerCase();
+        return b && ("input" === b && ("text" === a.type || "search" === a.type || "tel" === a.type || "url" === a.type || "password" === a.type) || "textarea" === b || "true" === a.contentEditable);
+      }
+      __name(Ne, "Ne");
+      function Oe(a) {
+        var b = Me(), c = a.focusedElem, d = a.selectionRange;
+        if (b !== c && c && c.ownerDocument && Le(c.ownerDocument.documentElement, c)) {
+          if (null !== d && Ne(c)) {
+            if (b = d.start, a = d.end, void 0 === a && (a = b), "selectionStart" in c) c.selectionStart = b, c.selectionEnd = Math.min(a, c.value.length);
+            else if (a = (b = c.ownerDocument || document) && b.defaultView || window, a.getSelection) {
+              a = a.getSelection();
+              var e = c.textContent.length, f = Math.min(d.start, e);
+              d = void 0 === d.end ? f : Math.min(d.end, e);
+              !a.extend && f > d && (e = d, d = f, f = e);
+              e = Ke(c, f);
+              var g = Ke(
+                c,
+                d
+              );
+              e && g && (1 !== a.rangeCount || a.anchorNode !== e.node || a.anchorOffset !== e.offset || a.focusNode !== g.node || a.focusOffset !== g.offset) && (b = b.createRange(), b.setStart(e.node, e.offset), a.removeAllRanges(), f > d ? (a.addRange(b), a.extend(g.node, g.offset)) : (b.setEnd(g.node, g.offset), a.addRange(b)));
+            }
+          }
+          b = [];
+          for (a = c; a = a.parentNode; ) 1 === a.nodeType && b.push({ element: a, left: a.scrollLeft, top: a.scrollTop });
+          "function" === typeof c.focus && c.focus();
+          for (c = 0; c < b.length; c++) a = b[c], a.element.scrollLeft = a.left, a.element.scrollTop = a.top;
+        }
+      }
+      __name(Oe, "Oe");
+      var Pe = ia && "documentMode" in document && 11 >= document.documentMode;
+      var Qe = null;
+      var Re = null;
+      var Se = null;
+      var Te = false;
+      function Ue(a, b, c) {
+        var d = c.window === c ? c.document : 9 === c.nodeType ? c : c.ownerDocument;
+        Te || null == Qe || Qe !== Xa(d) || (d = Qe, "selectionStart" in d && Ne(d) ? d = { start: d.selectionStart, end: d.selectionEnd } : (d = (d.ownerDocument && d.ownerDocument.defaultView || window).getSelection(), d = { anchorNode: d.anchorNode, anchorOffset: d.anchorOffset, focusNode: d.focusNode, focusOffset: d.focusOffset }), Se && Ie(Se, d) || (Se = d, d = oe(Re, "onSelect"), 0 < d.length && (b = new td("onSelect", "select", null, b, c), a.push({ event: b, listeners: d }), b.target = Qe)));
+      }
+      __name(Ue, "Ue");
+      function Ve(a, b) {
+        var c = {};
+        c[a.toLowerCase()] = b.toLowerCase();
+        c["Webkit" + a] = "webkit" + b;
+        c["Moz" + a] = "moz" + b;
+        return c;
+      }
+      __name(Ve, "Ve");
+      var We = { animationend: Ve("Animation", "AnimationEnd"), animationiteration: Ve("Animation", "AnimationIteration"), animationstart: Ve("Animation", "AnimationStart"), transitionend: Ve("Transition", "TransitionEnd") };
+      var Xe = {};
+      var Ye = {};
+      ia && (Ye = document.createElement("div").style, "AnimationEvent" in window || (delete We.animationend.animation, delete We.animationiteration.animation, delete We.animationstart.animation), "TransitionEvent" in window || delete We.transitionend.transition);
+      function Ze(a) {
+        if (Xe[a]) return Xe[a];
+        if (!We[a]) return a;
+        var b = We[a], c;
+        for (c in b) if (b.hasOwnProperty(c) && c in Ye) return Xe[a] = b[c];
+        return a;
+      }
+      __name(Ze, "Ze");
+      var $e = Ze("animationend");
+      var af = Ze("animationiteration");
+      var bf = Ze("animationstart");
+      var cf = Ze("transitionend");
+      var df = /* @__PURE__ */ new Map();
+      var ef = "abort auxClick cancel canPlay canPlayThrough click close contextMenu copy cut drag dragEnd dragEnter dragExit dragLeave dragOver dragStart drop durationChange emptied encrypted ended error gotPointerCapture input invalid keyDown keyPress keyUp load loadedData loadedMetadata loadStart lostPointerCapture mouseDown mouseMove mouseOut mouseOver mouseUp paste pause play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove waiting wheel".split(" ");
+      function ff(a, b) {
+        df.set(a, b);
+        fa(b, [a]);
+      }
+      __name(ff, "ff");
+      for (gf = 0; gf < ef.length; gf++) {
+        hf = ef[gf], jf = hf.toLowerCase(), kf = hf[0].toUpperCase() + hf.slice(1);
+        ff(jf, "on" + kf);
+      }
+      var hf;
+      var jf;
+      var kf;
+      var gf;
+      ff($e, "onAnimationEnd");
+      ff(af, "onAnimationIteration");
+      ff(bf, "onAnimationStart");
+      ff("dblclick", "onDoubleClick");
+      ff("focusin", "onFocus");
+      ff("focusout", "onBlur");
+      ff(cf, "onTransitionEnd");
+      ha("onMouseEnter", ["mouseout", "mouseover"]);
+      ha("onMouseLeave", ["mouseout", "mouseover"]);
+      ha("onPointerEnter", ["pointerout", "pointerover"]);
+      ha("onPointerLeave", ["pointerout", "pointerover"]);
+      fa("onChange", "change click focusin focusout input keydown keyup selectionchange".split(" "));
+      fa("onSelect", "focusout contextmenu dragend focusin keydown keyup mousedown mouseup selectionchange".split(" "));
+      fa("onBeforeInput", ["compositionend", "keypress", "textInput", "paste"]);
+      fa("onCompositionEnd", "compositionend focusout keydown keypress keyup mousedown".split(" "));
+      fa("onCompositionStart", "compositionstart focusout keydown keypress keyup mousedown".split(" "));
+      fa("onCompositionUpdate", "compositionupdate focusout keydown keypress keyup mousedown".split(" "));
+      var lf = "abort canplay canplaythrough durationchange emptied encrypted ended error loadeddata loadedmetadata loadstart pause play playing progress ratechange resize seeked seeking stalled suspend timeupdate volumechange waiting".split(" ");
+      var mf = new Set("cancel close invalid load scroll toggle".split(" ").concat(lf));
+      function nf(a, b, c) {
+        var d = a.type || "unknown-event";
+        a.currentTarget = c;
+        Ub(d, b, void 0, a);
+        a.currentTarget = null;
+      }
+      __name(nf, "nf");
+      function se(a, b) {
+        b = 0 !== (b & 4);
+        for (var c = 0; c < a.length; c++) {
+          var d = a[c], e = d.event;
+          d = d.listeners;
+          a: {
+            var f = void 0;
+            if (b) for (var g = d.length - 1; 0 <= g; g--) {
+              var h = d[g], k = h.instance, l = h.currentTarget;
+              h = h.listener;
+              if (k !== f && e.isPropagationStopped()) break a;
+              nf(e, h, l);
+              f = k;
+            }
+            else for (g = 0; g < d.length; g++) {
+              h = d[g];
+              k = h.instance;
+              l = h.currentTarget;
+              h = h.listener;
+              if (k !== f && e.isPropagationStopped()) break a;
+              nf(e, h, l);
+              f = k;
+            }
+          }
+        }
+        if (Qb) throw a = Rb, Qb = false, Rb = null, a;
+      }
+      __name(se, "se");
+      function D(a, b) {
+        var c = b[of];
+        void 0 === c && (c = b[of] = /* @__PURE__ */ new Set());
+        var d = a + "__bubble";
+        c.has(d) || (pf(b, a, 2, false), c.add(d));
+      }
+      __name(D, "D");
+      function qf(a, b, c) {
+        var d = 0;
+        b && (d |= 4);
+        pf(c, a, d, b);
+      }
+      __name(qf, "qf");
+      var rf = "_reactListening" + Math.random().toString(36).slice(2);
+      function sf(a) {
+        if (!a[rf]) {
+          a[rf] = true;
+          da.forEach(function(b2) {
+            "selectionchange" !== b2 && (mf.has(b2) || qf(b2, false, a), qf(b2, true, a));
+          });
+          var b = 9 === a.nodeType ? a : a.ownerDocument;
+          null === b || b[rf] || (b[rf] = true, qf("selectionchange", false, b));
+        }
+      }
+      __name(sf, "sf");
+      function pf(a, b, c, d) {
+        switch (jd(b)) {
+          case 1:
+            var e = ed;
+            break;
+          case 4:
+            e = gd;
+            break;
+          default:
+            e = fd;
+        }
+        c = e.bind(null, b, c, a);
+        e = void 0;
+        !Lb || "touchstart" !== b && "touchmove" !== b && "wheel" !== b || (e = true);
+        d ? void 0 !== e ? a.addEventListener(b, c, { capture: true, passive: e }) : a.addEventListener(b, c, true) : void 0 !== e ? a.addEventListener(b, c, { passive: e }) : a.addEventListener(b, c, false);
+      }
+      __name(pf, "pf");
+      function hd(a, b, c, d, e) {
+        var f = d;
+        if (0 === (b & 1) && 0 === (b & 2) && null !== d) a: for (; ; ) {
+          if (null === d) return;
+          var g = d.tag;
+          if (3 === g || 4 === g) {
+            var h = d.stateNode.containerInfo;
+            if (h === e || 8 === h.nodeType && h.parentNode === e) break;
+            if (4 === g) for (g = d.return; null !== g; ) {
+              var k = g.tag;
+              if (3 === k || 4 === k) {
+                if (k = g.stateNode.containerInfo, k === e || 8 === k.nodeType && k.parentNode === e) return;
+              }
+              g = g.return;
+            }
+            for (; null !== h; ) {
+              g = Wc(h);
+              if (null === g) return;
+              k = g.tag;
+              if (5 === k || 6 === k) {
+                d = f = g;
+                continue a;
+              }
+              h = h.parentNode;
+            }
+          }
+          d = d.return;
+        }
+        Jb(function() {
+          var d2 = f, e2 = xb(c), g2 = [];
+          a: {
+            var h2 = df.get(a);
+            if (void 0 !== h2) {
+              var k2 = td, n = a;
+              switch (a) {
+                case "keypress":
+                  if (0 === od(c)) break a;
+                case "keydown":
+                case "keyup":
+                  k2 = Rd;
+                  break;
+                case "focusin":
+                  n = "focus";
+                  k2 = Fd;
+                  break;
+                case "focusout":
+                  n = "blur";
+                  k2 = Fd;
+                  break;
+                case "beforeblur":
+                case "afterblur":
+                  k2 = Fd;
+                  break;
+                case "click":
+                  if (2 === c.button) break a;
+                case "auxclick":
+                case "dblclick":
+                case "mousedown":
+                case "mousemove":
+                case "mouseup":
+                case "mouseout":
+                case "mouseover":
+                case "contextmenu":
+                  k2 = Bd;
+                  break;
+                case "drag":
+                case "dragend":
+                case "dragenter":
+                case "dragexit":
+                case "dragleave":
+                case "dragover":
+                case "dragstart":
+                case "drop":
+                  k2 = Dd;
+                  break;
+                case "touchcancel":
+                case "touchend":
+                case "touchmove":
+                case "touchstart":
+                  k2 = Vd;
+                  break;
+                case $e:
+                case af:
+                case bf:
+                  k2 = Hd;
+                  break;
+                case cf:
+                  k2 = Xd;
+                  break;
+                case "scroll":
+                  k2 = vd;
+                  break;
+                case "wheel":
+                  k2 = Zd;
+                  break;
+                case "copy":
+                case "cut":
+                case "paste":
+                  k2 = Jd;
+                  break;
+                case "gotpointercapture":
+                case "lostpointercapture":
+                case "pointercancel":
+                case "pointerdown":
+                case "pointermove":
+                case "pointerout":
+                case "pointerover":
+                case "pointerup":
+                  k2 = Td;
+              }
+              var t = 0 !== (b & 4), J = !t && "scroll" === a, x = t ? null !== h2 ? h2 + "Capture" : null : h2;
+              t = [];
+              for (var w = d2, u; null !== w; ) {
+                u = w;
+                var F = u.stateNode;
+                5 === u.tag && null !== F && (u = F, null !== x && (F = Kb(w, x), null != F && t.push(tf(w, F, u))));
+                if (J) break;
+                w = w.return;
+              }
+              0 < t.length && (h2 = new k2(h2, n, null, c, e2), g2.push({ event: h2, listeners: t }));
+            }
+          }
+          if (0 === (b & 7)) {
+            a: {
+              h2 = "mouseover" === a || "pointerover" === a;
+              k2 = "mouseout" === a || "pointerout" === a;
+              if (h2 && c !== wb && (n = c.relatedTarget || c.fromElement) && (Wc(n) || n[uf])) break a;
+              if (k2 || h2) {
+                h2 = e2.window === e2 ? e2 : (h2 = e2.ownerDocument) ? h2.defaultView || h2.parentWindow : window;
+                if (k2) {
+                  if (n = c.relatedTarget || c.toElement, k2 = d2, n = n ? Wc(n) : null, null !== n && (J = Vb(n), n !== J || 5 !== n.tag && 6 !== n.tag)) n = null;
+                } else k2 = null, n = d2;
+                if (k2 !== n) {
+                  t = Bd;
+                  F = "onMouseLeave";
+                  x = "onMouseEnter";
+                  w = "mouse";
+                  if ("pointerout" === a || "pointerover" === a) t = Td, F = "onPointerLeave", x = "onPointerEnter", w = "pointer";
+                  J = null == k2 ? h2 : ue(k2);
+                  u = null == n ? h2 : ue(n);
+                  h2 = new t(F, w + "leave", k2, c, e2);
+                  h2.target = J;
+                  h2.relatedTarget = u;
+                  F = null;
+                  Wc(e2) === d2 && (t = new t(x, w + "enter", n, c, e2), t.target = u, t.relatedTarget = J, F = t);
+                  J = F;
+                  if (k2 && n) b: {
+                    t = k2;
+                    x = n;
+                    w = 0;
+                    for (u = t; u; u = vf(u)) w++;
+                    u = 0;
+                    for (F = x; F; F = vf(F)) u++;
+                    for (; 0 < w - u; ) t = vf(t), w--;
+                    for (; 0 < u - w; ) x = vf(x), u--;
+                    for (; w--; ) {
+                      if (t === x || null !== x && t === x.alternate) break b;
+                      t = vf(t);
+                      x = vf(x);
+                    }
+                    t = null;
+                  }
+                  else t = null;
+                  null !== k2 && wf(g2, h2, k2, t, false);
+                  null !== n && null !== J && wf(g2, J, n, t, true);
+                }
+              }
+            }
+            a: {
+              h2 = d2 ? ue(d2) : window;
+              k2 = h2.nodeName && h2.nodeName.toLowerCase();
+              if ("select" === k2 || "input" === k2 && "file" === h2.type) var na = ve;
+              else if (me(h2)) if (we) na = Fe;
+              else {
+                na = De;
+                var xa = Ce;
+              }
+              else (k2 = h2.nodeName) && "input" === k2.toLowerCase() && ("checkbox" === h2.type || "radio" === h2.type) && (na = Ee);
+              if (na && (na = na(a, d2))) {
+                ne(g2, na, c, e2);
+                break a;
+              }
+              xa && xa(a, h2, d2);
+              "focusout" === a && (xa = h2._wrapperState) && xa.controlled && "number" === h2.type && cb(h2, "number", h2.value);
+            }
+            xa = d2 ? ue(d2) : window;
+            switch (a) {
+              case "focusin":
+                if (me(xa) || "true" === xa.contentEditable) Qe = xa, Re = d2, Se = null;
+                break;
+              case "focusout":
+                Se = Re = Qe = null;
+                break;
+              case "mousedown":
+                Te = true;
+                break;
+              case "contextmenu":
+              case "mouseup":
+              case "dragend":
+                Te = false;
+                Ue(g2, c, e2);
+                break;
+              case "selectionchange":
+                if (Pe) break;
+              case "keydown":
+              case "keyup":
+                Ue(g2, c, e2);
+            }
+            var $a;
+            if (ae) b: {
+              switch (a) {
+                case "compositionstart":
+                  var ba = "onCompositionStart";
+                  break b;
+                case "compositionend":
+                  ba = "onCompositionEnd";
+                  break b;
+                case "compositionupdate":
+                  ba = "onCompositionUpdate";
+                  break b;
+              }
+              ba = void 0;
+            }
+            else ie ? ge(a, c) && (ba = "onCompositionEnd") : "keydown" === a && 229 === c.keyCode && (ba = "onCompositionStart");
+            ba && (de && "ko" !== c.locale && (ie || "onCompositionStart" !== ba ? "onCompositionEnd" === ba && ie && ($a = nd()) : (kd = e2, ld = "value" in kd ? kd.value : kd.textContent, ie = true)), xa = oe(d2, ba), 0 < xa.length && (ba = new Ld(ba, a, null, c, e2), g2.push({ event: ba, listeners: xa }), $a ? ba.data = $a : ($a = he(c), null !== $a && (ba.data = $a))));
+            if ($a = ce ? je(a, c) : ke(a, c)) d2 = oe(d2, "onBeforeInput"), 0 < d2.length && (e2 = new Ld("onBeforeInput", "beforeinput", null, c, e2), g2.push({ event: e2, listeners: d2 }), e2.data = $a);
+          }
+          se(g2, b);
+        });
+      }
+      __name(hd, "hd");
+      function tf(a, b, c) {
+        return { instance: a, listener: b, currentTarget: c };
+      }
+      __name(tf, "tf");
+      function oe(a, b) {
+        for (var c = b + "Capture", d = []; null !== a; ) {
+          var e = a, f = e.stateNode;
+          5 === e.tag && null !== f && (e = f, f = Kb(a, c), null != f && d.unshift(tf(a, f, e)), f = Kb(a, b), null != f && d.push(tf(a, f, e)));
+          a = a.return;
+        }
+        return d;
+      }
+      __name(oe, "oe");
+      function vf(a) {
+        if (null === a) return null;
+        do
+          a = a.return;
+        while (a && 5 !== a.tag);
+        return a ? a : null;
+      }
+      __name(vf, "vf");
+      function wf(a, b, c, d, e) {
+        for (var f = b._reactName, g = []; null !== c && c !== d; ) {
+          var h = c, k = h.alternate, l = h.stateNode;
+          if (null !== k && k === d) break;
+          5 === h.tag && null !== l && (h = l, e ? (k = Kb(c, f), null != k && g.unshift(tf(c, k, h))) : e || (k = Kb(c, f), null != k && g.push(tf(c, k, h))));
+          c = c.return;
+        }
+        0 !== g.length && a.push({ event: b, listeners: g });
+      }
+      __name(wf, "wf");
+      var xf = /\r\n?/g;
+      var yf = /\u0000|\uFFFD/g;
+      function zf(a) {
+        return ("string" === typeof a ? a : "" + a).replace(xf, "\n").replace(yf, "");
+      }
+      __name(zf, "zf");
+      function Af(a, b, c) {
+        b = zf(b);
+        if (zf(a) !== b && c) throw Error(p(425));
+      }
+      __name(Af, "Af");
+      function Bf() {
+      }
+      __name(Bf, "Bf");
+      var Cf = null;
+      var Df = null;
+      function Ef(a, b) {
+        return "textarea" === a || "noscript" === a || "string" === typeof b.children || "number" === typeof b.children || "object" === typeof b.dangerouslySetInnerHTML && null !== b.dangerouslySetInnerHTML && null != b.dangerouslySetInnerHTML.__html;
+      }
+      __name(Ef, "Ef");
+      var Ff = "function" === typeof setTimeout ? setTimeout : void 0;
+      var Gf = "function" === typeof clearTimeout ? clearTimeout : void 0;
+      var Hf = "function" === typeof Promise ? Promise : void 0;
+      var Jf = "function" === typeof queueMicrotask ? queueMicrotask : "undefined" !== typeof Hf ? function(a) {
+        return Hf.resolve(null).then(a).catch(If);
+      } : Ff;
+      function If(a) {
+        setTimeout(function() {
+          throw a;
+        });
+      }
+      __name(If, "If");
+      function Kf(a, b) {
+        var c = b, d = 0;
+        do {
+          var e = c.nextSibling;
+          a.removeChild(c);
+          if (e && 8 === e.nodeType) if (c = e.data, "/$" === c) {
+            if (0 === d) {
+              a.removeChild(e);
+              bd(b);
+              return;
+            }
+            d--;
+          } else "$" !== c && "$?" !== c && "$!" !== c || d++;
+          c = e;
+        } while (c);
+        bd(b);
+      }
+      __name(Kf, "Kf");
+      function Lf(a) {
+        for (; null != a; a = a.nextSibling) {
+          var b = a.nodeType;
+          if (1 === b || 3 === b) break;
+          if (8 === b) {
+            b = a.data;
+            if ("$" === b || "$!" === b || "$?" === b) break;
+            if ("/$" === b) return null;
+          }
+        }
+        return a;
+      }
+      __name(Lf, "Lf");
+      function Mf(a) {
+        a = a.previousSibling;
+        for (var b = 0; a; ) {
+          if (8 === a.nodeType) {
+            var c = a.data;
+            if ("$" === c || "$!" === c || "$?" === c) {
+              if (0 === b) return a;
+              b--;
+            } else "/$" === c && b++;
+          }
+          a = a.previousSibling;
+        }
+        return null;
+      }
+      __name(Mf, "Mf");
+      var Nf = Math.random().toString(36).slice(2);
+      var Of = "__reactFiber$" + Nf;
+      var Pf = "__reactProps$" + Nf;
+      var uf = "__reactContainer$" + Nf;
+      var of = "__reactEvents$" + Nf;
+      var Qf = "__reactListeners$" + Nf;
+      var Rf = "__reactHandles$" + Nf;
+      function Wc(a) {
+        var b = a[Of];
+        if (b) return b;
+        for (var c = a.parentNode; c; ) {
+          if (b = c[uf] || c[Of]) {
+            c = b.alternate;
+            if (null !== b.child || null !== c && null !== c.child) for (a = Mf(a); null !== a; ) {
+              if (c = a[Of]) return c;
+              a = Mf(a);
+            }
+            return b;
+          }
+          a = c;
+          c = a.parentNode;
+        }
+        return null;
+      }
+      __name(Wc, "Wc");
+      function Cb(a) {
+        a = a[Of] || a[uf];
+        return !a || 5 !== a.tag && 6 !== a.tag && 13 !== a.tag && 3 !== a.tag ? null : a;
+      }
+      __name(Cb, "Cb");
+      function ue(a) {
+        if (5 === a.tag || 6 === a.tag) return a.stateNode;
+        throw Error(p(33));
+      }
+      __name(ue, "ue");
+      function Db(a) {
+        return a[Pf] || null;
+      }
+      __name(Db, "Db");
+      var Sf = [];
+      var Tf = -1;
+      function Uf(a) {
+        return { current: a };
+      }
+      __name(Uf, "Uf");
+      function E(a) {
+        0 > Tf || (a.current = Sf[Tf], Sf[Tf] = null, Tf--);
+      }
+      __name(E, "E");
+      function G(a, b) {
+        Tf++;
+        Sf[Tf] = a.current;
+        a.current = b;
+      }
+      __name(G, "G");
+      var Vf = {};
+      var H2 = Uf(Vf);
+      var Wf = Uf(false);
+      var Xf = Vf;
+      function Yf(a, b) {
+        var c = a.type.contextTypes;
+        if (!c) return Vf;
+        var d = a.stateNode;
+        if (d && d.__reactInternalMemoizedUnmaskedChildContext === b) return d.__reactInternalMemoizedMaskedChildContext;
+        var e = {}, f;
+        for (f in c) e[f] = b[f];
+        d && (a = a.stateNode, a.__reactInternalMemoizedUnmaskedChildContext = b, a.__reactInternalMemoizedMaskedChildContext = e);
+        return e;
+      }
+      __name(Yf, "Yf");
+      function Zf(a) {
+        a = a.childContextTypes;
+        return null !== a && void 0 !== a;
+      }
+      __name(Zf, "Zf");
+      function $f() {
+        E(Wf);
+        E(H2);
+      }
+      __name($f, "$f");
+      function ag(a, b, c) {
+        if (H2.current !== Vf) throw Error(p(168));
+        G(H2, b);
+        G(Wf, c);
+      }
+      __name(ag, "ag");
+      function bg(a, b, c) {
+        var d = a.stateNode;
+        b = b.childContextTypes;
+        if ("function" !== typeof d.getChildContext) return c;
+        d = d.getChildContext();
+        for (var e in d) if (!(e in b)) throw Error(p(108, Ra(a) || "Unknown", e));
+        return A({}, c, d);
+      }
+      __name(bg, "bg");
+      function cg(a) {
+        a = (a = a.stateNode) && a.__reactInternalMemoizedMergedChildContext || Vf;
+        Xf = H2.current;
+        G(H2, a);
+        G(Wf, Wf.current);
+        return true;
+      }
+      __name(cg, "cg");
+      function dg(a, b, c) {
+        var d = a.stateNode;
+        if (!d) throw Error(p(169));
+        c ? (a = bg(a, b, Xf), d.__reactInternalMemoizedMergedChildContext = a, E(Wf), E(H2), G(H2, a)) : E(Wf);
+        G(Wf, c);
+      }
+      __name(dg, "dg");
+      var eg = null;
+      var fg = false;
+      var gg = false;
+      function hg(a) {
+        null === eg ? eg = [a] : eg.push(a);
+      }
+      __name(hg, "hg");
+      function ig(a) {
+        fg = true;
+        hg(a);
+      }
+      __name(ig, "ig");
+      function jg() {
+        if (!gg && null !== eg) {
+          gg = true;
+          var a = 0, b = C;
+          try {
+            var c = eg;
+            for (C = 1; a < c.length; a++) {
+              var d = c[a];
+              do
+                d = d(true);
+              while (null !== d);
+            }
+            eg = null;
+            fg = false;
+          } catch (e) {
+            throw null !== eg && (eg = eg.slice(a + 1)), ac(fc, jg), e;
+          } finally {
+            C = b, gg = false;
+          }
+        }
+        return null;
+      }
+      __name(jg, "jg");
+      var kg = [];
+      var lg = 0;
+      var mg = null;
+      var ng = 0;
+      var og = [];
+      var pg = 0;
+      var qg = null;
+      var rg = 1;
+      var sg = "";
+      function tg(a, b) {
+        kg[lg++] = ng;
+        kg[lg++] = mg;
+        mg = a;
+        ng = b;
+      }
+      __name(tg, "tg");
+      function ug(a, b, c) {
+        og[pg++] = rg;
+        og[pg++] = sg;
+        og[pg++] = qg;
+        qg = a;
+        var d = rg;
+        a = sg;
+        var e = 32 - oc(d) - 1;
+        d &= ~(1 << e);
+        c += 1;
+        var f = 32 - oc(b) + e;
+        if (30 < f) {
+          var g = e - e % 5;
+          f = (d & (1 << g) - 1).toString(32);
+          d >>= g;
+          e -= g;
+          rg = 1 << 32 - oc(b) + e | c << e | d;
+          sg = f + a;
+        } else rg = 1 << f | c << e | d, sg = a;
+      }
+      __name(ug, "ug");
+      function vg(a) {
+        null !== a.return && (tg(a, 1), ug(a, 1, 0));
+      }
+      __name(vg, "vg");
+      function wg(a) {
+        for (; a === mg; ) mg = kg[--lg], kg[lg] = null, ng = kg[--lg], kg[lg] = null;
+        for (; a === qg; ) qg = og[--pg], og[pg] = null, sg = og[--pg], og[pg] = null, rg = og[--pg], og[pg] = null;
+      }
+      __name(wg, "wg");
+      var xg = null;
+      var yg = null;
+      var I = false;
+      var zg = null;
+      function Ag(a, b) {
+        var c = Bg(5, null, null, 0);
+        c.elementType = "DELETED";
+        c.stateNode = b;
+        c.return = a;
+        b = a.deletions;
+        null === b ? (a.deletions = [c], a.flags |= 16) : b.push(c);
+      }
+      __name(Ag, "Ag");
+      function Cg(a, b) {
+        switch (a.tag) {
+          case 5:
+            var c = a.type;
+            b = 1 !== b.nodeType || c.toLowerCase() !== b.nodeName.toLowerCase() ? null : b;
+            return null !== b ? (a.stateNode = b, xg = a, yg = Lf(b.firstChild), true) : false;
+          case 6:
+            return b = "" === a.pendingProps || 3 !== b.nodeType ? null : b, null !== b ? (a.stateNode = b, xg = a, yg = null, true) : false;
+          case 13:
+            return b = 8 !== b.nodeType ? null : b, null !== b ? (c = null !== qg ? { id: rg, overflow: sg } : null, a.memoizedState = { dehydrated: b, treeContext: c, retryLane: 1073741824 }, c = Bg(18, null, null, 0), c.stateNode = b, c.return = a, a.child = c, xg = a, yg = null, true) : false;
+          default:
+            return false;
+        }
+      }
+      __name(Cg, "Cg");
+      function Dg(a) {
+        return 0 !== (a.mode & 1) && 0 === (a.flags & 128);
+      }
+      __name(Dg, "Dg");
+      function Eg(a) {
+        if (I) {
+          var b = yg;
+          if (b) {
+            var c = b;
+            if (!Cg(a, b)) {
+              if (Dg(a)) throw Error(p(418));
+              b = Lf(c.nextSibling);
+              var d = xg;
+              b && Cg(a, b) ? Ag(d, c) : (a.flags = a.flags & -4097 | 2, I = false, xg = a);
+            }
+          } else {
+            if (Dg(a)) throw Error(p(418));
+            a.flags = a.flags & -4097 | 2;
+            I = false;
+            xg = a;
+          }
+        }
+      }
+      __name(Eg, "Eg");
+      function Fg(a) {
+        for (a = a.return; null !== a && 5 !== a.tag && 3 !== a.tag && 13 !== a.tag; ) a = a.return;
+        xg = a;
+      }
+      __name(Fg, "Fg");
+      function Gg(a) {
+        if (a !== xg) return false;
+        if (!I) return Fg(a), I = true, false;
+        var b;
+        (b = 3 !== a.tag) && !(b = 5 !== a.tag) && (b = a.type, b = "head" !== b && "body" !== b && !Ef(a.type, a.memoizedProps));
+        if (b && (b = yg)) {
+          if (Dg(a)) throw Hg(), Error(p(418));
+          for (; b; ) Ag(a, b), b = Lf(b.nextSibling);
+        }
+        Fg(a);
+        if (13 === a.tag) {
+          a = a.memoizedState;
+          a = null !== a ? a.dehydrated : null;
+          if (!a) throw Error(p(317));
+          a: {
+            a = a.nextSibling;
+            for (b = 0; a; ) {
+              if (8 === a.nodeType) {
+                var c = a.data;
+                if ("/$" === c) {
+                  if (0 === b) {
+                    yg = Lf(a.nextSibling);
+                    break a;
+                  }
+                  b--;
+                } else "$" !== c && "$!" !== c && "$?" !== c || b++;
+              }
+              a = a.nextSibling;
+            }
+            yg = null;
+          }
+        } else yg = xg ? Lf(a.stateNode.nextSibling) : null;
+        return true;
+      }
+      __name(Gg, "Gg");
+      function Hg() {
+        for (var a = yg; a; ) a = Lf(a.nextSibling);
+      }
+      __name(Hg, "Hg");
+      function Ig() {
+        yg = xg = null;
+        I = false;
+      }
+      __name(Ig, "Ig");
+      function Jg(a) {
+        null === zg ? zg = [a] : zg.push(a);
+      }
+      __name(Jg, "Jg");
+      var Kg = ua.ReactCurrentBatchConfig;
+      function Lg(a, b, c) {
+        a = c.ref;
+        if (null !== a && "function" !== typeof a && "object" !== typeof a) {
+          if (c._owner) {
+            c = c._owner;
+            if (c) {
+              if (1 !== c.tag) throw Error(p(309));
+              var d = c.stateNode;
+            }
+            if (!d) throw Error(p(147, a));
+            var e = d, f = "" + a;
+            if (null !== b && null !== b.ref && "function" === typeof b.ref && b.ref._stringRef === f) return b.ref;
+            b = /* @__PURE__ */ __name(function(a2) {
+              var b2 = e.refs;
+              null === a2 ? delete b2[f] : b2[f] = a2;
+            }, "b");
+            b._stringRef = f;
+            return b;
+          }
+          if ("string" !== typeof a) throw Error(p(284));
+          if (!c._owner) throw Error(p(290, a));
+        }
+        return a;
+      }
+      __name(Lg, "Lg");
+      function Mg(a, b) {
+        a = Object.prototype.toString.call(b);
+        throw Error(p(31, "[object Object]" === a ? "object with keys {" + Object.keys(b).join(", ") + "}" : a));
+      }
+      __name(Mg, "Mg");
+      function Ng(a) {
+        var b = a._init;
+        return b(a._payload);
+      }
+      __name(Ng, "Ng");
+      function Og(a) {
+        function b(b2, c2) {
+          if (a) {
+            var d2 = b2.deletions;
+            null === d2 ? (b2.deletions = [c2], b2.flags |= 16) : d2.push(c2);
+          }
+        }
+        __name(b, "b");
+        function c(c2, d2) {
+          if (!a) return null;
+          for (; null !== d2; ) b(c2, d2), d2 = d2.sibling;
+          return null;
+        }
+        __name(c, "c");
+        function d(a2, b2) {
+          for (a2 = /* @__PURE__ */ new Map(); null !== b2; ) null !== b2.key ? a2.set(b2.key, b2) : a2.set(b2.index, b2), b2 = b2.sibling;
+          return a2;
+        }
+        __name(d, "d");
+        function e(a2, b2) {
+          a2 = Pg(a2, b2);
+          a2.index = 0;
+          a2.sibling = null;
+          return a2;
+        }
+        __name(e, "e");
+        function f(b2, c2, d2) {
+          b2.index = d2;
+          if (!a) return b2.flags |= 1048576, c2;
+          d2 = b2.alternate;
+          if (null !== d2) return d2 = d2.index, d2 < c2 ? (b2.flags |= 2, c2) : d2;
+          b2.flags |= 2;
+          return c2;
+        }
+        __name(f, "f");
+        function g(b2) {
+          a && null === b2.alternate && (b2.flags |= 2);
+          return b2;
+        }
+        __name(g, "g");
+        function h(a2, b2, c2, d2) {
+          if (null === b2 || 6 !== b2.tag) return b2 = Qg(c2, a2.mode, d2), b2.return = a2, b2;
+          b2 = e(b2, c2);
+          b2.return = a2;
+          return b2;
+        }
+        __name(h, "h");
+        function k(a2, b2, c2, d2) {
+          var f2 = c2.type;
+          if (f2 === ya) return m(a2, b2, c2.props.children, d2, c2.key);
+          if (null !== b2 && (b2.elementType === f2 || "object" === typeof f2 && null !== f2 && f2.$$typeof === Ha && Ng(f2) === b2.type)) return d2 = e(b2, c2.props), d2.ref = Lg(a2, b2, c2), d2.return = a2, d2;
+          d2 = Rg(c2.type, c2.key, c2.props, null, a2.mode, d2);
+          d2.ref = Lg(a2, b2, c2);
+          d2.return = a2;
+          return d2;
+        }
+        __name(k, "k");
+        function l(a2, b2, c2, d2) {
+          if (null === b2 || 4 !== b2.tag || b2.stateNode.containerInfo !== c2.containerInfo || b2.stateNode.implementation !== c2.implementation) return b2 = Sg(c2, a2.mode, d2), b2.return = a2, b2;
+          b2 = e(b2, c2.children || []);
+          b2.return = a2;
+          return b2;
+        }
+        __name(l, "l");
+        function m(a2, b2, c2, d2, f2) {
+          if (null === b2 || 7 !== b2.tag) return b2 = Tg(c2, a2.mode, d2, f2), b2.return = a2, b2;
+          b2 = e(b2, c2);
+          b2.return = a2;
+          return b2;
+        }
+        __name(m, "m");
+        function q(a2, b2, c2) {
+          if ("string" === typeof b2 && "" !== b2 || "number" === typeof b2) return b2 = Qg("" + b2, a2.mode, c2), b2.return = a2, b2;
+          if ("object" === typeof b2 && null !== b2) {
+            switch (b2.$$typeof) {
+              case va:
+                return c2 = Rg(b2.type, b2.key, b2.props, null, a2.mode, c2), c2.ref = Lg(a2, null, b2), c2.return = a2, c2;
+              case wa:
+                return b2 = Sg(b2, a2.mode, c2), b2.return = a2, b2;
+              case Ha:
+                var d2 = b2._init;
+                return q(a2, d2(b2._payload), c2);
+            }
+            if (eb(b2) || Ka(b2)) return b2 = Tg(b2, a2.mode, c2, null), b2.return = a2, b2;
+            Mg(a2, b2);
+          }
+          return null;
+        }
+        __name(q, "q");
+        function r(a2, b2, c2, d2) {
+          var e2 = null !== b2 ? b2.key : null;
+          if ("string" === typeof c2 && "" !== c2 || "number" === typeof c2) return null !== e2 ? null : h(a2, b2, "" + c2, d2);
+          if ("object" === typeof c2 && null !== c2) {
+            switch (c2.$$typeof) {
+              case va:
+                return c2.key === e2 ? k(a2, b2, c2, d2) : null;
+              case wa:
+                return c2.key === e2 ? l(a2, b2, c2, d2) : null;
+              case Ha:
+                return e2 = c2._init, r(
+                  a2,
+                  b2,
+                  e2(c2._payload),
+                  d2
+                );
+            }
+            if (eb(c2) || Ka(c2)) return null !== e2 ? null : m(a2, b2, c2, d2, null);
+            Mg(a2, c2);
+          }
+          return null;
+        }
+        __name(r, "r");
+        function y(a2, b2, c2, d2, e2) {
+          if ("string" === typeof d2 && "" !== d2 || "number" === typeof d2) return a2 = a2.get(c2) || null, h(b2, a2, "" + d2, e2);
+          if ("object" === typeof d2 && null !== d2) {
+            switch (d2.$$typeof) {
+              case va:
+                return a2 = a2.get(null === d2.key ? c2 : d2.key) || null, k(b2, a2, d2, e2);
+              case wa:
+                return a2 = a2.get(null === d2.key ? c2 : d2.key) || null, l(b2, a2, d2, e2);
+              case Ha:
+                var f2 = d2._init;
+                return y(a2, b2, c2, f2(d2._payload), e2);
+            }
+            if (eb(d2) || Ka(d2)) return a2 = a2.get(c2) || null, m(b2, a2, d2, e2, null);
+            Mg(b2, d2);
+          }
+          return null;
+        }
+        __name(y, "y");
+        function n(e2, g2, h2, k2) {
+          for (var l2 = null, m2 = null, u = g2, w = g2 = 0, x = null; null !== u && w < h2.length; w++) {
+            u.index > w ? (x = u, u = null) : x = u.sibling;
+            var n2 = r(e2, u, h2[w], k2);
+            if (null === n2) {
+              null === u && (u = x);
+              break;
+            }
+            a && u && null === n2.alternate && b(e2, u);
+            g2 = f(n2, g2, w);
+            null === m2 ? l2 = n2 : m2.sibling = n2;
+            m2 = n2;
+            u = x;
+          }
+          if (w === h2.length) return c(e2, u), I && tg(e2, w), l2;
+          if (null === u) {
+            for (; w < h2.length; w++) u = q(e2, h2[w], k2), null !== u && (g2 = f(u, g2, w), null === m2 ? l2 = u : m2.sibling = u, m2 = u);
+            I && tg(e2, w);
+            return l2;
+          }
+          for (u = d(e2, u); w < h2.length; w++) x = y(u, e2, w, h2[w], k2), null !== x && (a && null !== x.alternate && u.delete(null === x.key ? w : x.key), g2 = f(x, g2, w), null === m2 ? l2 = x : m2.sibling = x, m2 = x);
+          a && u.forEach(function(a2) {
+            return b(e2, a2);
+          });
+          I && tg(e2, w);
+          return l2;
+        }
+        __name(n, "n");
+        function t(e2, g2, h2, k2) {
+          var l2 = Ka(h2);
+          if ("function" !== typeof l2) throw Error(p(150));
+          h2 = l2.call(h2);
+          if (null == h2) throw Error(p(151));
+          for (var u = l2 = null, m2 = g2, w = g2 = 0, x = null, n2 = h2.next(); null !== m2 && !n2.done; w++, n2 = h2.next()) {
+            m2.index > w ? (x = m2, m2 = null) : x = m2.sibling;
+            var t2 = r(e2, m2, n2.value, k2);
+            if (null === t2) {
+              null === m2 && (m2 = x);
+              break;
+            }
+            a && m2 && null === t2.alternate && b(e2, m2);
+            g2 = f(t2, g2, w);
+            null === u ? l2 = t2 : u.sibling = t2;
+            u = t2;
+            m2 = x;
+          }
+          if (n2.done) return c(
+            e2,
+            m2
+          ), I && tg(e2, w), l2;
+          if (null === m2) {
+            for (; !n2.done; w++, n2 = h2.next()) n2 = q(e2, n2.value, k2), null !== n2 && (g2 = f(n2, g2, w), null === u ? l2 = n2 : u.sibling = n2, u = n2);
+            I && tg(e2, w);
+            return l2;
+          }
+          for (m2 = d(e2, m2); !n2.done; w++, n2 = h2.next()) n2 = y(m2, e2, w, n2.value, k2), null !== n2 && (a && null !== n2.alternate && m2.delete(null === n2.key ? w : n2.key), g2 = f(n2, g2, w), null === u ? l2 = n2 : u.sibling = n2, u = n2);
+          a && m2.forEach(function(a2) {
+            return b(e2, a2);
+          });
+          I && tg(e2, w);
+          return l2;
+        }
+        __name(t, "t");
+        function J(a2, d2, f2, h2) {
+          "object" === typeof f2 && null !== f2 && f2.type === ya && null === f2.key && (f2 = f2.props.children);
+          if ("object" === typeof f2 && null !== f2) {
+            switch (f2.$$typeof) {
+              case va:
+                a: {
+                  for (var k2 = f2.key, l2 = d2; null !== l2; ) {
+                    if (l2.key === k2) {
+                      k2 = f2.type;
+                      if (k2 === ya) {
+                        if (7 === l2.tag) {
+                          c(a2, l2.sibling);
+                          d2 = e(l2, f2.props.children);
+                          d2.return = a2;
+                          a2 = d2;
+                          break a;
+                        }
+                      } else if (l2.elementType === k2 || "object" === typeof k2 && null !== k2 && k2.$$typeof === Ha && Ng(k2) === l2.type) {
+                        c(a2, l2.sibling);
+                        d2 = e(l2, f2.props);
+                        d2.ref = Lg(a2, l2, f2);
+                        d2.return = a2;
+                        a2 = d2;
+                        break a;
+                      }
+                      c(a2, l2);
+                      break;
+                    } else b(a2, l2);
+                    l2 = l2.sibling;
+                  }
+                  f2.type === ya ? (d2 = Tg(f2.props.children, a2.mode, h2, f2.key), d2.return = a2, a2 = d2) : (h2 = Rg(f2.type, f2.key, f2.props, null, a2.mode, h2), h2.ref = Lg(a2, d2, f2), h2.return = a2, a2 = h2);
+                }
+                return g(a2);
+              case wa:
+                a: {
+                  for (l2 = f2.key; null !== d2; ) {
+                    if (d2.key === l2) if (4 === d2.tag && d2.stateNode.containerInfo === f2.containerInfo && d2.stateNode.implementation === f2.implementation) {
+                      c(a2, d2.sibling);
+                      d2 = e(d2, f2.children || []);
+                      d2.return = a2;
+                      a2 = d2;
+                      break a;
+                    } else {
+                      c(a2, d2);
+                      break;
+                    }
+                    else b(a2, d2);
+                    d2 = d2.sibling;
+                  }
+                  d2 = Sg(f2, a2.mode, h2);
+                  d2.return = a2;
+                  a2 = d2;
+                }
+                return g(a2);
+              case Ha:
+                return l2 = f2._init, J(a2, d2, l2(f2._payload), h2);
+            }
+            if (eb(f2)) return n(a2, d2, f2, h2);
+            if (Ka(f2)) return t(a2, d2, f2, h2);
+            Mg(a2, f2);
+          }
+          return "string" === typeof f2 && "" !== f2 || "number" === typeof f2 ? (f2 = "" + f2, null !== d2 && 6 === d2.tag ? (c(a2, d2.sibling), d2 = e(d2, f2), d2.return = a2, a2 = d2) : (c(a2, d2), d2 = Qg(f2, a2.mode, h2), d2.return = a2, a2 = d2), g(a2)) : c(a2, d2);
+        }
+        __name(J, "J");
+        return J;
+      }
+      __name(Og, "Og");
+      var Ug = Og(true);
+      var Vg = Og(false);
+      var Wg = Uf(null);
+      var Xg = null;
+      var Yg = null;
+      var Zg = null;
+      function $g() {
+        Zg = Yg = Xg = null;
+      }
+      __name($g, "$g");
+      function ah(a) {
+        var b = Wg.current;
+        E(Wg);
+        a._currentValue = b;
+      }
+      __name(ah, "ah");
+      function bh(a, b, c) {
+        for (; null !== a; ) {
+          var d = a.alternate;
+          (a.childLanes & b) !== b ? (a.childLanes |= b, null !== d && (d.childLanes |= b)) : null !== d && (d.childLanes & b) !== b && (d.childLanes |= b);
+          if (a === c) break;
+          a = a.return;
+        }
+      }
+      __name(bh, "bh");
+      function ch(a, b) {
+        Xg = a;
+        Zg = Yg = null;
+        a = a.dependencies;
+        null !== a && null !== a.firstContext && (0 !== (a.lanes & b) && (dh = true), a.firstContext = null);
+      }
+      __name(ch, "ch");
+      function eh(a) {
+        var b = a._currentValue;
+        if (Zg !== a) if (a = { context: a, memoizedValue: b, next: null }, null === Yg) {
+          if (null === Xg) throw Error(p(308));
+          Yg = a;
+          Xg.dependencies = { lanes: 0, firstContext: a };
+        } else Yg = Yg.next = a;
+        return b;
+      }
+      __name(eh, "eh");
+      var fh = null;
+      function gh(a) {
+        null === fh ? fh = [a] : fh.push(a);
+      }
+      __name(gh, "gh");
+      function hh(a, b, c, d) {
+        var e = b.interleaved;
+        null === e ? (c.next = c, gh(b)) : (c.next = e.next, e.next = c);
+        b.interleaved = c;
+        return ih(a, d);
+      }
+      __name(hh, "hh");
+      function ih(a, b) {
+        a.lanes |= b;
+        var c = a.alternate;
+        null !== c && (c.lanes |= b);
+        c = a;
+        for (a = a.return; null !== a; ) a.childLanes |= b, c = a.alternate, null !== c && (c.childLanes |= b), c = a, a = a.return;
+        return 3 === c.tag ? c.stateNode : null;
+      }
+      __name(ih, "ih");
+      var jh = false;
+      function kh(a) {
+        a.updateQueue = { baseState: a.memoizedState, firstBaseUpdate: null, lastBaseUpdate: null, shared: { pending: null, interleaved: null, lanes: 0 }, effects: null };
+      }
+      __name(kh, "kh");
+      function lh(a, b) {
+        a = a.updateQueue;
+        b.updateQueue === a && (b.updateQueue = { baseState: a.baseState, firstBaseUpdate: a.firstBaseUpdate, lastBaseUpdate: a.lastBaseUpdate, shared: a.shared, effects: a.effects });
+      }
+      __name(lh, "lh");
+      function mh(a, b) {
+        return { eventTime: a, lane: b, tag: 0, payload: null, callback: null, next: null };
+      }
+      __name(mh, "mh");
+      function nh(a, b, c) {
+        var d = a.updateQueue;
+        if (null === d) return null;
+        d = d.shared;
+        if (0 !== (K & 2)) {
+          var e = d.pending;
+          null === e ? b.next = b : (b.next = e.next, e.next = b);
+          d.pending = b;
+          return ih(a, c);
+        }
+        e = d.interleaved;
+        null === e ? (b.next = b, gh(d)) : (b.next = e.next, e.next = b);
+        d.interleaved = b;
+        return ih(a, c);
+      }
+      __name(nh, "nh");
+      function oh(a, b, c) {
+        b = b.updateQueue;
+        if (null !== b && (b = b.shared, 0 !== (c & 4194240))) {
+          var d = b.lanes;
+          d &= a.pendingLanes;
+          c |= d;
+          b.lanes = c;
+          Cc(a, c);
+        }
+      }
+      __name(oh, "oh");
+      function ph(a, b) {
+        var c = a.updateQueue, d = a.alternate;
+        if (null !== d && (d = d.updateQueue, c === d)) {
+          var e = null, f = null;
+          c = c.firstBaseUpdate;
+          if (null !== c) {
+            do {
+              var g = { eventTime: c.eventTime, lane: c.lane, tag: c.tag, payload: c.payload, callback: c.callback, next: null };
+              null === f ? e = f = g : f = f.next = g;
+              c = c.next;
+            } while (null !== c);
+            null === f ? e = f = b : f = f.next = b;
+          } else e = f = b;
+          c = { baseState: d.baseState, firstBaseUpdate: e, lastBaseUpdate: f, shared: d.shared, effects: d.effects };
+          a.updateQueue = c;
+          return;
+        }
+        a = c.lastBaseUpdate;
+        null === a ? c.firstBaseUpdate = b : a.next = b;
+        c.lastBaseUpdate = b;
+      }
+      __name(ph, "ph");
+      function qh(a, b, c, d) {
+        var e = a.updateQueue;
+        jh = false;
+        var f = e.firstBaseUpdate, g = e.lastBaseUpdate, h = e.shared.pending;
+        if (null !== h) {
+          e.shared.pending = null;
+          var k = h, l = k.next;
+          k.next = null;
+          null === g ? f = l : g.next = l;
+          g = k;
+          var m = a.alternate;
+          null !== m && (m = m.updateQueue, h = m.lastBaseUpdate, h !== g && (null === h ? m.firstBaseUpdate = l : h.next = l, m.lastBaseUpdate = k));
+        }
+        if (null !== f) {
+          var q = e.baseState;
+          g = 0;
+          m = l = k = null;
+          h = f;
+          do {
+            var r = h.lane, y = h.eventTime;
+            if ((d & r) === r) {
+              null !== m && (m = m.next = {
+                eventTime: y,
+                lane: 0,
+                tag: h.tag,
+                payload: h.payload,
+                callback: h.callback,
+                next: null
+              });
+              a: {
+                var n = a, t = h;
+                r = b;
+                y = c;
+                switch (t.tag) {
+                  case 1:
+                    n = t.payload;
+                    if ("function" === typeof n) {
+                      q = n.call(y, q, r);
+                      break a;
+                    }
+                    q = n;
+                    break a;
+                  case 3:
+                    n.flags = n.flags & -65537 | 128;
+                  case 0:
+                    n = t.payload;
+                    r = "function" === typeof n ? n.call(y, q, r) : n;
+                    if (null === r || void 0 === r) break a;
+                    q = A({}, q, r);
+                    break a;
+                  case 2:
+                    jh = true;
+                }
+              }
+              null !== h.callback && 0 !== h.lane && (a.flags |= 64, r = e.effects, null === r ? e.effects = [h] : r.push(h));
+            } else y = { eventTime: y, lane: r, tag: h.tag, payload: h.payload, callback: h.callback, next: null }, null === m ? (l = m = y, k = q) : m = m.next = y, g |= r;
+            h = h.next;
+            if (null === h) if (h = e.shared.pending, null === h) break;
+            else r = h, h = r.next, r.next = null, e.lastBaseUpdate = r, e.shared.pending = null;
+          } while (1);
+          null === m && (k = q);
+          e.baseState = k;
+          e.firstBaseUpdate = l;
+          e.lastBaseUpdate = m;
+          b = e.shared.interleaved;
+          if (null !== b) {
+            e = b;
+            do
+              g |= e.lane, e = e.next;
+            while (e !== b);
+          } else null === f && (e.shared.lanes = 0);
+          rh |= g;
+          a.lanes = g;
+          a.memoizedState = q;
+        }
+      }
+      __name(qh, "qh");
+      function sh(a, b, c) {
+        a = b.effects;
+        b.effects = null;
+        if (null !== a) for (b = 0; b < a.length; b++) {
+          var d = a[b], e = d.callback;
+          if (null !== e) {
+            d.callback = null;
+            d = c;
+            if ("function" !== typeof e) throw Error(p(191, e));
+            e.call(d);
+          }
+        }
+      }
+      __name(sh, "sh");
+      var th = {};
+      var uh = Uf(th);
+      var vh = Uf(th);
+      var wh = Uf(th);
+      function xh(a) {
+        if (a === th) throw Error(p(174));
+        return a;
+      }
+      __name(xh, "xh");
+      function yh(a, b) {
+        G(wh, b);
+        G(vh, a);
+        G(uh, th);
+        a = b.nodeType;
+        switch (a) {
+          case 9:
+          case 11:
+            b = (b = b.documentElement) ? b.namespaceURI : lb(null, "");
+            break;
+          default:
+            a = 8 === a ? b.parentNode : b, b = a.namespaceURI || null, a = a.tagName, b = lb(b, a);
+        }
+        E(uh);
+        G(uh, b);
+      }
+      __name(yh, "yh");
+      function zh() {
+        E(uh);
+        E(vh);
+        E(wh);
+      }
+      __name(zh, "zh");
+      function Ah(a) {
+        xh(wh.current);
+        var b = xh(uh.current);
+        var c = lb(b, a.type);
+        b !== c && (G(vh, a), G(uh, c));
+      }
+      __name(Ah, "Ah");
+      function Bh(a) {
+        vh.current === a && (E(uh), E(vh));
+      }
+      __name(Bh, "Bh");
+      var L = Uf(0);
+      function Ch(a) {
+        for (var b = a; null !== b; ) {
+          if (13 === b.tag) {
+            var c = b.memoizedState;
+            if (null !== c && (c = c.dehydrated, null === c || "$?" === c.data || "$!" === c.data)) return b;
+          } else if (19 === b.tag && void 0 !== b.memoizedProps.revealOrder) {
+            if (0 !== (b.flags & 128)) return b;
+          } else if (null !== b.child) {
+            b.child.return = b;
+            b = b.child;
+            continue;
+          }
+          if (b === a) break;
+          for (; null === b.sibling; ) {
+            if (null === b.return || b.return === a) return null;
+            b = b.return;
+          }
+          b.sibling.return = b.return;
+          b = b.sibling;
+        }
+        return null;
+      }
+      __name(Ch, "Ch");
+      var Dh = [];
+      function Eh() {
+        for (var a = 0; a < Dh.length; a++) Dh[a]._workInProgressVersionPrimary = null;
+        Dh.length = 0;
+      }
+      __name(Eh, "Eh");
+      var Fh = ua.ReactCurrentDispatcher;
+      var Gh = ua.ReactCurrentBatchConfig;
+      var Hh = 0;
+      var M = null;
+      var N = null;
+      var O = null;
+      var Ih = false;
+      var Jh = false;
+      var Kh = 0;
+      var Lh = 0;
+      function P() {
+        throw Error(p(321));
+      }
+      __name(P, "P");
+      function Mh(a, b) {
+        if (null === b) return false;
+        for (var c = 0; c < b.length && c < a.length; c++) if (!He(a[c], b[c])) return false;
+        return true;
+      }
+      __name(Mh, "Mh");
+      function Nh(a, b, c, d, e, f) {
+        Hh = f;
+        M = b;
+        b.memoizedState = null;
+        b.updateQueue = null;
+        b.lanes = 0;
+        Fh.current = null === a || null === a.memoizedState ? Oh : Ph;
+        a = c(d, e);
+        if (Jh) {
+          f = 0;
+          do {
+            Jh = false;
+            Kh = 0;
+            if (25 <= f) throw Error(p(301));
+            f += 1;
+            O = N = null;
+            b.updateQueue = null;
+            Fh.current = Qh;
+            a = c(d, e);
+          } while (Jh);
+        }
+        Fh.current = Rh;
+        b = null !== N && null !== N.next;
+        Hh = 0;
+        O = N = M = null;
+        Ih = false;
+        if (b) throw Error(p(300));
+        return a;
+      }
+      __name(Nh, "Nh");
+      function Sh() {
+        var a = 0 !== Kh;
+        Kh = 0;
+        return a;
+      }
+      __name(Sh, "Sh");
+      function Th() {
+        var a = { memoizedState: null, baseState: null, baseQueue: null, queue: null, next: null };
+        null === O ? M.memoizedState = O = a : O = O.next = a;
+        return O;
+      }
+      __name(Th, "Th");
+      function Uh() {
+        if (null === N) {
+          var a = M.alternate;
+          a = null !== a ? a.memoizedState : null;
+        } else a = N.next;
+        var b = null === O ? M.memoizedState : O.next;
+        if (null !== b) O = b, N = a;
+        else {
+          if (null === a) throw Error(p(310));
+          N = a;
+          a = { memoizedState: N.memoizedState, baseState: N.baseState, baseQueue: N.baseQueue, queue: N.queue, next: null };
+          null === O ? M.memoizedState = O = a : O = O.next = a;
+        }
+        return O;
+      }
+      __name(Uh, "Uh");
+      function Vh(a, b) {
+        return "function" === typeof b ? b(a) : b;
+      }
+      __name(Vh, "Vh");
+      function Wh(a) {
+        var b = Uh(), c = b.queue;
+        if (null === c) throw Error(p(311));
+        c.lastRenderedReducer = a;
+        var d = N, e = d.baseQueue, f = c.pending;
+        if (null !== f) {
+          if (null !== e) {
+            var g = e.next;
+            e.next = f.next;
+            f.next = g;
+          }
+          d.baseQueue = e = f;
+          c.pending = null;
+        }
+        if (null !== e) {
+          f = e.next;
+          d = d.baseState;
+          var h = g = null, k = null, l = f;
+          do {
+            var m = l.lane;
+            if ((Hh & m) === m) null !== k && (k = k.next = { lane: 0, action: l.action, hasEagerState: l.hasEagerState, eagerState: l.eagerState, next: null }), d = l.hasEagerState ? l.eagerState : a(d, l.action);
+            else {
+              var q = {
+                lane: m,
+                action: l.action,
+                hasEagerState: l.hasEagerState,
+                eagerState: l.eagerState,
+                next: null
+              };
+              null === k ? (h = k = q, g = d) : k = k.next = q;
+              M.lanes |= m;
+              rh |= m;
+            }
+            l = l.next;
+          } while (null !== l && l !== f);
+          null === k ? g = d : k.next = h;
+          He(d, b.memoizedState) || (dh = true);
+          b.memoizedState = d;
+          b.baseState = g;
+          b.baseQueue = k;
+          c.lastRenderedState = d;
+        }
+        a = c.interleaved;
+        if (null !== a) {
+          e = a;
+          do
+            f = e.lane, M.lanes |= f, rh |= f, e = e.next;
+          while (e !== a);
+        } else null === e && (c.lanes = 0);
+        return [b.memoizedState, c.dispatch];
+      }
+      __name(Wh, "Wh");
+      function Xh(a) {
+        var b = Uh(), c = b.queue;
+        if (null === c) throw Error(p(311));
+        c.lastRenderedReducer = a;
+        var d = c.dispatch, e = c.pending, f = b.memoizedState;
+        if (null !== e) {
+          c.pending = null;
+          var g = e = e.next;
+          do
+            f = a(f, g.action), g = g.next;
+          while (g !== e);
+          He(f, b.memoizedState) || (dh = true);
+          b.memoizedState = f;
+          null === b.baseQueue && (b.baseState = f);
+          c.lastRenderedState = f;
+        }
+        return [f, d];
+      }
+      __name(Xh, "Xh");
+      function Yh() {
+      }
+      __name(Yh, "Yh");
+      function Zh(a, b) {
+        var c = M, d = Uh(), e = b(), f = !He(d.memoizedState, e);
+        f && (d.memoizedState = e, dh = true);
+        d = d.queue;
+        $h(ai.bind(null, c, d, a), [a]);
+        if (d.getSnapshot !== b || f || null !== O && O.memoizedState.tag & 1) {
+          c.flags |= 2048;
+          bi(9, ci.bind(null, c, d, e, b), void 0, null);
+          if (null === Q) throw Error(p(349));
+          0 !== (Hh & 30) || di(c, b, e);
+        }
+        return e;
+      }
+      __name(Zh, "Zh");
+      function di(a, b, c) {
+        a.flags |= 16384;
+        a = { getSnapshot: b, value: c };
+        b = M.updateQueue;
+        null === b ? (b = { lastEffect: null, stores: null }, M.updateQueue = b, b.stores = [a]) : (c = b.stores, null === c ? b.stores = [a] : c.push(a));
+      }
+      __name(di, "di");
+      function ci(a, b, c, d) {
+        b.value = c;
+        b.getSnapshot = d;
+        ei(b) && fi(a);
+      }
+      __name(ci, "ci");
+      function ai(a, b, c) {
+        return c(function() {
+          ei(b) && fi(a);
+        });
+      }
+      __name(ai, "ai");
+      function ei(a) {
+        var b = a.getSnapshot;
+        a = a.value;
+        try {
+          var c = b();
+          return !He(a, c);
+        } catch (d) {
+          return true;
+        }
+      }
+      __name(ei, "ei");
+      function fi(a) {
+        var b = ih(a, 1);
+        null !== b && gi(b, a, 1, -1);
+      }
+      __name(fi, "fi");
+      function hi(a) {
+        var b = Th();
+        "function" === typeof a && (a = a());
+        b.memoizedState = b.baseState = a;
+        a = { pending: null, interleaved: null, lanes: 0, dispatch: null, lastRenderedReducer: Vh, lastRenderedState: a };
+        b.queue = a;
+        a = a.dispatch = ii.bind(null, M, a);
+        return [b.memoizedState, a];
+      }
+      __name(hi, "hi");
+      function bi(a, b, c, d) {
+        a = { tag: a, create: b, destroy: c, deps: d, next: null };
+        b = M.updateQueue;
+        null === b ? (b = { lastEffect: null, stores: null }, M.updateQueue = b, b.lastEffect = a.next = a) : (c = b.lastEffect, null === c ? b.lastEffect = a.next = a : (d = c.next, c.next = a, a.next = d, b.lastEffect = a));
+        return a;
+      }
+      __name(bi, "bi");
+      function ji() {
+        return Uh().memoizedState;
+      }
+      __name(ji, "ji");
+      function ki(a, b, c, d) {
+        var e = Th();
+        M.flags |= a;
+        e.memoizedState = bi(1 | b, c, void 0, void 0 === d ? null : d);
+      }
+      __name(ki, "ki");
+      function li(a, b, c, d) {
+        var e = Uh();
+        d = void 0 === d ? null : d;
+        var f = void 0;
+        if (null !== N) {
+          var g = N.memoizedState;
+          f = g.destroy;
+          if (null !== d && Mh(d, g.deps)) {
+            e.memoizedState = bi(b, c, f, d);
+            return;
+          }
+        }
+        M.flags |= a;
+        e.memoizedState = bi(1 | b, c, f, d);
+      }
+      __name(li, "li");
+      function mi(a, b) {
+        return ki(8390656, 8, a, b);
+      }
+      __name(mi, "mi");
+      function $h(a, b) {
+        return li(2048, 8, a, b);
+      }
+      __name($h, "$h");
+      function ni(a, b) {
+        return li(4, 2, a, b);
+      }
+      __name(ni, "ni");
+      function oi(a, b) {
+        return li(4, 4, a, b);
+      }
+      __name(oi, "oi");
+      function pi(a, b) {
+        if ("function" === typeof b) return a = a(), b(a), function() {
+          b(null);
+        };
+        if (null !== b && void 0 !== b) return a = a(), b.current = a, function() {
+          b.current = null;
+        };
+      }
+      __name(pi, "pi");
+      function qi(a, b, c) {
+        c = null !== c && void 0 !== c ? c.concat([a]) : null;
+        return li(4, 4, pi.bind(null, b, a), c);
+      }
+      __name(qi, "qi");
+      function ri() {
+      }
+      __name(ri, "ri");
+      function si(a, b) {
+        var c = Uh();
+        b = void 0 === b ? null : b;
+        var d = c.memoizedState;
+        if (null !== d && null !== b && Mh(b, d[1])) return d[0];
+        c.memoizedState = [a, b];
+        return a;
+      }
+      __name(si, "si");
+      function ti(a, b) {
+        var c = Uh();
+        b = void 0 === b ? null : b;
+        var d = c.memoizedState;
+        if (null !== d && null !== b && Mh(b, d[1])) return d[0];
+        a = a();
+        c.memoizedState = [a, b];
+        return a;
+      }
+      __name(ti, "ti");
+      function ui(a, b, c) {
+        if (0 === (Hh & 21)) return a.baseState && (a.baseState = false, dh = true), a.memoizedState = c;
+        He(c, b) || (c = yc(), M.lanes |= c, rh |= c, a.baseState = true);
+        return b;
+      }
+      __name(ui, "ui");
+      function vi(a, b) {
+        var c = C;
+        C = 0 !== c && 4 > c ? c : 4;
+        a(true);
+        var d = Gh.transition;
+        Gh.transition = {};
+        try {
+          a(false), b();
+        } finally {
+          C = c, Gh.transition = d;
+        }
+      }
+      __name(vi, "vi");
+      function wi() {
+        return Uh().memoizedState;
+      }
+      __name(wi, "wi");
+      function xi(a, b, c) {
+        var d = yi(a);
+        c = { lane: d, action: c, hasEagerState: false, eagerState: null, next: null };
+        if (zi(a)) Ai(b, c);
+        else if (c = hh(a, b, c, d), null !== c) {
+          var e = R();
+          gi(c, a, d, e);
+          Bi(c, b, d);
+        }
+      }
+      __name(xi, "xi");
+      function ii(a, b, c) {
+        var d = yi(a), e = { lane: d, action: c, hasEagerState: false, eagerState: null, next: null };
+        if (zi(a)) Ai(b, e);
+        else {
+          var f = a.alternate;
+          if (0 === a.lanes && (null === f || 0 === f.lanes) && (f = b.lastRenderedReducer, null !== f)) try {
+            var g = b.lastRenderedState, h = f(g, c);
+            e.hasEagerState = true;
+            e.eagerState = h;
+            if (He(h, g)) {
+              var k = b.interleaved;
+              null === k ? (e.next = e, gh(b)) : (e.next = k.next, k.next = e);
+              b.interleaved = e;
+              return;
+            }
+          } catch (l) {
+          } finally {
+          }
+          c = hh(a, b, e, d);
+          null !== c && (e = R(), gi(c, a, d, e), Bi(c, b, d));
+        }
+      }
+      __name(ii, "ii");
+      function zi(a) {
+        var b = a.alternate;
+        return a === M || null !== b && b === M;
+      }
+      __name(zi, "zi");
+      function Ai(a, b) {
+        Jh = Ih = true;
+        var c = a.pending;
+        null === c ? b.next = b : (b.next = c.next, c.next = b);
+        a.pending = b;
+      }
+      __name(Ai, "Ai");
+      function Bi(a, b, c) {
+        if (0 !== (c & 4194240)) {
+          var d = b.lanes;
+          d &= a.pendingLanes;
+          c |= d;
+          b.lanes = c;
+          Cc(a, c);
+        }
+      }
+      __name(Bi, "Bi");
+      var Rh = { readContext: eh, useCallback: P, useContext: P, useEffect: P, useImperativeHandle: P, useInsertionEffect: P, useLayoutEffect: P, useMemo: P, useReducer: P, useRef: P, useState: P, useDebugValue: P, useDeferredValue: P, useTransition: P, useMutableSource: P, useSyncExternalStore: P, useId: P, unstable_isNewReconciler: false };
+      var Oh = { readContext: eh, useCallback: /* @__PURE__ */ __name(function(a, b) {
+        Th().memoizedState = [a, void 0 === b ? null : b];
+        return a;
+      }, "useCallback"), useContext: eh, useEffect: mi, useImperativeHandle: /* @__PURE__ */ __name(function(a, b, c) {
+        c = null !== c && void 0 !== c ? c.concat([a]) : null;
+        return ki(
+          4194308,
+          4,
+          pi.bind(null, b, a),
+          c
+        );
+      }, "useImperativeHandle"), useLayoutEffect: /* @__PURE__ */ __name(function(a, b) {
+        return ki(4194308, 4, a, b);
+      }, "useLayoutEffect"), useInsertionEffect: /* @__PURE__ */ __name(function(a, b) {
+        return ki(4, 2, a, b);
+      }, "useInsertionEffect"), useMemo: /* @__PURE__ */ __name(function(a, b) {
+        var c = Th();
+        b = void 0 === b ? null : b;
+        a = a();
+        c.memoizedState = [a, b];
+        return a;
+      }, "useMemo"), useReducer: /* @__PURE__ */ __name(function(a, b, c) {
+        var d = Th();
+        b = void 0 !== c ? c(b) : b;
+        d.memoizedState = d.baseState = b;
+        a = { pending: null, interleaved: null, lanes: 0, dispatch: null, lastRenderedReducer: a, lastRenderedState: b };
+        d.queue = a;
+        a = a.dispatch = xi.bind(null, M, a);
+        return [d.memoizedState, a];
+      }, "useReducer"), useRef: /* @__PURE__ */ __name(function(a) {
+        var b = Th();
+        a = { current: a };
+        return b.memoizedState = a;
+      }, "useRef"), useState: hi, useDebugValue: ri, useDeferredValue: /* @__PURE__ */ __name(function(a) {
+        return Th().memoizedState = a;
+      }, "useDeferredValue"), useTransition: /* @__PURE__ */ __name(function() {
+        var a = hi(false), b = a[0];
+        a = vi.bind(null, a[1]);
+        Th().memoizedState = a;
+        return [b, a];
+      }, "useTransition"), useMutableSource: /* @__PURE__ */ __name(function() {
+      }, "useMutableSource"), useSyncExternalStore: /* @__PURE__ */ __name(function(a, b, c) {
+        var d = M, e = Th();
+        if (I) {
+          if (void 0 === c) throw Error(p(407));
+          c = c();
+        } else {
+          c = b();
+          if (null === Q) throw Error(p(349));
+          0 !== (Hh & 30) || di(d, b, c);
+        }
+        e.memoizedState = c;
+        var f = { value: c, getSnapshot: b };
+        e.queue = f;
+        mi(ai.bind(
+          null,
+          d,
+          f,
+          a
+        ), [a]);
+        d.flags |= 2048;
+        bi(9, ci.bind(null, d, f, c, b), void 0, null);
+        return c;
+      }, "useSyncExternalStore"), useId: /* @__PURE__ */ __name(function() {
+        var a = Th(), b = Q.identifierPrefix;
+        if (I) {
+          var c = sg;
+          var d = rg;
+          c = (d & ~(1 << 32 - oc(d) - 1)).toString(32) + c;
+          b = ":" + b + "R" + c;
+          c = Kh++;
+          0 < c && (b += "H" + c.toString(32));
+          b += ":";
+        } else c = Lh++, b = ":" + b + "r" + c.toString(32) + ":";
+        return a.memoizedState = b;
+      }, "useId"), unstable_isNewReconciler: false };
+      var Ph = {
+        readContext: eh,
+        useCallback: si,
+        useContext: eh,
+        useEffect: $h,
+        useImperativeHandle: qi,
+        useInsertionEffect: ni,
+        useLayoutEffect: oi,
+        useMemo: ti,
+        useReducer: Wh,
+        useRef: ji,
+        useState: /* @__PURE__ */ __name(function() {
+          return Wh(Vh);
+        }, "useState"),
+        useDebugValue: ri,
+        useDeferredValue: /* @__PURE__ */ __name(function(a) {
+          var b = Uh();
+          return ui(b, N.memoizedState, a);
+        }, "useDeferredValue"),
+        useTransition: /* @__PURE__ */ __name(function() {
+          var a = Wh(Vh)[0], b = Uh().memoizedState;
+          return [a, b];
+        }, "useTransition"),
+        useMutableSource: Yh,
+        useSyncExternalStore: Zh,
+        useId: wi,
+        unstable_isNewReconciler: false
+      };
+      var Qh = { readContext: eh, useCallback: si, useContext: eh, useEffect: $h, useImperativeHandle: qi, useInsertionEffect: ni, useLayoutEffect: oi, useMemo: ti, useReducer: Xh, useRef: ji, useState: /* @__PURE__ */ __name(function() {
+        return Xh(Vh);
+      }, "useState"), useDebugValue: ri, useDeferredValue: /* @__PURE__ */ __name(function(a) {
+        var b = Uh();
+        return null === N ? b.memoizedState = a : ui(b, N.memoizedState, a);
+      }, "useDeferredValue"), useTransition: /* @__PURE__ */ __name(function() {
+        var a = Xh(Vh)[0], b = Uh().memoizedState;
+        return [a, b];
+      }, "useTransition"), useMutableSource: Yh, useSyncExternalStore: Zh, useId: wi, unstable_isNewReconciler: false };
+      function Ci(a, b) {
+        if (a && a.defaultProps) {
+          b = A({}, b);
+          a = a.defaultProps;
+          for (var c in a) void 0 === b[c] && (b[c] = a[c]);
+          return b;
+        }
+        return b;
+      }
+      __name(Ci, "Ci");
+      function Di(a, b, c, d) {
+        b = a.memoizedState;
+        c = c(d, b);
+        c = null === c || void 0 === c ? b : A({}, b, c);
+        a.memoizedState = c;
+        0 === a.lanes && (a.updateQueue.baseState = c);
+      }
+      __name(Di, "Di");
+      var Ei = { isMounted: /* @__PURE__ */ __name(function(a) {
+        return (a = a._reactInternals) ? Vb(a) === a : false;
+      }, "isMounted"), enqueueSetState: /* @__PURE__ */ __name(function(a, b, c) {
+        a = a._reactInternals;
+        var d = R(), e = yi(a), f = mh(d, e);
+        f.payload = b;
+        void 0 !== c && null !== c && (f.callback = c);
+        b = nh(a, f, e);
+        null !== b && (gi(b, a, e, d), oh(b, a, e));
+      }, "enqueueSetState"), enqueueReplaceState: /* @__PURE__ */ __name(function(a, b, c) {
+        a = a._reactInternals;
+        var d = R(), e = yi(a), f = mh(d, e);
+        f.tag = 1;
+        f.payload = b;
+        void 0 !== c && null !== c && (f.callback = c);
+        b = nh(a, f, e);
+        null !== b && (gi(b, a, e, d), oh(b, a, e));
+      }, "enqueueReplaceState"), enqueueForceUpdate: /* @__PURE__ */ __name(function(a, b) {
+        a = a._reactInternals;
+        var c = R(), d = yi(a), e = mh(c, d);
+        e.tag = 2;
+        void 0 !== b && null !== b && (e.callback = b);
+        b = nh(a, e, d);
+        null !== b && (gi(b, a, d, c), oh(b, a, d));
+      }, "enqueueForceUpdate") };
+      function Fi(a, b, c, d, e, f, g) {
+        a = a.stateNode;
+        return "function" === typeof a.shouldComponentUpdate ? a.shouldComponentUpdate(d, f, g) : b.prototype && b.prototype.isPureReactComponent ? !Ie(c, d) || !Ie(e, f) : true;
+      }
+      __name(Fi, "Fi");
+      function Gi(a, b, c) {
+        var d = false, e = Vf;
+        var f = b.contextType;
+        "object" === typeof f && null !== f ? f = eh(f) : (e = Zf(b) ? Xf : H2.current, d = b.contextTypes, f = (d = null !== d && void 0 !== d) ? Yf(a, e) : Vf);
+        b = new b(c, f);
+        a.memoizedState = null !== b.state && void 0 !== b.state ? b.state : null;
+        b.updater = Ei;
+        a.stateNode = b;
+        b._reactInternals = a;
+        d && (a = a.stateNode, a.__reactInternalMemoizedUnmaskedChildContext = e, a.__reactInternalMemoizedMaskedChildContext = f);
+        return b;
+      }
+      __name(Gi, "Gi");
+      function Hi(a, b, c, d) {
+        a = b.state;
+        "function" === typeof b.componentWillReceiveProps && b.componentWillReceiveProps(c, d);
+        "function" === typeof b.UNSAFE_componentWillReceiveProps && b.UNSAFE_componentWillReceiveProps(c, d);
+        b.state !== a && Ei.enqueueReplaceState(b, b.state, null);
+      }
+      __name(Hi, "Hi");
+      function Ii(a, b, c, d) {
+        var e = a.stateNode;
+        e.props = c;
+        e.state = a.memoizedState;
+        e.refs = {};
+        kh(a);
+        var f = b.contextType;
+        "object" === typeof f && null !== f ? e.context = eh(f) : (f = Zf(b) ? Xf : H2.current, e.context = Yf(a, f));
+        e.state = a.memoizedState;
+        f = b.getDerivedStateFromProps;
+        "function" === typeof f && (Di(a, b, f, c), e.state = a.memoizedState);
+        "function" === typeof b.getDerivedStateFromProps || "function" === typeof e.getSnapshotBeforeUpdate || "function" !== typeof e.UNSAFE_componentWillMount && "function" !== typeof e.componentWillMount || (b = e.state, "function" === typeof e.componentWillMount && e.componentWillMount(), "function" === typeof e.UNSAFE_componentWillMount && e.UNSAFE_componentWillMount(), b !== e.state && Ei.enqueueReplaceState(e, e.state, null), qh(a, c, e, d), e.state = a.memoizedState);
+        "function" === typeof e.componentDidMount && (a.flags |= 4194308);
+      }
+      __name(Ii, "Ii");
+      function Ji(a, b) {
+        try {
+          var c = "", d = b;
+          do
+            c += Pa(d), d = d.return;
+          while (d);
+          var e = c;
+        } catch (f) {
+          e = "\nError generating stack: " + f.message + "\n" + f.stack;
+        }
+        return { value: a, source: b, stack: e, digest: null };
+      }
+      __name(Ji, "Ji");
+      function Ki(a, b, c) {
+        return { value: a, source: null, stack: null != c ? c : null, digest: null != b ? b : null };
+      }
+      __name(Ki, "Ki");
+      function Li(a, b) {
+        try {
+          console.error(b.value);
+        } catch (c) {
+          setTimeout(function() {
+            throw c;
+          });
+        }
+      }
+      __name(Li, "Li");
+      var Mi = "function" === typeof WeakMap ? WeakMap : Map;
+      function Ni(a, b, c) {
+        c = mh(-1, c);
+        c.tag = 3;
+        c.payload = { element: null };
+        var d = b.value;
+        c.callback = function() {
+          Oi || (Oi = true, Pi = d);
+          Li(a, b);
+        };
+        return c;
+      }
+      __name(Ni, "Ni");
+      function Qi(a, b, c) {
+        c = mh(-1, c);
+        c.tag = 3;
+        var d = a.type.getDerivedStateFromError;
+        if ("function" === typeof d) {
+          var e = b.value;
+          c.payload = function() {
+            return d(e);
+          };
+          c.callback = function() {
+            Li(a, b);
+          };
+        }
+        var f = a.stateNode;
+        null !== f && "function" === typeof f.componentDidCatch && (c.callback = function() {
+          Li(a, b);
+          "function" !== typeof d && (null === Ri ? Ri = /* @__PURE__ */ new Set([this]) : Ri.add(this));
+          var c2 = b.stack;
+          this.componentDidCatch(b.value, { componentStack: null !== c2 ? c2 : "" });
+        });
+        return c;
+      }
+      __name(Qi, "Qi");
+      function Si(a, b, c) {
+        var d = a.pingCache;
+        if (null === d) {
+          d = a.pingCache = new Mi();
+          var e = /* @__PURE__ */ new Set();
+          d.set(b, e);
+        } else e = d.get(b), void 0 === e && (e = /* @__PURE__ */ new Set(), d.set(b, e));
+        e.has(c) || (e.add(c), a = Ti.bind(null, a, b, c), b.then(a, a));
+      }
+      __name(Si, "Si");
+      function Ui(a) {
+        do {
+          var b;
+          if (b = 13 === a.tag) b = a.memoizedState, b = null !== b ? null !== b.dehydrated ? true : false : true;
+          if (b) return a;
+          a = a.return;
+        } while (null !== a);
+        return null;
+      }
+      __name(Ui, "Ui");
+      function Vi(a, b, c, d, e) {
+        if (0 === (a.mode & 1)) return a === b ? a.flags |= 65536 : (a.flags |= 128, c.flags |= 131072, c.flags &= -52805, 1 === c.tag && (null === c.alternate ? c.tag = 17 : (b = mh(-1, 1), b.tag = 2, nh(c, b, 1))), c.lanes |= 1), a;
+        a.flags |= 65536;
+        a.lanes = e;
+        return a;
+      }
+      __name(Vi, "Vi");
+      var Wi = ua.ReactCurrentOwner;
+      var dh = false;
+      function Xi(a, b, c, d) {
+        b.child = null === a ? Vg(b, null, c, d) : Ug(b, a.child, c, d);
+      }
+      __name(Xi, "Xi");
+      function Yi(a, b, c, d, e) {
+        c = c.render;
+        var f = b.ref;
+        ch(b, e);
+        d = Nh(a, b, c, d, f, e);
+        c = Sh();
+        if (null !== a && !dh) return b.updateQueue = a.updateQueue, b.flags &= -2053, a.lanes &= ~e, Zi(a, b, e);
+        I && c && vg(b);
+        b.flags |= 1;
+        Xi(a, b, d, e);
+        return b.child;
+      }
+      __name(Yi, "Yi");
+      function $i(a, b, c, d, e) {
+        if (null === a) {
+          var f = c.type;
+          if ("function" === typeof f && !aj(f) && void 0 === f.defaultProps && null === c.compare && void 0 === c.defaultProps) return b.tag = 15, b.type = f, bj(a, b, f, d, e);
+          a = Rg(c.type, null, d, b, b.mode, e);
+          a.ref = b.ref;
+          a.return = b;
+          return b.child = a;
+        }
+        f = a.child;
+        if (0 === (a.lanes & e)) {
+          var g = f.memoizedProps;
+          c = c.compare;
+          c = null !== c ? c : Ie;
+          if (c(g, d) && a.ref === b.ref) return Zi(a, b, e);
+        }
+        b.flags |= 1;
+        a = Pg(f, d);
+        a.ref = b.ref;
+        a.return = b;
+        return b.child = a;
+      }
+      __name($i, "$i");
+      function bj(a, b, c, d, e) {
+        if (null !== a) {
+          var f = a.memoizedProps;
+          if (Ie(f, d) && a.ref === b.ref) if (dh = false, b.pendingProps = d = f, 0 !== (a.lanes & e)) 0 !== (a.flags & 131072) && (dh = true);
+          else return b.lanes = a.lanes, Zi(a, b, e);
+        }
+        return cj(a, b, c, d, e);
+      }
+      __name(bj, "bj");
+      function dj(a, b, c) {
+        var d = b.pendingProps, e = d.children, f = null !== a ? a.memoizedState : null;
+        if ("hidden" === d.mode) if (0 === (b.mode & 1)) b.memoizedState = { baseLanes: 0, cachePool: null, transitions: null }, G(ej, fj), fj |= c;
+        else {
+          if (0 === (c & 1073741824)) return a = null !== f ? f.baseLanes | c : c, b.lanes = b.childLanes = 1073741824, b.memoizedState = { baseLanes: a, cachePool: null, transitions: null }, b.updateQueue = null, G(ej, fj), fj |= a, null;
+          b.memoizedState = { baseLanes: 0, cachePool: null, transitions: null };
+          d = null !== f ? f.baseLanes : c;
+          G(ej, fj);
+          fj |= d;
+        }
+        else null !== f ? (d = f.baseLanes | c, b.memoizedState = null) : d = c, G(ej, fj), fj |= d;
+        Xi(a, b, e, c);
+        return b.child;
+      }
+      __name(dj, "dj");
+      function gj(a, b) {
+        var c = b.ref;
+        if (null === a && null !== c || null !== a && a.ref !== c) b.flags |= 512, b.flags |= 2097152;
+      }
+      __name(gj, "gj");
+      function cj(a, b, c, d, e) {
+        var f = Zf(c) ? Xf : H2.current;
+        f = Yf(b, f);
+        ch(b, e);
+        c = Nh(a, b, c, d, f, e);
+        d = Sh();
+        if (null !== a && !dh) return b.updateQueue = a.updateQueue, b.flags &= -2053, a.lanes &= ~e, Zi(a, b, e);
+        I && d && vg(b);
+        b.flags |= 1;
+        Xi(a, b, c, e);
+        return b.child;
+      }
+      __name(cj, "cj");
+      function hj(a, b, c, d, e) {
+        if (Zf(c)) {
+          var f = true;
+          cg(b);
+        } else f = false;
+        ch(b, e);
+        if (null === b.stateNode) ij(a, b), Gi(b, c, d), Ii(b, c, d, e), d = true;
+        else if (null === a) {
+          var g = b.stateNode, h = b.memoizedProps;
+          g.props = h;
+          var k = g.context, l = c.contextType;
+          "object" === typeof l && null !== l ? l = eh(l) : (l = Zf(c) ? Xf : H2.current, l = Yf(b, l));
+          var m = c.getDerivedStateFromProps, q = "function" === typeof m || "function" === typeof g.getSnapshotBeforeUpdate;
+          q || "function" !== typeof g.UNSAFE_componentWillReceiveProps && "function" !== typeof g.componentWillReceiveProps || (h !== d || k !== l) && Hi(b, g, d, l);
+          jh = false;
+          var r = b.memoizedState;
+          g.state = r;
+          qh(b, d, g, e);
+          k = b.memoizedState;
+          h !== d || r !== k || Wf.current || jh ? ("function" === typeof m && (Di(b, c, m, d), k = b.memoizedState), (h = jh || Fi(b, c, h, d, r, k, l)) ? (q || "function" !== typeof g.UNSAFE_componentWillMount && "function" !== typeof g.componentWillMount || ("function" === typeof g.componentWillMount && g.componentWillMount(), "function" === typeof g.UNSAFE_componentWillMount && g.UNSAFE_componentWillMount()), "function" === typeof g.componentDidMount && (b.flags |= 4194308)) : ("function" === typeof g.componentDidMount && (b.flags |= 4194308), b.memoizedProps = d, b.memoizedState = k), g.props = d, g.state = k, g.context = l, d = h) : ("function" === typeof g.componentDidMount && (b.flags |= 4194308), d = false);
+        } else {
+          g = b.stateNode;
+          lh(a, b);
+          h = b.memoizedProps;
+          l = b.type === b.elementType ? h : Ci(b.type, h);
+          g.props = l;
+          q = b.pendingProps;
+          r = g.context;
+          k = c.contextType;
+          "object" === typeof k && null !== k ? k = eh(k) : (k = Zf(c) ? Xf : H2.current, k = Yf(b, k));
+          var y = c.getDerivedStateFromProps;
+          (m = "function" === typeof y || "function" === typeof g.getSnapshotBeforeUpdate) || "function" !== typeof g.UNSAFE_componentWillReceiveProps && "function" !== typeof g.componentWillReceiveProps || (h !== q || r !== k) && Hi(b, g, d, k);
+          jh = false;
+          r = b.memoizedState;
+          g.state = r;
+          qh(b, d, g, e);
+          var n = b.memoizedState;
+          h !== q || r !== n || Wf.current || jh ? ("function" === typeof y && (Di(b, c, y, d), n = b.memoizedState), (l = jh || Fi(b, c, l, d, r, n, k) || false) ? (m || "function" !== typeof g.UNSAFE_componentWillUpdate && "function" !== typeof g.componentWillUpdate || ("function" === typeof g.componentWillUpdate && g.componentWillUpdate(d, n, k), "function" === typeof g.UNSAFE_componentWillUpdate && g.UNSAFE_componentWillUpdate(d, n, k)), "function" === typeof g.componentDidUpdate && (b.flags |= 4), "function" === typeof g.getSnapshotBeforeUpdate && (b.flags |= 1024)) : ("function" !== typeof g.componentDidUpdate || h === a.memoizedProps && r === a.memoizedState || (b.flags |= 4), "function" !== typeof g.getSnapshotBeforeUpdate || h === a.memoizedProps && r === a.memoizedState || (b.flags |= 1024), b.memoizedProps = d, b.memoizedState = n), g.props = d, g.state = n, g.context = k, d = l) : ("function" !== typeof g.componentDidUpdate || h === a.memoizedProps && r === a.memoizedState || (b.flags |= 4), "function" !== typeof g.getSnapshotBeforeUpdate || h === a.memoizedProps && r === a.memoizedState || (b.flags |= 1024), d = false);
+        }
+        return jj(a, b, c, d, f, e);
+      }
+      __name(hj, "hj");
+      function jj(a, b, c, d, e, f) {
+        gj(a, b);
+        var g = 0 !== (b.flags & 128);
+        if (!d && !g) return e && dg(b, c, false), Zi(a, b, f);
+        d = b.stateNode;
+        Wi.current = b;
+        var h = g && "function" !== typeof c.getDerivedStateFromError ? null : d.render();
+        b.flags |= 1;
+        null !== a && g ? (b.child = Ug(b, a.child, null, f), b.child = Ug(b, null, h, f)) : Xi(a, b, h, f);
+        b.memoizedState = d.state;
+        e && dg(b, c, true);
+        return b.child;
+      }
+      __name(jj, "jj");
+      function kj(a) {
+        var b = a.stateNode;
+        b.pendingContext ? ag(a, b.pendingContext, b.pendingContext !== b.context) : b.context && ag(a, b.context, false);
+        yh(a, b.containerInfo);
+      }
+      __name(kj, "kj");
+      function lj(a, b, c, d, e) {
+        Ig();
+        Jg(e);
+        b.flags |= 256;
+        Xi(a, b, c, d);
+        return b.child;
+      }
+      __name(lj, "lj");
+      var mj = { dehydrated: null, treeContext: null, retryLane: 0 };
+      function nj(a) {
+        return { baseLanes: a, cachePool: null, transitions: null };
+      }
+      __name(nj, "nj");
+      function oj(a, b, c) {
+        var d = b.pendingProps, e = L.current, f = false, g = 0 !== (b.flags & 128), h;
+        (h = g) || (h = null !== a && null === a.memoizedState ? false : 0 !== (e & 2));
+        if (h) f = true, b.flags &= -129;
+        else if (null === a || null !== a.memoizedState) e |= 1;
+        G(L, e & 1);
+        if (null === a) {
+          Eg(b);
+          a = b.memoizedState;
+          if (null !== a && (a = a.dehydrated, null !== a)) return 0 === (b.mode & 1) ? b.lanes = 1 : "$!" === a.data ? b.lanes = 8 : b.lanes = 1073741824, null;
+          g = d.children;
+          a = d.fallback;
+          return f ? (d = b.mode, f = b.child, g = { mode: "hidden", children: g }, 0 === (d & 1) && null !== f ? (f.childLanes = 0, f.pendingProps = g) : f = pj(g, d, 0, null), a = Tg(a, d, c, null), f.return = b, a.return = b, f.sibling = a, b.child = f, b.child.memoizedState = nj(c), b.memoizedState = mj, a) : qj(b, g);
+        }
+        e = a.memoizedState;
+        if (null !== e && (h = e.dehydrated, null !== h)) return rj(a, b, g, d, h, e, c);
+        if (f) {
+          f = d.fallback;
+          g = b.mode;
+          e = a.child;
+          h = e.sibling;
+          var k = { mode: "hidden", children: d.children };
+          0 === (g & 1) && b.child !== e ? (d = b.child, d.childLanes = 0, d.pendingProps = k, b.deletions = null) : (d = Pg(e, k), d.subtreeFlags = e.subtreeFlags & 14680064);
+          null !== h ? f = Pg(h, f) : (f = Tg(f, g, c, null), f.flags |= 2);
+          f.return = b;
+          d.return = b;
+          d.sibling = f;
+          b.child = d;
+          d = f;
+          f = b.child;
+          g = a.child.memoizedState;
+          g = null === g ? nj(c) : { baseLanes: g.baseLanes | c, cachePool: null, transitions: g.transitions };
+          f.memoizedState = g;
+          f.childLanes = a.childLanes & ~c;
+          b.memoizedState = mj;
+          return d;
+        }
+        f = a.child;
+        a = f.sibling;
+        d = Pg(f, { mode: "visible", children: d.children });
+        0 === (b.mode & 1) && (d.lanes = c);
+        d.return = b;
+        d.sibling = null;
+        null !== a && (c = b.deletions, null === c ? (b.deletions = [a], b.flags |= 16) : c.push(a));
+        b.child = d;
+        b.memoizedState = null;
+        return d;
+      }
+      __name(oj, "oj");
+      function qj(a, b) {
+        b = pj({ mode: "visible", children: b }, a.mode, 0, null);
+        b.return = a;
+        return a.child = b;
+      }
+      __name(qj, "qj");
+      function sj(a, b, c, d) {
+        null !== d && Jg(d);
+        Ug(b, a.child, null, c);
+        a = qj(b, b.pendingProps.children);
+        a.flags |= 2;
+        b.memoizedState = null;
+        return a;
+      }
+      __name(sj, "sj");
+      function rj(a, b, c, d, e, f, g) {
+        if (c) {
+          if (b.flags & 256) return b.flags &= -257, d = Ki(Error(p(422))), sj(a, b, g, d);
+          if (null !== b.memoizedState) return b.child = a.child, b.flags |= 128, null;
+          f = d.fallback;
+          e = b.mode;
+          d = pj({ mode: "visible", children: d.children }, e, 0, null);
+          f = Tg(f, e, g, null);
+          f.flags |= 2;
+          d.return = b;
+          f.return = b;
+          d.sibling = f;
+          b.child = d;
+          0 !== (b.mode & 1) && Ug(b, a.child, null, g);
+          b.child.memoizedState = nj(g);
+          b.memoizedState = mj;
+          return f;
+        }
+        if (0 === (b.mode & 1)) return sj(a, b, g, null);
+        if ("$!" === e.data) {
+          d = e.nextSibling && e.nextSibling.dataset;
+          if (d) var h = d.dgst;
+          d = h;
+          f = Error(p(419));
+          d = Ki(f, d, void 0);
+          return sj(a, b, g, d);
+        }
+        h = 0 !== (g & a.childLanes);
+        if (dh || h) {
+          d = Q;
+          if (null !== d) {
+            switch (g & -g) {
+              case 4:
+                e = 2;
+                break;
+              case 16:
+                e = 8;
+                break;
+              case 64:
+              case 128:
+              case 256:
+              case 512:
+              case 1024:
+              case 2048:
+              case 4096:
+              case 8192:
+              case 16384:
+              case 32768:
+              case 65536:
+              case 131072:
+              case 262144:
+              case 524288:
+              case 1048576:
+              case 2097152:
+              case 4194304:
+              case 8388608:
+              case 16777216:
+              case 33554432:
+              case 67108864:
+                e = 32;
+                break;
+              case 536870912:
+                e = 268435456;
+                break;
+              default:
+                e = 0;
+            }
+            e = 0 !== (e & (d.suspendedLanes | g)) ? 0 : e;
+            0 !== e && e !== f.retryLane && (f.retryLane = e, ih(a, e), gi(d, a, e, -1));
+          }
+          tj();
+          d = Ki(Error(p(421)));
+          return sj(a, b, g, d);
+        }
+        if ("$?" === e.data) return b.flags |= 128, b.child = a.child, b = uj.bind(null, a), e._reactRetry = b, null;
+        a = f.treeContext;
+        yg = Lf(e.nextSibling);
+        xg = b;
+        I = true;
+        zg = null;
+        null !== a && (og[pg++] = rg, og[pg++] = sg, og[pg++] = qg, rg = a.id, sg = a.overflow, qg = b);
+        b = qj(b, d.children);
+        b.flags |= 4096;
+        return b;
+      }
+      __name(rj, "rj");
+      function vj(a, b, c) {
+        a.lanes |= b;
+        var d = a.alternate;
+        null !== d && (d.lanes |= b);
+        bh(a.return, b, c);
+      }
+      __name(vj, "vj");
+      function wj(a, b, c, d, e) {
+        var f = a.memoizedState;
+        null === f ? a.memoizedState = { isBackwards: b, rendering: null, renderingStartTime: 0, last: d, tail: c, tailMode: e } : (f.isBackwards = b, f.rendering = null, f.renderingStartTime = 0, f.last = d, f.tail = c, f.tailMode = e);
+      }
+      __name(wj, "wj");
+      function xj(a, b, c) {
+        var d = b.pendingProps, e = d.revealOrder, f = d.tail;
+        Xi(a, b, d.children, c);
+        d = L.current;
+        if (0 !== (d & 2)) d = d & 1 | 2, b.flags |= 128;
+        else {
+          if (null !== a && 0 !== (a.flags & 128)) a: for (a = b.child; null !== a; ) {
+            if (13 === a.tag) null !== a.memoizedState && vj(a, c, b);
+            else if (19 === a.tag) vj(a, c, b);
+            else if (null !== a.child) {
+              a.child.return = a;
+              a = a.child;
+              continue;
+            }
+            if (a === b) break a;
+            for (; null === a.sibling; ) {
+              if (null === a.return || a.return === b) break a;
+              a = a.return;
+            }
+            a.sibling.return = a.return;
+            a = a.sibling;
+          }
+          d &= 1;
+        }
+        G(L, d);
+        if (0 === (b.mode & 1)) b.memoizedState = null;
+        else switch (e) {
+          case "forwards":
+            c = b.child;
+            for (e = null; null !== c; ) a = c.alternate, null !== a && null === Ch(a) && (e = c), c = c.sibling;
+            c = e;
+            null === c ? (e = b.child, b.child = null) : (e = c.sibling, c.sibling = null);
+            wj(b, false, e, c, f);
+            break;
+          case "backwards":
+            c = null;
+            e = b.child;
+            for (b.child = null; null !== e; ) {
+              a = e.alternate;
+              if (null !== a && null === Ch(a)) {
+                b.child = e;
+                break;
+              }
+              a = e.sibling;
+              e.sibling = c;
+              c = e;
+              e = a;
+            }
+            wj(b, true, c, null, f);
+            break;
+          case "together":
+            wj(b, false, null, null, void 0);
+            break;
+          default:
+            b.memoizedState = null;
+        }
+        return b.child;
+      }
+      __name(xj, "xj");
+      function ij(a, b) {
+        0 === (b.mode & 1) && null !== a && (a.alternate = null, b.alternate = null, b.flags |= 2);
+      }
+      __name(ij, "ij");
+      function Zi(a, b, c) {
+        null !== a && (b.dependencies = a.dependencies);
+        rh |= b.lanes;
+        if (0 === (c & b.childLanes)) return null;
+        if (null !== a && b.child !== a.child) throw Error(p(153));
+        if (null !== b.child) {
+          a = b.child;
+          c = Pg(a, a.pendingProps);
+          b.child = c;
+          for (c.return = b; null !== a.sibling; ) a = a.sibling, c = c.sibling = Pg(a, a.pendingProps), c.return = b;
+          c.sibling = null;
+        }
+        return b.child;
+      }
+      __name(Zi, "Zi");
+      function yj(a, b, c) {
+        switch (b.tag) {
+          case 3:
+            kj(b);
+            Ig();
+            break;
+          case 5:
+            Ah(b);
+            break;
+          case 1:
+            Zf(b.type) && cg(b);
+            break;
+          case 4:
+            yh(b, b.stateNode.containerInfo);
+            break;
+          case 10:
+            var d = b.type._context, e = b.memoizedProps.value;
+            G(Wg, d._currentValue);
+            d._currentValue = e;
+            break;
+          case 13:
+            d = b.memoizedState;
+            if (null !== d) {
+              if (null !== d.dehydrated) return G(L, L.current & 1), b.flags |= 128, null;
+              if (0 !== (c & b.child.childLanes)) return oj(a, b, c);
+              G(L, L.current & 1);
+              a = Zi(a, b, c);
+              return null !== a ? a.sibling : null;
+            }
+            G(L, L.current & 1);
+            break;
+          case 19:
+            d = 0 !== (c & b.childLanes);
+            if (0 !== (a.flags & 128)) {
+              if (d) return xj(a, b, c);
+              b.flags |= 128;
+            }
+            e = b.memoizedState;
+            null !== e && (e.rendering = null, e.tail = null, e.lastEffect = null);
+            G(L, L.current);
+            if (d) break;
+            else return null;
+          case 22:
+          case 23:
+            return b.lanes = 0, dj(a, b, c);
+        }
+        return Zi(a, b, c);
+      }
+      __name(yj, "yj");
+      var zj;
+      var Aj;
+      var Bj;
+      var Cj;
+      zj = /* @__PURE__ */ __name(function(a, b) {
+        for (var c = b.child; null !== c; ) {
+          if (5 === c.tag || 6 === c.tag) a.appendChild(c.stateNode);
+          else if (4 !== c.tag && null !== c.child) {
+            c.child.return = c;
+            c = c.child;
+            continue;
+          }
+          if (c === b) break;
+          for (; null === c.sibling; ) {
+            if (null === c.return || c.return === b) return;
+            c = c.return;
+          }
+          c.sibling.return = c.return;
+          c = c.sibling;
+        }
+      }, "zj");
+      Aj = /* @__PURE__ */ __name(function() {
+      }, "Aj");
+      Bj = /* @__PURE__ */ __name(function(a, b, c, d) {
+        var e = a.memoizedProps;
+        if (e !== d) {
+          a = b.stateNode;
+          xh(uh.current);
+          var f = null;
+          switch (c) {
+            case "input":
+              e = Ya(a, e);
+              d = Ya(a, d);
+              f = [];
+              break;
+            case "select":
+              e = A({}, e, { value: void 0 });
+              d = A({}, d, { value: void 0 });
+              f = [];
+              break;
+            case "textarea":
+              e = gb(a, e);
+              d = gb(a, d);
+              f = [];
+              break;
+            default:
+              "function" !== typeof e.onClick && "function" === typeof d.onClick && (a.onclick = Bf);
+          }
+          ub(c, d);
+          var g;
+          c = null;
+          for (l in e) if (!d.hasOwnProperty(l) && e.hasOwnProperty(l) && null != e[l]) if ("style" === l) {
+            var h = e[l];
+            for (g in h) h.hasOwnProperty(g) && (c || (c = {}), c[g] = "");
+          } else "dangerouslySetInnerHTML" !== l && "children" !== l && "suppressContentEditableWarning" !== l && "suppressHydrationWarning" !== l && "autoFocus" !== l && (ea.hasOwnProperty(l) ? f || (f = []) : (f = f || []).push(l, null));
+          for (l in d) {
+            var k = d[l];
+            h = null != e ? e[l] : void 0;
+            if (d.hasOwnProperty(l) && k !== h && (null != k || null != h)) if ("style" === l) if (h) {
+              for (g in h) !h.hasOwnProperty(g) || k && k.hasOwnProperty(g) || (c || (c = {}), c[g] = "");
+              for (g in k) k.hasOwnProperty(g) && h[g] !== k[g] && (c || (c = {}), c[g] = k[g]);
+            } else c || (f || (f = []), f.push(
+              l,
+              c
+            )), c = k;
+            else "dangerouslySetInnerHTML" === l ? (k = k ? k.__html : void 0, h = h ? h.__html : void 0, null != k && h !== k && (f = f || []).push(l, k)) : "children" === l ? "string" !== typeof k && "number" !== typeof k || (f = f || []).push(l, "" + k) : "suppressContentEditableWarning" !== l && "suppressHydrationWarning" !== l && (ea.hasOwnProperty(l) ? (null != k && "onScroll" === l && D("scroll", a), f || h === k || (f = [])) : (f = f || []).push(l, k));
+          }
+          c && (f = f || []).push("style", c);
+          var l = f;
+          if (b.updateQueue = l) b.flags |= 4;
+        }
+      }, "Bj");
+      Cj = /* @__PURE__ */ __name(function(a, b, c, d) {
+        c !== d && (b.flags |= 4);
+      }, "Cj");
+      function Dj(a, b) {
+        if (!I) switch (a.tailMode) {
+          case "hidden":
+            b = a.tail;
+            for (var c = null; null !== b; ) null !== b.alternate && (c = b), b = b.sibling;
+            null === c ? a.tail = null : c.sibling = null;
+            break;
+          case "collapsed":
+            c = a.tail;
+            for (var d = null; null !== c; ) null !== c.alternate && (d = c), c = c.sibling;
+            null === d ? b || null === a.tail ? a.tail = null : a.tail.sibling = null : d.sibling = null;
+        }
+      }
+      __name(Dj, "Dj");
+      function S(a) {
+        var b = null !== a.alternate && a.alternate.child === a.child, c = 0, d = 0;
+        if (b) for (var e = a.child; null !== e; ) c |= e.lanes | e.childLanes, d |= e.subtreeFlags & 14680064, d |= e.flags & 14680064, e.return = a, e = e.sibling;
+        else for (e = a.child; null !== e; ) c |= e.lanes | e.childLanes, d |= e.subtreeFlags, d |= e.flags, e.return = a, e = e.sibling;
+        a.subtreeFlags |= d;
+        a.childLanes = c;
+        return b;
+      }
+      __name(S, "S");
+      function Ej(a, b, c) {
+        var d = b.pendingProps;
+        wg(b);
+        switch (b.tag) {
+          case 2:
+          case 16:
+          case 15:
+          case 0:
+          case 11:
+          case 7:
+          case 8:
+          case 12:
+          case 9:
+          case 14:
+            return S(b), null;
+          case 1:
+            return Zf(b.type) && $f(), S(b), null;
+          case 3:
+            d = b.stateNode;
+            zh();
+            E(Wf);
+            E(H2);
+            Eh();
+            d.pendingContext && (d.context = d.pendingContext, d.pendingContext = null);
+            if (null === a || null === a.child) Gg(b) ? b.flags |= 4 : null === a || a.memoizedState.isDehydrated && 0 === (b.flags & 256) || (b.flags |= 1024, null !== zg && (Fj(zg), zg = null));
+            Aj(a, b);
+            S(b);
+            return null;
+          case 5:
+            Bh(b);
+            var e = xh(wh.current);
+            c = b.type;
+            if (null !== a && null != b.stateNode) Bj(a, b, c, d, e), a.ref !== b.ref && (b.flags |= 512, b.flags |= 2097152);
+            else {
+              if (!d) {
+                if (null === b.stateNode) throw Error(p(166));
+                S(b);
+                return null;
+              }
+              a = xh(uh.current);
+              if (Gg(b)) {
+                d = b.stateNode;
+                c = b.type;
+                var f = b.memoizedProps;
+                d[Of] = b;
+                d[Pf] = f;
+                a = 0 !== (b.mode & 1);
+                switch (c) {
+                  case "dialog":
+                    D("cancel", d);
+                    D("close", d);
+                    break;
+                  case "iframe":
+                  case "object":
+                  case "embed":
+                    D("load", d);
+                    break;
+                  case "video":
+                  case "audio":
+                    for (e = 0; e < lf.length; e++) D(lf[e], d);
+                    break;
+                  case "source":
+                    D("error", d);
+                    break;
+                  case "img":
+                  case "image":
+                  case "link":
+                    D(
+                      "error",
+                      d
+                    );
+                    D("load", d);
+                    break;
+                  case "details":
+                    D("toggle", d);
+                    break;
+                  case "input":
+                    Za(d, f);
+                    D("invalid", d);
+                    break;
+                  case "select":
+                    d._wrapperState = { wasMultiple: !!f.multiple };
+                    D("invalid", d);
+                    break;
+                  case "textarea":
+                    hb(d, f), D("invalid", d);
+                }
+                ub(c, f);
+                e = null;
+                for (var g in f) if (f.hasOwnProperty(g)) {
+                  var h = f[g];
+                  "children" === g ? "string" === typeof h ? d.textContent !== h && (true !== f.suppressHydrationWarning && Af(d.textContent, h, a), e = ["children", h]) : "number" === typeof h && d.textContent !== "" + h && (true !== f.suppressHydrationWarning && Af(
+                    d.textContent,
+                    h,
+                    a
+                  ), e = ["children", "" + h]) : ea.hasOwnProperty(g) && null != h && "onScroll" === g && D("scroll", d);
+                }
+                switch (c) {
+                  case "input":
+                    Va(d);
+                    db(d, f, true);
+                    break;
+                  case "textarea":
+                    Va(d);
+                    jb(d);
+                    break;
+                  case "select":
+                  case "option":
+                    break;
+                  default:
+                    "function" === typeof f.onClick && (d.onclick = Bf);
+                }
+                d = e;
+                b.updateQueue = d;
+                null !== d && (b.flags |= 4);
+              } else {
+                g = 9 === e.nodeType ? e : e.ownerDocument;
+                "http://www.w3.org/1999/xhtml" === a && (a = kb(c));
+                "http://www.w3.org/1999/xhtml" === a ? "script" === c ? (a = g.createElement("div"), a.innerHTML = "<script><\/script>", a = a.removeChild(a.firstChild)) : "string" === typeof d.is ? a = g.createElement(c, { is: d.is }) : (a = g.createElement(c), "select" === c && (g = a, d.multiple ? g.multiple = true : d.size && (g.size = d.size))) : a = g.createElementNS(a, c);
+                a[Of] = b;
+                a[Pf] = d;
+                zj(a, b, false, false);
+                b.stateNode = a;
+                a: {
+                  g = vb(c, d);
+                  switch (c) {
+                    case "dialog":
+                      D("cancel", a);
+                      D("close", a);
+                      e = d;
+                      break;
+                    case "iframe":
+                    case "object":
+                    case "embed":
+                      D("load", a);
+                      e = d;
+                      break;
+                    case "video":
+                    case "audio":
+                      for (e = 0; e < lf.length; e++) D(lf[e], a);
+                      e = d;
+                      break;
+                    case "source":
+                      D("error", a);
+                      e = d;
+                      break;
+                    case "img":
+                    case "image":
+                    case "link":
+                      D(
+                        "error",
+                        a
+                      );
+                      D("load", a);
+                      e = d;
+                      break;
+                    case "details":
+                      D("toggle", a);
+                      e = d;
+                      break;
+                    case "input":
+                      Za(a, d);
+                      e = Ya(a, d);
+                      D("invalid", a);
+                      break;
+                    case "option":
+                      e = d;
+                      break;
+                    case "select":
+                      a._wrapperState = { wasMultiple: !!d.multiple };
+                      e = A({}, d, { value: void 0 });
+                      D("invalid", a);
+                      break;
+                    case "textarea":
+                      hb(a, d);
+                      e = gb(a, d);
+                      D("invalid", a);
+                      break;
+                    default:
+                      e = d;
+                  }
+                  ub(c, e);
+                  h = e;
+                  for (f in h) if (h.hasOwnProperty(f)) {
+                    var k = h[f];
+                    "style" === f ? sb(a, k) : "dangerouslySetInnerHTML" === f ? (k = k ? k.__html : void 0, null != k && nb(a, k)) : "children" === f ? "string" === typeof k ? ("textarea" !== c || "" !== k) && ob(a, k) : "number" === typeof k && ob(a, "" + k) : "suppressContentEditableWarning" !== f && "suppressHydrationWarning" !== f && "autoFocus" !== f && (ea.hasOwnProperty(f) ? null != k && "onScroll" === f && D("scroll", a) : null != k && ta(a, f, k, g));
+                  }
+                  switch (c) {
+                    case "input":
+                      Va(a);
+                      db(a, d, false);
+                      break;
+                    case "textarea":
+                      Va(a);
+                      jb(a);
+                      break;
+                    case "option":
+                      null != d.value && a.setAttribute("value", "" + Sa(d.value));
+                      break;
+                    case "select":
+                      a.multiple = !!d.multiple;
+                      f = d.value;
+                      null != f ? fb(a, !!d.multiple, f, false) : null != d.defaultValue && fb(
+                        a,
+                        !!d.multiple,
+                        d.defaultValue,
+                        true
+                      );
+                      break;
+                    default:
+                      "function" === typeof e.onClick && (a.onclick = Bf);
+                  }
+                  switch (c) {
+                    case "button":
+                    case "input":
+                    case "select":
+                    case "textarea":
+                      d = !!d.autoFocus;
+                      break a;
+                    case "img":
+                      d = true;
+                      break a;
+                    default:
+                      d = false;
+                  }
+                }
+                d && (b.flags |= 4);
+              }
+              null !== b.ref && (b.flags |= 512, b.flags |= 2097152);
+            }
+            S(b);
+            return null;
+          case 6:
+            if (a && null != b.stateNode) Cj(a, b, a.memoizedProps, d);
+            else {
+              if ("string" !== typeof d && null === b.stateNode) throw Error(p(166));
+              c = xh(wh.current);
+              xh(uh.current);
+              if (Gg(b)) {
+                d = b.stateNode;
+                c = b.memoizedProps;
+                d[Of] = b;
+                if (f = d.nodeValue !== c) {
+                  if (a = xg, null !== a) switch (a.tag) {
+                    case 3:
+                      Af(d.nodeValue, c, 0 !== (a.mode & 1));
+                      break;
+                    case 5:
+                      true !== a.memoizedProps.suppressHydrationWarning && Af(d.nodeValue, c, 0 !== (a.mode & 1));
+                  }
+                }
+                f && (b.flags |= 4);
+              } else d = (9 === c.nodeType ? c : c.ownerDocument).createTextNode(d), d[Of] = b, b.stateNode = d;
+            }
+            S(b);
+            return null;
+          case 13:
+            E(L);
+            d = b.memoizedState;
+            if (null === a || null !== a.memoizedState && null !== a.memoizedState.dehydrated) {
+              if (I && null !== yg && 0 !== (b.mode & 1) && 0 === (b.flags & 128)) Hg(), Ig(), b.flags |= 98560, f = false;
+              else if (f = Gg(b), null !== d && null !== d.dehydrated) {
+                if (null === a) {
+                  if (!f) throw Error(p(318));
+                  f = b.memoizedState;
+                  f = null !== f ? f.dehydrated : null;
+                  if (!f) throw Error(p(317));
+                  f[Of] = b;
+                } else Ig(), 0 === (b.flags & 128) && (b.memoizedState = null), b.flags |= 4;
+                S(b);
+                f = false;
+              } else null !== zg && (Fj(zg), zg = null), f = true;
+              if (!f) return b.flags & 65536 ? b : null;
+            }
+            if (0 !== (b.flags & 128)) return b.lanes = c, b;
+            d = null !== d;
+            d !== (null !== a && null !== a.memoizedState) && d && (b.child.flags |= 8192, 0 !== (b.mode & 1) && (null === a || 0 !== (L.current & 1) ? 0 === T && (T = 3) : tj()));
+            null !== b.updateQueue && (b.flags |= 4);
+            S(b);
+            return null;
+          case 4:
+            return zh(), Aj(a, b), null === a && sf(b.stateNode.containerInfo), S(b), null;
+          case 10:
+            return ah(b.type._context), S(b), null;
+          case 17:
+            return Zf(b.type) && $f(), S(b), null;
+          case 19:
+            E(L);
+            f = b.memoizedState;
+            if (null === f) return S(b), null;
+            d = 0 !== (b.flags & 128);
+            g = f.rendering;
+            if (null === g) if (d) Dj(f, false);
+            else {
+              if (0 !== T || null !== a && 0 !== (a.flags & 128)) for (a = b.child; null !== a; ) {
+                g = Ch(a);
+                if (null !== g) {
+                  b.flags |= 128;
+                  Dj(f, false);
+                  d = g.updateQueue;
+                  null !== d && (b.updateQueue = d, b.flags |= 4);
+                  b.subtreeFlags = 0;
+                  d = c;
+                  for (c = b.child; null !== c; ) f = c, a = d, f.flags &= 14680066, g = f.alternate, null === g ? (f.childLanes = 0, f.lanes = a, f.child = null, f.subtreeFlags = 0, f.memoizedProps = null, f.memoizedState = null, f.updateQueue = null, f.dependencies = null, f.stateNode = null) : (f.childLanes = g.childLanes, f.lanes = g.lanes, f.child = g.child, f.subtreeFlags = 0, f.deletions = null, f.memoizedProps = g.memoizedProps, f.memoizedState = g.memoizedState, f.updateQueue = g.updateQueue, f.type = g.type, a = g.dependencies, f.dependencies = null === a ? null : { lanes: a.lanes, firstContext: a.firstContext }), c = c.sibling;
+                  G(L, L.current & 1 | 2);
+                  return b.child;
+                }
+                a = a.sibling;
+              }
+              null !== f.tail && B() > Gj && (b.flags |= 128, d = true, Dj(f, false), b.lanes = 4194304);
+            }
+            else {
+              if (!d) if (a = Ch(g), null !== a) {
+                if (b.flags |= 128, d = true, c = a.updateQueue, null !== c && (b.updateQueue = c, b.flags |= 4), Dj(f, true), null === f.tail && "hidden" === f.tailMode && !g.alternate && !I) return S(b), null;
+              } else 2 * B() - f.renderingStartTime > Gj && 1073741824 !== c && (b.flags |= 128, d = true, Dj(f, false), b.lanes = 4194304);
+              f.isBackwards ? (g.sibling = b.child, b.child = g) : (c = f.last, null !== c ? c.sibling = g : b.child = g, f.last = g);
+            }
+            if (null !== f.tail) return b = f.tail, f.rendering = b, f.tail = b.sibling, f.renderingStartTime = B(), b.sibling = null, c = L.current, G(L, d ? c & 1 | 2 : c & 1), b;
+            S(b);
+            return null;
+          case 22:
+          case 23:
+            return Hj(), d = null !== b.memoizedState, null !== a && null !== a.memoizedState !== d && (b.flags |= 8192), d && 0 !== (b.mode & 1) ? 0 !== (fj & 1073741824) && (S(b), b.subtreeFlags & 6 && (b.flags |= 8192)) : S(b), null;
+          case 24:
+            return null;
+          case 25:
+            return null;
+        }
+        throw Error(p(156, b.tag));
+      }
+      __name(Ej, "Ej");
+      function Ij(a, b) {
+        wg(b);
+        switch (b.tag) {
+          case 1:
+            return Zf(b.type) && $f(), a = b.flags, a & 65536 ? (b.flags = a & -65537 | 128, b) : null;
+          case 3:
+            return zh(), E(Wf), E(H2), Eh(), a = b.flags, 0 !== (a & 65536) && 0 === (a & 128) ? (b.flags = a & -65537 | 128, b) : null;
+          case 5:
+            return Bh(b), null;
+          case 13:
+            E(L);
+            a = b.memoizedState;
+            if (null !== a && null !== a.dehydrated) {
+              if (null === b.alternate) throw Error(p(340));
+              Ig();
+            }
+            a = b.flags;
+            return a & 65536 ? (b.flags = a & -65537 | 128, b) : null;
+          case 19:
+            return E(L), null;
+          case 4:
+            return zh(), null;
+          case 10:
+            return ah(b.type._context), null;
+          case 22:
+          case 23:
+            return Hj(), null;
+          case 24:
+            return null;
+          default:
+            return null;
+        }
+      }
+      __name(Ij, "Ij");
+      var Jj = false;
+      var U = false;
+      var Kj = "function" === typeof WeakSet ? WeakSet : Set;
+      var V = null;
+      function Lj(a, b) {
+        var c = a.ref;
+        if (null !== c) if ("function" === typeof c) try {
+          c(null);
+        } catch (d) {
+          W2(a, b, d);
+        }
+        else c.current = null;
+      }
+      __name(Lj, "Lj");
+      function Mj(a, b, c) {
+        try {
+          c();
+        } catch (d) {
+          W2(a, b, d);
+        }
+      }
+      __name(Mj, "Mj");
+      var Nj = false;
+      function Oj(a, b) {
+        Cf = dd;
+        a = Me();
+        if (Ne(a)) {
+          if ("selectionStart" in a) var c = { start: a.selectionStart, end: a.selectionEnd };
+          else a: {
+            c = (c = a.ownerDocument) && c.defaultView || window;
+            var d = c.getSelection && c.getSelection();
+            if (d && 0 !== d.rangeCount) {
+              c = d.anchorNode;
+              var e = d.anchorOffset, f = d.focusNode;
+              d = d.focusOffset;
+              try {
+                c.nodeType, f.nodeType;
+              } catch (F) {
+                c = null;
+                break a;
+              }
+              var g = 0, h = -1, k = -1, l = 0, m = 0, q = a, r = null;
+              b: for (; ; ) {
+                for (var y; ; ) {
+                  q !== c || 0 !== e && 3 !== q.nodeType || (h = g + e);
+                  q !== f || 0 !== d && 3 !== q.nodeType || (k = g + d);
+                  3 === q.nodeType && (g += q.nodeValue.length);
+                  if (null === (y = q.firstChild)) break;
+                  r = q;
+                  q = y;
+                }
+                for (; ; ) {
+                  if (q === a) break b;
+                  r === c && ++l === e && (h = g);
+                  r === f && ++m === d && (k = g);
+                  if (null !== (y = q.nextSibling)) break;
+                  q = r;
+                  r = q.parentNode;
+                }
+                q = y;
+              }
+              c = -1 === h || -1 === k ? null : { start: h, end: k };
+            } else c = null;
+          }
+          c = c || { start: 0, end: 0 };
+        } else c = null;
+        Df = { focusedElem: a, selectionRange: c };
+        dd = false;
+        for (V = b; null !== V; ) if (b = V, a = b.child, 0 !== (b.subtreeFlags & 1028) && null !== a) a.return = b, V = a;
+        else for (; null !== V; ) {
+          b = V;
+          try {
+            var n = b.alternate;
+            if (0 !== (b.flags & 1024)) switch (b.tag) {
+              case 0:
+              case 11:
+              case 15:
+                break;
+              case 1:
+                if (null !== n) {
+                  var t = n.memoizedProps, J = n.memoizedState, x = b.stateNode, w = x.getSnapshotBeforeUpdate(b.elementType === b.type ? t : Ci(b.type, t), J);
+                  x.__reactInternalSnapshotBeforeUpdate = w;
+                }
+                break;
+              case 3:
+                var u = b.stateNode.containerInfo;
+                1 === u.nodeType ? u.textContent = "" : 9 === u.nodeType && u.documentElement && u.removeChild(u.documentElement);
+                break;
+              case 5:
+              case 6:
+              case 4:
+              case 17:
+                break;
+              default:
+                throw Error(p(163));
+            }
+          } catch (F) {
+            W2(b, b.return, F);
+          }
+          a = b.sibling;
+          if (null !== a) {
+            a.return = b.return;
+            V = a;
+            break;
+          }
+          V = b.return;
+        }
+        n = Nj;
+        Nj = false;
+        return n;
+      }
+      __name(Oj, "Oj");
+      function Pj(a, b, c) {
+        var d = b.updateQueue;
+        d = null !== d ? d.lastEffect : null;
+        if (null !== d) {
+          var e = d = d.next;
+          do {
+            if ((e.tag & a) === a) {
+              var f = e.destroy;
+              e.destroy = void 0;
+              void 0 !== f && Mj(b, c, f);
+            }
+            e = e.next;
+          } while (e !== d);
+        }
+      }
+      __name(Pj, "Pj");
+      function Qj(a, b) {
+        b = b.updateQueue;
+        b = null !== b ? b.lastEffect : null;
+        if (null !== b) {
+          var c = b = b.next;
+          do {
+            if ((c.tag & a) === a) {
+              var d = c.create;
+              c.destroy = d();
+            }
+            c = c.next;
+          } while (c !== b);
+        }
+      }
+      __name(Qj, "Qj");
+      function Rj(a) {
+        var b = a.ref;
+        if (null !== b) {
+          var c = a.stateNode;
+          switch (a.tag) {
+            case 5:
+              a = c;
+              break;
+            default:
+              a = c;
+          }
+          "function" === typeof b ? b(a) : b.current = a;
+        }
+      }
+      __name(Rj, "Rj");
+      function Sj(a) {
+        var b = a.alternate;
+        null !== b && (a.alternate = null, Sj(b));
+        a.child = null;
+        a.deletions = null;
+        a.sibling = null;
+        5 === a.tag && (b = a.stateNode, null !== b && (delete b[Of], delete b[Pf], delete b[of], delete b[Qf], delete b[Rf]));
+        a.stateNode = null;
+        a.return = null;
+        a.dependencies = null;
+        a.memoizedProps = null;
+        a.memoizedState = null;
+        a.pendingProps = null;
+        a.stateNode = null;
+        a.updateQueue = null;
+      }
+      __name(Sj, "Sj");
+      function Tj(a) {
+        return 5 === a.tag || 3 === a.tag || 4 === a.tag;
+      }
+      __name(Tj, "Tj");
+      function Uj(a) {
+        a: for (; ; ) {
+          for (; null === a.sibling; ) {
+            if (null === a.return || Tj(a.return)) return null;
+            a = a.return;
+          }
+          a.sibling.return = a.return;
+          for (a = a.sibling; 5 !== a.tag && 6 !== a.tag && 18 !== a.tag; ) {
+            if (a.flags & 2) continue a;
+            if (null === a.child || 4 === a.tag) continue a;
+            else a.child.return = a, a = a.child;
+          }
+          if (!(a.flags & 2)) return a.stateNode;
+        }
+      }
+      __name(Uj, "Uj");
+      function Vj(a, b, c) {
+        var d = a.tag;
+        if (5 === d || 6 === d) a = a.stateNode, b ? 8 === c.nodeType ? c.parentNode.insertBefore(a, b) : c.insertBefore(a, b) : (8 === c.nodeType ? (b = c.parentNode, b.insertBefore(a, c)) : (b = c, b.appendChild(a)), c = c._reactRootContainer, null !== c && void 0 !== c || null !== b.onclick || (b.onclick = Bf));
+        else if (4 !== d && (a = a.child, null !== a)) for (Vj(a, b, c), a = a.sibling; null !== a; ) Vj(a, b, c), a = a.sibling;
+      }
+      __name(Vj, "Vj");
+      function Wj(a, b, c) {
+        var d = a.tag;
+        if (5 === d || 6 === d) a = a.stateNode, b ? c.insertBefore(a, b) : c.appendChild(a);
+        else if (4 !== d && (a = a.child, null !== a)) for (Wj(a, b, c), a = a.sibling; null !== a; ) Wj(a, b, c), a = a.sibling;
+      }
+      __name(Wj, "Wj");
+      var X = null;
+      var Xj = false;
+      function Yj(a, b, c) {
+        for (c = c.child; null !== c; ) Zj(a, b, c), c = c.sibling;
+      }
+      __name(Yj, "Yj");
+      function Zj(a, b, c) {
+        if (lc && "function" === typeof lc.onCommitFiberUnmount) try {
+          lc.onCommitFiberUnmount(kc, c);
+        } catch (h) {
+        }
+        switch (c.tag) {
+          case 5:
+            U || Lj(c, b);
+          case 6:
+            var d = X, e = Xj;
+            X = null;
+            Yj(a, b, c);
+            X = d;
+            Xj = e;
+            null !== X && (Xj ? (a = X, c = c.stateNode, 8 === a.nodeType ? a.parentNode.removeChild(c) : a.removeChild(c)) : X.removeChild(c.stateNode));
+            break;
+          case 18:
+            null !== X && (Xj ? (a = X, c = c.stateNode, 8 === a.nodeType ? Kf(a.parentNode, c) : 1 === a.nodeType && Kf(a, c), bd(a)) : Kf(X, c.stateNode));
+            break;
+          case 4:
+            d = X;
+            e = Xj;
+            X = c.stateNode.containerInfo;
+            Xj = true;
+            Yj(a, b, c);
+            X = d;
+            Xj = e;
+            break;
+          case 0:
+          case 11:
+          case 14:
+          case 15:
+            if (!U && (d = c.updateQueue, null !== d && (d = d.lastEffect, null !== d))) {
+              e = d = d.next;
+              do {
+                var f = e, g = f.destroy;
+                f = f.tag;
+                void 0 !== g && (0 !== (f & 2) ? Mj(c, b, g) : 0 !== (f & 4) && Mj(c, b, g));
+                e = e.next;
+              } while (e !== d);
+            }
+            Yj(a, b, c);
+            break;
+          case 1:
+            if (!U && (Lj(c, b), d = c.stateNode, "function" === typeof d.componentWillUnmount)) try {
+              d.props = c.memoizedProps, d.state = c.memoizedState, d.componentWillUnmount();
+            } catch (h) {
+              W2(c, b, h);
+            }
+            Yj(a, b, c);
+            break;
+          case 21:
+            Yj(a, b, c);
+            break;
+          case 22:
+            c.mode & 1 ? (U = (d = U) || null !== c.memoizedState, Yj(a, b, c), U = d) : Yj(a, b, c);
+            break;
+          default:
+            Yj(a, b, c);
+        }
+      }
+      __name(Zj, "Zj");
+      function ak(a) {
+        var b = a.updateQueue;
+        if (null !== b) {
+          a.updateQueue = null;
+          var c = a.stateNode;
+          null === c && (c = a.stateNode = new Kj());
+          b.forEach(function(b2) {
+            var d = bk.bind(null, a, b2);
+            c.has(b2) || (c.add(b2), b2.then(d, d));
+          });
+        }
+      }
+      __name(ak, "ak");
+      function ck(a, b) {
+        var c = b.deletions;
+        if (null !== c) for (var d = 0; d < c.length; d++) {
+          var e = c[d];
+          try {
+            var f = a, g = b, h = g;
+            a: for (; null !== h; ) {
+              switch (h.tag) {
+                case 5:
+                  X = h.stateNode;
+                  Xj = false;
+                  break a;
+                case 3:
+                  X = h.stateNode.containerInfo;
+                  Xj = true;
+                  break a;
+                case 4:
+                  X = h.stateNode.containerInfo;
+                  Xj = true;
+                  break a;
+              }
+              h = h.return;
+            }
+            if (null === X) throw Error(p(160));
+            Zj(f, g, e);
+            X = null;
+            Xj = false;
+            var k = e.alternate;
+            null !== k && (k.return = null);
+            e.return = null;
+          } catch (l) {
+            W2(e, b, l);
+          }
+        }
+        if (b.subtreeFlags & 12854) for (b = b.child; null !== b; ) dk(b, a), b = b.sibling;
+      }
+      __name(ck, "ck");
+      function dk(a, b) {
+        var c = a.alternate, d = a.flags;
+        switch (a.tag) {
+          case 0:
+          case 11:
+          case 14:
+          case 15:
+            ck(b, a);
+            ek(a);
+            if (d & 4) {
+              try {
+                Pj(3, a, a.return), Qj(3, a);
+              } catch (t) {
+                W2(a, a.return, t);
+              }
+              try {
+                Pj(5, a, a.return);
+              } catch (t) {
+                W2(a, a.return, t);
+              }
+            }
+            break;
+          case 1:
+            ck(b, a);
+            ek(a);
+            d & 512 && null !== c && Lj(c, c.return);
+            break;
+          case 5:
+            ck(b, a);
+            ek(a);
+            d & 512 && null !== c && Lj(c, c.return);
+            if (a.flags & 32) {
+              var e = a.stateNode;
+              try {
+                ob(e, "");
+              } catch (t) {
+                W2(a, a.return, t);
+              }
+            }
+            if (d & 4 && (e = a.stateNode, null != e)) {
+              var f = a.memoizedProps, g = null !== c ? c.memoizedProps : f, h = a.type, k = a.updateQueue;
+              a.updateQueue = null;
+              if (null !== k) try {
+                "input" === h && "radio" === f.type && null != f.name && ab(e, f);
+                vb(h, g);
+                var l = vb(h, f);
+                for (g = 0; g < k.length; g += 2) {
+                  var m = k[g], q = k[g + 1];
+                  "style" === m ? sb(e, q) : "dangerouslySetInnerHTML" === m ? nb(e, q) : "children" === m ? ob(e, q) : ta(e, m, q, l);
+                }
+                switch (h) {
+                  case "input":
+                    bb(e, f);
+                    break;
+                  case "textarea":
+                    ib(e, f);
+                    break;
+                  case "select":
+                    var r = e._wrapperState.wasMultiple;
+                    e._wrapperState.wasMultiple = !!f.multiple;
+                    var y = f.value;
+                    null != y ? fb(e, !!f.multiple, y, false) : r !== !!f.multiple && (null != f.defaultValue ? fb(
+                      e,
+                      !!f.multiple,
+                      f.defaultValue,
+                      true
+                    ) : fb(e, !!f.multiple, f.multiple ? [] : "", false));
+                }
+                e[Pf] = f;
+              } catch (t) {
+                W2(a, a.return, t);
+              }
+            }
+            break;
+          case 6:
+            ck(b, a);
+            ek(a);
+            if (d & 4) {
+              if (null === a.stateNode) throw Error(p(162));
+              e = a.stateNode;
+              f = a.memoizedProps;
+              try {
+                e.nodeValue = f;
+              } catch (t) {
+                W2(a, a.return, t);
+              }
+            }
+            break;
+          case 3:
+            ck(b, a);
+            ek(a);
+            if (d & 4 && null !== c && c.memoizedState.isDehydrated) try {
+              bd(b.containerInfo);
+            } catch (t) {
+              W2(a, a.return, t);
+            }
+            break;
+          case 4:
+            ck(b, a);
+            ek(a);
+            break;
+          case 13:
+            ck(b, a);
+            ek(a);
+            e = a.child;
+            e.flags & 8192 && (f = null !== e.memoizedState, e.stateNode.isHidden = f, !f || null !== e.alternate && null !== e.alternate.memoizedState || (fk = B()));
+            d & 4 && ak(a);
+            break;
+          case 22:
+            m = null !== c && null !== c.memoizedState;
+            a.mode & 1 ? (U = (l = U) || m, ck(b, a), U = l) : ck(b, a);
+            ek(a);
+            if (d & 8192) {
+              l = null !== a.memoizedState;
+              if ((a.stateNode.isHidden = l) && !m && 0 !== (a.mode & 1)) for (V = a, m = a.child; null !== m; ) {
+                for (q = V = m; null !== V; ) {
+                  r = V;
+                  y = r.child;
+                  switch (r.tag) {
+                    case 0:
+                    case 11:
+                    case 14:
+                    case 15:
+                      Pj(4, r, r.return);
+                      break;
+                    case 1:
+                      Lj(r, r.return);
+                      var n = r.stateNode;
+                      if ("function" === typeof n.componentWillUnmount) {
+                        d = r;
+                        c = r.return;
+                        try {
+                          b = d, n.props = b.memoizedProps, n.state = b.memoizedState, n.componentWillUnmount();
+                        } catch (t) {
+                          W2(d, c, t);
+                        }
+                      }
+                      break;
+                    case 5:
+                      Lj(r, r.return);
+                      break;
+                    case 22:
+                      if (null !== r.memoizedState) {
+                        gk(q);
+                        continue;
+                      }
+                  }
+                  null !== y ? (y.return = r, V = y) : gk(q);
+                }
+                m = m.sibling;
+              }
+              a: for (m = null, q = a; ; ) {
+                if (5 === q.tag) {
+                  if (null === m) {
+                    m = q;
+                    try {
+                      e = q.stateNode, l ? (f = e.style, "function" === typeof f.setProperty ? f.setProperty("display", "none", "important") : f.display = "none") : (h = q.stateNode, k = q.memoizedProps.style, g = void 0 !== k && null !== k && k.hasOwnProperty("display") ? k.display : null, h.style.display = rb("display", g));
+                    } catch (t) {
+                      W2(a, a.return, t);
+                    }
+                  }
+                } else if (6 === q.tag) {
+                  if (null === m) try {
+                    q.stateNode.nodeValue = l ? "" : q.memoizedProps;
+                  } catch (t) {
+                    W2(a, a.return, t);
+                  }
+                } else if ((22 !== q.tag && 23 !== q.tag || null === q.memoizedState || q === a) && null !== q.child) {
+                  q.child.return = q;
+                  q = q.child;
+                  continue;
+                }
+                if (q === a) break a;
+                for (; null === q.sibling; ) {
+                  if (null === q.return || q.return === a) break a;
+                  m === q && (m = null);
+                  q = q.return;
+                }
+                m === q && (m = null);
+                q.sibling.return = q.return;
+                q = q.sibling;
+              }
+            }
+            break;
+          case 19:
+            ck(b, a);
+            ek(a);
+            d & 4 && ak(a);
+            break;
+          case 21:
+            break;
+          default:
+            ck(
+              b,
+              a
+            ), ek(a);
+        }
+      }
+      __name(dk, "dk");
+      function ek(a) {
+        var b = a.flags;
+        if (b & 2) {
+          try {
+            a: {
+              for (var c = a.return; null !== c; ) {
+                if (Tj(c)) {
+                  var d = c;
+                  break a;
+                }
+                c = c.return;
+              }
+              throw Error(p(160));
+            }
+            switch (d.tag) {
+              case 5:
+                var e = d.stateNode;
+                d.flags & 32 && (ob(e, ""), d.flags &= -33);
+                var f = Uj(a);
+                Wj(a, f, e);
+                break;
+              case 3:
+              case 4:
+                var g = d.stateNode.containerInfo, h = Uj(a);
+                Vj(a, h, g);
+                break;
+              default:
+                throw Error(p(161));
+            }
+          } catch (k) {
+            W2(a, a.return, k);
+          }
+          a.flags &= -3;
+        }
+        b & 4096 && (a.flags &= -4097);
+      }
+      __name(ek, "ek");
+      function hk(a, b, c) {
+        V = a;
+        ik(a, b, c);
+      }
+      __name(hk, "hk");
+      function ik(a, b, c) {
+        for (var d = 0 !== (a.mode & 1); null !== V; ) {
+          var e = V, f = e.child;
+          if (22 === e.tag && d) {
+            var g = null !== e.memoizedState || Jj;
+            if (!g) {
+              var h = e.alternate, k = null !== h && null !== h.memoizedState || U;
+              h = Jj;
+              var l = U;
+              Jj = g;
+              if ((U = k) && !l) for (V = e; null !== V; ) g = V, k = g.child, 22 === g.tag && null !== g.memoizedState ? jk(e) : null !== k ? (k.return = g, V = k) : jk(e);
+              for (; null !== f; ) V = f, ik(f, b, c), f = f.sibling;
+              V = e;
+              Jj = h;
+              U = l;
+            }
+            kk(a, b, c);
+          } else 0 !== (e.subtreeFlags & 8772) && null !== f ? (f.return = e, V = f) : kk(a, b, c);
+        }
+      }
+      __name(ik, "ik");
+      function kk(a) {
+        for (; null !== V; ) {
+          var b = V;
+          if (0 !== (b.flags & 8772)) {
+            var c = b.alternate;
+            try {
+              if (0 !== (b.flags & 8772)) switch (b.tag) {
+                case 0:
+                case 11:
+                case 15:
+                  U || Qj(5, b);
+                  break;
+                case 1:
+                  var d = b.stateNode;
+                  if (b.flags & 4 && !U) if (null === c) d.componentDidMount();
+                  else {
+                    var e = b.elementType === b.type ? c.memoizedProps : Ci(b.type, c.memoizedProps);
+                    d.componentDidUpdate(e, c.memoizedState, d.__reactInternalSnapshotBeforeUpdate);
+                  }
+                  var f = b.updateQueue;
+                  null !== f && sh(b, f, d);
+                  break;
+                case 3:
+                  var g = b.updateQueue;
+                  if (null !== g) {
+                    c = null;
+                    if (null !== b.child) switch (b.child.tag) {
+                      case 5:
+                        c = b.child.stateNode;
+                        break;
+                      case 1:
+                        c = b.child.stateNode;
+                    }
+                    sh(b, g, c);
+                  }
+                  break;
+                case 5:
+                  var h = b.stateNode;
+                  if (null === c && b.flags & 4) {
+                    c = h;
+                    var k = b.memoizedProps;
+                    switch (b.type) {
+                      case "button":
+                      case "input":
+                      case "select":
+                      case "textarea":
+                        k.autoFocus && c.focus();
+                        break;
+                      case "img":
+                        k.src && (c.src = k.src);
+                    }
+                  }
+                  break;
+                case 6:
+                  break;
+                case 4:
+                  break;
+                case 12:
+                  break;
+                case 13:
+                  if (null === b.memoizedState) {
+                    var l = b.alternate;
+                    if (null !== l) {
+                      var m = l.memoizedState;
+                      if (null !== m) {
+                        var q = m.dehydrated;
+                        null !== q && bd(q);
+                      }
+                    }
+                  }
+                  break;
+                case 19:
+                case 17:
+                case 21:
+                case 22:
+                case 23:
+                case 25:
+                  break;
+                default:
+                  throw Error(p(163));
+              }
+              U || b.flags & 512 && Rj(b);
+            } catch (r) {
+              W2(b, b.return, r);
+            }
+          }
+          if (b === a) {
+            V = null;
+            break;
+          }
+          c = b.sibling;
+          if (null !== c) {
+            c.return = b.return;
+            V = c;
+            break;
+          }
+          V = b.return;
+        }
+      }
+      __name(kk, "kk");
+      function gk(a) {
+        for (; null !== V; ) {
+          var b = V;
+          if (b === a) {
+            V = null;
+            break;
+          }
+          var c = b.sibling;
+          if (null !== c) {
+            c.return = b.return;
+            V = c;
+            break;
+          }
+          V = b.return;
+        }
+      }
+      __name(gk, "gk");
+      function jk(a) {
+        for (; null !== V; ) {
+          var b = V;
+          try {
+            switch (b.tag) {
+              case 0:
+              case 11:
+              case 15:
+                var c = b.return;
+                try {
+                  Qj(4, b);
+                } catch (k) {
+                  W2(b, c, k);
+                }
+                break;
+              case 1:
+                var d = b.stateNode;
+                if ("function" === typeof d.componentDidMount) {
+                  var e = b.return;
+                  try {
+                    d.componentDidMount();
+                  } catch (k) {
+                    W2(b, e, k);
+                  }
+                }
+                var f = b.return;
+                try {
+                  Rj(b);
+                } catch (k) {
+                  W2(b, f, k);
+                }
+                break;
+              case 5:
+                var g = b.return;
+                try {
+                  Rj(b);
+                } catch (k) {
+                  W2(b, g, k);
+                }
+            }
+          } catch (k) {
+            W2(b, b.return, k);
+          }
+          if (b === a) {
+            V = null;
+            break;
+          }
+          var h = b.sibling;
+          if (null !== h) {
+            h.return = b.return;
+            V = h;
+            break;
+          }
+          V = b.return;
+        }
+      }
+      __name(jk, "jk");
+      var lk = Math.ceil;
+      var mk = ua.ReactCurrentDispatcher;
+      var nk = ua.ReactCurrentOwner;
+      var ok = ua.ReactCurrentBatchConfig;
+      var K = 0;
+      var Q = null;
+      var Y = null;
+      var Z = 0;
+      var fj = 0;
+      var ej = Uf(0);
+      var T = 0;
+      var pk = null;
+      var rh = 0;
+      var qk = 0;
+      var rk = 0;
+      var sk = null;
+      var tk = null;
+      var fk = 0;
+      var Gj = Infinity;
+      var uk = null;
+      var Oi = false;
+      var Pi = null;
+      var Ri = null;
+      var vk = false;
+      var wk = null;
+      var xk = 0;
+      var yk = 0;
+      var zk = null;
+      var Ak = -1;
+      var Bk = 0;
+      function R() {
+        return 0 !== (K & 6) ? B() : -1 !== Ak ? Ak : Ak = B();
+      }
+      __name(R, "R");
+      function yi(a) {
+        if (0 === (a.mode & 1)) return 1;
+        if (0 !== (K & 2) && 0 !== Z) return Z & -Z;
+        if (null !== Kg.transition) return 0 === Bk && (Bk = yc()), Bk;
+        a = C;
+        if (0 !== a) return a;
+        a = window.event;
+        a = void 0 === a ? 16 : jd(a.type);
+        return a;
+      }
+      __name(yi, "yi");
+      function gi(a, b, c, d) {
+        if (50 < yk) throw yk = 0, zk = null, Error(p(185));
+        Ac(a, c, d);
+        if (0 === (K & 2) || a !== Q) a === Q && (0 === (K & 2) && (qk |= c), 4 === T && Ck(a, Z)), Dk(a, d), 1 === c && 0 === K && 0 === (b.mode & 1) && (Gj = B() + 500, fg && jg());
+      }
+      __name(gi, "gi");
+      function Dk(a, b) {
+        var c = a.callbackNode;
+        wc(a, b);
+        var d = uc(a, a === Q ? Z : 0);
+        if (0 === d) null !== c && bc(c), a.callbackNode = null, a.callbackPriority = 0;
+        else if (b = d & -d, a.callbackPriority !== b) {
+          null != c && bc(c);
+          if (1 === b) 0 === a.tag ? ig(Ek.bind(null, a)) : hg(Ek.bind(null, a)), Jf(function() {
+            0 === (K & 6) && jg();
+          }), c = null;
+          else {
+            switch (Dc(d)) {
+              case 1:
+                c = fc;
+                break;
+              case 4:
+                c = gc;
+                break;
+              case 16:
+                c = hc;
+                break;
+              case 536870912:
+                c = jc;
+                break;
+              default:
+                c = hc;
+            }
+            c = Fk(c, Gk.bind(null, a));
+          }
+          a.callbackPriority = b;
+          a.callbackNode = c;
+        }
+      }
+      __name(Dk, "Dk");
+      function Gk(a, b) {
+        Ak = -1;
+        Bk = 0;
+        if (0 !== (K & 6)) throw Error(p(327));
+        var c = a.callbackNode;
+        if (Hk() && a.callbackNode !== c) return null;
+        var d = uc(a, a === Q ? Z : 0);
+        if (0 === d) return null;
+        if (0 !== (d & 30) || 0 !== (d & a.expiredLanes) || b) b = Ik(a, d);
+        else {
+          b = d;
+          var e = K;
+          K |= 2;
+          var f = Jk();
+          if (Q !== a || Z !== b) uk = null, Gj = B() + 500, Kk(a, b);
+          do
+            try {
+              Lk();
+              break;
+            } catch (h) {
+              Mk(a, h);
+            }
+          while (1);
+          $g();
+          mk.current = f;
+          K = e;
+          null !== Y ? b = 0 : (Q = null, Z = 0, b = T);
+        }
+        if (0 !== b) {
+          2 === b && (e = xc(a), 0 !== e && (d = e, b = Nk(a, e)));
+          if (1 === b) throw c = pk, Kk(a, 0), Ck(a, d), Dk(a, B()), c;
+          if (6 === b) Ck(a, d);
+          else {
+            e = a.current.alternate;
+            if (0 === (d & 30) && !Ok(e) && (b = Ik(a, d), 2 === b && (f = xc(a), 0 !== f && (d = f, b = Nk(a, f))), 1 === b)) throw c = pk, Kk(a, 0), Ck(a, d), Dk(a, B()), c;
+            a.finishedWork = e;
+            a.finishedLanes = d;
+            switch (b) {
+              case 0:
+              case 1:
+                throw Error(p(345));
+              case 2:
+                Pk(a, tk, uk);
+                break;
+              case 3:
+                Ck(a, d);
+                if ((d & 130023424) === d && (b = fk + 500 - B(), 10 < b)) {
+                  if (0 !== uc(a, 0)) break;
+                  e = a.suspendedLanes;
+                  if ((e & d) !== d) {
+                    R();
+                    a.pingedLanes |= a.suspendedLanes & e;
+                    break;
+                  }
+                  a.timeoutHandle = Ff(Pk.bind(null, a, tk, uk), b);
+                  break;
+                }
+                Pk(a, tk, uk);
+                break;
+              case 4:
+                Ck(a, d);
+                if ((d & 4194240) === d) break;
+                b = a.eventTimes;
+                for (e = -1; 0 < d; ) {
+                  var g = 31 - oc(d);
+                  f = 1 << g;
+                  g = b[g];
+                  g > e && (e = g);
+                  d &= ~f;
+                }
+                d = e;
+                d = B() - d;
+                d = (120 > d ? 120 : 480 > d ? 480 : 1080 > d ? 1080 : 1920 > d ? 1920 : 3e3 > d ? 3e3 : 4320 > d ? 4320 : 1960 * lk(d / 1960)) - d;
+                if (10 < d) {
+                  a.timeoutHandle = Ff(Pk.bind(null, a, tk, uk), d);
+                  break;
+                }
+                Pk(a, tk, uk);
+                break;
+              case 5:
+                Pk(a, tk, uk);
+                break;
+              default:
+                throw Error(p(329));
+            }
+          }
+        }
+        Dk(a, B());
+        return a.callbackNode === c ? Gk.bind(null, a) : null;
+      }
+      __name(Gk, "Gk");
+      function Nk(a, b) {
+        var c = sk;
+        a.current.memoizedState.isDehydrated && (Kk(a, b).flags |= 256);
+        a = Ik(a, b);
+        2 !== a && (b = tk, tk = c, null !== b && Fj(b));
+        return a;
+      }
+      __name(Nk, "Nk");
+      function Fj(a) {
+        null === tk ? tk = a : tk.push.apply(tk, a);
+      }
+      __name(Fj, "Fj");
+      function Ok(a) {
+        for (var b = a; ; ) {
+          if (b.flags & 16384) {
+            var c = b.updateQueue;
+            if (null !== c && (c = c.stores, null !== c)) for (var d = 0; d < c.length; d++) {
+              var e = c[d], f = e.getSnapshot;
+              e = e.value;
+              try {
+                if (!He(f(), e)) return false;
+              } catch (g) {
+                return false;
+              }
+            }
+          }
+          c = b.child;
+          if (b.subtreeFlags & 16384 && null !== c) c.return = b, b = c;
+          else {
+            if (b === a) break;
+            for (; null === b.sibling; ) {
+              if (null === b.return || b.return === a) return true;
+              b = b.return;
+            }
+            b.sibling.return = b.return;
+            b = b.sibling;
+          }
+        }
+        return true;
+      }
+      __name(Ok, "Ok");
+      function Ck(a, b) {
+        b &= ~rk;
+        b &= ~qk;
+        a.suspendedLanes |= b;
+        a.pingedLanes &= ~b;
+        for (a = a.expirationTimes; 0 < b; ) {
+          var c = 31 - oc(b), d = 1 << c;
+          a[c] = -1;
+          b &= ~d;
+        }
+      }
+      __name(Ck, "Ck");
+      function Ek(a) {
+        if (0 !== (K & 6)) throw Error(p(327));
+        Hk();
+        var b = uc(a, 0);
+        if (0 === (b & 1)) return Dk(a, B()), null;
+        var c = Ik(a, b);
+        if (0 !== a.tag && 2 === c) {
+          var d = xc(a);
+          0 !== d && (b = d, c = Nk(a, d));
+        }
+        if (1 === c) throw c = pk, Kk(a, 0), Ck(a, b), Dk(a, B()), c;
+        if (6 === c) throw Error(p(345));
+        a.finishedWork = a.current.alternate;
+        a.finishedLanes = b;
+        Pk(a, tk, uk);
+        Dk(a, B());
+        return null;
+      }
+      __name(Ek, "Ek");
+      function Qk(a, b) {
+        var c = K;
+        K |= 1;
+        try {
+          return a(b);
+        } finally {
+          K = c, 0 === K && (Gj = B() + 500, fg && jg());
+        }
+      }
+      __name(Qk, "Qk");
+      function Rk(a) {
+        null !== wk && 0 === wk.tag && 0 === (K & 6) && Hk();
+        var b = K;
+        K |= 1;
+        var c = ok.transition, d = C;
+        try {
+          if (ok.transition = null, C = 1, a) return a();
+        } finally {
+          C = d, ok.transition = c, K = b, 0 === (K & 6) && jg();
+        }
+      }
+      __name(Rk, "Rk");
+      function Hj() {
+        fj = ej.current;
+        E(ej);
+      }
+      __name(Hj, "Hj");
+      function Kk(a, b) {
+        a.finishedWork = null;
+        a.finishedLanes = 0;
+        var c = a.timeoutHandle;
+        -1 !== c && (a.timeoutHandle = -1, Gf(c));
+        if (null !== Y) for (c = Y.return; null !== c; ) {
+          var d = c;
+          wg(d);
+          switch (d.tag) {
+            case 1:
+              d = d.type.childContextTypes;
+              null !== d && void 0 !== d && $f();
+              break;
+            case 3:
+              zh();
+              E(Wf);
+              E(H2);
+              Eh();
+              break;
+            case 5:
+              Bh(d);
+              break;
+            case 4:
+              zh();
+              break;
+            case 13:
+              E(L);
+              break;
+            case 19:
+              E(L);
+              break;
+            case 10:
+              ah(d.type._context);
+              break;
+            case 22:
+            case 23:
+              Hj();
+          }
+          c = c.return;
+        }
+        Q = a;
+        Y = a = Pg(a.current, null);
+        Z = fj = b;
+        T = 0;
+        pk = null;
+        rk = qk = rh = 0;
+        tk = sk = null;
+        if (null !== fh) {
+          for (b = 0; b < fh.length; b++) if (c = fh[b], d = c.interleaved, null !== d) {
+            c.interleaved = null;
+            var e = d.next, f = c.pending;
+            if (null !== f) {
+              var g = f.next;
+              f.next = e;
+              d.next = g;
+            }
+            c.pending = d;
+          }
+          fh = null;
+        }
+        return a;
+      }
+      __name(Kk, "Kk");
+      function Mk(a, b) {
+        do {
+          var c = Y;
+          try {
+            $g();
+            Fh.current = Rh;
+            if (Ih) {
+              for (var d = M.memoizedState; null !== d; ) {
+                var e = d.queue;
+                null !== e && (e.pending = null);
+                d = d.next;
+              }
+              Ih = false;
+            }
+            Hh = 0;
+            O = N = M = null;
+            Jh = false;
+            Kh = 0;
+            nk.current = null;
+            if (null === c || null === c.return) {
+              T = 1;
+              pk = b;
+              Y = null;
+              break;
+            }
+            a: {
+              var f = a, g = c.return, h = c, k = b;
+              b = Z;
+              h.flags |= 32768;
+              if (null !== k && "object" === typeof k && "function" === typeof k.then) {
+                var l = k, m = h, q = m.tag;
+                if (0 === (m.mode & 1) && (0 === q || 11 === q || 15 === q)) {
+                  var r = m.alternate;
+                  r ? (m.updateQueue = r.updateQueue, m.memoizedState = r.memoizedState, m.lanes = r.lanes) : (m.updateQueue = null, m.memoizedState = null);
+                }
+                var y = Ui(g);
+                if (null !== y) {
+                  y.flags &= -257;
+                  Vi(y, g, h, f, b);
+                  y.mode & 1 && Si(f, l, b);
+                  b = y;
+                  k = l;
+                  var n = b.updateQueue;
+                  if (null === n) {
+                    var t = /* @__PURE__ */ new Set();
+                    t.add(k);
+                    b.updateQueue = t;
+                  } else n.add(k);
+                  break a;
+                } else {
+                  if (0 === (b & 1)) {
+                    Si(f, l, b);
+                    tj();
+                    break a;
+                  }
+                  k = Error(p(426));
+                }
+              } else if (I && h.mode & 1) {
+                var J = Ui(g);
+                if (null !== J) {
+                  0 === (J.flags & 65536) && (J.flags |= 256);
+                  Vi(J, g, h, f, b);
+                  Jg(Ji(k, h));
+                  break a;
+                }
+              }
+              f = k = Ji(k, h);
+              4 !== T && (T = 2);
+              null === sk ? sk = [f] : sk.push(f);
+              f = g;
+              do {
+                switch (f.tag) {
+                  case 3:
+                    f.flags |= 65536;
+                    b &= -b;
+                    f.lanes |= b;
+                    var x = Ni(f, k, b);
+                    ph(f, x);
+                    break a;
+                  case 1:
+                    h = k;
+                    var w = f.type, u = f.stateNode;
+                    if (0 === (f.flags & 128) && ("function" === typeof w.getDerivedStateFromError || null !== u && "function" === typeof u.componentDidCatch && (null === Ri || !Ri.has(u)))) {
+                      f.flags |= 65536;
+                      b &= -b;
+                      f.lanes |= b;
+                      var F = Qi(f, h, b);
+                      ph(f, F);
+                      break a;
+                    }
+                }
+                f = f.return;
+              } while (null !== f);
+            }
+            Sk(c);
+          } catch (na) {
+            b = na;
+            Y === c && null !== c && (Y = c = c.return);
+            continue;
+          }
+          break;
+        } while (1);
+      }
+      __name(Mk, "Mk");
+      function Jk() {
+        var a = mk.current;
+        mk.current = Rh;
+        return null === a ? Rh : a;
+      }
+      __name(Jk, "Jk");
+      function tj() {
+        if (0 === T || 3 === T || 2 === T) T = 4;
+        null === Q || 0 === (rh & 268435455) && 0 === (qk & 268435455) || Ck(Q, Z);
+      }
+      __name(tj, "tj");
+      function Ik(a, b) {
+        var c = K;
+        K |= 2;
+        var d = Jk();
+        if (Q !== a || Z !== b) uk = null, Kk(a, b);
+        do
+          try {
+            Tk();
+            break;
+          } catch (e) {
+            Mk(a, e);
+          }
+        while (1);
+        $g();
+        K = c;
+        mk.current = d;
+        if (null !== Y) throw Error(p(261));
+        Q = null;
+        Z = 0;
+        return T;
+      }
+      __name(Ik, "Ik");
+      function Tk() {
+        for (; null !== Y; ) Uk(Y);
+      }
+      __name(Tk, "Tk");
+      function Lk() {
+        for (; null !== Y && !cc(); ) Uk(Y);
+      }
+      __name(Lk, "Lk");
+      function Uk(a) {
+        var b = Vk(a.alternate, a, fj);
+        a.memoizedProps = a.pendingProps;
+        null === b ? Sk(a) : Y = b;
+        nk.current = null;
+      }
+      __name(Uk, "Uk");
+      function Sk(a) {
+        var b = a;
+        do {
+          var c = b.alternate;
+          a = b.return;
+          if (0 === (b.flags & 32768)) {
+            if (c = Ej(c, b, fj), null !== c) {
+              Y = c;
+              return;
+            }
+          } else {
+            c = Ij(c, b);
+            if (null !== c) {
+              c.flags &= 32767;
+              Y = c;
+              return;
+            }
+            if (null !== a) a.flags |= 32768, a.subtreeFlags = 0, a.deletions = null;
+            else {
+              T = 6;
+              Y = null;
+              return;
+            }
+          }
+          b = b.sibling;
+          if (null !== b) {
+            Y = b;
+            return;
+          }
+          Y = b = a;
+        } while (null !== b);
+        0 === T && (T = 5);
+      }
+      __name(Sk, "Sk");
+      function Pk(a, b, c) {
+        var d = C, e = ok.transition;
+        try {
+          ok.transition = null, C = 1, Wk(a, b, c, d);
+        } finally {
+          ok.transition = e, C = d;
+        }
+        return null;
+      }
+      __name(Pk, "Pk");
+      function Wk(a, b, c, d) {
+        do
+          Hk();
+        while (null !== wk);
+        if (0 !== (K & 6)) throw Error(p(327));
+        c = a.finishedWork;
+        var e = a.finishedLanes;
+        if (null === c) return null;
+        a.finishedWork = null;
+        a.finishedLanes = 0;
+        if (c === a.current) throw Error(p(177));
+        a.callbackNode = null;
+        a.callbackPriority = 0;
+        var f = c.lanes | c.childLanes;
+        Bc(a, f);
+        a === Q && (Y = Q = null, Z = 0);
+        0 === (c.subtreeFlags & 2064) && 0 === (c.flags & 2064) || vk || (vk = true, Fk(hc, function() {
+          Hk();
+          return null;
+        }));
+        f = 0 !== (c.flags & 15990);
+        if (0 !== (c.subtreeFlags & 15990) || f) {
+          f = ok.transition;
+          ok.transition = null;
+          var g = C;
+          C = 1;
+          var h = K;
+          K |= 4;
+          nk.current = null;
+          Oj(a, c);
+          dk(c, a);
+          Oe(Df);
+          dd = !!Cf;
+          Df = Cf = null;
+          a.current = c;
+          hk(c, a, e);
+          dc();
+          K = h;
+          C = g;
+          ok.transition = f;
+        } else a.current = c;
+        vk && (vk = false, wk = a, xk = e);
+        f = a.pendingLanes;
+        0 === f && (Ri = null);
+        mc(c.stateNode, d);
+        Dk(a, B());
+        if (null !== b) for (d = a.onRecoverableError, c = 0; c < b.length; c++) e = b[c], d(e.value, { componentStack: e.stack, digest: e.digest });
+        if (Oi) throw Oi = false, a = Pi, Pi = null, a;
+        0 !== (xk & 1) && 0 !== a.tag && Hk();
+        f = a.pendingLanes;
+        0 !== (f & 1) ? a === zk ? yk++ : (yk = 0, zk = a) : yk = 0;
+        jg();
+        return null;
+      }
+      __name(Wk, "Wk");
+      function Hk() {
+        if (null !== wk) {
+          var a = Dc(xk), b = ok.transition, c = C;
+          try {
+            ok.transition = null;
+            C = 16 > a ? 16 : a;
+            if (null === wk) var d = false;
+            else {
+              a = wk;
+              wk = null;
+              xk = 0;
+              if (0 !== (K & 6)) throw Error(p(331));
+              var e = K;
+              K |= 4;
+              for (V = a.current; null !== V; ) {
+                var f = V, g = f.child;
+                if (0 !== (V.flags & 16)) {
+                  var h = f.deletions;
+                  if (null !== h) {
+                    for (var k = 0; k < h.length; k++) {
+                      var l = h[k];
+                      for (V = l; null !== V; ) {
+                        var m = V;
+                        switch (m.tag) {
+                          case 0:
+                          case 11:
+                          case 15:
+                            Pj(8, m, f);
+                        }
+                        var q = m.child;
+                        if (null !== q) q.return = m, V = q;
+                        else for (; null !== V; ) {
+                          m = V;
+                          var r = m.sibling, y = m.return;
+                          Sj(m);
+                          if (m === l) {
+                            V = null;
+                            break;
+                          }
+                          if (null !== r) {
+                            r.return = y;
+                            V = r;
+                            break;
+                          }
+                          V = y;
+                        }
+                      }
+                    }
+                    var n = f.alternate;
+                    if (null !== n) {
+                      var t = n.child;
+                      if (null !== t) {
+                        n.child = null;
+                        do {
+                          var J = t.sibling;
+                          t.sibling = null;
+                          t = J;
+                        } while (null !== t);
+                      }
+                    }
+                    V = f;
+                  }
+                }
+                if (0 !== (f.subtreeFlags & 2064) && null !== g) g.return = f, V = g;
+                else b: for (; null !== V; ) {
+                  f = V;
+                  if (0 !== (f.flags & 2048)) switch (f.tag) {
+                    case 0:
+                    case 11:
+                    case 15:
+                      Pj(9, f, f.return);
+                  }
+                  var x = f.sibling;
+                  if (null !== x) {
+                    x.return = f.return;
+                    V = x;
+                    break b;
+                  }
+                  V = f.return;
+                }
+              }
+              var w = a.current;
+              for (V = w; null !== V; ) {
+                g = V;
+                var u = g.child;
+                if (0 !== (g.subtreeFlags & 2064) && null !== u) u.return = g, V = u;
+                else b: for (g = w; null !== V; ) {
+                  h = V;
+                  if (0 !== (h.flags & 2048)) try {
+                    switch (h.tag) {
+                      case 0:
+                      case 11:
+                      case 15:
+                        Qj(9, h);
+                    }
+                  } catch (na) {
+                    W2(h, h.return, na);
+                  }
+                  if (h === g) {
+                    V = null;
+                    break b;
+                  }
+                  var F = h.sibling;
+                  if (null !== F) {
+                    F.return = h.return;
+                    V = F;
+                    break b;
+                  }
+                  V = h.return;
+                }
+              }
+              K = e;
+              jg();
+              if (lc && "function" === typeof lc.onPostCommitFiberRoot) try {
+                lc.onPostCommitFiberRoot(kc, a);
+              } catch (na) {
+              }
+              d = true;
+            }
+            return d;
+          } finally {
+            C = c, ok.transition = b;
+          }
+        }
+        return false;
+      }
+      __name(Hk, "Hk");
+      function Xk(a, b, c) {
+        b = Ji(c, b);
+        b = Ni(a, b, 1);
+        a = nh(a, b, 1);
+        b = R();
+        null !== a && (Ac(a, 1, b), Dk(a, b));
+      }
+      __name(Xk, "Xk");
+      function W2(a, b, c) {
+        if (3 === a.tag) Xk(a, a, c);
+        else for (; null !== b; ) {
+          if (3 === b.tag) {
+            Xk(b, a, c);
+            break;
+          } else if (1 === b.tag) {
+            var d = b.stateNode;
+            if ("function" === typeof b.type.getDerivedStateFromError || "function" === typeof d.componentDidCatch && (null === Ri || !Ri.has(d))) {
+              a = Ji(c, a);
+              a = Qi(b, a, 1);
+              b = nh(b, a, 1);
+              a = R();
+              null !== b && (Ac(b, 1, a), Dk(b, a));
+              break;
+            }
+          }
+          b = b.return;
+        }
+      }
+      __name(W2, "W");
+      function Ti(a, b, c) {
+        var d = a.pingCache;
+        null !== d && d.delete(b);
+        b = R();
+        a.pingedLanes |= a.suspendedLanes & c;
+        Q === a && (Z & c) === c && (4 === T || 3 === T && (Z & 130023424) === Z && 500 > B() - fk ? Kk(a, 0) : rk |= c);
+        Dk(a, b);
+      }
+      __name(Ti, "Ti");
+      function Yk(a, b) {
+        0 === b && (0 === (a.mode & 1) ? b = 1 : (b = sc, sc <<= 1, 0 === (sc & 130023424) && (sc = 4194304)));
+        var c = R();
+        a = ih(a, b);
+        null !== a && (Ac(a, b, c), Dk(a, c));
+      }
+      __name(Yk, "Yk");
+      function uj(a) {
+        var b = a.memoizedState, c = 0;
+        null !== b && (c = b.retryLane);
+        Yk(a, c);
+      }
+      __name(uj, "uj");
+      function bk(a, b) {
+        var c = 0;
+        switch (a.tag) {
+          case 13:
+            var d = a.stateNode;
+            var e = a.memoizedState;
+            null !== e && (c = e.retryLane);
+            break;
+          case 19:
+            d = a.stateNode;
+            break;
+          default:
+            throw Error(p(314));
+        }
+        null !== d && d.delete(b);
+        Yk(a, c);
+      }
+      __name(bk, "bk");
+      var Vk;
+      Vk = /* @__PURE__ */ __name(function(a, b, c) {
+        if (null !== a) if (a.memoizedProps !== b.pendingProps || Wf.current) dh = true;
+        else {
+          if (0 === (a.lanes & c) && 0 === (b.flags & 128)) return dh = false, yj(a, b, c);
+          dh = 0 !== (a.flags & 131072) ? true : false;
+        }
+        else dh = false, I && 0 !== (b.flags & 1048576) && ug(b, ng, b.index);
+        b.lanes = 0;
+        switch (b.tag) {
+          case 2:
+            var d = b.type;
+            ij(a, b);
+            a = b.pendingProps;
+            var e = Yf(b, H2.current);
+            ch(b, c);
+            e = Nh(null, b, d, a, e, c);
+            var f = Sh();
+            b.flags |= 1;
+            "object" === typeof e && null !== e && "function" === typeof e.render && void 0 === e.$$typeof ? (b.tag = 1, b.memoizedState = null, b.updateQueue = null, Zf(d) ? (f = true, cg(b)) : f = false, b.memoizedState = null !== e.state && void 0 !== e.state ? e.state : null, kh(b), e.updater = Ei, b.stateNode = e, e._reactInternals = b, Ii(b, d, a, c), b = jj(null, b, d, true, f, c)) : (b.tag = 0, I && f && vg(b), Xi(null, b, e, c), b = b.child);
+            return b;
+          case 16:
+            d = b.elementType;
+            a: {
+              ij(a, b);
+              a = b.pendingProps;
+              e = d._init;
+              d = e(d._payload);
+              b.type = d;
+              e = b.tag = Zk(d);
+              a = Ci(d, a);
+              switch (e) {
+                case 0:
+                  b = cj(null, b, d, a, c);
+                  break a;
+                case 1:
+                  b = hj(null, b, d, a, c);
+                  break a;
+                case 11:
+                  b = Yi(null, b, d, a, c);
+                  break a;
+                case 14:
+                  b = $i(null, b, d, Ci(d.type, a), c);
+                  break a;
+              }
+              throw Error(p(
+                306,
+                d,
+                ""
+              ));
+            }
+            return b;
+          case 0:
+            return d = b.type, e = b.pendingProps, e = b.elementType === d ? e : Ci(d, e), cj(a, b, d, e, c);
+          case 1:
+            return d = b.type, e = b.pendingProps, e = b.elementType === d ? e : Ci(d, e), hj(a, b, d, e, c);
+          case 3:
+            a: {
+              kj(b);
+              if (null === a) throw Error(p(387));
+              d = b.pendingProps;
+              f = b.memoizedState;
+              e = f.element;
+              lh(a, b);
+              qh(b, d, null, c);
+              var g = b.memoizedState;
+              d = g.element;
+              if (f.isDehydrated) if (f = { element: d, isDehydrated: false, cache: g.cache, pendingSuspenseBoundaries: g.pendingSuspenseBoundaries, transitions: g.transitions }, b.updateQueue.baseState = f, b.memoizedState = f, b.flags & 256) {
+                e = Ji(Error(p(423)), b);
+                b = lj(a, b, d, c, e);
+                break a;
+              } else if (d !== e) {
+                e = Ji(Error(p(424)), b);
+                b = lj(a, b, d, c, e);
+                break a;
+              } else for (yg = Lf(b.stateNode.containerInfo.firstChild), xg = b, I = true, zg = null, c = Vg(b, null, d, c), b.child = c; c; ) c.flags = c.flags & -3 | 4096, c = c.sibling;
+              else {
+                Ig();
+                if (d === e) {
+                  b = Zi(a, b, c);
+                  break a;
+                }
+                Xi(a, b, d, c);
+              }
+              b = b.child;
+            }
+            return b;
+          case 5:
+            return Ah(b), null === a && Eg(b), d = b.type, e = b.pendingProps, f = null !== a ? a.memoizedProps : null, g = e.children, Ef(d, e) ? g = null : null !== f && Ef(d, f) && (b.flags |= 32), gj(a, b), Xi(a, b, g, c), b.child;
+          case 6:
+            return null === a && Eg(b), null;
+          case 13:
+            return oj(a, b, c);
+          case 4:
+            return yh(b, b.stateNode.containerInfo), d = b.pendingProps, null === a ? b.child = Ug(b, null, d, c) : Xi(a, b, d, c), b.child;
+          case 11:
+            return d = b.type, e = b.pendingProps, e = b.elementType === d ? e : Ci(d, e), Yi(a, b, d, e, c);
+          case 7:
+            return Xi(a, b, b.pendingProps, c), b.child;
+          case 8:
+            return Xi(a, b, b.pendingProps.children, c), b.child;
+          case 12:
+            return Xi(a, b, b.pendingProps.children, c), b.child;
+          case 10:
+            a: {
+              d = b.type._context;
+              e = b.pendingProps;
+              f = b.memoizedProps;
+              g = e.value;
+              G(Wg, d._currentValue);
+              d._currentValue = g;
+              if (null !== f) if (He(f.value, g)) {
+                if (f.children === e.children && !Wf.current) {
+                  b = Zi(a, b, c);
+                  break a;
+                }
+              } else for (f = b.child, null !== f && (f.return = b); null !== f; ) {
+                var h = f.dependencies;
+                if (null !== h) {
+                  g = f.child;
+                  for (var k = h.firstContext; null !== k; ) {
+                    if (k.context === d) {
+                      if (1 === f.tag) {
+                        k = mh(-1, c & -c);
+                        k.tag = 2;
+                        var l = f.updateQueue;
+                        if (null !== l) {
+                          l = l.shared;
+                          var m = l.pending;
+                          null === m ? k.next = k : (k.next = m.next, m.next = k);
+                          l.pending = k;
+                        }
+                      }
+                      f.lanes |= c;
+                      k = f.alternate;
+                      null !== k && (k.lanes |= c);
+                      bh(
+                        f.return,
+                        c,
+                        b
+                      );
+                      h.lanes |= c;
+                      break;
+                    }
+                    k = k.next;
+                  }
+                } else if (10 === f.tag) g = f.type === b.type ? null : f.child;
+                else if (18 === f.tag) {
+                  g = f.return;
+                  if (null === g) throw Error(p(341));
+                  g.lanes |= c;
+                  h = g.alternate;
+                  null !== h && (h.lanes |= c);
+                  bh(g, c, b);
+                  g = f.sibling;
+                } else g = f.child;
+                if (null !== g) g.return = f;
+                else for (g = f; null !== g; ) {
+                  if (g === b) {
+                    g = null;
+                    break;
+                  }
+                  f = g.sibling;
+                  if (null !== f) {
+                    f.return = g.return;
+                    g = f;
+                    break;
+                  }
+                  g = g.return;
+                }
+                f = g;
+              }
+              Xi(a, b, e.children, c);
+              b = b.child;
+            }
+            return b;
+          case 9:
+            return e = b.type, d = b.pendingProps.children, ch(b, c), e = eh(e), d = d(e), b.flags |= 1, Xi(a, b, d, c), b.child;
+          case 14:
+            return d = b.type, e = Ci(d, b.pendingProps), e = Ci(d.type, e), $i(a, b, d, e, c);
+          case 15:
+            return bj(a, b, b.type, b.pendingProps, c);
+          case 17:
+            return d = b.type, e = b.pendingProps, e = b.elementType === d ? e : Ci(d, e), ij(a, b), b.tag = 1, Zf(d) ? (a = true, cg(b)) : a = false, ch(b, c), Gi(b, d, e), Ii(b, d, e, c), jj(null, b, d, true, a, c);
+          case 19:
+            return xj(a, b, c);
+          case 22:
+            return dj(a, b, c);
+        }
+        throw Error(p(156, b.tag));
+      }, "Vk");
+      function Fk(a, b) {
+        return ac(a, b);
+      }
+      __name(Fk, "Fk");
+      function $k(a, b, c, d) {
+        this.tag = a;
+        this.key = c;
+        this.sibling = this.child = this.return = this.stateNode = this.type = this.elementType = null;
+        this.index = 0;
+        this.ref = null;
+        this.pendingProps = b;
+        this.dependencies = this.memoizedState = this.updateQueue = this.memoizedProps = null;
+        this.mode = d;
+        this.subtreeFlags = this.flags = 0;
+        this.deletions = null;
+        this.childLanes = this.lanes = 0;
+        this.alternate = null;
+      }
+      __name($k, "$k");
+      function Bg(a, b, c, d) {
+        return new $k(a, b, c, d);
+      }
+      __name(Bg, "Bg");
+      function aj(a) {
+        a = a.prototype;
+        return !(!a || !a.isReactComponent);
+      }
+      __name(aj, "aj");
+      function Zk(a) {
+        if ("function" === typeof a) return aj(a) ? 1 : 0;
+        if (void 0 !== a && null !== a) {
+          a = a.$$typeof;
+          if (a === Da) return 11;
+          if (a === Ga) return 14;
+        }
+        return 2;
+      }
+      __name(Zk, "Zk");
+      function Pg(a, b) {
+        var c = a.alternate;
+        null === c ? (c = Bg(a.tag, b, a.key, a.mode), c.elementType = a.elementType, c.type = a.type, c.stateNode = a.stateNode, c.alternate = a, a.alternate = c) : (c.pendingProps = b, c.type = a.type, c.flags = 0, c.subtreeFlags = 0, c.deletions = null);
+        c.flags = a.flags & 14680064;
+        c.childLanes = a.childLanes;
+        c.lanes = a.lanes;
+        c.child = a.child;
+        c.memoizedProps = a.memoizedProps;
+        c.memoizedState = a.memoizedState;
+        c.updateQueue = a.updateQueue;
+        b = a.dependencies;
+        c.dependencies = null === b ? null : { lanes: b.lanes, firstContext: b.firstContext };
+        c.sibling = a.sibling;
+        c.index = a.index;
+        c.ref = a.ref;
+        return c;
+      }
+      __name(Pg, "Pg");
+      function Rg(a, b, c, d, e, f) {
+        var g = 2;
+        d = a;
+        if ("function" === typeof a) aj(a) && (g = 1);
+        else if ("string" === typeof a) g = 5;
+        else a: switch (a) {
+          case ya:
+            return Tg(c.children, e, f, b);
+          case za:
+            g = 8;
+            e |= 8;
+            break;
+          case Aa:
+            return a = Bg(12, c, b, e | 2), a.elementType = Aa, a.lanes = f, a;
+          case Ea:
+            return a = Bg(13, c, b, e), a.elementType = Ea, a.lanes = f, a;
+          case Fa:
+            return a = Bg(19, c, b, e), a.elementType = Fa, a.lanes = f, a;
+          case Ia:
+            return pj(c, e, f, b);
+          default:
+            if ("object" === typeof a && null !== a) switch (a.$$typeof) {
+              case Ba:
+                g = 10;
+                break a;
+              case Ca:
+                g = 9;
+                break a;
+              case Da:
+                g = 11;
+                break a;
+              case Ga:
+                g = 14;
+                break a;
+              case Ha:
+                g = 16;
+                d = null;
+                break a;
+            }
+            throw Error(p(130, null == a ? a : typeof a, ""));
+        }
+        b = Bg(g, c, b, e);
+        b.elementType = a;
+        b.type = d;
+        b.lanes = f;
+        return b;
+      }
+      __name(Rg, "Rg");
+      function Tg(a, b, c, d) {
+        a = Bg(7, a, d, b);
+        a.lanes = c;
+        return a;
+      }
+      __name(Tg, "Tg");
+      function pj(a, b, c, d) {
+        a = Bg(22, a, d, b);
+        a.elementType = Ia;
+        a.lanes = c;
+        a.stateNode = { isHidden: false };
+        return a;
+      }
+      __name(pj, "pj");
+      function Qg(a, b, c) {
+        a = Bg(6, a, null, b);
+        a.lanes = c;
+        return a;
+      }
+      __name(Qg, "Qg");
+      function Sg(a, b, c) {
+        b = Bg(4, null !== a.children ? a.children : [], a.key, b);
+        b.lanes = c;
+        b.stateNode = { containerInfo: a.containerInfo, pendingChildren: null, implementation: a.implementation };
+        return b;
+      }
+      __name(Sg, "Sg");
+      function al(a, b, c, d, e) {
+        this.tag = b;
+        this.containerInfo = a;
+        this.finishedWork = this.pingCache = this.current = this.pendingChildren = null;
+        this.timeoutHandle = -1;
+        this.callbackNode = this.pendingContext = this.context = null;
+        this.callbackPriority = 0;
+        this.eventTimes = zc(0);
+        this.expirationTimes = zc(-1);
+        this.entangledLanes = this.finishedLanes = this.mutableReadLanes = this.expiredLanes = this.pingedLanes = this.suspendedLanes = this.pendingLanes = 0;
+        this.entanglements = zc(0);
+        this.identifierPrefix = d;
+        this.onRecoverableError = e;
+        this.mutableSourceEagerHydrationData = null;
+      }
+      __name(al, "al");
+      function bl(a, b, c, d, e, f, g, h, k) {
+        a = new al(a, b, c, h, k);
+        1 === b ? (b = 1, true === f && (b |= 8)) : b = 0;
+        f = Bg(3, null, null, b);
+        a.current = f;
+        f.stateNode = a;
+        f.memoizedState = { element: d, isDehydrated: c, cache: null, transitions: null, pendingSuspenseBoundaries: null };
+        kh(f);
+        return a;
+      }
+      __name(bl, "bl");
+      function cl(a, b, c) {
+        var d = 3 < arguments.length && void 0 !== arguments[3] ? arguments[3] : null;
+        return { $$typeof: wa, key: null == d ? null : "" + d, children: a, containerInfo: b, implementation: c };
+      }
+      __name(cl, "cl");
+      function dl(a) {
+        if (!a) return Vf;
+        a = a._reactInternals;
+        a: {
+          if (Vb(a) !== a || 1 !== a.tag) throw Error(p(170));
+          var b = a;
+          do {
+            switch (b.tag) {
+              case 3:
+                b = b.stateNode.context;
+                break a;
+              case 1:
+                if (Zf(b.type)) {
+                  b = b.stateNode.__reactInternalMemoizedMergedChildContext;
+                  break a;
+                }
+            }
+            b = b.return;
+          } while (null !== b);
+          throw Error(p(171));
+        }
+        if (1 === a.tag) {
+          var c = a.type;
+          if (Zf(c)) return bg(a, c, b);
+        }
+        return b;
+      }
+      __name(dl, "dl");
+      function el(a, b, c, d, e, f, g, h, k) {
+        a = bl(c, d, true, a, e, f, g, h, k);
+        a.context = dl(null);
+        c = a.current;
+        d = R();
+        e = yi(c);
+        f = mh(d, e);
+        f.callback = void 0 !== b && null !== b ? b : null;
+        nh(c, f, e);
+        a.current.lanes = e;
+        Ac(a, e, d);
+        Dk(a, d);
+        return a;
+      }
+      __name(el, "el");
+      function fl(a, b, c, d) {
+        var e = b.current, f = R(), g = yi(e);
+        c = dl(c);
+        null === b.context ? b.context = c : b.pendingContext = c;
+        b = mh(f, g);
+        b.payload = { element: a };
+        d = void 0 === d ? null : d;
+        null !== d && (b.callback = d);
+        a = nh(e, b, g);
+        null !== a && (gi(a, e, g, f), oh(a, e, g));
+        return g;
+      }
+      __name(fl, "fl");
+      function gl(a) {
+        a = a.current;
+        if (!a.child) return null;
+        switch (a.child.tag) {
+          case 5:
+            return a.child.stateNode;
+          default:
+            return a.child.stateNode;
+        }
+      }
+      __name(gl, "gl");
+      function hl(a, b) {
+        a = a.memoizedState;
+        if (null !== a && null !== a.dehydrated) {
+          var c = a.retryLane;
+          a.retryLane = 0 !== c && c < b ? c : b;
+        }
+      }
+      __name(hl, "hl");
+      function il(a, b) {
+        hl(a, b);
+        (a = a.alternate) && hl(a, b);
+      }
+      __name(il, "il");
+      function jl() {
+        return null;
+      }
+      __name(jl, "jl");
+      var kl = "function" === typeof reportError ? reportError : function(a) {
+        console.error(a);
+      };
+      function ll(a) {
+        this._internalRoot = a;
+      }
+      __name(ll, "ll");
+      ml.prototype.render = ll.prototype.render = function(a) {
+        var b = this._internalRoot;
+        if (null === b) throw Error(p(409));
+        fl(a, b, null, null);
+      };
+      ml.prototype.unmount = ll.prototype.unmount = function() {
+        var a = this._internalRoot;
+        if (null !== a) {
+          this._internalRoot = null;
+          var b = a.containerInfo;
+          Rk(function() {
+            fl(null, a, null, null);
+          });
+          b[uf] = null;
+        }
+      };
+      function ml(a) {
+        this._internalRoot = a;
+      }
+      __name(ml, "ml");
+      ml.prototype.unstable_scheduleHydration = function(a) {
+        if (a) {
+          var b = Hc();
+          a = { blockedOn: null, target: a, priority: b };
+          for (var c = 0; c < Qc.length && 0 !== b && b < Qc[c].priority; c++) ;
+          Qc.splice(c, 0, a);
+          0 === c && Vc(a);
+        }
+      };
+      function nl(a) {
+        return !(!a || 1 !== a.nodeType && 9 !== a.nodeType && 11 !== a.nodeType);
+      }
+      __name(nl, "nl");
+      function ol(a) {
+        return !(!a || 1 !== a.nodeType && 9 !== a.nodeType && 11 !== a.nodeType && (8 !== a.nodeType || " react-mount-point-unstable " !== a.nodeValue));
+      }
+      __name(ol, "ol");
+      function pl() {
+      }
+      __name(pl, "pl");
+      function ql(a, b, c, d, e) {
+        if (e) {
+          if ("function" === typeof d) {
+            var f = d;
+            d = /* @__PURE__ */ __name(function() {
+              var a2 = gl(g);
+              f.call(a2);
+            }, "d");
+          }
+          var g = el(b, d, a, 0, null, false, false, "", pl);
+          a._reactRootContainer = g;
+          a[uf] = g.current;
+          sf(8 === a.nodeType ? a.parentNode : a);
+          Rk();
+          return g;
+        }
+        for (; e = a.lastChild; ) a.removeChild(e);
+        if ("function" === typeof d) {
+          var h = d;
+          d = /* @__PURE__ */ __name(function() {
+            var a2 = gl(k);
+            h.call(a2);
+          }, "d");
+        }
+        var k = bl(a, 0, false, null, null, false, false, "", pl);
+        a._reactRootContainer = k;
+        a[uf] = k.current;
+        sf(8 === a.nodeType ? a.parentNode : a);
+        Rk(function() {
+          fl(b, k, c, d);
+        });
+        return k;
+      }
+      __name(ql, "ql");
+      function rl(a, b, c, d, e) {
+        var f = c._reactRootContainer;
+        if (f) {
+          var g = f;
+          if ("function" === typeof e) {
+            var h = e;
+            e = /* @__PURE__ */ __name(function() {
+              var a2 = gl(g);
+              h.call(a2);
+            }, "e");
+          }
+          fl(b, g, a, e);
+        } else g = ql(c, b, a, e, d);
+        return gl(g);
+      }
+      __name(rl, "rl");
+      Ec = /* @__PURE__ */ __name(function(a) {
+        switch (a.tag) {
+          case 3:
+            var b = a.stateNode;
+            if (b.current.memoizedState.isDehydrated) {
+              var c = tc(b.pendingLanes);
+              0 !== c && (Cc(b, c | 1), Dk(b, B()), 0 === (K & 6) && (Gj = B() + 500, jg()));
+            }
+            break;
+          case 13:
+            Rk(function() {
+              var b2 = ih(a, 1);
+              if (null !== b2) {
+                var c2 = R();
+                gi(b2, a, 1, c2);
+              }
+            }), il(a, 1);
+        }
+      }, "Ec");
+      Fc = /* @__PURE__ */ __name(function(a) {
+        if (13 === a.tag) {
+          var b = ih(a, 134217728);
+          if (null !== b) {
+            var c = R();
+            gi(b, a, 134217728, c);
+          }
+          il(a, 134217728);
+        }
+      }, "Fc");
+      Gc = /* @__PURE__ */ __name(function(a) {
+        if (13 === a.tag) {
+          var b = yi(a), c = ih(a, b);
+          if (null !== c) {
+            var d = R();
+            gi(c, a, b, d);
+          }
+          il(a, b);
+        }
+      }, "Gc");
+      Hc = /* @__PURE__ */ __name(function() {
+        return C;
+      }, "Hc");
+      Ic = /* @__PURE__ */ __name(function(a, b) {
+        var c = C;
+        try {
+          return C = a, b();
+        } finally {
+          C = c;
+        }
+      }, "Ic");
+      yb = /* @__PURE__ */ __name(function(a, b, c) {
+        switch (b) {
+          case "input":
+            bb(a, c);
+            b = c.name;
+            if ("radio" === c.type && null != b) {
+              for (c = a; c.parentNode; ) c = c.parentNode;
+              c = c.querySelectorAll("input[name=" + JSON.stringify("" + b) + '][type="radio"]');
+              for (b = 0; b < c.length; b++) {
+                var d = c[b];
+                if (d !== a && d.form === a.form) {
+                  var e = Db(d);
+                  if (!e) throw Error(p(90));
+                  Wa(d);
+                  bb(d, e);
+                }
+              }
+            }
+            break;
+          case "textarea":
+            ib(a, c);
+            break;
+          case "select":
+            b = c.value, null != b && fb(a, !!c.multiple, b, false);
+        }
+      }, "yb");
+      Gb = Qk;
+      Hb = Rk;
+      var sl = { usingClientEntryPoint: false, Events: [Cb, ue, Db, Eb, Fb, Qk] };
+      var tl = { findFiberByHostInstance: Wc, bundleType: 0, version: "18.3.1", rendererPackageName: "react-dom" };
+      var ul = { bundleType: tl.bundleType, version: tl.version, rendererPackageName: tl.rendererPackageName, rendererConfig: tl.rendererConfig, overrideHookState: null, overrideHookStateDeletePath: null, overrideHookStateRenamePath: null, overrideProps: null, overridePropsDeletePath: null, overridePropsRenamePath: null, setErrorHandler: null, setSuspenseHandler: null, scheduleUpdate: null, currentDispatcherRef: ua.ReactCurrentDispatcher, findHostInstanceByFiber: /* @__PURE__ */ __name(function(a) {
+        a = Zb(a);
+        return null === a ? null : a.stateNode;
+      }, "findHostInstanceByFiber"), findFiberByHostInstance: tl.findFiberByHostInstance || jl, findHostInstancesForRefresh: null, scheduleRefresh: null, scheduleRoot: null, setRefreshHandler: null, getCurrentFiber: null, reconcilerVersion: "18.3.1-next-f1338f8080-20240426" };
+      if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
+        vl = __REACT_DEVTOOLS_GLOBAL_HOOK__;
+        if (!vl.isDisabled && vl.supportsFiber) try {
+          kc = vl.inject(ul), lc = vl;
+        } catch (a) {
+        }
+      }
+      var vl;
+      exports.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = sl;
+      exports.createPortal = function(a, b) {
+        var c = 2 < arguments.length && void 0 !== arguments[2] ? arguments[2] : null;
+        if (!nl(b)) throw Error(p(200));
+        return cl(a, b, null, c);
+      };
+      exports.createRoot = function(a, b) {
+        if (!nl(a)) throw Error(p(299));
+        var c = false, d = "", e = kl;
+        null !== b && void 0 !== b && (true === b.unstable_strictMode && (c = true), void 0 !== b.identifierPrefix && (d = b.identifierPrefix), void 0 !== b.onRecoverableError && (e = b.onRecoverableError));
+        b = bl(a, 1, false, null, null, c, false, d, e);
+        a[uf] = b.current;
+        sf(8 === a.nodeType ? a.parentNode : a);
+        return new ll(b);
+      };
+      exports.findDOMNode = function(a) {
+        if (null == a) return null;
+        if (1 === a.nodeType) return a;
+        var b = a._reactInternals;
+        if (void 0 === b) {
+          if ("function" === typeof a.render) throw Error(p(188));
+          a = Object.keys(a).join(",");
+          throw Error(p(268, a));
+        }
+        a = Zb(b);
+        a = null === a ? null : a.stateNode;
+        return a;
+      };
+      exports.flushSync = function(a) {
+        return Rk(a);
+      };
+      exports.hydrate = function(a, b, c) {
+        if (!ol(b)) throw Error(p(200));
+        return rl(null, a, b, true, c);
+      };
+      exports.hydrateRoot = function(a, b, c) {
+        if (!nl(a)) throw Error(p(405));
+        var d = null != c && c.hydratedSources || null, e = false, f = "", g = kl;
+        null !== c && void 0 !== c && (true === c.unstable_strictMode && (e = true), void 0 !== c.identifierPrefix && (f = c.identifierPrefix), void 0 !== c.onRecoverableError && (g = c.onRecoverableError));
+        b = el(b, null, a, 1, null != c ? c : null, e, false, f, g);
+        a[uf] = b.current;
+        sf(a);
+        if (d) for (a = 0; a < d.length; a++) c = d[a], e = c._getVersion, e = e(c._source), null == b.mutableSourceEagerHydrationData ? b.mutableSourceEagerHydrationData = [c, e] : b.mutableSourceEagerHydrationData.push(
+          c,
+          e
+        );
+        return new ml(b);
+      };
+      exports.render = function(a, b, c) {
+        if (!ol(b)) throw Error(p(200));
+        return rl(null, a, b, false, c);
+      };
+      exports.unmountComponentAtNode = function(a) {
+        if (!ol(a)) throw Error(p(40));
+        return a._reactRootContainer ? (Rk(function() {
+          rl(null, null, a, false, function() {
+            a._reactRootContainer = null;
+            a[uf] = null;
+          });
+        }), true) : false;
+      };
+      exports.unstable_batchedUpdates = Qk;
+      exports.unstable_renderSubtreeIntoContainer = function(a, b, c, d) {
+        if (!ol(c)) throw Error(p(200));
+        if (null == a || void 0 === a._reactInternals) throw Error(p(38));
+        return rl(a, b, c, false, d);
+      };
+      exports.version = "18.3.1-next-f1338f8080-20240426";
+    }
+  });
+
+  // node_modules/react-dom/index.js
+  var require_react_dom = __commonJS({
+    "node_modules/react-dom/index.js"(exports, module) {
+      "use strict";
+      function checkDCE() {
+        if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
+          return;
+        }
+        if (false) {
+          throw new Error("^_^");
+        }
+        try {
+          __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE(checkDCE);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      __name(checkDCE, "checkDCE");
+      if (true) {
+        checkDCE();
+        module.exports = require_react_dom_production_min();
+      } else {
+        module.exports = null;
+      }
+    }
+  });
+
+  // node_modules/react-dom/client.js
+  var require_client = __commonJS({
+    "node_modules/react-dom/client.js"(exports) {
+      "use strict";
+      var m = require_react_dom();
+      if (true) {
+        exports.createRoot = m.createRoot;
+        exports.hydrateRoot = m.hydrateRoot;
+      } else {
+        i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        exports.createRoot = function(c, o) {
+          i.usingClientEntryPoint = true;
+          try {
+            return m.createRoot(c, o);
+          } finally {
+            i.usingClientEntryPoint = false;
+          }
+        };
+        exports.hydrateRoot = function(c, h, o) {
+          i.usingClientEntryPoint = true;
+          try {
+            return m.hydrateRoot(c, h, o);
+          } finally {
+            i.usingClientEntryPoint = false;
+          }
+        };
+      }
+      var i;
+    }
+  });
+
+  // node_modules/react/cjs/react-jsx-runtime.production.min.js
+  var require_react_jsx_runtime_production_min = __commonJS({
+    "node_modules/react/cjs/react-jsx-runtime.production.min.js"(exports) {
+      "use strict";
+      var f = require_react();
+      var k = Symbol.for("react.element");
+      var l = Symbol.for("react.fragment");
+      var m = Object.prototype.hasOwnProperty;
+      var n = f.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner;
+      var p = { key: true, ref: true, __self: true, __source: true };
+      function q(c, a, g) {
+        var b, d = {}, e = null, h = null;
+        void 0 !== g && (e = "" + g);
+        void 0 !== a.key && (e = "" + a.key);
+        void 0 !== a.ref && (h = a.ref);
+        for (b in a) m.call(a, b) && !p.hasOwnProperty(b) && (d[b] = a[b]);
+        if (c && c.defaultProps) for (b in a = c.defaultProps, a) void 0 === d[b] && (d[b] = a[b]);
+        return { $$typeof: k, type: c, key: e, ref: h, props: d, _owner: n.current };
+      }
+      __name(q, "q");
+      exports.Fragment = l;
+      exports.jsx = q;
+      exports.jsxs = q;
+    }
+  });
+
+  // node_modules/react/jsx-runtime.js
+  var require_jsx_runtime = __commonJS({
+    "node_modules/react/jsx-runtime.js"(exports, module) {
+      "use strict";
+      if (true) {
+        module.exports = require_react_jsx_runtime_production_min();
+      } else {
+        module.exports = null;
+      }
+    }
+  });
+
+  // src/main.tsx
+  var import_react13 = __toESM(require_react(), 1);
+  var import_client = __toESM(require_client(), 1);
+
+  // src/App.tsx
+  var import_react12 = __toESM(require_react(), 1);
+
+  // src/lib/format.ts
+  function swissNumber(value, decimals = 2) {
+    const negative = value < 0;
+    const fixed = Math.abs(value).toFixed(decimals);
+    const [int, frac] = fixed.split(".");
+    const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return `${negative ? "\u2212" : ""}${grouped}${frac !== void 0 ? "." + frac : ""}`;
+  }
+  __name(swissNumber, "swissNumber");
+  function money(value, currency = "CHF", decimals = 2) {
+    return `${currency} ${swissNumber(value, decimals)}`;
+  }
+  __name(money, "money");
+  function signedMoney(value, currency = "CHF") {
+    const sign = value > 0 ? "+ " : value < 0 ? "\u2212 " : "";
+    return `${sign}${money(Math.abs(value), currency)}`;
+  }
+  __name(signedMoney, "signedMoney");
+  var DAY_MS = 864e5;
+  var EPOCH_UTC = Date.UTC(2026, 7, 14);
+  function dateOf(day) {
+    return new Date(EPOCH_UTC + day * DAY_MS);
+  }
+  __name(dateOf, "dateOf");
+  var MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+  var WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  function shortDate(day) {
+    const d = dateOf(day);
+    return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  }
+  __name(shortDate, "shortDate");
+  function longDate(day) {
+    const d = dateOf(day);
+    return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  }
+  __name(longDate, "longDate");
+  function dayOfMonth(day) {
+    return dateOf(day).getUTCDate();
+  }
+  __name(dayOfMonth, "dayOfMonth");
+  function isWeekend(day) {
+    const wd = dateOf(day).getUTCDay();
+    return wd === 0 || wd === 6;
+  }
+  __name(isWeekend, "isWeekend");
+  function nextBusinessDay(day) {
+    let d = day + 1;
+    while (isWeekend(d)) d += 1;
+    return d;
+  }
+  __name(nextBusinessDay, "nextBusinessDay");
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0;
+      a = a + 1831565813 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  __name(mulberry32, "mulberry32");
+  function roundTo(value, step) {
+    return Math.round(value / step) * step;
+  }
+  __name(roundTo, "roundTo");
+
+  // src/app-shell/shell.tsx
+  var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+  function StatusBar({ onCard = false }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: `status-bar ${onCard ? "status-bar--card" : ""}`, "aria-hidden": "true", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "9:41" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "flex items-center", style: { gap: "var(--space-2xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { width: "17", height: "11", viewBox: "0 0 17 11", fill: "currentColor", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "0", y: "7", width: "3", height: "4", rx: "0.8" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "4.5", y: "5", width: "3", height: "6", rx: "0.8" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "9", y: "2.5", width: "3", height: "8.5", rx: "0.8" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "13.5", y: "0", width: "3", height: "11", rx: "0.8" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "15", height: "11", viewBox: "0 0 15 11", fill: "currentColor", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M7.5 9.2a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zM4.9 7.6l1.3 1.3a1.9 1.9 0 0 1 2.6 0l1.3-1.3a3.7 3.7 0 0 0-5.2 0zM2.3 5l1.3 1.3a5.6 5.6 0 0 1 7.8 0L12.7 5a7.4 7.4 0 0 0-10.4 0zM0 2.6l1.3 1.3a8.9 8.9 0 0 1 12.4 0L15 2.6a10.8 10.8 0 0 0-15 0z", transform: "scale(1,0.92)" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { width: "25", height: "12", viewBox: "0 0 25 12", fill: "none", stroke: "currentColor", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "0.5", y: "0.5", width: "21", height: "11", rx: "3", opacity: "0.4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "2", y: "2", width: "18", height: "8", rx: "1.8", fill: "currentColor", stroke: "none" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M23.5 4v4a2.2 2.2 0 0 0 0-4z", fill: "currentColor", stroke: "none", opacity: "0.4" })
+        ] })
+      ] })
+    ] });
+  }
+  __name(StatusBar, "StatusBar");
+  function ShieldIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "16", height: "18", viewBox: "0 0 16 18", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 1.2 14.5 3.5v5c0 4-2.6 6.9-6.5 8.3C4.1 15.4 1.5 12.5 1.5 8.5v-5L8 1.2z", strokeLinejoin: "round" }) });
+  }
+  __name(ShieldIcon, "ShieldIcon");
+  function SearchIcon({ plus = false }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { width: "20", height: "20", viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: "1.7", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "8.5", cy: "8.5", r: "5.5" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m13 13 4.5 4.5", strokeLinecap: "round" }),
+      plus && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8.5 6.3v4.4M6.3 8.5h4.4", strokeLinecap: "round", strokeWidth: "1.4" })
+    ] });
+  }
+  __name(SearchIcon, "SearchIcon");
+  function TopBar({ onCard = false }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: `top-bar ${onCard ? "top-bar--card" : ""}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "top-bar__icon top-bar__icon--ring", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShieldIcon, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "flex items-center", style: { gap: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "top-bar__icon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SearchIcon, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "top-bar__avatar", "aria-label": "Profile \u2014 L\xE9a Baumann", children: "LB" })
+      ] })
+    ] });
+  }
+  __name(TopBar, "TopBar");
+  function DetailTopBar({ title, onBack, onCard = false }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: `top-bar ${onCard ? "top-bar--card" : ""}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "top-bar__icon", style: { minWidth: "var(--size-touch-target)", minHeight: "var(--size-touch-target)" }, onClick: onBack, "aria-label": "Back", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "11", height: "18", viewBox: "0 0 11 18", fill: "none", stroke: "currentColor", strokeWidth: "2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9.5 1.5 2 9l7.5 7.5", strokeLinecap: "round", strokeLinejoin: "round" }) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { className: "top-bar__title m-0", children: title }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "flex items-center", style: { gap: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "top-bar__icon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SearchIcon, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "top-bar__avatar", "aria-hidden": "true", children: "LB" })
+      ] })
+    ] });
+  }
+  __name(DetailTopBar, "DetailTopBar");
+  var TAB_ICONS = {
+    home: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.7", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 9.5 11 3l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H4a1 1 0 0 1-1-1V9.5z", strokeLinejoin: "round" }) }),
+    trade: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.7", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 4v10M4 6.5h3v5H4M11 3v3M11 6h1.5v6H9.5V6H11M11 12v2M18 8v10M18 10h-3v5.5h3", strokeLinecap: "round" }) }),
+    bank: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.7", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { x: "2.5", y: "5", width: "17", height: "12", rx: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M2.5 9h17" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M6 13.5h4", strokeLinecap: "round" })
+    ] }),
+    search: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SearchIcon, { plus: true })
+  };
+  var TAB_LABELS = { home: "Home", trade: "Trade", bank: "Bank", search: "Search" };
+  function BottomNav({ active, onSelect }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", { className: "tab-bar", "aria-label": "Main navigation", children: Object.keys(TAB_LABELS).map((tab) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+      "button",
+      {
+        type: "button",
+        className: "tab-bar__item",
+        "aria-current": active === tab ? "page" : void 0,
+        onClick: () => onSelect(tab),
+        children: [
+          TAB_ICONS[tab],
+          TAB_LABELS[tab]
+        ]
+      },
+      tab
+    )) });
+  }
+  __name(BottomNav, "BottomNav");
+  function AmountXL({ value, currency = "CHF" }) {
+    const fixed = swissNumber(value);
+    const dot = fixed.lastIndexOf(".");
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "amount-xl", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "amount-xl__int", children: fixed.slice(0, dot) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "amount-xl__frac", children: [
+        fixed.slice(dot),
+        " ",
+        currency
+      ] })
+    ] });
+  }
+  __name(AmountXL, "AmountXL");
+  function Delta({ pct, amount }) {
+    const up = pct >= 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: `delta ${up ? "delta--up" : "delta--down"} amount`, children: [
+      up ? "\u25B2" : "\u25BC",
+      " ",
+      Math.abs(pct).toFixed(2),
+      "% ",
+      up ? "+" : "\u2212",
+      swissNumber(Math.abs(amount)),
+      " CHF"
+    ] });
+  }
+  __name(Delta, "Delta");
+
+  // src/components/MarginCallModal.tsx
+  var import_react2 = __toESM(require_react(), 1);
+
+  // src/state/store.tsx
+  var import_react = __toESM(require_react(), 1);
+
+  // src/data/mockLedger.ts
+  var CLIENT = {
+    name: "L\xE9a Baumann",
+    ibanMasked: "CH\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 4 291",
+    ibanFull: "CH93 0076 2011 6238 5295 7",
+    // sample-format IBAN, prototype only
+    employer: "Employer SA",
+    salaryNet: 21e3,
+    // wealthy profile — senior executive net salary
+    salaryDayOfMonth: 25
+  };
+  var FX = {
+    eurToChf: 574.1 / 612,
+    // §10: EUR 612.00 ≈ CHF 574.10 (indicative)
+    usdToChf: 842.3 / 1050,
+    // §10: USD 1'050.00 ≈ CHF 842.30 (indicative)
+    spreadPct: 0.95
+    // conversion cost shown before any FX top-up ⟨TO CONFIRM⟩
+  };
+  var LOMBARD_RATE_PA = 4.25;
+  var PENDING_CARD_RESERVED = 1240;
+  var TRADING_ORDERS_RESERVED = 6e3;
+  var SAVE_EASY_PENALTY_FREE = 25e3;
+  var LOMBARD_LIMIT = 15e4;
+  var INITIAL_ACCOUNTS = {
+    everyday: 165880.5,
+    // 1'880.10 + 1'000 Auto Cover + 163'000.40 annual bonus (day 0)
+    eurWallet: 8612,
+    usdWallet: 12050,
+    saveEasy: 86400,
+    tradingCash: 24260,
+    investEasy: 428900,
+    savingPlan: 24500,
+    lombardAvailable: 118600,
+    lombardDrawn: 0
+  };
+  var INITIAL_ALLOCATION = {
+    enabled: true,
+    paused: false,
+    skipNext: false,
+    mode: "automatic",
+    bufferMode: "ai",
+    manualBuffer: 12e3,
+    // fixed liquidity fallback (§16/§43)
+    safetyLevel: "balanced",
+    // An absolute floor, deliberately below the usual prediction so the AI —
+    // not the floor — normally decides how much is kept.
+    minKeep: 3e3,
+    maxKeep: 2e4,
+    basis: "excess",
+    // Spec §14/§28 example plan: Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20.
+    splits: [
+      { destination: "saveEasy", label: "Save Easy", percent: 30 },
+      { destination: "investEasy", label: "Invest Easy", percent: 40 },
+      { destination: "tradingCash", label: "Trading", percent: 10 },
+      { destination: "savingPlan", label: "Global ETF Saving Plan", percent: 20 }
+    ],
+    // Guardrails — §19, scaled to the CHF 21'000 salary.
+    maxPerSalary: 25e3,
+    minAllocation: 500,
+    askOnVariance: true,
+    variancePct: 20,
+    scheduledForDay: null,
+    lastReceived: 0,
+    lastRun: {
+      day: -18,
+      // Monday 27 July — salary landed Friday 24 July (25th was a Saturday)
+      moved: [
+        { destination: "saveEasy", amount: 2800 },
+        { destination: "investEasy", amount: 3700 },
+        { destination: "tradingCash", amount: 900 },
+        { destination: "savingPlan", amount: 1900 }
+      ]
+    }
+  };
+  var INITIAL_AUTO_COVER = {
+    // Pre-enabled in the demo so the 14 August cover exists; the product default is OFF.
+    enabled: true,
+    paused: false,
+    coverMode: "buffer",
+    bufferAmount: 1e3,
+    perTransactionMax: 25e3,
+    monthlyCap: 4e4,
+    usedThisMonth: 1e3,
+    // the 14 August cover
+    // Invest Easy is deliberately absent: Auto Cover never sells investments (§6.3/FR-26).
+    sources: [
+      { source: "saveEasy", enabled: true, monthlyLimit: 25e3, usedThisMonth: 1e3 },
+      { source: "tradingCash", enabled: true, monthlyLimit: 15e3, usedThisMonth: 0 },
+      { source: "eurWallet", enabled: false, monthlyLimit: 5e3, usedThisMonth: 0 },
+      { source: "usdWallet", enabled: false, monthlyLimit: 5e3, usedThisMonth: 0 }
+    ],
+    tradingReserve: 1e4,
+    lombardEnabled: false,
+    lombardAcknowledged: false,
+    lombardPerCoverMax: 5e3,
+    lombardMonthlyMax: 1e4,
+    lombardUsedThisMonth: 0,
+    lastTopUpDay: 0,
+    keepMinimumEnabled: true,
+    // advanced §31 mode, on in the demo so the loop is visible
+    minBalance: 2e3
+  };
+  var TRADING_POSITIONS = 180074.41;
+  var PILLAR_3A = 42180;
+  var PILLAR_3A_PAID_IN = 5148;
+  var PILLAR_3A_ALLOWANCE = 7056;
+  var TRADING_DAY_CHANGE_PCT = 0.87;
+  var TRADING_PERIOD_GAIN = 12854.41;
+  var INVEST_EASY_PERF_PCT = 0.45;
+  var PILLAR_3A_PERF_PCT = 7.83;
+  var SPEND_SCALE = 1.1;
+  var MERCHANTS = [
+    { label: "Coop Lausanne St-Fran\xE7ois", category: "groceries", min: 24, max: 180, weight: 10 },
+    { label: "Migros Lausanne Flon", category: "groceries", min: 18, max: 140, weight: 8 },
+    { label: "Boulangerie Saint-Pierre", category: "dining", min: 6, max: 24, weight: 6 },
+    { label: "Caf\xE9 de Grancy", category: "dining", min: 12, max: 48, weight: 6 },
+    { label: "Beau-Rivage Palace", category: "dining", min: 120, max: 420, weight: 4 },
+    { label: "Holy Cow! Lausanne", category: "dining", min: 25, max: 70, weight: 4 },
+    { label: "SBB CFF FFS \xB7 1st class", category: "transport", min: 18, max: 320, weight: 4 },
+    { label: "Socar Lausanne", category: "transport", min: 70, max: 150, weight: 3 },
+    { label: "Bong\xE9nie Lausanne", category: "shopping", min: 120, max: 900, weight: 3 },
+    { label: "Galaxus", category: "shopping", min: 60, max: 600, weight: 2 },
+    { label: "Pharmacie Amavita Gare", category: "health", min: 15, max: 90, weight: 2 },
+    { label: "TWINT \xB7 P2P payment", category: "transfer", min: 20, max: 200, weight: 4 },
+    { label: "Lausanne Palace Spa", category: "leisure", min: 90, max: 260, weight: 1 }
+  ];
+  var RECURRING_DEBITS = [
+    { label: "Rent \u2014 R\xE9gie du L\xE9man", category: "housing", amount: 4950, dayOfMonth: 1 },
+    { label: "Sanitas \u2014 health insurance", category: "insurance", amount: 885, dayOfMonth: 5 },
+    { label: "Country Club Lausanne", category: "subscription", amount: 389, dayOfMonth: 3 },
+    { label: "Swisscom", category: "subscription", amount: 95, dayOfMonth: 8 },
+    { label: "Netflix", category: "subscription", amount: 18.9, dayOfMonth: 12 }
+  ];
+  function salaryCreditDay(day) {
+    const dom = dayOfMonth(day);
+    if (dom === CLIENT.salaryDayOfMonth) return !isWeekend(day);
+    const wd = dateOf(day).getUTCDay();
+    if (wd !== 5) return false;
+    const domNext = dayOfMonth(day + 1);
+    const domNext2 = dayOfMonth(day + 2);
+    return domNext === CLIENT.salaryDayOfMonth || domNext2 === CLIENT.salaryDayOfMonth;
+  }
+  __name(salaryCreditDay, "salaryCreditDay");
+  function pickMerchant(rng) {
+    const total = MERCHANTS.reduce((s, m) => s + m.weight, 0);
+    let r = rng() * total;
+    for (const m of MERCHANTS) {
+      r -= m.weight;
+      if (r <= 0) return m;
+    }
+    return MERCHANTS[0];
+  }
+  __name(pickMerchant, "pickMerchant");
+  function generateHistory() {
+    const rng = mulberry32(20260814);
+    const txns = [];
+    let seq = 0;
+    const push = /* @__PURE__ */ __name((t) => {
+      seq += 1;
+      txns.push({ id: `hist-${seq}`, ...t });
+    }, "push");
+    for (let day = -90; day <= 0; day += 1) {
+      const dom = dayOfMonth(day);
+      for (const r of RECURRING_DEBITS) {
+        if (dom === r.dayOfMonth) {
+          push({ day, label: r.label, category: r.category, amount: -r.amount, currency: "CHF", status: "booked" });
+        }
+      }
+      if (salaryCreditDay(day) && day < 0) {
+        push({
+          day,
+          label: `Salary \u2014 ${CLIENT.employer}`,
+          category: "salary",
+          amount: CLIENT.salaryNet,
+          currency: "CHF",
+          status: "booked"
+        });
+      }
+      if (day === -80 || day === -49 || day === -18) {
+        const total = day === -18 ? 9300 : day === -49 ? 8400 : 8900;
+        const received = 21e3 + (day === -18 ? 214.4 : 0);
+        const plan = [
+          { destination: "saveEasy", label: "Save Easy", percent: 30 },
+          { destination: "investEasy", label: "Invest Easy", percent: 40 },
+          { destination: "tradingCash", label: "Trading", percent: 10 },
+          { destination: "savingPlan", label: "Global ETF Saving Plan", percent: 20 }
+        ];
+        let before = 33e3 + Math.round(rng() * 2e3);
+        for (const p of plan) {
+          const amount = Math.round(total * p.percent / 100 / 10) * 10;
+          push({
+            day,
+            label: `Smart Salary Allocation \xB7 to ${p.label}`,
+            category: "smart-liquidity",
+            amount: -amount,
+            currency: "CHF",
+            status: "booked",
+            smart: {
+              engine: "allocation",
+              title: `Smart Salary Allocation \xB7 to ${p.label}`,
+              source: "everyday",
+              destination: p.destination,
+              reason: `CHF ${received.toFixed(2)} was received from ${CLIENT.employer}. Your plan keeps your Cash Safety Buffer available in Banking; the allocatable amount was distributed by your plan \u2014 ${p.percent}% to ${p.label}.`,
+              balanceBefore: before,
+              balanceAfter: before - amount
+            }
+          });
+          before -= amount;
+        }
+      }
+      if (day === -33) {
+        push({
+          day,
+          label: "SWISS International Air Lines",
+          category: "leisure",
+          amount: -2486,
+          currency: "CHF",
+          status: "booked"
+        });
+      }
+      if (day === -61) {
+        push({ day, label: "Amazon.de", category: "shopping", amount: -374.9, currency: "EUR", status: "booked" });
+      }
+      if (day === -26) {
+        push({ day, label: "Airbnb", category: "leisure", amount: -1212, currency: "EUR", status: "booked" });
+      }
+      if (day < 0) {
+        const countRoll = rng();
+        const count = countRoll < 0.25 ? 0 : countRoll < 0.6 ? 1 : countRoll < 0.9 ? 2 : 3;
+        for (let i = 0; i < count; i += 1) {
+          const m = pickMerchant(rng);
+          const amount = -(m.min + rng() * (m.max - m.min)) * SPEND_SCALE;
+          push({
+            day,
+            label: m.label,
+            category: m.category,
+            amount: Math.round(amount * 20) / 20,
+            // Swiss 5-centime rounding
+            currency: "CHF",
+            status: "booked"
+          });
+        }
+      }
+    }
+    push({
+      day: 0,
+      label: "Beau-Rivage Palace",
+      category: "dining",
+      amount: -486.4,
+      currency: "CHF",
+      status: "booked"
+    });
+    push({
+      day: 0,
+      label: "Auto Cover \xB7 from Save Easy",
+      category: "smart-liquidity",
+      amount: 1e3,
+      currency: "CHF",
+      status: "booked",
+      smart: {
+        engine: "autoCover",
+        title: "Auto Cover \xB7 from Save Easy",
+        source: "saveEasy",
+        destination: "everyday",
+        reason: "Your Everyday balance fell to CHF 1'880.10, below your minimum of CHF 2'000.00. Auto Cover topped up one increment of CHF 1'000.00 from Save Easy, the first source in your list (instant, no cost).",
+        balanceBefore: 1880.1,
+        balanceAfter: 2880.1
+      }
+    });
+    push({
+      day: 0,
+      label: `Annual bonus \u2014 ${CLIENT.employer}`,
+      category: "salary",
+      amount: 163000.4,
+      currency: "CHF",
+      status: "booked"
+    });
+    return txns;
+  }
+  __name(generateHistory, "generateHistory");
+
+  // src/state/forecast.ts
+  var MARGIN_FACTOR = {
+    efficient: 0.06,
+    balanced: 0.16,
+    cautious: 0.32
+  };
+  function confidenceUplift(confidence) {
+    return confidence === "high" ? 0 : confidence === "medium" ? 0.06 : 0.15;
+  }
+  __name(confidenceUplift, "confidenceUplift");
+  function keepForSafetyLevel(f, level, minKeep) {
+    const margin = Math.round(f.expectedRequirement * (MARGIN_FACTOR[level] + confidenceUplift(f.confidence)) / 50) * 50;
+    const raw = Math.round((f.expectedRequirement + margin) / 50) * 50;
+    return { amount: Math.max(raw, minKeep), raw, clampedByMin: raw < minKeep };
+  }
+  __name(keepForSafetyLevel, "keepForSafetyLevel");
+  var ONE_OFF_THRESHOLD = 1500;
+  var CATEGORY_LABELS = {
+    housing: "Housing",
+    insurance: "Insurance",
+    groceries: "Groceries",
+    dining: "Restaurants",
+    transport: "Transport",
+    shopping: "Shopping",
+    health: "Health",
+    leisure: "Travel & leisure",
+    subscription: "Subscriptions",
+    transfer: "Transfers"
+  };
+  function isDiscretionary(t) {
+    return t.amount < 0 && t.currency === "CHF" && t.category !== "smart-liquidity" && t.category !== "housing" && t.category !== "insurance" && t.category !== "subscription" && t.status === "booked";
+  }
+  __name(isDiscretionary, "isDiscretionary");
+  function detectRecurring(txns) {
+    const groups = /* @__PURE__ */ new Map();
+    for (const t of txns) {
+      if (t.amount >= 0 || t.category === "smart-liquidity" || t.currency !== "CHF") continue;
+      const list = groups.get(t.label) ?? [];
+      list.push(t);
+      groups.set(t.label, list);
+    }
+    const out = [];
+    for (const [label, list] of groups) {
+      if (list.length < 2) continue;
+      const amounts = list.map((t) => -t.amount);
+      const mean = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+      const similar = amounts.every((a) => Math.abs(a - mean) / mean < 0.15);
+      const doms = list.map((t) => dayOfMonth(t.day));
+      const sameDom = doms.every((d) => Math.abs(d - doms[0]) <= 2);
+      if (similar && sameDom) {
+        out.push({ label, amount: Math.round(mean * 100) / 100, dayOfMonth: doms[doms.length - 1] });
+      }
+    }
+    return out.sort((a, b) => b.amount - a.amount);
+  }
+  __name(detectRecurring, "detectRecurring");
+  function nextSalaryDayAfter(day) {
+    for (let d = day + 1; d <= day + 40; d += 1) {
+      if (salaryCreditDay(d)) return d;
+    }
+    return day + 30;
+  }
+  __name(nextSalaryDayAfter, "nextSalaryDayAfter");
+  function fallsInHorizon(dom, start, end) {
+    for (let d = start + 1; d <= end; d += 1) {
+      if (dayOfMonth(d) === dom) return true;
+    }
+    return false;
+  }
+  __name(fallsInHorizon, "fallsInHorizon");
+  function computeForecast(state) {
+    const { day, txns, accounts, flags, allocation, plannedExpenses } = state;
+    const windowStart = day - 90;
+    const history = txns.filter((t) => t.day >= windowStart && t.day < day);
+    const horizonEnd = nextSalaryDayAfter(day);
+    const horizonDays = Math.max(1, horizonEnd - day);
+    const detected = detectRecurring(history);
+    const recurring = detected.map((r) => ({
+      ...r,
+      dueInCycle: fallsInHorizon(r.dayOfMonth, day, horizonEnd)
+    }));
+    const recurringMonthlyTotal = recurring.reduce((s, r) => s + r.amount, 0);
+    const recurringPredicted = recurring.filter((r) => r.dueInCycle).reduce((s, r) => s + r.amount, 0);
+    const recurringLabels = new Set(recurring.map((r) => r.label));
+    const oneOffsExcluded = history.filter((t) => isDiscretionary(t) && !recurringLabels.has(t.label) && -t.amount >= ONE_OFF_THRESHOLD).map((t) => ({ label: t.label, amount: -t.amount }));
+    const daily = /* @__PURE__ */ new Map();
+    const byCategory = /* @__PURE__ */ new Map();
+    for (const t of history) {
+      if (!isDiscretionary(t) || recurringLabels.has(t.label) || -t.amount >= ONE_OFF_THRESHOLD) continue;
+      daily.set(t.day, (daily.get(t.day) ?? 0) + -t.amount);
+      byCategory.set(t.category, (byCategory.get(t.category) ?? 0) + -t.amount);
+    }
+    const nDays = 90;
+    let sum = 0;
+    for (const v of daily.values()) sum += v;
+    const avgDaily = sum / nDays;
+    let variance = 0;
+    for (let d = windowStart; d < day; d += 1) {
+      const v = daily.get(d) ?? 0;
+      variance += (v - avgDaily) ** 2;
+    }
+    const dailyStd = Math.sqrt(variance / nDays);
+    const variablePredicted = avgDaily * horizonDays;
+    const plannedTotal = plannedExpenses.reduce((s, p) => s + p.amount, 0);
+    const pendingCard = PENDING_CARD_RESERVED;
+    const confirmedUpcoming = plannedTotal + pendingCard;
+    const volatility = avgDaily > 0 ? dailyStd / avgDaily : 1;
+    let confidence = "high";
+    if (flags.irregularIncome || volatility > 1.4) confidence = "low";
+    else if (volatility > 0.9) confidence = "medium";
+    const confidenceNote = confidence === "high" ? "Your recent spending has been relatively predictable." : confidence === "medium" ? "Your spending varies from month to month, so we've included a larger safety margin." : "Your recent activity is less predictable than usual, so we're keeping more available for your protection.";
+    const expectedRequirement = confirmedUpcoming + recurringPredicted + variablePredicted;
+    const safetyMargin = Math.round(
+      expectedRequirement * (MARGIN_FACTOR[allocation.safetyLevel] + confidenceUplift(confidence)) / 50
+    ) * 50;
+    const round50 = /* @__PURE__ */ __name((v) => Math.round(v / 50) * 50, "round50");
+    const keepRaw = round50(expectedRequirement + safetyMargin);
+    const liftedByMin = keepRaw < allocation.minKeep;
+    const aboveMax = keepRaw > allocation.maxKeep;
+    const keep = liftedByMin ? allocation.minKeep : keepRaw;
+    const fallbackUsed = allocation.bufferMode === "manual";
+    const effectiveKeep = fallbackUsed ? allocation.manualBuffer : keep;
+    const points = [];
+    const spanDays = Math.max(horizonDays, 14);
+    let typical = accounts.everyday - pendingCard;
+    let high = accounts.everyday - pendingCard;
+    for (let i = 0; i <= spanDays; i += 1) {
+      const d = day + i;
+      let event;
+      if (i > 0) {
+        typical -= avgDaily;
+        high -= avgDaily + 0.45 * dailyStd;
+        for (const r of recurring) {
+          if (dayOfMonth(d) === r.dayOfMonth) {
+            typical -= r.amount;
+            high -= r.amount;
+            if (r.amount >= 800) event = r.label.split(" \u2014 ")[0].split(" \xB7 ")[0];
+          }
+        }
+        if (d === horizonEnd && !flags.salaryMissing) {
+          const credited = flags.salaryDelayed ? 0 : CLIENT.salaryNet;
+          typical += credited;
+          high += credited;
+          event = flags.salaryDelayed ? "Salary (delayed)" : "Salary";
+        }
+      }
+      points.push({ day: d, typical: Math.round(typical), high: Math.round(high), event });
+    }
+    const categories = [...byCategory.entries()].map(([category, total]) => ({
+      category,
+      label: CATEGORY_LABELS[category] ?? "Other",
+      amount: Math.round(total / nDays * horizonDays / 10) * 10
+    })).filter((c) => c.amount > 0).sort((a, b) => b.amount - a.amount);
+    const seasonalNote = null;
+    return {
+      horizonStart: day,
+      horizonEnd,
+      horizonDays,
+      confirmedUpcoming: Math.round(confirmedUpcoming),
+      pendingCard,
+      plannedTotal,
+      recurringPredicted: Math.round(recurringPredicted),
+      variablePredicted: Math.round(variablePredicted),
+      expectedRequirement: Math.round(expectedRequirement),
+      safetyMargin,
+      keep: effectiveKeep,
+      keepRaw,
+      aboveMax,
+      liftedByMin,
+      fallbackUsed,
+      confidence,
+      confidenceNote,
+      buffer: effectiveKeep,
+      bufferLow: round50(expectedRequirement),
+      bufferHigh: round50(keepRaw + safetyMargin * 0.5),
+      points,
+      nextSalaryDay: horizonEnd,
+      factors: {
+        recurring,
+        recurringMonthlyTotal: Math.round(recurringMonthlyTotal),
+        categories,
+        avgDailyCardSpend: Math.round(avgDaily * 100) / 100,
+        dailyStdDev: Math.round(dailyStd * 100) / 100,
+        monthsOfHistory: 3,
+        oneOffsExcluded,
+        seasonalNote,
+        widened: flags.irregularIncome
+      }
+    };
+  }
+  __name(computeForecast, "computeForecast");
+
+  // src/state/liquidityEngine.ts
+  var SOURCE_LABELS = {
+    everyday: "Everyday",
+    eurWallet: "EUR wallet",
+    usdWallet: "USD wallet",
+    saveEasy: "Save Easy",
+    tradingCash: "Trading cash",
+    investEasy: "Invest Easy",
+    savingPlan: "Global ETF Saving Plan",
+    lombard: "Lombard credit"
+  };
+  function initialState() {
+    return {
+      day: 0,
+      accounts: { ...INITIAL_ACCOUNTS },
+      txns: generateHistory(),
+      status: "healthy",
+      allocation: { ...INITIAL_ALLOCATION, splits: INITIAL_ALLOCATION.splits.map((s) => ({ ...s })) },
+      autoCover: { ...INITIAL_AUTO_COVER, sources: INITIAL_AUTO_COVER.sources.map((x) => ({ ...x })) },
+      flags: {
+        marketClosed: false,
+        salaryDelayed: false,
+        salaryMissing: false,
+        irregularIncome: false,
+        sourcesExhausted: false,
+        marginCall: false,
+        savingPlanOutage: false,
+        tradingUnavailable: false
+      },
+      pendingSettlements: [],
+      pendingAllocation: null,
+      plannedExpenses: [],
+      notices: [],
+      coverFailedDay: null,
+      announcement: "",
+      seq: 0
+    };
+  }
+  __name(initialState, "initialState");
+  function draft(state) {
+    return {
+      ...state,
+      accounts: { ...state.accounts },
+      txns: [...state.txns],
+      allocation: { ...state.allocation, splits: state.allocation.splits.map((s) => ({ ...s })) },
+      autoCover: { ...state.autoCover, sources: state.autoCover.sources.map((x) => ({ ...x })) },
+      flags: { ...state.flags },
+      pendingSettlements: [...state.pendingSettlements],
+      plannedExpenses: [...state.plannedExpenses],
+      notices: [...state.notices]
+    };
+  }
+  __name(draft, "draft");
+  function nextId(s, prefix) {
+    s.seq += 1;
+    return `${prefix}-${s.seq}`;
+  }
+  __name(nextId, "nextId");
+  function addNotice(s, n) {
+    s.notices = [{ id: nextId(s, "ntc"), day: s.day, ...n }, ...s.notices].slice(0, 12);
+  }
+  __name(addNotice, "addNotice");
+  function addTxn(s, t) {
+    const txn = { id: nextId(s, "txn"), ...t };
+    s.txns = [...s.txns, txn];
+    return txn;
+  }
+  __name(addTxn, "addTxn");
+  function announce(s, text) {
+    s.announcement = text;
+  }
+  __name(announce, "announce");
+  function deriveStatus(s) {
+    const { accounts, autoCover, allocation } = s;
+    if (s.coverFailedDay !== null && accounts.everyday < autoCover.minBalance) {
+      s.status = "autoCoverFailed";
+      return;
+    }
+    s.coverFailedDay = null;
+    if (s.pendingSettlements.length > 0) {
+      s.status = "autoCoverPending";
+      return;
+    }
+    if (allocation.paused) {
+      s.status = "rulesPaused";
+      return;
+    }
+    if (autoCover.enabled && autoCover.lastTopUpDay === s.day) {
+      s.status = "autoCoverExecuted";
+      return;
+    }
+    if (accounts.everyday < autoCover.minBalance + 1e3) {
+      s.status = "approachingMinimum";
+      return;
+    }
+    s.status = "healthy";
+  }
+  __name(deriveStatus, "deriveStatus");
+  function sourceCoverCapacity(s, source) {
+    return sourceCapacity(s, source);
+  }
+  __name(sourceCoverCapacity, "sourceCoverCapacity");
+  function coverCapacity(s) {
+    const own = s.autoCover.sources.reduce((sum, x) => sum + sourceCapacity(s, x.source).amount, 0);
+    const credit = sourceCapacity(s, "lombard").amount;
+    return { own: Math.round(own), credit: Math.round(credit) };
+  }
+  __name(coverCapacity, "coverCapacity");
+  function sourceCapacity(s, source) {
+    const cfg = s.autoCover;
+    const exhausted = s.flags.sourcesExhausted;
+    const cfgSource = cfg.sources.find((x) => x.source === source);
+    if (source === "lombard") {
+      if (!cfg.lombardEnabled || !cfg.lombardAcknowledged) {
+        return { amount: 0, reason: "Automatic borrowing is off" };
+      }
+      const monthLeft2 = cfg.lombardMonthlyMax - cfg.lombardUsedThisMonth;
+      const amount = Math.max(
+        0,
+        Math.min(exhausted ? 0 : s.accounts.lombardAvailable, cfg.lombardPerCoverMax, monthLeft2)
+      );
+      return amount > 0 ? { amount } : { amount: 0, reason: "Borrowing limit reached" };
+    }
+    if (!cfgSource || !cfgSource.enabled) return { amount: 0, reason: "Not authorised for Auto Cover" };
+    const monthLeft = cfgSource.monthlyLimit - cfgSource.usedThisMonth;
+    if (monthLeft <= 0) return { amount: 0, reason: "Monthly limit for this source reached" };
+    if (source === "saveEasy") {
+      const penaltyFree = Math.max(0, SAVE_EASY_PENALTY_FREE - cfgSource.usedThisMonth);
+      const amount = Math.max(0, Math.min(exhausted ? 0 : s.accounts.saveEasy, penaltyFree, monthLeft));
+      return amount > 0 ? { amount } : { amount: 0, reason: "No penalty-free balance available" };
+    }
+    if (source === "tradingCash") {
+      if (s.flags.marketClosed || s.flags.tradingUnavailable) {
+        return { amount: 0, reason: "Temporarily unavailable \u2014 Auto Cover will skip this source" };
+      }
+      const free = s.accounts.tradingCash - TRADING_ORDERS_RESERVED - cfg.tradingReserve;
+      const amount = Math.max(0, Math.min(exhausted ? 0 : free, monthLeft));
+      return amount > 0 ? { amount } : { amount: 0, reason: "Reserved for open orders and your Trading reserve" };
+    }
+    if (source === "eurWallet" || source === "usdWallet") {
+      const rate = source === "eurWallet" ? FX.eurToChf : FX.usdToChf;
+      const grossChf = (exhausted ? 0 : s.accounts[source]) * rate;
+      const netChf = grossChf * (1 - FX.spreadPct / 100);
+      const amount = Math.max(0, Math.min(netChf, monthLeft));
+      return amount > 0 ? { amount } : { amount: 0, reason: "No balance available" };
+    }
+    return { amount: 0, reason: "Not eligible" };
+  }
+  __name(sourceCapacity, "sourceCapacity");
+  function planCover(s, needed) {
+    const cfg = s.autoCover;
+    const plan = { parts: [], total: 0, missing: 0, skipped: [], usesLombard: false };
+    const budget = Math.min(needed, cfg.perTransactionMax, Math.max(0, cfg.monthlyCap - cfg.usedThisMonth));
+    const order = [...cfg.sources.map((x) => x.source), "lombard"];
+    for (const source of order) {
+      if (plan.total >= budget - 5e-3) break;
+      const { amount, reason } = sourceCapacity(s, source);
+      if (amount <= 0) {
+        if (reason) plan.skipped.push({ source, reason });
+        continue;
+      }
+      const take = Math.min(amount, budget - plan.total);
+      const isCredit = source === "lombard";
+      const fxCost = source === "eurWallet" || source === "usdWallet" ? Math.round(take * (FX.spreadPct / 100) * 100) / 100 : void 0;
+      plan.parts.push({ source, amount: take, fxCost, isCredit });
+      plan.total += take;
+      if (isCredit) plan.usesLombard = true;
+    }
+    plan.missing = Math.max(0, needed - plan.total);
+    return plan;
+  }
+  __name(planCover, "planCover");
+  function attemptAutoCover(s, shortfall, trigger) {
+    const cfg = s.autoCover;
+    if (!cfg.enabled || cfg.paused) return false;
+    if (shortfall <= 0) return true;
+    const needed = cfg.coverMode === "buffer" ? shortfall + cfg.bufferAmount : shortfall;
+    const plan = planCover(s, needed);
+    if (plan.total + 5e-3 < shortfall) {
+      s.coverFailedDay = s.day;
+      const monthlyLeft = cfg.monthlyCap - cfg.usedThisMonth;
+      const limitReached = monthlyLeft <= 0 || shortfall > cfg.perTransactionMax;
+      addNotice(s, {
+        kind: "error",
+        title: limitReached ? "Auto Cover limit reached" : "We couldn't cover this payment",
+        shortfall: shortfall - plan.total,
+        body: limitReached ? `This would need ${money(shortfall)}, above your ${money(cfg.perTransactionMax)} per-payment limit or your ${money(cfg.monthlyCap)} monthly limit (${money(cfg.usedThisMonth)} used). Auto Cover stays on but won't move more until you change the limits.` : `${money(shortfall)} was required, but your authorised sources could provide ${money(plan.total)}. ` + (plan.skipped.length ? `${plan.skipped.map((k) => `${SOURCE_LABELS[k.source]}: ${k.reason.toLowerCase()}`).join("; ")}. ` : "") + (!cfg.lombardEnabled && s.accounts.lombardAvailable > 0 ? "You have Lombard capacity available, but automatic borrowing is off. " : "") + "No money was moved."
+      });
+      announce(s, `Auto Cover could not cover ${money(shortfall)}.`);
+      return false;
+    }
+    const before = s.accounts.everyday;
+    for (const part of plan.parts) {
+      if (part.source === "saveEasy") s.accounts.saveEasy -= part.amount;
+      else if (part.source === "tradingCash") s.accounts.tradingCash -= part.amount;
+      else if (part.source === "eurWallet") s.accounts.eurWallet -= (part.amount + (part.fxCost ?? 0)) / FX.eurToChf;
+      else if (part.source === "usdWallet") s.accounts.usdWallet -= (part.amount + (part.fxCost ?? 0)) / FX.usdToChf;
+      else if (part.source === "lombard") {
+        s.accounts.lombardAvailable -= part.amount;
+        s.accounts.lombardDrawn += part.amount;
+        cfg.lombardUsedThisMonth += part.amount;
+      }
+      const cfgSource = cfg.sources.find((x) => x.source === part.source);
+      if (cfgSource) cfgSource.usedThisMonth += part.amount;
+      s.accounts.everyday += part.amount;
+      addTxn(s, {
+        day: s.day,
+        label: part.isCredit ? "Auto Cover \xB7 borrowed through Lombard" : `Auto Cover \xB7 from ${SOURCE_LABELS[part.source]}`,
+        category: "smart-liquidity",
+        amount: part.amount,
+        currency: "CHF",
+        status: "booked",
+        smart: {
+          engine: "autoCover",
+          title: part.isCredit ? "Auto Cover \xB7 borrowed through Lombard" : `Auto Cover \xB7 from ${SOURCE_LABELS[part.source]}`,
+          source: part.source,
+          destination: "everyday",
+          reason: buildCoverReason(s, trigger, shortfall, plan, part),
+          balanceBefore: before,
+          balanceAfter: s.accounts.everyday,
+          fxCostChf: part.fxCost,
+          interestRatePa: part.isCredit ? LOMBARD_RATE_PA : void 0
+        }
+      });
+    }
+    cfg.usedThisMonth += plan.total;
+    cfg.lastTopUpDay = s.day;
+    const ownCash = plan.parts.filter((p) => !p.isCredit).reduce((a, p) => a + p.amount, 0);
+    const borrowed = plan.parts.filter((p) => p.isCredit).reduce((a, p) => a + p.amount, 0);
+    addNotice(s, {
+      kind: borrowed > 0 ? "warning" : "info",
+      title: borrowed > 0 ? "Lombard Auto Cover was used" : "Payment covered automatically",
+      body: (borrowed > 0 ? `${money(ownCash)} came from your own cash and ${money(borrowed)} was borrowed through your Lombard facility \u2014 your borrowing has increased by ${money(borrowed)}. ` : `We moved ${money(plan.total)} from ${plan.parts.map((p) => SOURCE_LABELS[p.source]).join(" and ")} so your ${trigger} could go through. `) + `Everyday balance is now ${money(s.accounts.everyday)}.`
+    });
+    announce(s, `Auto Cover moved ${money(plan.total)}. Everyday balance ${money(s.accounts.everyday)}.`);
+    return true;
+  }
+  __name(attemptAutoCover, "attemptAutoCover");
+  function buildCoverReason(s, trigger, shortfall, plan, part) {
+    const cfg = s.autoCover;
+    const position = plan.parts.indexOf(part) + 1;
+    const why = part.source === "lombard" ? "Your own cash sources could not cover the whole amount, so Lombard \u2014 your last authorised source \u2014 was used." : position === 1 ? `${SOURCE_LABELS[part.source]} is your first Auto Cover source and had eligible cash available.` : `${SOURCE_LABELS[part.source]} is next in your source order; the previous source could not cover the whole amount.`;
+    const amountWhy = cfg.coverMode === "buffer" ? `You chose to cover the shortfall plus a ${money(cfg.bufferAmount)} buffer, so ${money(plan.total)} was moved in total.` : `You chose Exact Cover, so only the ${money(shortfall)} shortfall was moved.`;
+    const extra = part.fxCost !== void 0 ? ` The conversion cost of ${money(part.fxCost)} is included.` : part.source === "lombard" ? ` Interest applies to borrowed amounts at ${LOMBARD_RATE_PA}% p.a. This is credit, not your own cash.` : "";
+    return `Your Everyday balance was ${money(shortfall)} short for ${trigger}. ${why} ${amountWhy}${extra}`;
+  }
+  __name(buildCoverReason, "buildCoverReason");
+  function computeAllocationAmounts(s) {
+    const rule = s.allocation;
+    const buffer = rule.bufferMode === "ai" ? computeForecast(s).buffer : rule.manualBuffer;
+    const base = rule.basis === "percentOfReceived" ? Math.max(rule.lastReceived, 0) : Number.POSITIVE_INFINITY;
+    const allocatable = Math.min(Math.max(0, s.accounts.everyday - buffer), base);
+    const total = Math.min(allocatable, rule.maxPerSalary);
+    const amounts = rule.splits.map((split) => ({
+      destination: split.destination,
+      label: split.label,
+      amount: Math.round(total * split.percent / 100 / 10) * 10
+    })).filter((a) => a.amount > 0);
+    return { buffer, allocatable, total, amounts };
+  }
+  __name(computeAllocationAmounts, "computeAllocationAmounts");
+  function buildAllocationReason(s, buffer, allocatable, total, split, percent) {
+    const rule = s.allocation;
+    const capped = total < allocatable - 1;
+    return `${money(rule.lastReceived)} was received from ${CLIENT.employer}. Your plan keeps at least ${money(buffer)} available in Banking (${rule.bufferMode === "ai" ? "recommended Cash Safety Buffer" : "your Cash Safety Buffer"}), leaving ${money(allocatable)} allocatable. ` + (capped ? `Your maximum of ${money(rule.maxPerSalary)} per salary applied, so ${money(total)} was distributed. ` : `${money(total)} was distributed according to your plan. `) + `${percent}% went to ${split.label}: ${money(split.amount)}.`;
+  }
+  __name(buildAllocationReason, "buildAllocationReason");
+  function executeAllocation(s, calc) {
+    const rule = s.allocation;
+    const moved = [];
+    let failedAmount = 0;
+    for (const part of calc.amounts) {
+      const percent = rule.splits.find((x) => x.destination === part.destination)?.percent ?? 0;
+      const before = s.accounts.everyday;
+      if (part.destination === "savingPlan" && s.flags.savingPlanOutage) {
+        failedAmount += part.amount;
+        addTxn(s, {
+          day: s.day,
+          label: `Smart Salary Allocation \xB7 to ${part.label}`,
+          category: "smart-liquidity",
+          amount: -part.amount,
+          currency: "CHF",
+          status: "failed",
+          smart: {
+            engine: "allocation",
+            title: `Smart Salary Allocation \xB7 to ${part.label}`,
+            source: "everyday",
+            destination: part.destination,
+            reason: `${buildAllocationReason(s, calc.buffer, calc.allocatable, calc.total, part, percent)} The Saving Plan could not accept the transfer, so this amount stayed in Banking. It was not redirected to any other product.`,
+            balanceBefore: before,
+            balanceAfter: before
+          }
+        });
+        continue;
+      }
+      s.accounts.everyday -= part.amount;
+      if (part.destination === "investEasy") s.accounts.investEasy += part.amount;
+      else if (part.destination === "saveEasy") s.accounts.saveEasy += part.amount;
+      else if (part.destination === "tradingCash") s.accounts.tradingCash += part.amount;
+      else if (part.destination === "savingPlan") s.accounts.savingPlan += part.amount;
+      addTxn(s, {
+        day: s.day,
+        label: `Smart Salary Allocation \xB7 to ${part.label}`,
+        category: "smart-liquidity",
+        amount: -part.amount,
+        currency: "CHF",
+        status: "booked",
+        smart: {
+          engine: "allocation",
+          title: `Smart Salary Allocation \xB7 to ${part.label}`,
+          source: "everyday",
+          destination: part.destination === "goal" ? "saveEasy" : part.destination,
+          reason: buildAllocationReason(s, calc.buffer, calc.allocatable, calc.total, part, percent),
+          balanceBefore: before,
+          balanceAfter: s.accounts.everyday
+        }
+      });
+      moved.push({ destination: part.destination, amount: part.amount });
+    }
+    rule.lastRun = { day: s.day, moved };
+    const okTotal = moved.reduce((a, m) => a + m.amount, 0);
+    if (failedAmount > 0) {
+      addNotice(s, {
+        kind: "warning",
+        title: "Most of your salary plan was completed",
+        body: `${money(okTotal)} was allocated, but ${money(failedAmount)} could not be sent to your Saving Plan and stayed in Banking. It was not moved to any other product. You can try again or keep it in Banking.`
+      });
+    } else {
+      addNotice(s, {
+        kind: "info",
+        title: "Your salary is working",
+        body: `${money(okTotal)} was allocated: ${moved.map((m) => `${money(m.amount)} \u2192 ${rule.splits.find((x) => x.destination === m.destination)?.label ?? m.destination}`).join(", ")}. ${money(calc.buffer)} stays available in Banking.`
+      });
+    }
+    announce(s, `Allocation executed. ${money(okTotal)} moved. Banking balance ${money(s.accounts.everyday)}.`);
+  }
+  __name(executeAllocation, "executeAllocation");
+  function runAllocation(s) {
+    const rule = s.allocation;
+    rule.scheduledForDay = null;
+    if (!rule.enabled || rule.paused) return;
+    if (rule.skipNext) {
+      rule.skipNext = false;
+      addNotice(s, {
+        kind: "info",
+        title: "Allocation skipped",
+        body: "This salary allocation was skipped, as you asked. The plan resumes with your next salary."
+      });
+      return;
+    }
+    const calc = computeAllocationAmounts(s);
+    if (calc.total < rule.minAllocation) {
+      addNotice(s, {
+        kind: "info",
+        title: "Your salary stayed in Banking",
+        body: `There wasn't enough excess liquidity above your ${money(calc.buffer)} safety buffer (minimum allocation ${money(rule.minAllocation)}). No action is required.`
+      });
+      return;
+    }
+    const expected = CLIENT.salaryNet;
+    const variance = expected > 0 ? Math.abs(rule.lastReceived - expected) / expected : 0;
+    const anomaly = rule.askOnVariance && variance > rule.variancePct / 100 ? `${money(rule.lastReceived)} arrived from your salary payer \u2014 significantly ${rule.lastReceived > expected ? "above" : "below"} your usual ${money(expected)}. The allocation was paused for your review.` : null;
+    if (rule.mode === "review" || anomaly) {
+      s.pendingAllocation = {
+        preparedDay: s.day,
+        received: rule.lastReceived,
+        total: calc.total,
+        amounts: calc.amounts.map((a) => ({ ...a })),
+        anomaly
+      };
+      addNotice(s, {
+        kind: anomaly ? "warning" : "info",
+        title: anomaly ? "This payment looks different" : "Your salary plan is ready",
+        body: anomaly ?? `${money(calc.total)} can be allocated according to your plan. Approve it, or it lapses with your next salary.`
+      });
+      announce(s, anomaly ?? `Salary plan ready. ${money(calc.total)} awaiting your approval.`);
+      return;
+    }
+    executeAllocation(s, calc);
+  }
+  __name(runAllocation, "runAllocation");
+  function applyDebit(s, t, isDirectDebit) {
+    const amount = -t.amount;
+    const cfg = s.autoCover;
+    const available = s.accounts.everyday - PENDING_CARD_RESERVED;
+    const paymentShortfall = amount - available;
+    const minimumShortfall = cfg.keepMinimumEnabled ? cfg.minBalance - (available - amount) : 0;
+    const shortfall = Math.max(paymentShortfall, minimumShortfall);
+    if (shortfall > 0) {
+      attemptAutoCover(s, Math.ceil(shortfall), `your ${money(amount)} ${isDirectDebit ? "payment" : "card payment"} to ${t.label}`);
+    }
+    if (s.accounts.everyday - amount < 0) {
+      addTxn(s, { ...t, status: "failed" });
+      addNotice(s, {
+        kind: "error",
+        title: isDirectDebit ? "Direct debit failed" : "Card payment declined",
+        shortfall: amount - s.accounts.everyday,
+        body: `${t.label} for ${money(amount)} could not be paid \u2014 your Everyday balance is ${money(s.accounts.everyday)}. Transfer money in, or sell positions, then the payment can be retried.`
+      });
+      announce(s, `${isDirectDebit ? "Direct debit failed" : "Card declined"}: ${t.label}, ${money(amount)}.`);
+      return;
+    }
+    s.accounts.everyday -= amount;
+    addTxn(s, { ...t, status: "booked" });
+  }
+  __name(applyDebit, "applyDebit");
+  function advanceDay(prev) {
+    const s = draft(prev);
+    s.day += 1;
+    const dom = new Date(Date.UTC(2026, 7, 14) + s.day * 864e5).getUTCDate();
+    if (dom === 1) {
+      s.autoCover.usedThisMonth = 0;
+      s.autoCover.lombardUsedThisMonth = 0;
+      s.autoCover.sources = s.autoCover.sources.map((x) => ({ ...x, usedThisMonth: 0 }));
+    }
+    const due = s.pendingSettlements.filter((p) => p.settlesOnDay <= s.day);
+    s.pendingSettlements = s.pendingSettlements.filter((p) => p.settlesOnDay > s.day);
+    for (const p of due) {
+      s.accounts.everyday += p.amount;
+      s.txns = s.txns.map(
+        (t) => t.id === p.txnId ? { ...t, status: "booked", smart: t.smart ? { ...t.smart, balanceAfter: s.accounts.everyday } : t.smart } : t
+      );
+      addNotice(s, {
+        kind: "info",
+        title: "Auto Cover settled",
+        body: `${money(p.amount)} from the ${SOURCE_LABELS[p.source]} sale has settled and is now spendable. Balance: ${money(s.accounts.everyday)}.`
+      });
+      announce(s, `Settlement complete. Everyday balance ${money(s.accounts.everyday)}.`);
+    }
+    for (const r of RECURRING_DEBITS) {
+      if (dom === r.dayOfMonth) {
+        applyDebit(
+          s,
+          { day: s.day, label: r.label, category: r.category, amount: -r.amount, currency: "CHF" },
+          true
+        );
+      }
+    }
+    const expectedToday = salaryCreditDay(s.day);
+    const delayedArrival = s.flags.salaryDelayed && salaryCreditDay(s.day - 3);
+    if (expectedToday && !s.flags.salaryDelayed && !s.flags.salaryMissing || delayedArrival) {
+      const amount = s.flags.irregularIncome ? Math.round((12e3 + mulberry32(s.day)() * 3e4) / 100) * 100 : CLIENT.salaryNet;
+      s.accounts.everyday += amount;
+      addTxn(s, {
+        day: s.day,
+        label: `Salary \u2014 ${CLIENT.employer}`,
+        category: "salary",
+        amount,
+        currency: "CHF",
+        status: "booked"
+      });
+      if (s.pendingAllocation) {
+        s.pendingAllocation = null;
+        addNotice(s, {
+          kind: "info",
+          title: "Previous salary plan lapsed",
+          body: "The prepared allocation was not approved before this salary arrived, so no transfer occurred."
+        });
+      }
+      s.allocation.lastReceived = amount;
+      s.allocation.scheduledForDay = nextBusinessDay(s.day);
+      addNotice(s, {
+        kind: "info",
+        title: delayedArrival ? "Salary arrived (late)" : "Salary arrived",
+        body: `${money(amount)} from ${CLIENT.employer}. Smart Salary Allocation is scheduled for ${shortDate(s.allocation.scheduledForDay)}.`
+      });
+      announce(s, `Salary received. Everyday balance ${money(s.accounts.everyday)}.`);
+    } else if (expectedToday && (s.flags.salaryDelayed || s.flags.salaryMissing)) {
+      addNotice(s, {
+        kind: "warning",
+        title: "Salary not received yet",
+        body: "Your salary was expected today and has not arrived. Smart Salary Allocation waits for the money \u2014 it does not run on a guess."
+      });
+    }
+    if (s.allocation.scheduledForDay === s.day) runAllocation(s);
+    const rng = mulberry32(s.day * 7919 + 17);
+    const roll = rng();
+    const count = roll < 0.25 ? 0 : roll < 0.6 ? 1 : roll < 0.9 ? 2 : 3;
+    const pool = [
+      { label: "Coop Lausanne St-Fran\xE7ois", category: "groceries", min: 24, max: 180 },
+      { label: "Migros Lausanne Flon", category: "groceries", min: 18, max: 140 },
+      { label: "SBB CFF FFS \xB7 1st class", category: "transport", min: 18, max: 320 },
+      { label: "Boulangerie Saint-Pierre", category: "dining", min: 6, max: 24 },
+      { label: "Caf\xE9 de Grancy", category: "dining", min: 12, max: 48 },
+      { label: "Beau-Rivage Palace", category: "dining", min: 120, max: 420 },
+      { label: "Bong\xE9nie Lausanne", category: "shopping", min: 120, max: 900 },
+      { label: "TWINT \xB7 P2P payment", category: "transfer", min: 20, max: 200 }
+    ];
+    const SIM_POOL_FACTOR = 1;
+    for (let i = 0; i < count; i += 1) {
+      const m = pool[Math.floor(rng() * pool.length)];
+      const amount = Math.round((m.min + rng() * (m.max - m.min)) * SPEND_SCALE * SIM_POOL_FACTOR * 20) / 20;
+      applyDebit(
+        s,
+        { day: s.day, label: m.label, category: m.category, amount: -amount, currency: "CHF" },
+        false
+      );
+    }
+    if (s.autoCover.keepMinimumEnabled) {
+      const available = s.accounts.everyday - PENDING_CARD_RESERVED;
+      if (available < s.autoCover.minBalance) {
+        attemptAutoCover(s, Math.ceil(s.autoCover.minBalance - available), "your minimum Everyday balance");
+      }
+    }
+    deriveStatus(s);
+    return s;
+  }
+  __name(advanceDay, "advanceDay");
+  function reduce(prev, action) {
+    switch (action.type) {
+      case "advanceDay":
+        return advanceDay(prev);
+      case "setAutoCoverEnabled": {
+        const s = draft(prev);
+        s.autoCover.enabled = action.enabled;
+        deriveStatus(s);
+        return s;
+      }
+      case "setMinBalance": {
+        const s = draft(prev);
+        s.autoCover.minBalance = Math.max(0, action.value);
+        deriveStatus(s);
+        return s;
+      }
+      case "moveWaterfallSource": {
+        const s = draft(prev);
+        const w = s.autoCover.sources;
+        const j = action.index + action.direction;
+        if (action.index < 0 || action.index >= w.length || j < 0 || j >= w.length) return prev;
+        [w[action.index], w[j]] = [w[j], w[action.index]];
+        return s;
+      }
+      case "toggleCoverSource": {
+        const s = draft(prev);
+        const src = s.autoCover.sources.find((x) => x.source === action.source);
+        if (!src) return prev;
+        src.enabled = action.enabled;
+        return s;
+      }
+      case "setCoverMode": {
+        const s = draft(prev);
+        s.autoCover.coverMode = action.mode;
+        if (action.bufferAmount !== void 0) s.autoCover.bufferAmount = Math.max(0, action.bufferAmount);
+        return s;
+      }
+      case "setPerTransactionMax": {
+        const s = draft(prev);
+        s.autoCover.perTransactionMax = Math.max(0, action.value);
+        return s;
+      }
+      case "setCoverMonthlyCap": {
+        const s = draft(prev);
+        s.autoCover.monthlyCap = Math.max(0, action.value);
+        return s;
+      }
+      case "setTradingReserve": {
+        const s = draft(prev);
+        s.autoCover.tradingReserve = Math.max(0, action.value);
+        return s;
+      }
+      case "setLombardCoverLimits": {
+        const s = draft(prev);
+        if (action.perCover !== void 0) s.autoCover.lombardPerCoverMax = Math.max(0, action.perCover);
+        if (action.monthly !== void 0) s.autoCover.lombardMonthlyMax = Math.max(0, action.monthly);
+        return s;
+      }
+      case "setKeepMinimum": {
+        const s = draft(prev);
+        s.autoCover.keepMinimumEnabled = action.enabled;
+        deriveStatus(s);
+        return s;
+      }
+      case "setSafetyLevel": {
+        const s = draft(prev);
+        s.allocation.safetyLevel = action.level;
+        return s;
+      }
+      case "setKeepBoundaries": {
+        const s = draft(prev);
+        if (action.min !== void 0) s.allocation.minKeep = Math.max(0, action.min);
+        if (action.max !== void 0) s.allocation.maxKeep = Math.max(0, action.max);
+        if (s.allocation.maxKeep < s.allocation.minKeep) s.allocation.maxKeep = s.allocation.minKeep;
+        return s;
+      }
+      case "addPlannedExpense": {
+        const s = draft(prev);
+        s.plannedExpenses = [
+          ...s.plannedExpenses,
+          { id: nextId(s, "plan"), label: action.label, amount: Math.max(0, action.amount) }
+        ];
+        return s;
+      }
+      case "removePlannedExpense": {
+        const s = draft(prev);
+        s.plannedExpenses = s.plannedExpenses.filter((p) => p.id !== action.id);
+        return s;
+      }
+      case "setLombard": {
+        const s = draft(prev);
+        s.autoCover.lombardEnabled = action.enabled && action.acknowledged;
+        s.autoCover.lombardAcknowledged = action.acknowledged;
+        return s;
+      }
+      case "setAllocationMode": {
+        const s = draft(prev);
+        s.allocation.mode = action.mode;
+        return s;
+      }
+      case "setMaxPerSalary": {
+        const s = draft(prev);
+        s.allocation.maxPerSalary = Math.max(0, action.value);
+        return s;
+      }
+      case "setAskOnVariance": {
+        const s = draft(prev);
+        s.allocation.askOnVariance = action.value;
+        return s;
+      }
+      case "approvePendingAllocation": {
+        if (!prev.pendingAllocation) return prev;
+        const s = draft(prev);
+        s.pendingAllocation = null;
+        const calc = computeAllocationAmounts(s);
+        if (calc.total < s.allocation.minAllocation) {
+          addNotice(s, {
+            kind: "info",
+            title: "Nothing left to allocate",
+            body: `Since the plan was prepared, your available liquidity fell below the ${money(s.allocation.minAllocation)} minimum. Your money stayed in Banking.`
+          });
+          deriveStatus(s);
+          return s;
+        }
+        executeAllocation(s, calc);
+        deriveStatus(s);
+        return s;
+      }
+      case "skipPendingAllocation": {
+        if (!prev.pendingAllocation) return prev;
+        const s = draft(prev);
+        s.pendingAllocation = null;
+        addNotice(s, {
+          kind: "info",
+          title: "Allocation skipped",
+          body: "The prepared allocation was skipped. Your money stays in Banking; the plan resumes with your next salary."
+        });
+        return s;
+      }
+      case "setAllocationPaused": {
+        const s = draft(prev);
+        s.allocation.paused = action.paused;
+        deriveStatus(s);
+        return s;
+      }
+      case "skipNextAllocation": {
+        const s = draft(prev);
+        s.allocation.skipNext = !s.allocation.skipNext;
+        return s;
+      }
+      case "setBufferMode": {
+        const s = draft(prev);
+        s.allocation.bufferMode = action.mode;
+        if (action.manualBuffer !== void 0) s.allocation.manualBuffer = action.manualBuffer;
+        return s;
+      }
+      case "setBasis": {
+        const s = draft(prev);
+        s.allocation.basis = action.basis;
+        return s;
+      }
+      case "setSplits": {
+        const s = draft(prev);
+        const total = action.splits.reduce((a, x) => a + x.percent, 0);
+        if (total > 100) return prev;
+        s.allocation.splits = action.splits.map((x) => ({ ...x }));
+        return s;
+      }
+      case "setFlag": {
+        const s = draft(prev);
+        s.flags[action.flag] = action.value;
+        deriveStatus(s);
+        return s;
+      }
+      case "triggerMarginCall": {
+        const s = draft(prev);
+        s.flags.marginCall = true;
+        const drawn = Math.max(s.accounts.lombardDrawn, 28800);
+        s.accounts.lombardDrawn = drawn;
+        s.accounts.lombardAvailable = Math.max(0, drawn - 13200);
+        addNotice(s, {
+          kind: "marginCall",
+          title: "Margin call on your Lombard credit",
+          shortfall: 13200,
+          body: `Markets have fallen and your portfolio no longer fully covers what you have borrowed. Add ${money(13200)} by tomorrow 16:00, or Swissquote may sell positions to restore cover.`
+        });
+        announce(s, "Margin call on your Lombard credit. Action required.");
+        return s;
+      }
+      case "resolveMarginCall": {
+        const s = draft(prev);
+        s.flags.marginCall = false;
+        s.notices = s.notices.filter((n) => n.kind !== "marginCall");
+        return s;
+      }
+      case "dismissNotice": {
+        const s = draft(prev);
+        s.notices = s.notices.filter((n) => n.id !== action.id);
+        return s;
+      }
+      case "manualTransferIn": {
+        const s = draft(prev);
+        s.accounts.everyday += action.amount;
+        addTxn(s, {
+          day: s.day,
+          label: "Transfer in \u2014 manual",
+          category: "transfer",
+          amount: action.amount,
+          currency: "CHF",
+          status: "booked"
+        });
+        announce(s, `Money moved. Everyday balance ${money(s.accounts.everyday)}.`);
+        deriveStatus(s);
+        return s;
+      }
+      /**
+       * Put surplus to work now. This is the client pressing a button, not the
+       * engine acting on its own — AI Budgeting never invests mid-cycle by
+       * itself (§35). It routes through the plan the client already approved,
+       * so no new investment decision is made here, and it can never dip into
+       * the protected liquidity the forecast says they need.
+       */
+      case "allocateSurplusNow": {
+        const s = draft(prev);
+        const rule = s.allocation;
+        const keep = computeForecast(s).keep;
+        const flexible = Math.max(0, s.accounts.everyday - PENDING_CARD_RESERVED - keep);
+        const total = Math.min(action.amount, flexible);
+        if (total < rule.minAllocation) return prev;
+        const splitTotal = rule.splits.reduce((sum, x) => sum + x.percent, 0) || 100;
+        const moved = [];
+        for (const split of rule.splits) {
+          const amount = Math.round(total * split.percent / splitTotal / 10) * 10;
+          if (amount <= 0) continue;
+          const before = s.accounts.everyday;
+          s.accounts.everyday -= amount;
+          if (split.destination === "investEasy") s.accounts.investEasy += amount;
+          else if (split.destination === "saveEasy") s.accounts.saveEasy += amount;
+          else if (split.destination === "tradingCash") s.accounts.tradingCash += amount;
+          else if (split.destination === "savingPlan") s.accounts.savingPlan += amount;
+          addTxn(s, {
+            day: s.day,
+            label: `Surplus put to work \xB7 to ${split.label}`,
+            category: "smart-liquidity",
+            amount: -amount,
+            currency: "CHF",
+            status: "booked",
+            smart: {
+              engine: "allocation",
+              title: `Surplus put to work \xB7 to ${split.label}`,
+              source: "everyday",
+              destination: split.destination === "goal" ? "saveEasy" : split.destination,
+              reason: `You chose to put ${money(total)} of your flexible cash to work. AI Budgeting expects you to need ${money(keep)} before your next salary, and that stays in Banking. The amount was split by your existing plan \u2014 ${split.percent}% to ${split.label}.`,
+              balanceBefore: before,
+              balanceAfter: s.accounts.everyday
+            }
+          });
+          moved.push({ destination: split.destination, amount });
+        }
+        const okTotal = moved.reduce((sum, m) => sum + m.amount, 0);
+        addNotice(s, {
+          kind: "info",
+          title: "Your surplus is working",
+          body: `${money(okTotal)} was allocated by your plan: ${moved.map((m) => `${money(m.amount)} \u2192 ${rule.splits.find((x) => x.destination === m.destination)?.label ?? m.destination}`).join(", ")}. ${money(keep)} stays available in Banking.`
+        });
+        announce(s, `${money(okTotal)} put to work. Banking balance ${money(s.accounts.everyday)}.`);
+        deriveStatus(s);
+        return s;
+      }
+      case "simulateLargePayment": {
+        const s = draft(prev);
+        applyDebit(
+          s,
+          { day: s.day, label: action.label, category: "transfer", amount: -action.amount, currency: "CHF" },
+          true
+        );
+        deriveStatus(s);
+        return s;
+      }
+      case "pauseAll": {
+        const s = draft(prev);
+        s.allocation.paused = true;
+        s.autoCover.enabled = false;
+        deriveStatus(s);
+        return s;
+      }
+      case "resumeAll": {
+        const s = draft(prev);
+        s.allocation.paused = false;
+        s.autoCover.enabled = true;
+        deriveStatus(s);
+        return s;
+      }
+      default:
+        return prev;
+    }
+  }
+  __name(reduce, "reduce");
+
+  // src/state/store.tsx
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+  var Ctx = (0, import_react.createContext)(null);
+  function computeBuyingPower(state, protectedLiquidity, settings) {
+    const a = state.accounts;
+    const availableNow = Math.max(0, a.everyday - PENDING_CARD_RESERVED);
+    const ownSegments = [
+      {
+        key: "cash",
+        label: "Everyday",
+        amountChf: availableNow,
+        liquidityClass: "now",
+        availability: "Available now",
+        reserved: [{ label: "Authorised card payments", amount: PENDING_CARD_RESERVED }],
+        cost: null,
+        indicative: false,
+        isCredit: false
+      }
+    ];
+    if (settings.includeTrading) {
+      const free = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
+      ownSegments.push({
+        key: "trading",
+        label: "Trading cash",
+        amountChf: state.flags.tradingUnavailable ? 0 : free,
+        liquidityClass: "transferable",
+        availability: state.flags.tradingUnavailable ? "Temporarily unavailable" : "Transferable to Everyday",
+        reserved: [{ label: "Reserved for open orders", amount: TRADING_ORDERS_RESERVED }],
+        cost: null,
+        indicative: false,
+        isCredit: false
+      });
+    }
+    if (settings.includeSaveEasy) {
+      const penaltyFree = Math.min(a.saveEasy, SAVE_EASY_PENALTY_FREE);
+      ownSegments.push({
+        key: "save",
+        label: "Save Easy",
+        amountChf: penaltyFree,
+        liquidityClass: "conditional",
+        availability: "Accessible \u2014 withdrawal conditions apply",
+        reserved: a.saveEasy > penaltyFree ? [{ label: "Above the penalty-free limit", amount: a.saveEasy - penaltyFree }] : void 0,
+        cost: null,
+        indicative: false,
+        isCredit: false
+      });
+    }
+    if (settings.includeWallets) {
+      const fxChf = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+      ownSegments.push({
+        key: "fx",
+        label: "Other currencies",
+        amountChf: fxChf,
+        liquidityClass: "conditional",
+        availability: "Needs conversion to CHF",
+        cost: `FX spread \u2248 ${FX.spreadPct}%`,
+        indicative: true,
+        isCredit: false
+      });
+    }
+    const ownTotal = ownSegments.reduce((s, x) => s + x.amountChf, 0);
+    const accessibleElsewhere = ownTotal - availableNow;
+    const flexible = Math.max(0, ownTotal - protectedLiquidity);
+    const credit = {
+      key: "credit",
+      label: "Lombard available",
+      amountChf: settings.showLombard ? a.lombardAvailable : 0,
+      liquidityClass: "credit",
+      availability: settings.showLombard ? `Up to ${a.lombardAvailable} currently drawable` : "Not shown",
+      cost: `${LOMBARD_RATE_PA}% p.a. interest`,
+      indicative: false,
+      isCredit: true
+    };
+    const notIncluded = [
+      { label: "Invest Easy", amountChf: a.investEasy, reason: "Invested \u2014 would need to be sold" },
+      { label: "Global ETF Saving Plan", amountChf: a.savingPlan, reason: "Invested \u2014 would need to be sold" }
+    ];
+    return {
+      availableNow,
+      accessibleElsewhere,
+      ownSegments,
+      ownTotal,
+      protectedLiquidity,
+      flexible,
+      credit,
+      maximum: ownTotal + credit.amountChf,
+      notIncluded
+    };
+  }
+  __name(computeBuyingPower, "computeBuyingPower");
+  function StoreProvider({ children }) {
+    const [state, dispatch] = (0, import_react.useReducer)(reduce, void 0, initialState);
+    const [tab, setTab] = (0, import_react.useState)("bank");
+    const [screen, setScreen] = (0, import_react.useState)("home");
+    const [txnDetailId, setTxnDetailId] = (0, import_react.useState)(null);
+    const [buyingPowerOpen, setBuyingPowerOpen] = (0, import_react.useState)(false);
+    const [card, setCardState] = (0, import_react.useState)({
+      frozen: false,
+      onlinePayments: true,
+      monthlyLimit: 1e4,
+      contactlessLimit: 100
+    });
+    const [bpSettings, setBpSettingsState] = (0, import_react.useState)({
+      includeTrading: true,
+      includeSaveEasy: true,
+      includeWallets: true,
+      showLombard: true
+      // on in the demo; the product default is off until opted in
+    });
+    const forecast = (0, import_react.useMemo)(() => computeForecast(state), [state]);
+    const buyingPower = (0, import_react.useMemo)(
+      () => computeBuyingPower(state, forecast.keep, bpSettings),
+      [state, forecast.keep, bpSettings]
+    );
+    const nav = {
+      tab,
+      screen,
+      txnDetailId,
+      buyingPowerOpen,
+      setTab: /* @__PURE__ */ __name((t) => {
+        setTxnDetailId(null);
+        setBuyingPowerOpen(false);
+        setScreen("home");
+        setTab(t);
+      }, "setTab"),
+      go: /* @__PURE__ */ __name((s) => {
+        setTxnDetailId(null);
+        setBuyingPowerOpen(false);
+        setScreen(s);
+        setTab("bank");
+      }, "go"),
+      openTxn: /* @__PURE__ */ __name((id) => setTxnDetailId(id), "openTxn"),
+      closeTxn: /* @__PURE__ */ __name(() => setTxnDetailId(null), "closeTxn"),
+      setBuyingPowerOpen
+    };
+    const store = {
+      state,
+      dispatch,
+      forecast,
+      buyingPower,
+      nav,
+      card,
+      setCard: /* @__PURE__ */ __name((patch) => setCardState((c) => ({ ...c, ...patch })), "setCard"),
+      bpSettings,
+      setBpSettings: /* @__PURE__ */ __name((patch) => setBpSettingsState((c) => ({ ...c, ...patch })), "setBpSettings")
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Ctx.Provider, { value: store, children });
+  }
+  __name(StoreProvider, "StoreProvider");
+  function useStore() {
+    const s = (0, import_react.useContext)(Ctx);
+    if (!s) throw new Error("useStore outside <StoreProvider>");
+    return s;
+  }
+  __name(useStore, "useStore");
+
+  // src/components/MarginCallModal.tsx
+  var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+  function MarginCallModal() {
+    const { state, dispatch } = useStore();
+    const ref = (0, import_react2.useRef)(null);
+    const notice = state.notices.find((n) => n.kind === "marginCall");
+    (0, import_react2.useEffect)(() => {
+      if (notice) ref.current?.focus();
+    }, [notice]);
+    if (!state.flags.marginCall || !notice) return null;
+    const shortfall = notice.shortfall ?? 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "scrim", "aria-hidden": "true" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        "div",
+        {
+          className: "modal",
+          role: "alertdialog",
+          "aria-modal": "true",
+          "aria-labelledby": "margin-call-title",
+          "aria-describedby": "margin-call-body",
+          tabIndex: -1,
+          ref,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("h2", { id: "margin-call-title", className: "m-0", style: { color: "var(--color-text-error)", fontSize: "var(--font-size-title)", marginBottom: "var(--space-sm)" }, children: "Margin call on your Lombard credit" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { id: "margin-call-body", className: "m-0", style: { marginBottom: "var(--space-md)" }, children: notice.body }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-col", style: { gap: "var(--space-xs)" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+                "button",
+                {
+                  type: "button",
+                  className: "btn btn--danger",
+                  onClick: () => {
+                    dispatch({ type: "manualTransferIn", amount: shortfall });
+                    dispatch({ type: "resolveMarginCall" });
+                  },
+                  children: [
+                    "Add ",
+                    money(shortfall),
+                    " now"
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "resolveMarginCall" }), children: "Sell positions to restore cover" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "caption m-0", children: "If you do nothing by the deadline, Swissquote may sell positions for you. Call +41 44 825 88 88 to talk it through." })
+            ] })
+          ]
+        }
+      )
+    ] });
+  }
+  __name(MarginCallModal, "MarginCallModal");
+
+  // src/components/ui.tsx
+  var import_react3 = __toESM(require_react(), 1);
+  var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+  function ConceptBadge() {
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "concept-badge m-0", children: "Concept \u2014 not a product commitment" });
+  }
+  __name(ConceptBadge, "ConceptBadge");
+  function Toggle({
+    checked,
+    onChange,
+    label
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      "button",
+      {
+        type: "button",
+        role: "switch",
+        "aria-checked": checked,
+        "aria-label": label,
+        className: "toggle",
+        onClick: () => onChange(!checked),
+        children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "toggle__track", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "toggle__thumb" }) })
+      }
+    );
+  }
+  __name(Toggle, "Toggle");
+  var STATUS_LABELS = {
+    healthy: "Healthy",
+    approachingMinimum: "Approaching minimum",
+    autoCoverPending: "Auto Cover pending",
+    autoCoverExecuted: "Auto Cover executed",
+    autoCoverFailed: "Auto Cover could not run",
+    rulesPaused: "Rules paused"
+  };
+  function StatusPill({ status }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: `status-pill status-pill--${status}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "status-pill__dot", "aria-hidden": "true" }),
+      STATUS_LABELS[status]
+    ] });
+  }
+  __name(StatusPill, "StatusPill");
+  function Sheet({
+    title,
+    onClose,
+    children
+  }) {
+    const ref = (0, import_react3.useRef)(null);
+    (0, import_react3.useEffect)(() => {
+      ref.current?.focus();
+      const onKey = /* @__PURE__ */ __name((e) => {
+        if (e.key === "Escape") onClose();
+      }, "onKey");
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { type: "button", className: "scrim", "aria-label": "Close", onClick: onClose }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "sheet", role: "dialog", "aria-modal": "true", "aria-label": title, tabIndex: -1, ref, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "sheet__grabber", "aria-hidden": "true" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "sheet__body", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h2", { className: "screen-header__title m-0", children: title }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: onClose, children: "Close" })
+          ] }),
+          children
+        ] })
+      ] })
+    ] });
+  }
+  __name(Sheet, "Sheet");
+
+  // src/features/auto-cover/AutoCover.tsx
+  var import_react4 = __toESM(require_react(), 1);
+
+  // src/components/SourceWaterfallList.tsx
+  var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+  function SourceWaterfallList({ editing = false }) {
+    const { state, dispatch } = useStore();
+    const cfg = state.autoCover;
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("ol", { className: "m-0 flex flex-col list-none", style: { gap: "var(--space-xs)", padding: 0 }, "aria-label": "Auto Cover sources, in order", children: [
+      cfg.sources.map((src, i) => {
+        const { amount, reason } = sourceCoverCapacity(state, src.source);
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("li", { className: "waterfall-row", style: { opacity: src.enabled ? 1 : 0.6 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "waterfall-row__rank", "aria-hidden": "true", children: i + 1 }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: SOURCE_LABELS[src.source] }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "caption block", children: [
+              src.enabled ? amount > 0 ? `${money(amount, "CHF", 0)} eligible` : reason : "Not used",
+              src.enabled && amount > 0 && ` \xB7 ${money(src.monthlyLimit - src.usedThisMonth, "CHF", 0)} left this month`
+            ] })
+          ] }),
+          editing ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "flex", style: { gap: "var(--space-2xs)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "waterfall-row__move",
+                "aria-label": `Move ${SOURCE_LABELS[src.source]} earlier`,
+                disabled: i === 0,
+                onClick: () => dispatch({ type: "moveWaterfallSource", index: i, direction: -1 }),
+                children: "\u2191"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "waterfall-row__move",
+                "aria-label": `Move ${SOURCE_LABELS[src.source]} later`,
+                disabled: i === cfg.sources.length - 1,
+                onClick: () => dispatch({ type: "moveWaterfallSource", index: i, direction: 1 }),
+                children: "\u2193"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "waterfall-row__move",
+                "aria-label": `${src.enabled ? "Remove" : "Add"} ${SOURCE_LABELS[src.source]}`,
+                onClick: () => dispatch({ type: "toggleCoverSource", source: src.source, enabled: !src.enabled }),
+                children: src.enabled ? "\u2212" : "+"
+              }
+            )
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "amount caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)" }, children: src.enabled && amount > 0 ? money(amount, "CHF", 0) : "\u2014" })
+        ] }, src.source);
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("li", { className: "waterfall-row waterfall-row--pinned", "aria-label": "Lombard credit, always last", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "waterfall-row__rank", "aria-hidden": "true", children: cfg.sources.length + 1 }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: [
+            "Lombard ",
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "class-chip class-chip--credit", children: "Credit" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "caption block", children: cfg.lombardEnabled && cfg.lombardAcknowledged ? `Up to ${money(cfg.lombardPerCoverMax, "CHF", 0)} per cover \xB7 ${LOMBARD_RATE_PA}% p.a.` : "Off. We never borrow on your behalf by default." })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("li", { className: "waterfall-row waterfall-row--pinned", "aria-label": "Investments are never sold", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "waterfall-row__rank", "aria-hidden": "true", children: "\u2014" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Invest Easy & Saving Plan" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "caption block", children: "Never touched. We don't sell your investments to pay a bill." })
+        ] })
+      ] })
+    ] });
+  }
+  __name(SourceWaterfallList, "SourceWaterfallList");
+
+  // src/features/auto-cover/AutoCover.tsx
+  var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+  function AutoCover() {
+    const { state, dispatch } = useStore();
+    const [editing, setEditing] = (0, import_react4.useState)(false);
+    const cfg = state.autoCover;
+    const capacity = coverCapacity(state);
+    const failed = state.status === "autoCoverFailed";
+    const health = !cfg.enabled ? { label: "Off", tone: "rulesPaused" } : capacity.own <= 0 && capacity.credit <= 0 ? { label: "No cover available", tone: "autoCoverFailed" } : capacity.own <= 0 ? { label: "Credit only", tone: "approachingMinimum" } : capacity.own < cfg.perTransactionMax ? { label: "Limited", tone: "approachingMinimum" } : { label: "Ready", tone: "healthy" };
+    const covers = state.txns.filter((t) => t.smart?.engine === "autoCover");
+    const recent = [...covers].sort((a, b) => b.day - a.day).slice(0, 3);
+    const usedThisMonth = cfg.usedThisMonth;
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "card", "aria-label": "Auto Cover status", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "flex items-center", style: { gap: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              Toggle,
+              {
+                checked: cfg.enabled,
+                onChange: (v) => dispatch({ type: "setAutoCoverEnabled", enabled: v }),
+                label: "Auto Cover"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontWeight: "var(--font-weight-semibold)" }, children: cfg.enabled ? "On" : "Off" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: `status-pill status-pill--${health.tone}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "status-pill__dot", "aria-hidden": "true" }),
+            health.label
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "m-0", style: { marginTop: "var(--space-xs)" }, children: "A payment bigger than your balance shouldn't fail when the cash is just sitting elsewhere. We bring it back, in the order you set." }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "sl-card__stats", style: { borderTopColor: "var(--color-border-subtle)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "sl-card__stat", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "micro block", style: { color: "var(--color-text-secondary)" }, children: "Your cash, on standby" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "amount block", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+              "CHF ",
+              swissNumber(capacity.own, 0)
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "sl-card__stat", style: { borderLeft: "1px solid var(--color-border-subtle)", paddingLeft: "var(--space-md)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "micro block", style: { color: "var(--color-text-secondary)" }, children: "Credit, if you allow it" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "amount block", style: { fontWeight: "var(--font-weight-bold)" }, children: cfg.lombardEnabled ? `CHF ${swissNumber(capacity.credit, 0)}` : "Off" })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: [
+          "Up to ",
+          money(cfg.perTransactionMax, "CHF", 0),
+          " a payment. ",
+          money(usedThisMonth, "CHF", 0),
+          " of",
+          " ",
+          money(cfg.monthlyCap, "CHF", 0),
+          " used this month."
+        ] })
+      ] }),
+      failed && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "notice notice--error", "aria-label": "Auto Cover failure", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { children: "We couldn't cover it in full" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "m-0 caption", style: { color: "var(--color-text-primary)", marginTop: "var(--space-2xs)" }, children: "So nothing moved. Half a transfer solves nothing. Add money, or authorise another source below." }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex", style: { gap: "var(--space-xs)", marginTop: "var(--space-xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--primary",
+              onClick: () => dispatch({ type: "manualTransferIn", amount: 5e3 }),
+              children: [
+                "Transfer in ",
+                money(5e3, "CHF", 0)
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--secondary",
+              onClick: () => dispatch({ type: "setFlag", flag: "sourcesExhausted", value: false }),
+              children: "Retry sources"
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { "aria-label": "Funding order", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("h2", { className: "section-title m-0", children: "Funding order" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => setEditing((v) => !v), children: editing ? "Done" : "Edit rules" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(SourceWaterfallList, { editing })
+      ] }),
+      editing && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "card", "aria-label": "Cover amount", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "How much to move" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex flex-col", style: { gap: "var(--space-xs)" }, role: "radiogroup", "aria-label": "Cover amount", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+              "button",
+              {
+                type: "button",
+                className: "choice-row",
+                role: "radio",
+                "aria-checked": cfg.coverMode === "exact",
+                onClick: () => dispatch({ type: "setCoverMode", mode: "exact" }),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "choice-row__dot", "aria-hidden": "true" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Exact cover" }),
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "caption block", children: "Only what the payment is short." })
+                  ] })
+                ]
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+              "button",
+              {
+                type: "button",
+                className: "choice-row",
+                role: "radio",
+                "aria-checked": cfg.coverMode === "buffer",
+                onClick: () => dispatch({ type: "setCoverMode", mode: "buffer" }),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "choice-row__dot", "aria-hidden": "true" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: [
+                      "Cover + ",
+                      money(cfg.bufferAmount, "CHF", 0),
+                      " buffer"
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "caption block", children: "A little extra, so the next small payment doesn't trigger it again." })
+                  ] })
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "card", "aria-label": "Limits", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Your limits" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "block", style: { marginBottom: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption", children: [
+              "Maximum per payment: ",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { className: "amount", children: money(cfg.perTransactionMax, "CHF", 0) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 500,
+                max: 2e4,
+                step: 500,
+                value: cfg.perTransactionMax,
+                onChange: (e) => dispatch({ type: "setPerTransactionMax", value: Number(e.target.value) }),
+                "aria-label": "Maximum per payment"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "block", style: { marginBottom: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption", children: [
+              "Maximum per month: ",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { className: "amount", children: money(cfg.monthlyCap, "CHF", 0) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 1e3,
+                max: 5e4,
+                step: 1e3,
+                value: cfg.monthlyCap,
+                onChange: (e) => dispatch({ type: "setCoverMonthlyCap", value: Number(e.target.value) }),
+                "aria-label": "Maximum per month"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "block", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption", children: [
+              "Always keep in Trading: ",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { className: "amount", children: money(cfg.tradingReserve, "CHF", 0) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 0,
+                max: 2e4,
+                step: 1e3,
+                value: cfg.tradingReserve,
+                onChange: (e) => dispatch({ type: "setTradingReserve", value: Number(e.target.value) }),
+                "aria-label": "Trading reserve"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "flex items-center justify-between", style: { gap: "var(--space-sm)", marginTop: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: [
+                "Also keep Everyday above ",
+                money(cfg.minBalance, "CHF", 0)
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "caption block", children: "Advanced. Tops up at day's end, not just for payments." })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              Toggle,
+              {
+                checked: cfg.keepMinimumEnabled,
+                onChange: (v) => dispatch({ type: "setKeepMinimum", enabled: v }),
+                label: "Keep a minimum Everyday balance"
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "lombard-block", "aria-label": "Credit, if you allow it", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center justify-between", style: { gap: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "flex-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: "Lombard as last resort" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption block", children: [
+                "Borrowing at ",
+                LOMBARD_RATE_PA,
+                "% p.a. Your own cash goes first, always."
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              Toggle,
+              {
+                checked: cfg.lombardEnabled,
+                onChange: (v) => dispatch({ type: "setLombard", enabled: v, acknowledged: cfg.lombardAcknowledged }),
+                label: "Lombard as Auto Cover source"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "flex items-start", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked: cfg.lombardAcknowledged,
+                style: { width: "var(--space-md)", height: "var(--space-md)", marginTop: "var(--space-2xs)", accentColor: "var(--color-action-primary)" },
+                onChange: (e) => dispatch({ type: "setLombard", enabled: cfg.lombardEnabled && e.target.checked, acknowledged: e.target.checked })
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "caption", children: "I understand Auto Cover may increase my Lombard borrowing, that interest applies, that my available capacity can change, and that it will never exceed the limits I set." })
+          ] }),
+          cfg.lombardEnabled && cfg.lombardAcknowledged && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "block", style: { marginTop: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption", children: [
+              "Borrow at most ",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { className: "amount", children: money(cfg.lombardPerCoverMax, "CHF", 0) }),
+              " per cover \xB7",
+              " ",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { className: "amount", children: money(cfg.lombardMonthlyMax, "CHF", 0) }),
+              " per month"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 0,
+                max: 1e4,
+                step: 500,
+                value: cfg.lombardPerCoverMax,
+                onChange: (e) => dispatch({ type: "setLombardCoverLimits", perCover: Number(e.target.value) }),
+                "aria-label": "Maximum Lombard borrowing per cover"
+              }
+            )
+          ] })
+        ] })
+      ] }),
+      !editing && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("section", { className: "card", "aria-label": "Auto Cover history", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Recent covers" }),
+        recent.map((t) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-baseline justify-between", style: { padding: "var(--space-2xs) 0" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "caption", style: { color: "var(--color-text-primary)" }, children: [
+            shortDate(t.day),
+            " \xB7 from ",
+            t.smart?.source === "lombard" ? "Lombard (credit)" : t.smart?.title.replace("Auto Cover \xB7 from ", "")
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "amount caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)" }, children: money(t.amount, "CHF", 0) })
+        ] }, t.id)),
+        recent.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "caption m-0", children: "Nothing has needed covering yet." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "micro m-0", children: "Cash only. We never sell your investments. We never borrow unless you switch Lombard on yourself." })
+    ] });
+  }
+  __name(AutoCover, "AutoCover");
+
+  // src/features/budgeting/AiBudgeting.tsx
+  var import_react6 = __toESM(require_react(), 1);
+
+  // src/components/LiquidityForecastChart.tsx
+  var import_react5 = __toESM(require_react(), 1);
+  var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+  var W = 340;
+  var H = 150;
+  var PAD_L = 8;
+  var PAD_R = 8;
+  var PAD_T = 10;
+  var PAD_B = 26;
+  function LiquidityForecastChart({ forecast, minBalance }) {
+    const [picked, setPicked] = (0, import_react5.useState)(null);
+    const pts = forecast.points;
+    const values = pts.flatMap((p) => [p.typical, p.high]);
+    const dataMin = Math.min(...values);
+    const dataMax = Math.max(...values);
+    const pad = Math.max((dataMax - dataMin) * 0.15, 300);
+    const minRelevant = minBalance > dataMin - 3 * pad;
+    const max = dataMax + pad;
+    const min = (minRelevant ? Math.min(dataMin, minBalance) : dataMin) - pad;
+    const x = /* @__PURE__ */ __name((i) => PAD_L + i / (pts.length - 1) * (W - PAD_L - PAD_R), "x");
+    const y = /* @__PURE__ */ __name((v) => PAD_T + (1 - (v - min) / (max - min)) * (H - PAD_T - PAD_B), "y");
+    const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(" ");
+    const bandPath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(" ") + " " + [...pts].reverse().map((p, i) => `${i === 0 ? "L" : "L"}${x(pts.length - 1 - i).toFixed(1)},${y(p.high).toFixed(1)}`).join(" ") + " Z";
+    const events = pts.map((p, i) => ({ ...p, i })).filter((p) => p.event);
+    const lowestTypical = pts.reduce((a, b) => b.typical < a.typical ? b : a);
+    const sel = picked !== null ? pts[picked] : null;
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("figure", { className: "m-0", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+        "svg",
+        {
+          viewBox: `0 0 ${W} ${H}`,
+          role: "img",
+          "aria-label": `Projected Everyday balance over the next 30 days. Typical scenario reaches its lowest point, ${money(lowestTypical.typical)}, on ${shortDate(lowestTypical.day)}. In a high-spend scenario the balance runs lower \u2014 the shaded band shows the range.`,
+          style: { width: "100%", height: "auto", display: "block", touchAction: "manipulation" },
+          onPointerMove: (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const rel = (e.clientX - rect.left) / rect.width * W;
+            const i = Math.round((rel - PAD_L) / (W - PAD_L - PAD_R) * (pts.length - 1));
+            setPicked(Math.max(0, Math.min(pts.length - 1, i)));
+          },
+          onPointerLeave: () => setPicked(null),
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("line", { x1: PAD_L, x2: W - PAD_R, y1: H - PAD_B, y2: H - PAD_B, stroke: "var(--color-dataviz-grid)", strokeWidth: "1" }),
+            minRelevant && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+              "line",
+              {
+                x1: PAD_L,
+                x2: W - PAD_R,
+                y1: y(minBalance),
+                y2: y(minBalance),
+                stroke: "var(--color-feedback-warning)",
+                strokeWidth: "1",
+                strokeDasharray: "3 4"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("path", { d: bandPath, fill: "var(--color-dataviz-band)", stroke: "none" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("path", { d: linePath, fill: "none", stroke: "var(--color-dataviz-line)", strokeWidth: "2" }),
+            events.map((e) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("g", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("line", { x1: x(e.i), x2: x(e.i), y1: y(e.typical), y2: H - PAD_B + 4, stroke: "var(--color-dataviz-grid)", strokeWidth: "1" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("circle", { cx: x(e.i), cy: y(e.typical), r: "4", fill: "var(--color-dataviz-line)", stroke: "var(--color-surface-default)", strokeWidth: "2" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+                "text",
+                {
+                  x: x(e.i),
+                  y: H - PAD_B + 16,
+                  textAnchor: e.i > pts.length - 6 ? "end" : e.i < 5 ? "start" : "middle",
+                  fontSize: "9",
+                  fill: "var(--color-text-secondary)",
+                  children: e.event
+                }
+              )
+            ] }, `${e.day}-${e.event}`)),
+            sel && picked !== null && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("g", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("line", { x1: x(picked), x2: x(picked), y1: PAD_T, y2: H - PAD_B, stroke: "var(--color-border-strong)", strokeWidth: "1" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("circle", { cx: x(picked), cy: y(sel.typical), r: "4", fill: "var(--color-dataviz-line)", stroke: "var(--color-surface-default)", strokeWidth: "2" })
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("figcaption", { className: "caption", "aria-live": "polite", children: sel ? `${shortDate(sel.day)} \u2014 likely around CHF ${swissNumber(sel.typical, 0)} (high-spend: CHF ${swissNumber(sel.high, 0)})` : minRelevant ? `Lowest likely point: ${money(lowestTypical.typical)} on ${shortDate(lowestTypical.day)} \xB7 dashed line = your CHF ${swissNumber(minBalance, 0)} minimum` : `Lowest likely point: ${money(lowestTypical.typical, "CHF", 0)} on ${shortDate(lowestTypical.day)} \u2014 comfortably above your CHF ${swissNumber(minBalance, 0)} minimum` })
+    ] });
+  }
+  __name(LiquidityForecastChart, "LiquidityForecastChart");
+  function ForecastSparkline({ forecast }) {
+    const pts = forecast.points;
+    const values = pts.map((p) => p.typical);
+    const max = Math.max(...values);
+    const min = Math.min(...values, 0);
+    const w = 92;
+    const h = 40;
+    const x = /* @__PURE__ */ __name((i) => 2 + i / (pts.length - 1) * (w - 8), "x");
+    const y = /* @__PURE__ */ __name((v) => 4 + (1 - (v - min) / (max - min || 1)) * (h - 8), "y");
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(" ");
+    const last = pts[pts.length - 1];
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, "aria-hidden": "true", style: { flex: "none" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("path", { d, fill: "none", stroke: "var(--color-chart-line)", strokeWidth: "2", strokeLinecap: "round" }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+        "circle",
+        {
+          cx: x(pts.length - 1),
+          cy: y(last.typical),
+          r: "3.5",
+          fill: "var(--color-chart-line)",
+          stroke: "var(--color-surface-default)",
+          strokeWidth: "2"
+        }
+      )
+    ] });
+  }
+  __name(ForecastSparkline, "ForecastSparkline");
+
+  // src/components/PlanBar.tsx
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+  var PLAN_SWATCH = {
+    keep: "plan-bar__segment--keep",
+    saveEasy: "plan-bar__segment--saveEasy",
+    investEasy: "plan-bar__segment--investEasy",
+    tradingCash: "plan-bar__segment--tradingCash",
+    savingPlan: "plan-bar__segment--savingPlan",
+    goal: "plan-bar__segment--saveEasy"
+  };
+  function PlanBar({ buffer, estTotal, splits }) {
+    const scale = buffer + estTotal || 1;
+    return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "plan-bar", "aria-hidden": "true", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "plan-bar__segment plan-bar__segment--keep", style: { width: `${Math.max(6, buffer / scale * 100)}%` } }),
+      splits.map((s) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        "span",
+        {
+          className: `plan-bar__segment ${PLAN_SWATCH[s.destination]}`,
+          style: { width: `${Math.max(2, estTotal * s.percent / 100 / scale * 100)}%` }
+        },
+        s.destination
+      ))
+    ] });
+  }
+  __name(PlanBar, "PlanBar");
+
+  // src/features/budgeting/AiBudgeting.tsx
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+  var SAFETY_LABELS = {
+    efficient: { title: "Efficient", blurb: "Keep less. Invest more." },
+    balanced: { title: "Balanced", blurb: "Recommended" },
+    cautious: { title: "Cautious", blurb: "Keep more. Sleep easier." }
+  };
+  function PutToWorkCard({ grow }) {
+    const { state, dispatch, nav } = useStore();
+    const rule = state.allocation;
+    const [amount, setAmount] = (0, import_react6.useState)(() => Math.floor(grow / 1e3) * 1e3);
+    const [adjusting, setAdjusting] = (0, import_react6.useState)(false);
+    const doneToday = state.txns.filter(
+      (t) => t.day === state.day && t.smart?.title.startsWith("Surplus put to work")
+    );
+    if (doneToday.length > 0) {
+      const total = doneToday.reduce((s, t) => s + -t.amount, 0);
+      return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Surplus put to work", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-baseline justify-between", style: { marginBottom: "var(--space-2xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", children: "Done" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "status-pill status-pill--healthy", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "status-pill__dot", "aria-hidden": "true" }),
+            "Working"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "m-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("strong", { className: "amount", children: money(total, "CHF", 0) }),
+          " is working, across ",
+          doneToday.length,
+          " destinations.",
+          " ",
+          money(grow, "CHF", 0),
+          " still free."
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          "button",
+          {
+            type: "button",
+            className: "btn btn--secondary",
+            style: { marginTop: "var(--space-sm)" },
+            onClick: () => nav.go("transactions"),
+            children: "See where it went"
+          }
+        )
+      ] });
+    }
+    const capped = Math.min(amount, Math.floor(grow / 100) * 100);
+    const splitTotal = rule.splits.reduce((s, x) => s + x.percent, 0) || 100;
+    const step = grow > 5e4 ? 1e3 : 100;
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Put your surplus to work", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-baseline justify-between", style: { marginBottom: "var(--space-2xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", children: "Put it to work" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "caption", children: "Your plan. Unchanged." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "m-0", style: { marginBottom: "var(--space-sm)" }, children: [
+        money(grow, "CHF", 0),
+        " is sitting idle. Your plan would send it here:"
+      ] }),
+      rule.splits.map((s) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "plan-row", style: { padding: "var(--space-2xs) 0" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: `plan-row__swatch ${PLAN_SWATCH[s.destination]}`, "aria-hidden": "true" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-1 caption", style: { color: "var(--color-text-primary)" }, children: s.label }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "caption amount", children: [
+          s.percent,
+          "%"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          "span",
+          {
+            className: "amount caption",
+            style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)", minWidth: "var(--space-2xl)", textAlign: "right" },
+            children: swissNumber(Math.round(capped * s.percent / splitTotal / 10) * 10, 0)
+          }
+        )
+      ] }, s.destination)),
+      adjusting && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("label", { className: "block", style: { marginTop: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "caption", children: [
+          "Amount: ",
+          money(capped, "CHF", 0)
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          "input",
+          {
+            type: "range",
+            className: "slider",
+            min: Math.min(rule.minAllocation, capped),
+            max: Math.floor(grow / 100) * 100,
+            step,
+            value: capped,
+            onChange: (e) => setAmount(Number(e.target.value)),
+            "aria-label": "Amount to put to work"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center flex-wrap", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: "btn btn--primary",
+            onClick: () => dispatch({ type: "allocateSurplusNow", amount: capped }),
+            children: [
+              "Put ",
+              money(capped, "CHF", 0),
+              " to work"
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => setAdjusting((v) => !v), children: adjusting ? "Done" : "Change amount" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: [
+        "Your plan moves the cash. We don't pick investments for you, and the",
+        " ",
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          "button",
+          {
+            type: "button",
+            className: "link micro",
+            style: { padding: 0 },
+            onClick: () => nav.go("allocation"),
+            children: "plan is editable"
+          }
+        ),
+        " ",
+        "whenever you want. Nothing else moves until your next salary."
+      ] })
+    ] });
+  }
+  __name(PutToWorkCard, "PutToWorkCard");
+  function AiBudgeting() {
+    const { state, dispatch, forecast, buyingPower } = useStore();
+    const [adjusting, setAdjusting] = (0, import_react6.useState)(false);
+    const rule = state.allocation;
+    const f = forecast.factors;
+    const grow = Math.max(0, buyingPower.availableNow - forecast.keep);
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Keep and grow", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-baseline justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "section-title", children: [
+            shortDate(forecast.horizonStart),
+            " \u2192 ",
+            shortDate(forecast.horizonEnd)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: `status-pill status-pill--${forecast.confidence === "high" ? "healthy" : forecast.confidence === "medium" ? "approachingMinimum" : "autoCoverFailed"}`, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "status-pill__dot", "aria-hidden": "true" }),
+            forecast.confidence === "high" ? "Predictable" : forecast.confidence === "medium" ? "Varies" : "Less predictable"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "keep-grow", style: { marginTop: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "keep-grow__side", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "keep-grow__label", children: "Keep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "keep-grow__value amount", children: [
+              "CHF ",
+              swissNumber(forecast.keep, 0)
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "caption", children: "What life costs until then" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "keep-grow__side keep-grow__side--grow", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "keep-grow__label", children: "Grow" }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "keep-grow__value amount", children: [
+              "CHF ",
+              swissNumber(grow, 0)
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "caption", children: "Free to go to work" })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "caption m-0", style: { marginTop: "var(--space-sm)" }, children: [
+          "About ",
+          money(forecast.expectedRequirement, "CHF", 0),
+          " of spending before ",
+          shortDate(forecast.horizonEnd),
+          ", plus a",
+          " ",
+          money(forecast.safetyMargin, "CHF", 0),
+          " margin.",
+          forecast.confidence !== "high" && ` ${forecast.confidenceNote}`
+        ] }),
+        forecast.liftedByMin && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "caption m-0", style: { marginTop: "var(--space-2xs)", color: "var(--color-text-primary)" }, children: [
+          "Your own floor of ",
+          money(rule.minKeep, "CHF", 0),
+          " wins \u2014 we predicted ",
+          money(forecast.keepRaw, "CHF", 0),
+          "."
+        ] }),
+        forecast.aboveMax && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "notice notice--warning", style: { marginTop: "var(--space-xs)" }, children: [
+          "Your expenses run above your ",
+          money(rule.maxKeep, "CHF", 0),
+          " ceiling. We keep the higher amount \u2014 your payments come first. Worth a look before your next allocation."
+        ] }),
+        forecast.fallbackUsed && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "notice notice--info", style: { marginTop: "var(--space-xs)" }, children: [
+          "Your fixed buffer of ",
+          money(rule.manualBuffer, "CHF", 0),
+          " is in charge, not the estimate."
+        ] })
+      ] }),
+      grow >= rule.minAllocation && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(PutToWorkCard, { grow }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Projected balance", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Until your next salary" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(LiquidityForecastChart, { forecast, minBalance: forecast.keep })
+      ] }),
+      !adjusting ? /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => setAdjusting(true), children: "Change the rules" }) : /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Safety level", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "How careful should we be?" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-col", style: { gap: "var(--space-xs)" }, role: "radiogroup", "aria-label": "Safety level", children: Object.keys(SAFETY_LABELS).map((level) => {
+            const preview = keepForSafetyLevel(forecast, level, rule.minKeep);
+            return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+              "button",
+              {
+                type: "button",
+                className: "choice-row",
+                role: "radio",
+                "aria-checked": rule.safetyLevel === level,
+                onClick: () => dispatch({ type: "setSafetyLevel", level }),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "choice-row__dot", "aria-hidden": "true" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "flex-1 min-w-0", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: SAFETY_LABELS[level].title }),
+                    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "caption block", children: SAFETY_LABELS[level].blurb })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-right", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "block amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: swissNumber(preview.amount, 0) }),
+                    preview.clampedByMin && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "micro block", children: "your minimum" })
+                  ] })
+                ]
+              },
+              level
+            );
+          }) }),
+          ["efficient", "balanced", "cautious"].every(
+            (l) => keepForSafetyLevel(forecast, l, rule.minKeep).clampedByMin
+          ) && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "caption m-0", style: { marginTop: "var(--space-xs)" }, children: [
+            "All three hit your ",
+            money(rule.minKeep, "CHF", 0),
+            " floor: we predict less than that before your next salary. Lower the floor to let the estimate decide."
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Your limits", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Your limits" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("label", { className: "block", style: { marginBottom: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "caption", children: [
+              "Never below ",
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("strong", { className: "amount", children: money(rule.minKeep, "CHF", 0) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 2e3,
+                max: 2e4,
+                step: 500,
+                value: rule.minKeep,
+                onChange: (e) => dispatch({ type: "setKeepBoundaries", min: Number(e.target.value) }),
+                "aria-label": "Minimum cash to keep"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("label", { className: "block", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "caption", children: [
+              "Normally no more than ",
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("strong", { className: "amount", children: money(rule.maxKeep, "CHF", 0) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                min: 5e3,
+                max: 4e4,
+                step: 500,
+                value: rule.maxKeep,
+                onChange: (e) => dispatch({ type: "setKeepBoundaries", max: Number(e.target.value) }),
+                "aria-label": "Preferred maximum cash to keep"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "button",
+              {
+                type: "button",
+                className: `btn ${rule.bufferMode === "ai" ? "btn--primary" : "btn--secondary"}`,
+                onClick: () => dispatch({ type: "setBufferMode", mode: "ai" }),
+                children: "Predict it"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "button",
+              {
+                type: "button",
+                className: `btn ${rule.bufferMode === "manual" ? "btn--primary" : "btn--secondary"}`,
+                onClick: () => dispatch({ type: "setBufferMode", mode: "manual", manualBuffer: forecast.keepRaw }),
+                children: "Fixed amount"
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("section", { className: "card", "aria-label": "Planned expenses", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Planned expenses" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("p", { className: "caption m-0", style: { marginBottom: "var(--space-xs)" }, children: "Spending we can't see yet? Tell us. We'll protect it." }),
+          state.plannedExpenses.map((p) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "settings-row", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-1", children: p.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "amount", children: money(p.amount, "CHF", 0) }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "btn btn--ghost",
+                onClick: () => dispatch({ type: "removePlannedExpense", id: p.id }),
+                children: "Remove"
+              }
+            )
+          ] }, p.id)),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)", marginTop: "var(--space-xs)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "btn btn--secondary",
+                onClick: () => dispatch({ type: "addPlannedExpense", label: "Summer holiday", amount: 8e3 }),
+                children: "+ Holiday 8'000"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "btn btn--secondary",
+                onClick: () => dispatch({ type: "addPlannedExpense", label: "Cantonal taxes", amount: 24e3 }),
+                children: "+ Taxes 24'000"
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { type: "button", className: "btn btn--primary", onClick: () => setAdjusting(false), children: "Done" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("details", { className: "card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("summary", { className: "disclosure", style: { listStyle: "none", cursor: "pointer" }, children: [
+          "Where ",
+          money(forecast.keep, "CHF", 0),
+          " comes from",
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "disclosure__chevron", "aria-hidden": "true", children: "\u203A" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { style: { marginTop: "var(--space-xs)" }, children: [
+          [
+            { label: "Already committed", value: forecast.confirmedUpcoming, note: `incl. ${money(forecast.pendingCard, "CHF", 0)} on your card, not yet booked` },
+            { label: "Recurring bills", value: forecast.recurringPredicted, note: f.recurring.filter((r) => r.dueInCycle).map((r) => r.label.split(" \u2014 ")[0]).join(", ") || "none due this cycle" },
+            { label: "Everyday spending", value: forecast.variablePredicted, note: `${money(Math.round(f.avgDailyCardSpend), "CHF", 0)} a day, ${forecast.horizonDays} days` },
+            { label: "Safety margin", value: forecast.safetyMargin, note: `${SAFETY_LABELS[rule.safetyLevel].title}` }
+          ].map((row) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "factor-row", style: { borderTop: "1px solid var(--color-border-subtle)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "factor-row__label", children: row.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "factor-row__value", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("strong", { className: "amount", children: money(row.value, "CHF", 0) }),
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "micro block", children: row.note })
+            ] })
+          ] }, row.label)),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "factor-row", style: { borderTop: "1px solid var(--color-border-default)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "factor-row__label", style: { fontWeight: "var(--font-weight-semibold)" }, children: "Recommended" }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "factor-row__value amount", style: { fontWeight: "var(--font-weight-bold)" }, children: money(forecast.keep, "CHF", 0) })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: [
+            "An estimate, from your Swissquote history alone. That data stays here.",
+            f.oneOffsExcluded.length > 0 && ` One-offs left out (${f.oneOffsExcluded.map((o) => o.label).join(", ")}) \u2014 they'd skew it.`
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+  __name(AiBudgeting, "AiBudgeting");
+
+  // src/features/card/CardManagement.tsx
+  var import_react7 = __toESM(require_react(), 1);
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+  function BankCardVisual({ variant, frozen }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: `bank-card bank-card--${variant} ${frozen ? "bank-card--frozen" : ""}`, "aria-hidden": "true", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "bank-card__brand", children: "Swissquote" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "bank-card__chip" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "bank-card__number", children: variant === "hero" ? "\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 1234" : "\u2022\u2022\u2022\u2022 1234" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "bank-card__scheme", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", {})
+      ] })
+    ] });
+  }
+  __name(BankCardVisual, "BankCardVisual");
+  function CardManagement() {
+    const { card, setCard, nav } = useStore();
+    const [detailsRevealed, setDetailsRevealed] = (0, import_react7.useState)(false);
+    const [copied, setCopied] = (0, import_react7.useState)(false);
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(BankCardVisual, { variant: "hero", frozen: card.frozen }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "text-center", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "m-0", style: { fontWeight: "var(--font-weight-semibold)" }, children: "Elite card \u2022\u2022\u2022\u2022 1234" }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("p", { className: "caption m-0", children: [
+          "Swiss Debit Mastercard \xB7 ",
+          card.frozen ? "blocked. Payments are declined." : "active"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        "button",
+        {
+          type: "button",
+          className: `btn ${card.frozen ? "btn--primary" : "btn--secondary"}`,
+          onClick: () => setCard({ frozen: !card.frozen }),
+          children: card.frozen ? "Unblock card" : "Block card"
+        }
+      ),
+      card.frozen && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "caption m-0 text-center", style: { marginTop: "calc(-1 * var(--space-xs))" }, children: "Blocked instantly. Payments already authorised may still land. Unblock whenever you like." }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("section", { className: "card", "aria-label": "Payment limits", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Payment limits" }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("label", { className: "block", style: { marginBottom: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "caption", children: [
+            "Monthly spending limit: ",
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("strong", { className: "amount", children: money(card.monthlyLimit, "CHF", 0) })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+            "input",
+            {
+              type: "range",
+              className: "slider",
+              min: 1e3,
+              max: 3e4,
+              step: 500,
+              value: card.monthlyLimit,
+              onChange: (e) => setCard({ monthlyLimit: Number(e.target.value) }),
+              "aria-label": "Monthly spending limit"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("label", { className: "block", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "caption", children: [
+            "Contactless without PIN: ",
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("strong", { className: "amount", children: money(card.contactlessLimit, "CHF", 0) }),
+            " per payment"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+            "input",
+            {
+              type: "range",
+              className: "slider",
+              min: 0,
+              max: 300,
+              step: 20,
+              value: card.contactlessLimit,
+              onChange: (e) => setCard({ contactlessLimit: Number(e.target.value) }),
+              "aria-label": "Contactless limit per payment"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "settings-row", style: { marginTop: "var(--space-2xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Online payments" }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "caption block", children: "Off means online payments are declined. Your card still works in shops." })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Toggle, { checked: card.onlinePayments, onChange: (v) => setCard({ onlinePayments: v }), label: "Online payments" })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("section", { className: "card", "aria-label": "Card details", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Card details" }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "settings-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "caption block", children: "Card number" }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "amount", style: { fontWeight: "var(--font-weight-medium)" }, children: detailsRevealed ? "5412 7534 9821 1234" : "\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 1234" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--ghost",
+              onClick: () => {
+                if (!detailsRevealed) {
+                  setDetailsRevealed(true);
+                } else {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }
+              },
+              children: copied ? "Copied" : detailsRevealed ? "Copy" : "Show"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "settings-row", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "caption block", children: "Expiry \xB7 CVV" }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "amount", style: { fontWeight: "var(--font-weight-medium)" }, children: detailsRevealed ? "08/29 \xB7 447" : "\u2022\u2022/\u2022\u2022 \xB7 \u2022\u2022\u2022" })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "settings-row", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "caption block", children: "Cardholder" }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { style: { fontWeight: "var(--font-weight-medium)" }, children: CLIENT.name })
+        ] }) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("button", { type: "button", className: "btn btn--ghost", style: { alignSelf: "flex-start" }, onClick: () => nav.go("pay"), children: "Apple Pay, Google Pay & TWINT \u2192" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("button", { type: "button", className: "btn btn--ghost", style: { alignSelf: "flex-start" }, children: "Replace lost or damaged card" })
+    ] });
+  }
+  __name(CardManagement, "CardManagement");
+
+  // src/features/pay/PayHub.tsx
+  var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+  var STANDING_ORDER_LABELS = ["Rent \u2014 R\xE9gie du L\xE9man", "Country Club Lausanne"];
+  var EBILL_LABELS = ["Sanitas \u2014 health insurance", "Swisscom"];
+  function Group({ title, rows, footer }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("section", { className: "card", "aria-label": title, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-2xs)" }, children: title }),
+      rows.map((r) => /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("button", { type: "button", className: "settings-row", style: { width: "100%" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: r.label }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "caption block", children: r.hint })
+        ] }),
+        r.meta && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "caption", children: r.meta }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+      ] }, r.label)),
+      footer && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: footer })
+    ] });
+  }
+  __name(Group, "Group");
+  function PayHub() {
+    const { state, card } = useStore();
+    const a = state.accounts;
+    const standingOrders = RECURRING_DEBITS.filter((r) => STANDING_ORDER_LABELS.includes(r.label));
+    const ebills = RECURRING_DEBITS.filter((r) => EBILL_LABELS.includes(r.label));
+    const standingTotal = standingOrders.reduce((s, r) => s + r.amount, 0);
+    const ebillTotal = ebills.reduce((s, r) => s + r.amount, 0);
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("p", { className: "caption m-0", children: [
+        "From Everyday \xB7 ",
+        money(a.everyday),
+        " ready"
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        Group,
+        {
+          title: "Send money",
+          rows: [
+            { label: "Standard payment", hint: "There in 1\u20132 business days", meta: "Free" },
+            { label: "Instant payment", hint: "There in seconds. Any day, any hour." },
+            { label: "Scan a QR-bill", hint: "Point your camera at a Swiss QR invoice" },
+            {
+              label: "Standing orders",
+              hint: `${standingOrders.map((r) => r.label.split(" \u2014 ")[0]).join(", ")} \xB7 ${money(standingTotal, "CHF", 0)}/month`,
+              meta: `${standingOrders.length} active`
+            },
+            {
+              label: "eBill",
+              hint: `${ebills.map((r) => r.label.split(" \u2014 ")[0]).join(", ")} \xB7 ${money(ebillTotal, "CHF", 0)}/month`,
+              meta: `${ebills.length} due`
+            }
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        Group,
+        {
+          title: "Card & phone",
+          rows: [
+            {
+              label: "Debit card payments",
+              hint: card.frozen ? "Card blocked \u2014 payments are declined" : "Elite card \u2022\u2022\u2022\u2022 1234",
+              meta: card.frozen ? "Blocked" : "Active"
+            },
+            { label: "Apple Pay", hint: "Your iPhone or Watch", meta: "Add" },
+            { label: "Google Pay", hint: "Your Android phone", meta: "Add" },
+            { label: "TWINT", hint: "Swiss mobile payments, and paying people back", meta: "Connected" }
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        Group,
+        {
+          title: "Spending in other currencies",
+          rows: [
+            { label: "EUR", hint: "Spend it as it is. No conversion.", meta: `${swissNumber(a.eurWallet, 0)} EUR` },
+            { label: "USD", hint: "Spend it as it is. No conversion.", meta: `${swissNumber(a.usdWallet, 0)} USD` },
+            {
+              label: "Auto FX",
+              hint: "Converts for you when you pay in a currency you don't hold",
+              meta: "Off"
+            }
+          ],
+          footer: `Conversions carry a spread of about ${FX.spreadPct}%. You see it before you pay, not after.`
+        }
+      )
+    ] });
+  }
+  __name(PayHub, "PayHub");
+
+  // src/features/buying-power/BuyingPowerSheet.tsx
+  var import_react8 = __toESM(require_react(), 1);
+  var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+  var CLASS_LABEL = {
+    now: "Now",
+    transferable: "Transferable",
+    conditional: "Conditions",
+    credit: "Credit"
+  };
+  function SourceRow({ segment }) {
+    const [open, setOpen] = (0, import_react8.useState)(false);
+    const hasDetail = (segment.reserved?.length ?? 0) > 0 || segment.cost !== null;
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("li", { style: { borderBottom: "1px solid var(--color-border-subtle)" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(
+        "button",
+        {
+          type: "button",
+          className: "flex items-center",
+          style: { gap: "var(--space-sm)", width: "100%", padding: "var(--space-sm) 0", minHeight: "var(--size-touch-target)" },
+          onClick: () => hasDetail && setOpen((v) => !v),
+          "aria-expanded": hasDetail ? open : void 0,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "flex-1 min-w-0", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: segment.label }),
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "caption block", children: [
+                segment.availability,
+                segment.indicative && " \xB7 indicative"
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: `class-chip class-chip--${segment.liquidityClass}`, children: CLASS_LABEL[segment.liquidityClass] }),
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: swissNumber(segment.amountChf, 0) }),
+            hasDetail && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: open ? "\u2304" : "\u203A" })
+          ]
+        }
+      ),
+      open && /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { paddingBottom: "var(--space-sm)" }, children: [
+        segment.reserved?.map((r) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between caption", style: { padding: "var(--space-2xs) 0" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { children: [
+            "\u2212 ",
+            r.label
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "amount", children: swissNumber(r.amount, 0) })
+        ] }, r.label)),
+        segment.cost && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "caption m-0", children: segment.cost }),
+        segment.liquidityClass === "transferable" && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { type: "button", className: "btn btn--secondary", style: { marginTop: "var(--space-xs)" }, children: "Move to Everyday" })
+      ] })
+    ] });
+  }
+  __name(SourceRow, "SourceRow");
+  function BuyingPowerSheet() {
+    const { buyingPower: bp, nav, bpSettings, setBpSettings, state } = useStore();
+    if (!nav.buyingPowerOpen) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Sheet, { title: "Everyday Buying Power", onClose: () => nav.setBuyingPowerOpen(false), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "caption", style: { marginTop: 0 }, children: "Your money, wherever it sits. Credit kept separate \u2014 because it isn't yours." }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("h3", { className: "section-title", style: { margin: "0 0 var(--space-2xs)" }, children: "Your cash" }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: [
+        bp.ownSegments.map((s) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SourceRow, { segment: s }, s.key)),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("li", { className: "flex items-baseline justify-between", style: { padding: "var(--space-sm) 0" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { style: { fontWeight: "var(--font-weight-semibold)" }, children: "Own accessible cash" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+            "CHF ",
+            swissNumber(bp.ownTotal, 0)
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "card card--subtle", style: { marginBottom: "var(--space-md)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between caption", style: { marginBottom: "var(--space-2xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "Protected for upcoming needs (AI Budgeting)" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "amount", children: [
+            "\u2212 ",
+            swissNumber(bp.protectedLiquidity, 0)
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "Flexible cash" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "amount", children: [
+            "CHF ",
+            swissNumber(bp.flexible, 0)
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-2xs)" }, children: "Still yours, still reachable. Just spoken for, until your next salary." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "lombard-block", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center justify-between", style: { gap: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: "Show Lombard credit" }),
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "caption block", children: "Capacity to borrow. Not money you own." })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+            Toggle,
+            {
+              checked: bpSettings.showLombard,
+              onChange: (v) => setBpSettings({ showLombard: v }),
+              label: "Show Lombard in Buying Power"
+            }
+          )
+        ] }),
+        bpSettings.showLombard && /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(import_jsx_runtime12.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-baseline justify-between", style: { marginTop: "var(--space-sm)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "Currently drawable" }),
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+              "up to CHF ",
+              swissNumber(bp.credit.amountChf, 0)
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between caption", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { children: [
+              "Credit limit ",
+              money(LOMBARD_LIMIT, "CHF", 0),
+              " \xB7 used ",
+              money(state.accounts.lombardDrawn, "CHF", 0)
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { children: [
+              LOMBARD_RATE_PA,
+              "% p.a."
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "caption m-0", style: { marginTop: "var(--space-2xs)", color: "var(--color-text-primary)" }, children: "Borrowing against your portfolio. Capacity moves with the value of your pledged assets. Showing it here borrows nothing." })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-baseline justify-between", style: { marginTop: "var(--space-md)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "caption", children: [
+          "The most you could reach ",
+          bpSettings.showLombard && "(cash + credit)"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+          "CHF ",
+          swissNumber(bp.maximum, 0)
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("h3", { className: "section-title", style: { margin: "var(--space-md) 0 var(--space-2xs)" }, children: "Not included" }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: bp.notIncluded.map((n) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("li", { className: "flex items-baseline justify-between caption", style: { padding: "var(--space-2xs) 0" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { children: [
+          n.label,
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "micro", children: [
+            "\xB7 ",
+            n.reason
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "amount", children: swissNumber(n.amountChf, 0) })
+      ] }, n.label)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: "Invested money isn't cash. We count only what you can actually use." })
+    ] });
+  }
+  __name(BuyingPowerSheet, "BuyingPowerSheet");
+
+  // src/features/home/EverydayHome.tsx
+  var import_react9 = __toESM(require_react(), 1);
+
+  // src/components/AutomationStatusCard.tsx
+  var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
+  function AutomationStatusCard() {
+    const { state, dispatch, forecast, nav } = useStore();
+    const { allocation, autoCover, status } = state;
+    const paused = allocation.paused;
+    const buffer = allocation.bufferMode === "ai" ? forecast.buffer : allocation.manualBuffer;
+    const estTotal = Math.min(
+      Math.max(0, state.accounts.everyday + CLIENT.salaryNet - buffer),
+      allocation.maxPerSalary
+    );
+    const nextRunDay = allocation.scheduledForDay ?? nextSalaryDayAfter(state.day) + 1;
+    let line;
+    let stats = null;
+    if (paused) {
+      line = "Paused. Nothing moves until you say so.";
+    } else if (status === "autoCoverFailed") {
+      line = "Auto Cover came up short. Your move.";
+    } else if (state.pendingAllocation) {
+      line = state.pendingAllocation.anomaly ? "This payment looks different. Nothing moves until you check it." : `${money(state.pendingAllocation.total)} ready to go. Your call.`;
+    } else if (state.pendingSettlements.length > 0) {
+      const p = state.pendingSettlements[0];
+      line = `${money(p.amount)} settles ${shortDate(p.settlesOnDay)}. Not spendable before then.`;
+    } else if (allocation.enabled) {
+      line = allocation.scheduledForDay !== null ? "Salary in. Your plan runs tomorrow." : "Your salary lands. The rest goes to work.";
+      stats = [
+        { label: "Next run", value: shortDate(nextRunDay) },
+        { label: "Keep in Banking", value: `\u2265 ${swissNumber(buffer, 0)}` },
+        { label: "Allocate excess", value: `\u2248 ${swissNumber(roundTo(estTotal, 50), 0)}` }
+      ];
+    } else {
+      line = "Allocation is off. Your salary sits still.";
+    }
+    const destinations = allocation.splits.map((s) => `${s.label.replace("Global ETF ", "ETF ")} ${s.percent}%`).join(" \xB7 ");
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("section", { className: "sl-card", "aria-label": "Smart Liquidity status", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-sm)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { className: "sl-card__eyebrow", children: "Smart Liquidity" }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(StatusPill, { status })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "m-0", style: { fontSize: "var(--font-size-heading)", fontWeight: "var(--font-weight-medium)", lineHeight: "var(--line-height-tight)" }, children: line }),
+      stats && /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { className: "sl-card__stats", children: stats.map((s) => /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "sl-card__stat", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { className: "sl-card__muted block", style: { fontSize: "var(--font-size-micro)" }, children: s.label }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { className: "sl-card__stat-value block", children: s.value })
+      ] }, s.label)) }),
+      stats && /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(import_jsx_runtime13.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { style: { marginTop: "var(--space-sm)" }, children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(PlanBar, { buffer, estTotal, splits: allocation.splits }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "sl-card__muted m-0", style: { marginTop: "var(--space-xs)" }, children: destinations })
+      ] }),
+      autoCover.enabled && !paused && /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "sl-card__muted m-0", style: { marginTop: "var(--space-sm)" }, children: "Auto Cover is on. Short on a payment? We bring your cash back." }),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex items-center", style: { gap: "var(--space-xs)", marginTop: "var(--space-md)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("button", { type: "button", className: "btn btn--inverse", onClick: () => nav.go("allocation"), children: "View plan" }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+          "button",
+          {
+            type: "button",
+            className: "btn btn--ghost-inverse",
+            onClick: () => dispatch({ type: paused ? "resumeAll" : "pauseAll" }),
+            children: paused ? "Resume automations" : "Pause all"
+          }
+        )
+      ] })
+    ] });
+  }
+  __name(AutomationStatusCard, "AutomationStatusCard");
+
+  // src/components/BuyingPowerBar.tsx
+  var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
+  var SWATCH_CLASS = {
+    cash: "bp-bar__segment--cash",
+    fx: "bp-bar__segment--fx",
+    save: "bp-bar__segment--save",
+    trading: "bp-bar__segment--trading",
+    credit: "bp-bar__segment--credit"
+  };
+  function BuyingPowerBar({ onOpen }) {
+    const { buyingPower } = useStore();
+    const { ownSegments, credit, ownTotal } = buyingPower;
+    const scale = ownTotal + credit.amountChf || 1;
+    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("button", { type: "button", className: "bp-bar", onClick: onOpen, "aria-haspopup": "dialog", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "sr-only", children: [
+        "Everyday Buying Power.",
+        " ",
+        ownSegments.map((s) => `${s.label} ${money(s.amountChf)}, ${s.availability}. `).join(""),
+        "Your accessible cash totals ",
+        money(ownTotal),
+        ".",
+        credit.amountChf > 0 && ` Separately, ${credit.label} ${money(credit.amountChf)} \u2014 credit, not your money.`,
+        " ",
+        "Opens details."
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "bp-bar__track", "aria-hidden": "true", children: [
+        ownSegments.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+          "span",
+          {
+            className: `bp-bar__segment ${SWATCH_CLASS[s.key]}`,
+            style: {
+              width: `${Math.max(1.5, s.amountChf / scale * 100)}%`,
+              animationDelay: `calc(var(--motion-duration-fast) * ${i})`
+            }
+          },
+          s.key
+        )),
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "bp-bar__divider" }),
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+          "span",
+          {
+            className: `bp-bar__segment ${SWATCH_CLASS.credit}`,
+            style: {
+              width: `${Math.max(1.5, credit.amountChf / scale * 100)}%`,
+              animationDelay: `calc(var(--motion-duration-fast) * ${ownSegments.length})`
+            }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "flex items-baseline justify-between", style: { marginTop: "var(--space-2xs)" }, "aria-hidden": "true", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "caption", children: [
+          "Your cash",
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("strong", { className: "amount", style: { color: "var(--color-text-primary)" }, children: [
+            "CHF ",
+            swissNumber(ownTotal, 0)
+          ] })
+        ] }),
+        credit.amountChf > 0 && /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "caption", children: [
+          "Lombard ",
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "amount", children: [
+            "+ ",
+            swissNumber(credit.amountChf, 0)
+          ] }),
+          " \xB7 credit"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "bp-legend", style: { marginTop: "var(--space-2xs)" }, "aria-hidden": "true", children: [...ownSegments, credit].map((s) => /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("span", { className: "bp-legend__item", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: `bp-legend__swatch ${SWATCH_CLASS[s.key]}` }),
+        s.label
+      ] }, s.key)) })
+    ] });
+  }
+  __name(BuyingPowerBar, "BuyingPowerBar");
+
+  // src/features/transactions/TxnRow.tsx
+  var import_jsx_runtime15 = __toESM(require_jsx_runtime(), 1);
+  var CATEGORY_ICONS = {
+    housing: "\u2302",
+    insurance: "\u271A",
+    groceries: "\u{1F6D2}",
+    dining: "\u{1F37D}",
+    transport: "\u{1F686}",
+    shopping: "\u{1F6CD}",
+    health: "\u271A",
+    leisure: "\u2708",
+    subscription: "\u21BB",
+    salary: "\u{1F4BC}",
+    transfer: "\u21C4",
+    "smart-liquidity": "\u2699"
+  };
+  function TxnRow({ txn, onOpen }) {
+    const smart = txn.category === "smart-liquidity";
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+      "button",
+      {
+        type: "button",
+        className: `txn-row ${smart ? "txn-row--smart" : ""} ${txn.status === "failed" ? "txn-row--failed" : ""}`,
+        onClick: onOpen,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "txn-row__icon", "aria-hidden": "true", children: CATEGORY_ICONS[txn.category] }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("span", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "txn-row__label block truncate", style: { fontWeight: smart ? "var(--font-weight-semibold)" : "var(--font-weight-medium)" }, children: txn.smart?.title ?? txn.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("span", { className: "caption block", children: [
+              shortDate(txn.day),
+              txn.status === "pending" && " \xB7 pending settlement",
+              txn.status === "failed" && " \xB7 failed"
+            ] })
+          ] }),
+          txn.currency !== "CHF" && /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "currency-badge", children: txn.currency }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+            "span",
+            {
+              className: "amount",
+              style: {
+                fontWeight: "var(--font-weight-semibold)",
+                color: txn.status === "failed" ? "var(--color-text-error)" : txn.amount > 0 ? "var(--color-text-positive)" : "var(--color-text-primary)"
+              },
+              children: signedMoney(txn.amount, txn.currency)
+            }
+          )
+        ]
+      }
+    ) });
+  }
+  __name(TxnRow, "TxnRow");
+
+  // src/features/home/EverydayHome.tsx
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
+  function EverydayHome() {
+    const { state, dispatch, forecast, nav } = useStore();
+    const [ibanRevealed, setIbanRevealed] = (0, import_react9.useState)(false);
+    const [copied, setCopied] = (0, import_react9.useState)(false);
+    const [detailsOpen, setDetailsOpen] = (0, import_react9.useState)(false);
+    const recent = [...state.txns].sort((a, b) => b.day - a.day || b.id.localeCompare(a.id)).slice(0, 5);
+    const failNotices = state.notices.filter((n) => n.kind === "error" || n.kind === "warning").slice(0, 2);
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Bank sections", children: ["Overview", "Save & Invest", "Credits", "Insurance"].map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { type: "button", role: "tab", "aria-selected": i === 0, className: "chip", children: t }, t)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("header", { className: "flex flex-col items-center", style: { gap: "var(--space-2xs)" }, "aria-label": "Everyday balance", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)" }, children: "Everyday" }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(AmountXL, { value: state.accounts.everyday }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("p", { className: "micro m-0 text-center", children: "Yours, right now" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(BuyingPowerBar, { onOpen: () => nav.setBuyingPowerOpen(true) }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(AutomationStatusCard, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("button", { type: "button", className: "ai-card", onClick: () => nav.go("budgeting"), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "ai-card__eyebrow", style: { marginBottom: "var(--space-2xs)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("path", { d: "M6 0c.5 3.2 2.3 5 5.5 5.5C8.3 6 6.5 7.8 6 11 5.5 7.8 3.7 6 .5 5.5 3.7 5 5.5 3.2 6 0z" }) }),
+            "AI Budgeting"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "block amount", style: { fontSize: "var(--font-size-title)", fontWeight: "var(--font-weight-bold)", lineHeight: "var(--line-height-tight)" }, children: money(forecast.buffer) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "caption block", style: { marginTop: "var(--space-2xs)" }, children: "What you'll likely need before your next salary" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(ForecastSparkline, { forecast }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+      ] }),
+      failNotices.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "flex flex-col", style: { gap: "var(--space-xs)" }, "aria-label": "Notifications", children: failNotices.map((n) => /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: `notice notice--${n.kind === "error" ? "error" : "warning"}`, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "flex items-start justify-between", style: { gap: "var(--space-xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("strong", { children: n.title }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { type: "button", className: "btn btn--ghost", style: { minHeight: "var(--space-xl)" }, onClick: () => dispatch({ type: "dismissNotice", id: n.id }), children: "Dismiss" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("p", { className: "m-0 caption", style: { color: "var(--color-text-primary)" }, children: n.body }),
+        n.kind === "error" && n.shortfall !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "flex", style: { gap: "var(--space-xs)", marginTop: "var(--space-xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--secondary",
+              onClick: () => dispatch({ type: "manualTransferIn", amount: Math.ceil(n.shortfall / 50) * 50 }),
+              children: [
+                "Transfer in ",
+                money(Math.ceil(n.shortfall / 50) * 50)
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => nav.go("autoCover"), children: "Sell positions" })
+        ] })
+      ] }, n.id)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("nav", { className: "grid grid-cols-4", style: { gap: "var(--space-xs)" }, "aria-label": "Quick actions", children: [
+        {
+          label: "Pay",
+          to: "pay",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("path", { d: "M11 17V5M5.5 10.5 11 5l5.5 5.5", strokeLinecap: "round", strokeLinejoin: "round" })
+        },
+        {
+          label: "Scan QR-bill",
+          to: null,
+          icon: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("path", { d: "M4 8V4h4M14 4h4v4M18 14v4h-4M8 18H4v-4M4 11h14", strokeLinecap: "round", strokeLinejoin: "round" })
+        },
+        {
+          label: "Move money",
+          to: "autoCover",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("path", { d: "M4 8h12l-3-3M18 14H6l3 3", strokeLinecap: "round", strokeLinejoin: "round" })
+        },
+        {
+          label: "Card",
+          to: "card",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("rect", { x: "3", y: "5.5", width: "16", height: "11", rx: "2" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("path", { d: "M3 9.5h16" })
+          ] })
+        }
+      ].map((a) => /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
+        "button",
+        {
+          type: "button",
+          className: "quick-action",
+          onClick: () => a.to ? nav.go(a.to) : void 0,
+          "aria-disabled": a.to === null,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "quick-action__icon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.6", children: a.icon }) }),
+            a.label
+          ]
+        },
+        a.label
+      )) }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("section", { "aria-label": "Recent activity", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("h2", { className: "section-title m-0", children: "Recent activity" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => nav.go("transactions"), children: "All transactions" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: recent.map((t) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(TxnRow, { txn: t, onOpen: () => {
+          nav.go("transactions");
+          nav.openTxn(t.id);
+        } }, t.id)) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("button", { type: "button", className: "settings-row", style: { borderBottom: "none" }, onClick: () => setDetailsOpen(true), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Account details" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "caption block amount", children: [
+            "IBAN ",
+            CLIENT.ibanMasked,
+            " \xB7 statements"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+      ] }),
+      detailsOpen && /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(Sheet, { title: "Account details", onClose: () => setDetailsOpen(false), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "settings-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "caption block", children: "IBAN" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "amount", style: { fontWeight: "var(--font-weight-medium)" }, children: ibanRevealed ? CLIENT.ibanFull : CLIENT.ibanMasked })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--ghost",
+              onClick: () => {
+                if (!ibanRevealed) {
+                  setIbanRevealed(true);
+                } else {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }
+              },
+              children: copied ? "Copied" : ibanRevealed ? "Copy" : "Show"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "settings-row", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "caption block", children: "Account holder" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontWeight: "var(--font-weight-medium)" }, children: CLIENT.name })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "settings-row", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "caption block", children: "Deposit protection" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { children: "Protected by esisuisse up to CHF 100'000 \u27E8TO CONFIRM\u27E9" })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "settings-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "flex-1", style: { fontWeight: "var(--font-weight-medium)" }, children: "Statements" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+        ] })
+      ] })
+    ] });
+  }
+  __name(EverydayHome, "EverydayHome");
+
+  // src/features/allocation/SmartSalaryAllocation.tsx
+  var import_react10 = __toESM(require_react(), 1);
+  var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
+  function SmartSalaryAllocation() {
+    const { state, dispatch, forecast, nav } = useStore();
+    const [editing, setEditing] = (0, import_react10.useState)(false);
+    const rule = state.allocation;
+    const pending = state.pendingAllocation;
+    const buffer = rule.bufferMode === "ai" ? forecast.buffer : rule.manualBuffer;
+    const estTotal = Math.min(Math.max(0, state.accounts.everyday + CLIENT.salaryNet - buffer), rule.maxPerSalary);
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "screen", children: [
+      pending && /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: `notice ${pending.anomaly ? "notice--warning" : "notice--info"}`, "aria-label": "Allocation awaiting approval", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("strong", { children: pending.anomaly ? "This payment looks different" : "Your salary plan is ready" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "m-0 caption", style: { color: "var(--color-text-primary)", marginTop: "var(--space-2xs)" }, children: pending.anomaly ?? `${money(pending.total)} ready to move, exactly as your plan says.` }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("ul", { className: "m-0 list-none caption amount", style: { padding: 0, marginTop: "var(--space-2xs)" }, children: pending.amounts.map((a) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("li", { children: [
+          "\u2192 ",
+          money(a.amount),
+          " ",
+          a.label
+        ] }, a.destination)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("button", { type: "button", className: "btn btn--primary", onClick: () => dispatch({ type: "approvePendingAllocation" }), children: [
+            "Allocate ",
+            money(pending.total, "CHF", 0)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "skipPendingAllocation" }), children: "Not this time" })
+        ] })
+      ] }),
+      editing ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(PlanEditor, { onDone: () => setEditing(false) }) : /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(PlanSummary, { onEdit: () => setEditing(true), estTotal, buffer }),
+      !editing && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(ActivityCard, { onOpenTransactions: () => nav.go("transactions") }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "micro m-0", children: [
+        "Runs one business day after your salary from ",
+        CLIENT.employer,
+        " lands. Every destination keeps its own product, suitability and disclosure rules \u2014 we don't bend those."
+      ] })
+    ] });
+  }
+  __name(SmartSalaryAllocation, "SmartSalaryAllocation");
+  function PlanSummary({ onEdit, estTotal, buffer }) {
+    const { state, dispatch } = useStore();
+    const rule = state.allocation;
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Your salary plan", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-2xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "section-title", style: { textTransform: "uppercase", letterSpacing: "0.05em" }, children: rule.paused ? "Paused" : "Active" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption", children: [
+          "Next salary ~",
+          shortDate(nextSalaryDayAfter(state.day))
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "m-0", style: { fontWeight: "var(--font-weight-medium)", marginBottom: "var(--space-sm)" }, children: [
+        "Keep ",
+        money(buffer, "CHF", 0),
+        ". Put \u2248 ",
+        money(estTotal, "CHF", 0),
+        " to work."
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(PlanBar, { buffer, estTotal, splits: rule.splits }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { style: { marginTop: "var(--space-sm)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "plan-row", style: { padding: "var(--space-2xs) 0" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "plan-row__swatch plan-bar__segment--keep", "aria-hidden": "true" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "flex-1 caption", style: { color: "var(--color-text-primary)" }, children: "Stays in Banking" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "amount caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)" }, children: [
+            "\u2265 ",
+            swissNumber(buffer, 0)
+          ] })
+        ] }),
+        rule.splits.map((s) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "plan-row", style: { padding: "var(--space-2xs) 0" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: `plan-row__swatch ${PLAN_SWATCH[s.destination]}`, "aria-hidden": "true" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "flex-1 caption", style: { color: "var(--color-text-primary)" }, children: s.label }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption amount", children: [
+            s.percent,
+            "%"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "amount caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)", minWidth: "var(--space-2xl)", textAlign: "right" }, children: [
+            "\u2248 ",
+            swissNumber(roundTo(estTotal * s.percent / 100, 10), 0)
+          ] })
+        ] }, s.destination))
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: [
+        rule.mode === "automatic" ? "Runs on its own" : "Asks you first, every time",
+        " \xB7 never more than ",
+        money(rule.maxPerSalary, "CHF", 0),
+        " a salary"
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center flex-wrap", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--primary", onClick: onEdit, children: "Edit plan" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "setAllocationPaused", paused: !rule.paused }), children: rule.paused ? "Resume" : "Pause" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--ghost", "aria-pressed": rule.skipNext, onClick: () => dispatch({ type: "skipNextAllocation" }), children: rule.skipNext ? "Skipping next \u2713" : "Skip next" })
+      ] })
+    ] });
+  }
+  __name(PlanSummary, "PlanSummary");
+  function ActivityCard({ onOpenTransactions }) {
+    const { state } = useStore();
+    const runs = /* @__PURE__ */ new Map();
+    for (const t of state.txns) {
+      if (t.smart?.engine !== "allocation") continue;
+      const list = runs.get(t.day) ?? [];
+      list.push(t);
+      runs.set(t.day, list);
+    }
+    const history = [...runs.entries()].sort((a, b) => b[0] - a[0]).slice(0, 2);
+    const yearAllocated = state.txns.filter((t) => t.smart?.engine === "allocation" && t.status === "booked").reduce((a, t) => a + -t.amount, 0);
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Allocation activity", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h2", { className: "section-title m-0", children: "Activity" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: onOpenTransactions, children: "All transactions" })
+      ] }),
+      history.map(([day, txns]) => {
+        const ok = txns.filter((t) => t.status === "booked");
+        const failed = txns.filter((t) => t.status === "failed");
+        const total = ok.reduce((a, t) => a + -t.amount, 0);
+        return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("button", { type: "button", className: "flex items-baseline justify-between", style: { width: "100%", padding: "var(--space-2xs) 0", minHeight: "var(--space-xl)" }, onClick: onOpenTransactions, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption", style: { color: "var(--color-text-primary)" }, children: [
+            shortDate(day),
+            " \xB7 ",
+            ok.length,
+            " destination",
+            ok.length === 1 ? "" : "s",
+            failed.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { style: { color: "var(--color-text-warning)" }, children: [
+              " \xB7 ",
+              failed.length,
+              " not completed"
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "amount caption", style: { fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)" }, children: money(total, "CHF", 0) })
+        ] }, day);
+      }),
+      history.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "caption m-0", children: "Nothing yet. The first runs a business day after your salary." }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "caption m-0", style: { marginTop: "var(--space-xs)", borderTop: "1px solid var(--color-border-subtle)", paddingTop: "var(--space-xs)" }, children: [
+        "Put to work so far: ",
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("strong", { className: "amount", children: money(yearAllocated, "CHF", 0) })
+      ] })
+    ] });
+  }
+  __name(ActivityCard, "ActivityCard");
+  function PlanEditor({ onDone }) {
+    const { state, dispatch, forecast } = useStore();
+    const rule = state.allocation;
+    const buffer = rule.bufferMode === "ai" ? forecast.buffer : rule.manualBuffer;
+    const estTotal = Math.min(Math.max(0, state.accounts.everyday + CLIENT.salaryNet - buffer), rule.maxPerSalary);
+    const splitTotal = rule.splits.reduce((a, s) => a + s.percent, 0);
+    const remainder = 100 - splitTotal;
+    const setSplit = /* @__PURE__ */ __name((i, percent) => {
+      const splits = rule.splits.map((s, j) => j === i ? { ...s, percent } : s);
+      dispatch({ type: "setSplits", splits });
+    }, "setSplit");
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(import_jsx_runtime17.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-heading)", fontWeight: "var(--font-weight-bold)" }, children: "Edit plan" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: "btn btn--primary", onClick: onDone, children: "Done" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "caption m-0", style: { marginTop: "calc(-1 * var(--space-sm))" }, children: "Changes count from your next salary." }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Split the excess", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h3", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Split the excess" }),
+        rule.splits.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "plan-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: `plan-row__swatch ${PLAN_SWATCH[s.destination]}`, "aria-hidden": "true" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: s.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+              "input",
+              {
+                type: "range",
+                className: "slider",
+                style: { minHeight: "var(--space-lg)" },
+                min: 0,
+                max: 100,
+                step: 5,
+                value: s.percent,
+                onChange: (e) => setSplit(i, Number(e.target.value)),
+                "aria-label": `Share to ${s.label}, percent`
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "text-right", style: { minWidth: "var(--space-2xl)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "block amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+              s.percent,
+              "%"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "micro block amount", children: [
+              "\u2248 ",
+              swissNumber(roundTo(estTotal * s.percent / 100, 10), 0)
+            ] })
+          ] })
+        ] }, s.destination)),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "caption m-0", role: "status", children: [
+          "Left in Banking: ",
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("strong", { className: "amount", children: [
+            remainder,
+            "%"
+          ] }),
+          remainder < 0 && " \u2014 splits cannot exceed 100%"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Cash Safety Buffer", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h3", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Cash Safety Buffer" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "m-0 amount", style: { fontSize: "var(--font-size-title)", fontWeight: "var(--font-weight-bold)" }, children: money(buffer) }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "caption m-0", children: rule.bufferMode === "ai" ? `Recommended from your recent Banking activity (range ${money(forecast.bufferLow, "CHF", 0)}\u2013${money(forecast.bufferHigh, "CHF", 0)}). Smart Liquidity only allocates money above this amount.` : "Your number. Nothing below it ever moves." }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: `btn ${rule.bufferMode === "ai" ? "btn--primary" : "btn--secondary"}`, onClick: () => dispatch({ type: "setBufferMode", mode: "ai" }), children: "Use recommended" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { type: "button", className: `btn ${rule.bufferMode === "manual" ? "btn--primary" : "btn--secondary"}`, onClick: () => dispatch({ type: "setBufferMode", mode: "manual", manualBuffer: buffer }), children: "Choose my own" })
+        ] }),
+        rule.bufferMode === "manual" && /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("label", { className: "block", style: { marginTop: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption", children: [
+            "Keep at least ",
+            money(rule.manualBuffer)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+            "input",
+            {
+              type: "range",
+              className: "slider",
+              min: 4e3,
+              max: 24e3,
+              step: 100,
+              value: rule.manualBuffer,
+              onChange: (e) => dispatch({ type: "setBufferMode", mode: "manual", manualBuffer: Number(e.target.value) }),
+              "aria-label": "Cash Safety Buffer amount"
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Execution preference", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h3", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "Execution" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex flex-col", style: { gap: "var(--space-xs)" }, role: "radiogroup", "aria-label": "Execution preference", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("button", { type: "button", className: "choice-row", role: "radio", "aria-checked": rule.mode === "automatic", onClick: () => dispatch({ type: "setAllocationMode", mode: "automatic" }), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "choice-row__dot", "aria-hidden": "true" }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Automatic" }),
+              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "caption block", children: "It just happens when your salary lands. You're told every time." })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("button", { type: "button", className: "choice-row", role: "radio", "aria-checked": rule.mode === "review", onClick: () => dispatch({ type: "setAllocationMode", mode: "review" }), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "choice-row__dot", "aria-hidden": "true" }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Review before allocation" }),
+              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "caption block", children: "We prepare it, you approve it. No approval, no movement." })
+            ] })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("section", { className: "card", "aria-label": "Guardrails", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("h3", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Guardrails" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("label", { className: "block", style: { marginBottom: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption", children: [
+            "Maximum per salary: ",
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("strong", { className: "amount", children: money(rule.maxPerSalary, "CHF", 0) })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+            "input",
+            {
+              type: "range",
+              className: "slider",
+              min: 5e3,
+              max: 5e4,
+              step: 1e3,
+              value: rule.maxPerSalary,
+              onChange: (e) => dispatch({ type: "setMaxPerSalary", value: Number(e.target.value) }),
+              "aria-label": "Maximum allocation per salary"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("label", { className: "flex items-center justify-between", style: { gap: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Salary variation protection" }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("span", { className: "caption block", children: [
+              "More than \xB1",
+              rule.variancePct,
+              "% off your usual salary? Ask me first."
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Toggle, { checked: rule.askOnVariance, onChange: (v) => dispatch({ type: "setAskOnVariance", value: v }), label: "Ask first on unusual salary" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "caption m-0", style: { marginTop: "var(--space-sm)" }, children: [
+          "Below ",
+          money(rule.minAllocation, "CHF", 0),
+          ", nothing moves. An allocation can never push your balance negative."
+        ] })
+      ] })
+    ] });
+  }
+  __name(PlanEditor, "PlanEditor");
+
+  // src/features/transactions/Transactions.tsx
+  var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
+  function Transactions() {
+    const { state, nav } = useStore();
+    const detail = nav.txnDetailId ? state.txns.find((t) => t.id === nav.txnDetailId) : null;
+    if (detail) {
+      const smart = detail.smart;
+      return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "screen", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("section", { className: "card", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "caption m-0", children: longDate(detail.day) }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "m-0", style: { fontSize: "var(--font-size-heading)", fontWeight: "var(--font-weight-semibold)" }, children: smart?.title ?? detail.label }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "m-0 amount", style: { fontSize: "var(--font-size-display)", fontWeight: "var(--font-weight-bold)" }, children: signedMoney(detail.amount, detail.currency) }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "caption m-0", children: [
+            detail.status === "pending" && "Pending \u2014 settles T+2. Not spendable until settled.",
+            detail.status === "failed" && "Failed \u2014 the amount was not paid.",
+            detail.status === "booked" && "Booked"
+          ] })
+        ] }),
+        smart && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("section", { className: "card", "aria-label": "Why this happened", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-xs)" }, children: "Why this happened" }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "m-0", style: { marginBottom: "var(--space-sm)" }, children: smart.reason }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("dl", { className: "m-0 grid grid-cols-2", style: { gap: "var(--space-2xs) var(--space-sm)", fontSize: "var(--font-size-caption)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Rule" }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0", children: smart.engine === "autoCover" ? "Auto Cover" : "Smart Salary Allocation" }),
+            smart.source && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "From" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0", children: SOURCE_LABELS[smart.source] })
+            ] }),
+            smart.destination && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "To" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0", children: SOURCE_LABELS[smart.destination] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Balance before" }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0 amount", children: money(smart.balanceBefore) }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Balance after" }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0 amount", children: money(smart.balanceAfter) }),
+            smart.settlesOnDay !== void 0 && detail.status === "pending" && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Settles" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0", children: shortDate(smart.settlesOnDay) })
+            ] }),
+            smart.fxCostChf !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Conversion cost" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dd", { className: "m-0 amount", children: money(smart.fxCostChf) })
+            ] }),
+            smart.interestRatePa !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("dt", { className: "caption m-0", children: "Interest" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("dd", { className: "m-0", children: [
+                smart.interestRatePa,
+                "% p.a."
+              ] })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--secondary",
+              style: { marginTop: "var(--space-sm)" },
+              onClick: () => nav.go(smart.engine === "autoCover" ? "autoCover" : "allocation"),
+              children: "Edit the rule that caused this"
+            }
+          )
+        ] })
+      ] });
+    }
+    const txns = [...state.txns].sort((a, b) => b.day - a.day || b.id.localeCompare(a.id)).slice(0, 60);
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "screen", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: txns.map((t) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(TxnRow, { txn: t, onOpen: () => nav.openTxn(t.id) }, t.id)) }) });
+  }
+  __name(Transactions, "Transactions");
+
+  // src/features/wealth-home/HomeTab.tsx
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
+  function WealthChart() {
+    const d = "M0,58 L18,52 L36,55 L54,44 L72,47 L90,38 L108,42 L126,30 L144,34 L162,24 L180,28 L198,18 L216,24 L234,14 L252,20 L270,10 L288,14 L306,6 L324,10 L340,4";
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("svg", { viewBox: "0 0 340 64", style: { width: "100%", height: "auto", display: "block" }, role: "img", "aria-label": "Trading account performance over the past week, rising steadily", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("path", { d: `${d} L340,64 L0,64 Z`, fill: "var(--color-chart-fill)" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("path", { d, fill: "none", stroke: "var(--color-chart-line)", strokeWidth: "2" })
+    ] });
+  }
+  __name(WealthChart, "WealthChart");
+  function RangeChips() {
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Time range", children: ["1W", "1M", "6M", "1Y", "YTD", "All"].map((r, i) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("button", { type: "button", role: "tab", "aria-selected": i === 0, className: "chip", children: r }, r)) });
+  }
+  __name(RangeChips, "RangeChips");
+  function ProductCard({
+    name,
+    amount,
+    onOpen,
+    children
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("section", { className: "card", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("button", { type: "button", className: "product-row", onClick: onOpen, style: { cursor: onOpen ? "pointer" : "default" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "flex-1 min-w-0", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: name }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+          swissNumber(amount),
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "caption", children: "CHF" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+      ] }),
+      children
+    ] });
+  }
+  __name(ProductCard, "ProductCard");
+  function HomeTab() {
+    const { state, nav } = useStore();
+    const a = state.accounts;
+    const eurChf = a.eurWallet * FX.eurToChf;
+    const usdChf = a.usdWallet * FX.usdToChf;
+    const cashAccount = a.everyday + eurChf + usdChf;
+    const tradingTotal = TRADING_POSITIONS + a.tradingCash;
+    const tradingBuyingPower = a.tradingCash - TRADING_ORDERS_RESERVED;
+    const tradingDayChange = tradingTotal - tradingTotal / (1 + TRADING_DAY_CHANGE_PCT / 100);
+    const periodStart = tradingTotal - TRADING_PERIOD_GAIN;
+    const totalWealth = cashAccount + tradingTotal + a.investEasy + a.saveEasy + a.savingPlan + PILLAR_3A - a.lombardDrawn;
+    const investEasyGain = a.investEasy - a.investEasy / (1 + INVEST_EASY_PERF_PCT / 100);
+    const pillar3aGain = PILLAR_3A - PILLAR_3A / (1 + PILLAR_3A_PERF_PCT / 100);
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex flex-col items-center", style: { gap: "var(--space-2xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "caption", children: "Total wealth" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(AmountXL, { value: totalWealth }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "micro", children: [
+          "Across all your Swissquote products",
+          a.lombardDrawn > 0 ? ", after Lombard borrowing" : ""
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("section", { className: "card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "product-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: "Trading 784521" }),
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "caption", children: "Daily change" }),
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Delta, { pct: TRADING_DAY_CHANGE_PCT, amount: tradingDayChange })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+            swissNumber(tradingTotal),
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "caption", children: "CHF" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "flex justify-center", style: { margin: "var(--space-sm) 0" }, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "chip", children: "Absolute performance \u25BE" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "m-0 text-center amount", style: { fontSize: "var(--font-size-caption)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-positive)", marginBottom: "var(--space-xs)" }, children: [
+          "+ ",
+          swissNumber(TRADING_PERIOD_GAIN),
+          " CHF ",
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "caption", children: "over the period" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(WealthChart, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex justify-between caption amount", style: { marginBottom: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { children: [
+            swissNumber(periodStart),
+            " CHF"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { children: [
+            swissNumber(tradingTotal),
+            " CHF"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(RangeChips, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("dl", { className: "m-0", style: { marginTop: "var(--space-sm)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex justify-between", style: { padding: "var(--space-2xs) 0" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("dt", { className: "caption m-0", children: "Securities" }),
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("dd", { className: "m-0 amount", children: [
+              swissNumber(TRADING_POSITIONS),
+              " CHF"
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex justify-between", style: { padding: "var(--space-2xs) 0" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("dt", { className: "caption m-0", children: "Buying power" }),
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("dd", { className: "m-0 amount", children: [
+              swissNumber(tradingBuyingPower),
+              " CHF"
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "micro m-0", children: [
+            swissNumber(TRADING_ORDERS_RESERVED, 0),
+            " CHF of your cash is reserved for open orders."
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ProductCard, { name: "Everyday 123456", amount: cashAccount, onOpen: () => nav.setTab("bank"), children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "flex", style: { gap: "var(--space-xs)", marginTop: "var(--space-sm)" }, children: [
+        { flag: "\u{1F1E8}\u{1F1ED}", code: "CHF", value: swissNumber(a.everyday) },
+        { flag: "\u{1F1EA}\u{1F1FA}", code: "EUR", value: swissNumber(a.eurWallet) },
+        { flag: "\u{1F1FA}\u{1F1F8}", code: "USD", value: swissNumber(a.usdWallet) }
+      ].map((c) => /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "currency-cell", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("span", { className: "currency-cell__code", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { "aria-hidden": "true", children: c.flag }),
+          " ",
+          c.code
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "currency-cell__value", children: c.value })
+      ] }, c.code)) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("h2", { className: "section-title m-0", children: "Other products" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ProductCard, { name: "Invest Easy 291034", amount: a.investEasy, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: [
+        "Performance ",
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Delta, { pct: INVEST_EASY_PERF_PCT, amount: investEasyGain })
+      ] }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ProductCard, { name: "Save Easy 517823", amount: a.saveEasy }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ProductCard, { name: "Global ETF Saving Plan", amount: a.savingPlan, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: "Funded monthly by your Smart Salary Allocation" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(ProductCard, { name: "3A", amount: PILLAR_3A, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: [
+          "Performance ",
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Delta, { pct: PILLAR_3A_PERF_PCT, amount: pillar3aGain })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+          "div",
+          {
+            className: "progress",
+            style: { marginTop: "var(--space-sm)" },
+            role: "img",
+            "aria-label": `${swissNumber(PILLAR_3A_PAID_IN, 0)} of ${swissNumber(PILLAR_3A_ALLOWANCE, 0)} CHF annual allowance paid in`,
+            children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "progress__fill", style: { width: `${PILLAR_3A_PAID_IN / PILLAR_3A_ALLOWANCE * 100}%` } })
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "m-0 caption amount", style: { marginTop: "var(--space-2xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("strong", { style: { color: "var(--color-text-primary)" }, children: [
+            swissNumber(PILLAR_3A_PAID_IN, 0),
+            " CHF"
+          ] }),
+          " /",
+          " ",
+          swissNumber(PILLAR_3A_ALLOWANCE, 0),
+          " Annual allowance"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ProductCard, { name: "Lombard Loan", amount: a.lombardDrawn, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: [
+        a.lombardDrawn > 0 ? "Borrowed" : "Nothing borrowed",
+        " \xB7 ",
+        swissNumber(a.lombardAvailable, 0),
+        " CHF currently drawable of a ",
+        swissNumber(LOMBARD_LIMIT, 0),
+        " CHF limit"
+      ] }) })
+    ] });
+  }
+  __name(HomeTab, "HomeTab");
+
+  // src/features/search/SearchTab.tsx
+  var import_react11 = __toESM(require_react(), 1);
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
+  var RECENT = [
+    { query: "BTC", type: "Crypto" },
+    { query: "SQN", type: "Shares" },
+    { query: "APPL", type: "Shares" }
+  ];
+  var INSTRUMENTS = [
+    { name: "Apple Inc", ticker: "APPL", type: "Shares" },
+    { name: "Amazon.com", ticker: "AMZN", type: "Shares" },
+    { name: "Nike", ticker: "NKE", type: "Shares" },
+    { name: "Swissquote Group", ticker: "SQN", type: "Shares" },
+    { name: "Target Corporation", ticker: "TGT", type: "Shares" },
+    { name: "Southern Copper", ticker: "SCCO", type: "Shares" },
+    { name: "Bitcoin", ticker: "BTC", type: "Crypto" },
+    { name: "Ethereum", ticker: "ETH", type: "Crypto" },
+    { name: "iShares Core MSCI World", ticker: "IWDA", type: "ETF" },
+    { name: "Vanguard S&P 500", ticker: "VUSA", type: "ETF" }
+  ];
+  var QUESTIONS = [
+    "How much can I invest this month?",
+    "How much will I need before my next salary?",
+    "Why did Auto Cover move money?",
+    "What is my buying power right now?",
+    "How much did I spend on restaurants last month?",
+    "Can I afford a CHF 20\u2019000 payment this week?",
+    "What happens if I lower my safety buffer?",
+    "How much have I saved and invested automatically?",
+    "When does my next salary allocation run?",
+    "What is my Lombard credit costing me?",
+    "Which subscriptions am I paying for?",
+    "Is my spending higher than usual?"
+  ];
+  function SearchIcon2({ size = 16 }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("svg", { width: size, height: size, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: "1.7", "aria-hidden": "true", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("circle", { cx: "8.5", cy: "8.5", r: "5.5" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "m13 13 4.5 4.5", strokeLinecap: "round" })
+    ] });
+  }
+  __name(SearchIcon2, "SearchIcon");
+  function SparkIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("svg", { width: "14", height: "14", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "M6 0c.5 3.2 2.3 5 5.5 5.5C8.3 6 6.5 7.8 6 11 5.5 7.8 3.7 6 .5 5.5 3.7 5 5.5 3.2 6 0z" }) });
+  }
+  __name(SparkIcon, "SparkIcon");
+  function ShiftIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("svg", { width: "18", height: "16", viewBox: "0 0 18 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "M9 1.5 2 8.5h3.5V14h7V8.5H16L9 1.5z", strokeLinejoin: "round" }) });
+  }
+  __name(ShiftIcon, "ShiftIcon");
+  function BackspaceIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("svg", { width: "20", height: "15", viewBox: "0 0 20 15", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "M6.6 1h11.2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6.6a1 1 0 0 1-.74-.33L1 7.5l4.86-6.17A1 1 0 0 1 6.6 1z", strokeLinejoin: "round" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "m9.5 5 5 5m0-5-5 5", strokeLinecap: "round" })
+    ] });
+  }
+  __name(BackspaceIcon, "BackspaceIcon");
+  function EmojiIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("circle", { cx: "11", cy: "11", r: "9" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "M7.5 13a4.5 4.5 0 0 0 7 0", strokeLinecap: "round" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("circle", { cx: "8", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("circle", { cx: "14", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" })
+    ] });
+  }
+  __name(EmojiIcon, "EmojiIcon");
+  function MicIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("svg", { width: "16", height: "22", viewBox: "0 0 16 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("rect", { x: "5", y: "1", width: "6", height: "11", rx: "3" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d: "M2 10a6 6 0 0 0 12 0M8 16v4", strokeLinecap: "round" })
+    ] });
+  }
+  __name(MicIcon, "MicIcon");
+  function Keyboard({ onKey }) {
+    const row1 = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
+    const row2 = ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
+    const row3 = ["Z", "X", "C", "V", "B", "N", "M"];
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "keyboard", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "keyboard__row", children: row1.map((k) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "keyboard__row keyboard__row--inset", children: row2.map((k) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "keyboard__row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "keyboard__key keyboard__key--mod", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ShiftIcon, {}) }),
+        row3.map((k) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--mod", onClick: () => onKey("\u232B"), "aria-label": "Backspace", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(BackspaceIcon, {}) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "keyboard__row", style: { marginBottom: 0 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "123" }),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--space", onClick: () => onKey(" "), "aria-label": "Space", children: "space" }),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "return" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "keyboard__footer", "aria-hidden": "true", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(EmojiIcon, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(MicIcon, {})
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "keyboard__home-indicator", "aria-hidden": "true" })
+    ] });
+  }
+  __name(Keyboard, "Keyboard");
+  function SearchTab() {
+    const { nav } = useStore();
+    const [mode, setMode] = (0, import_react11.useState)("ai");
+    const [query, setQuery] = (0, import_react11.useState)("");
+    const inputRef = (0, import_react11.useRef)(null);
+    const onKey = /* @__PURE__ */ __name((key) => {
+      setQuery((q2) => key === "\u232B" ? q2.slice(0, -1) : q2 + (q2.length === 0 ? key : key.toLowerCase()));
+    }, "onKey");
+    const q = query.trim().toLowerCase();
+    const questionMatches = (0, import_react11.useMemo)(
+      () => q ? QUESTIONS.filter((s) => s.toLowerCase().includes(q)) : QUESTIONS.slice(0, 4),
+      [q]
+    );
+    const instrumentMatches = (0, import_react11.useMemo)(
+      () => q ? INSTRUMENTS.filter((i) => i.name.toLowerCase().includes(q) || i.ticker.toLowerCase().includes(q)) : [],
+      [q]
+    );
+    const showRecent = mode === "search" && q.length === 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex flex-col", style: { minHeight: "100%" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "screen", style: { flex: 1 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+            "button",
+            {
+              type: "button",
+              className: "top-bar__icon",
+              "aria-label": "Close search",
+              style: { fontSize: "var(--font-size-title)", minWidth: "var(--size-touch-target)", minHeight: "var(--size-touch-target)" },
+              onClick: () => nav.setTab("home"),
+              children: "\xD7"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "seg-control", role: "tablist", "aria-label": "Search mode", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "search", className: "seg-control__item", onClick: () => setMode("search"), children: "Search" }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "ai", className: "seg-control__item", onClick: () => setMode("ai"), children: "Ask AI" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { width: "var(--space-xl)" } })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("label", { className: "search-field", style: { marginBottom: "var(--space-2xs)" }, children: [
+          mode === "ai" ? /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SparkIcon, {}) : /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SearchIcon2, {}),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+            "input",
+            {
+              ref: inputRef,
+              type: "text",
+              value: query,
+              onChange: (e) => setQuery(e.target.value),
+              placeholder: mode === "ai" ? "Ask anything about your money" : "Search shares, ETFs, crypto",
+              "aria-label": mode === "ai" ? "Ask AI" : "Search",
+              style: {
+                flex: 1,
+                minWidth: 0,
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                font: "inherit",
+                color: "var(--color-text-primary)"
+              }
+            }
+          ),
+          query && /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "caption", onClick: () => setQuery(""), "aria-label": "Clear input", children: "\u2715" })
+        ] }),
+        showRecent ? /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(import_jsx_runtime20.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: "Recent searches" }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { type: "button", className: "caption", style: { color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: "Clear" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex justify-between caption", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { children: "Your search" }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { children: "Product type" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: RECENT.map((r) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "flex justify-between",
+              style: { width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
+              onClick: () => setQuery(r.query),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontWeight: "var(--font-weight-medium)" }, children: r.query }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "caption", children: r.type })
+              ]
+            }
+          ) }, r.query)) })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(import_jsx_runtime20.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: mode === "ai" ? q ? "Ask Swissquote" : "Try asking" : "Results" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, "aria-live": "polite", children: mode === "ai" ? questionMatches.map((s) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "flex items-center",
+              style: { gap: "var(--space-sm)", width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
+              onClick: () => setQuery(s),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { color: "var(--color-text-link)" }, children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SparkIcon, {}) }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "flex-1", children: s }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+              ]
+            }
+          ) }, s)) : instrumentMatches.map((i) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "flex items-center",
+              style: { gap: "var(--space-sm)", width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
+              onClick: () => setQuery(i.ticker),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("span", { className: "flex-1 min-w-0", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: i.name }),
+                  /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "caption block", children: i.ticker })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "caption", children: i.type })
+              ]
+            }
+          ) }, i.ticker)) }),
+          mode === "ai" && q.length > 0 && questionMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "caption m-0", children: "Ask it in your own words \u2014 Swissquote will use your accounts, cards and Smart Liquidity settings to answer." }),
+          mode === "search" && q.length > 0 && instrumentMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("p", { className: "caption m-0", children: [
+            "No instruments match \u201C",
+            query,
+            "\u201D."
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Keyboard, { onKey })
+    ] });
+  }
+  __name(SearchTab, "SearchTab");
+
+  // src/features/trade/TradeTab.tsx
+  var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
+  var ROWS = [
+    { name: "Apple Inc", ticker: "APPL", price: "184.92", change: "\u22122.34 (\u22121.25%)", up: false, bg: "var(--color-action-primary)", initial: "" },
+    { name: "Nike", ticker: "NKE", price: "412.85", change: "+5.60 (+1.37%)", up: true, bg: "var(--color-action-primary)", initial: "\u2713" },
+    { name: "Mulia Industrindo", ticker: "MLIA", price: "267.40", change: "+3.15 (+1.19%)", up: true, bg: "var(--color-dataviz-save)", initial: "M" },
+    { name: "Target Corporation", ticker: "TGT", price: "68'245.00", change: "+892.00 (+1.32%)", up: true, bg: "var(--color-feedback-error)", initial: "\u25CE" },
+    { name: "Vicore Pharma Holding AB", ticker: "VICO", price: "0.9438", change: "\u22120.0012 (\u22120.13%)", up: false, bg: "var(--color-dataviz-fx)", initial: "V" },
+    { name: "Malindo Feedmill TBK\u2026", ticker: "MAIN", price: "532.60", change: "+8.40 (+1.60%)", up: true, bg: "var(--color-dataviz-credit)", initial: "M" },
+    { name: "Southern Copper Corpor\u2026", ticker: "SCCO", price: "78.56", change: "\u22120.92 (\u22121.16%)", up: false, bg: "var(--color-chart-line)", initial: "S" },
+    { name: "Lancartama Sejati TB\u2026", ticker: "TAMA", price: "156.30", change: "+1.85 (+1.20%)", up: true, bg: "var(--color-dataviz-save)", initial: "L" },
+    { name: "Pantai Indah Kapuk\u2026", ticker: "PANI", price: "68'245.00", change: "+892.00 (+1.32%)", up: true, bg: "var(--color-dataviz-trading)", initial: "P" },
+    { name: "Amazon.com", ticker: "AMZN", price: "78.56", change: "\u22120.92 (\u22121.16%)", up: false, bg: "var(--color-action-primary)", initial: "a" }
+  ];
+  function TradeTab() {
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Trade sections", children: ["Watchlists", "Inspiration", "Markets", "News"].map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { type: "button", role: "tab", "aria-selected": i === 0, className: "chip", children: t }, t)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { type: "button", className: "chip", children: "My favourite \u25BE" }),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("span", { className: "flex items-center caption", style: { gap: "var(--space-sm)", color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { children: "Edit" }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { children: "\u2193 Sort" }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { "aria-hidden": "true", children: "\u22EE" })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: ROWS.map((r) => /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("button", { type: "button", className: "trade-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "logo-dot", style: { background: r.bg }, "aria-hidden": "true", children: r.initial }),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "block truncate", style: { fontWeight: "var(--font-weight-semibold)" }, children: r.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "caption block", children: r.ticker })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("span", { className: "text-right", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("span", { className: "block amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+            r.price,
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "caption", children: "USD" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: `delta ${r.up ? "delta--up" : "delta--down"} amount`, children: r.change })
+        ] })
+      ] }) }, r.ticker)) })
+    ] });
+  }
+  __name(TradeTab, "TradeTab");
+
+  // src/sim/SimulatePanel.tsx
+  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
+  var FLAG_LABELS = [
+    { flag: "marketClosed", label: "Market closed" },
+    { flag: "salaryDelayed", label: "Salary late" },
+    { flag: "salaryMissing", label: "Salary missing" },
+    { flag: "irregularIncome", label: "Irregular income (Marc)" },
+    { flag: "sourcesExhausted", label: "Sources exhausted" },
+    { flag: "savingPlanOutage", label: "Saving Plan outage" },
+    { flag: "tradingUnavailable", label: "Trading unavailable" }
+  ];
+  function SimulatePanel({ onReset }) {
+    const { state, dispatch } = useStore();
+    const advance = /* @__PURE__ */ __name((n) => {
+      for (let i = 0; i < n; i += 1) dispatch({ type: "advanceDay" });
+    }, "advance");
+    const daysToAllocation = nextSalaryDayAfter(state.day) + 1 - state.day;
+    return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("aside", { className: "sim-panel", "aria-label": "Prototype simulation controls", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex items-baseline justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("strong", { children: "Simulate" }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("span", { className: "caption", children: [
+          longDate(state.day),
+          " \xB7 day ",
+          state.day
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("button", { type: "button", className: "btn btn--primary", onClick: () => advance(1), children: "+1 day" }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(7), children: "+7 days" }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(daysToAllocation), children: "To salary + allocation" }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+          "button",
+          {
+            type: "button",
+            className: "btn btn--secondary",
+            onClick: () => dispatch({
+              type: "simulateLargePayment",
+              label: "Kitchen renovation \u2014 Cuisines L\xE9man SA",
+              amount: Math.round((state.accounts.everyday + 9e3) / 100) * 100
+            }),
+            children: "Payment bigger than balance"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "triggerMarginCall" }), children: "Force margin call" }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: onReset, children: "Reset demo" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Failure states", children: FLAG_LABELS.map(({ flag, label }) => /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+        "button",
+        {
+          type: "button",
+          className: "sim-panel__chip",
+          "aria-pressed": state.flags[flag],
+          onClick: () => dispatch({ type: "setFlag", flag, value: !state.flags[flag] }),
+          children: label
+        },
+        flag
+      )) }),
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "micro m-0", children: "The demo loop: turn on a failure state (or none), then advance to salary + allocation and keep pressing +1 day \u2014 spending draws the balance down until Auto Cover fires and its transaction appears with an explanation. In-memory only; Reset restores 14 August 2026." })
+    ] });
+  }
+  __name(SimulatePanel, "SimulatePanel");
+
+  // src/App.tsx
+  var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
+  var BANK_SUBSCREEN_TITLES = {
+    allocation: "Smart Salary Allocation",
+    budgeting: "AI Budgeting",
+    autoCover: "Auto Cover",
+    transactions: "Transactions",
+    card: "Card",
+    pay: "Pay"
+  };
+  function Phone() {
+    const { state, nav } = useStore();
+    const onBankSubScreen = nav.tab === "bank" && (nav.screen !== "home" || nav.txnDetailId !== null);
+    let content;
+    let header;
+    if (nav.tab === "home") {
+      header = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(HomeTab, {});
+    } else if (nav.tab === "trade") {
+      header = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(TradeTab, {});
+    } else if (nav.tab === "search") {
+      header = null;
+      content = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(SearchTab, {});
+    } else if (!onBankSubScreen) {
+      header = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(EverydayHome, {});
+    } else if (nav.screen === "transactions" || nav.txnDetailId !== null) {
+      header = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
+        DetailTopBar,
+        {
+          title: nav.txnDetailId !== null ? "Transaction" : "Transactions",
+          onBack: () => nav.txnDetailId !== null ? nav.closeTxn() : nav.go("home")
+        }
+      );
+      content = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Transactions, {});
+    } else {
+      header = /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(DetailTopBar, { title: BANK_SUBSCREEN_TITLES[nav.screen], onBack: () => nav.go("home") });
+      content = nav.screen === "allocation" ? /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(SmartSalaryAllocation, {}) : nav.screen === "budgeting" ? /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(AiBudgeting, {}) : nav.screen === "card" ? /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(CardManagement, {}) : nav.screen === "pay" ? /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(PayHub, {}) : /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(AutoCover, {});
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "phone", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(ConceptBadge, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(StatusBar, {}),
+      header,
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "phone__scroll", children: content }),
+      !onBankSubScreen && nav.tab !== "search" && /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(BottomNav, { active: nav.tab, onSelect: nav.setTab }),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(BuyingPowerSheet, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(MarginCallModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { "aria-live": "polite", className: "sr-only", children: state.announcement })
+    ] });
+  }
+  __name(Phone, "Phone");
+  function App() {
+    const [runId, setRunId] = (0, import_react12.useState)(0);
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(StoreProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("main", { className: "stage", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Phone, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(SimulatePanel, { onReset: () => setRunId((x) => x + 1) })
+    ] }) }, runId);
+  }
+  __name(App, "App");
+
+  // src/main.tsx
+  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(
+    /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(import_react13.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(App, {}) })
+  );
+})();
