@@ -10,6 +10,7 @@ import { MarginCallModal } from './components/MarginCallModal';
 import { ConceptBadge } from './components/ui';
 import { AutoCover } from './features/auto-cover/AutoCover';
 import { AiBudgeting } from './features/budgeting/AiBudgeting';
+import { CardManagement } from './features/card/CardManagement';
 import { BuyingPowerSheet } from './features/buying-power/BuyingPowerSheet';
 import { EverydayHome } from './features/home/EverydayHome';
 import { SmartSalaryAllocation } from './features/allocation/SmartSalaryAllocation';
@@ -27,6 +28,7 @@ const BANK_SUBSCREEN_TITLES: Record<Exclude<Screen, 'home'>, string> = {
   budgeting: 'AI Budgeting',
   autoCover: 'Auto Cover',
   transactions: 'Transactions',
+  card: 'Card',
 };
 
 function Phone() {
@@ -58,7 +60,15 @@ function Phone() {
   } else {
     header = <DetailTopBar title={BANK_SUBSCREEN_TITLES[nav.screen as Exclude<Screen, 'home'>]} onBack={() => nav.go('home')} />;
     content =
-      nav.screen === 'allocation' ? <SmartSalaryAllocation /> : nav.screen === 'budgeting' ? <AiBudgeting /> : <AutoCover />;
+      nav.screen === 'allocation' ? (
+        <SmartSalaryAllocation />
+      ) : nav.screen === 'budgeting' ? (
+        <AiBudgeting />
+      ) : nav.screen === 'card' ? (
+        <CardManagement />
+      ) : (
+        <AutoCover />
+      );
   }
 
   return (

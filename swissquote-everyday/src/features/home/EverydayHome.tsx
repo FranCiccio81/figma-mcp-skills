@@ -11,13 +11,16 @@ import { AmountXL } from '../../app-shell/shell';
 import { AutomationStatusCard } from '../../components/AutomationStatusCard';
 import { BuyingPowerBar } from '../../components/BuyingPowerBar';
 import { ForecastSparkline } from '../../components/LiquidityForecastChart';
+import { Sheet } from '../../components/ui';
+import { BankCardVisual } from '../card/CardManagement';
 import { useStore } from '../../state/store';
 import { TxnRow } from '../transactions/TxnRow';
 
 export function EverydayHome() {
-  const { state, dispatch, forecast, nav } = useStore();
+  const { state, dispatch, forecast, nav, card } = useStore();
   const [ibanRevealed, setIbanRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const recent = [...state.txns].sort((a, b) => b.day - a.day || b.id.localeCompare(a.id)).slice(0, 5);
   const failNotices = state.notices.filter((n) => n.kind === 'error' || n.kind === 'warning').slice(0, 2);
@@ -38,29 +41,8 @@ export function EverydayHome() {
         <span className="caption" style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
           Everyday
         </span>
-        <button
-          type="button"
-          className="caption amount"
-          style={{ minHeight: 'var(--space-lg)', display: 'inline-flex', alignItems: 'center' }}
-          onClick={() => {
-            if (!ibanRevealed) {
-              setIbanRevealed(true);
-            } else {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }
-          }}
-          aria-label={ibanRevealed ? 'Copy IBAN' : 'Reveal IBAN'}
-        >
-          {ibanRevealed ? CLIENT.ibanFull : CLIENT.ibanMasked}
-          <span style={{ marginLeft: 'var(--space-xs)', color: 'var(--color-text-link)' }}>
-            {copied ? 'Copied' : ibanRevealed ? 'Copy' : 'Show'}
-          </span>
-        </button>
         <AmountXL value={state.accounts.everyday} />
-        <p className="micro m-0 text-center">
-          In the account now · protected by esisuisse up to CHF 100'000 ⟨TO CONFIRM⟩
-        </p>
+        <p className="micro m-0 text-center">In the account now</p>
       </header>
 
       <BuyingPowerBar onOpen={() => nav.setBuyingPowerOpen(true)} />
@@ -139,7 +121,7 @@ export function EverydayHome() {
           },
           {
             label: 'Card',
-            to: null,
+            to: 'card' as const,
             icon: (
               <>
                 <rect x="3" y="5.5" width="16" height="11" rx="2" />
@@ -165,6 +147,16 @@ export function EverydayHome() {
         ))}
       </nav>
 
+      {/* Elite card — entry to card management */}
+      <button type="button" className="card flex items-center" style={{ gap: 'var(--space-sm)', width: '100%' }} onClick={() => nav.go('card')}>
+        <BankCardVisual variant="mini" frozen={card.frozen} />
+        <span className="flex-1 min-w-0">
+          <span className="block" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Elite card •••• 1234</span>
+          <span className="caption block">{card.frozen ? 'Blocked — tap to manage' : 'Manage card'}</span>
+        </span>
+        <span className="product-row__chevron" aria-hidden="true">›</span>
+      </button>
+
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between">
           <h2 className="section-title m-0">Recent activity</h2>
@@ -178,6 +170,58 @@ export function EverydayHome() {
           ))}
         </ul>
       </section>
+
+      {/* Account details — the IBAN's home, out of the header (§5.1 revisited) */}
+      <button type="button" className="settings-row" style={{ borderBottom: 'none' }} onClick={() => setDetailsOpen(true)}>
+        <span className="flex-1">
+          <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Account details</span>
+          <span className="caption block amount">IBAN {CLIENT.ibanMasked} · statements</span>
+        </span>
+        <span className="product-row__chevron" aria-hidden="true">›</span>
+      </button>
+
+      {detailsOpen && (
+        <Sheet title="Account details" onClose={() => setDetailsOpen(false)}>
+          <div className="settings-row">
+            <span className="flex-1">
+              <span className="caption block">IBAN</span>
+              <span className="amount" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                {ibanRevealed ? CLIENT.ibanFull : CLIENT.ibanMasked}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => {
+                if (!ibanRevealed) {
+                  setIbanRevealed(true);
+                } else {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }
+              }}
+            >
+              {copied ? 'Copied' : ibanRevealed ? 'Copy' : 'Show'}
+            </button>
+          </div>
+          <div className="settings-row">
+            <span className="flex-1">
+              <span className="caption block">Account holder</span>
+              <span style={{ fontWeight: 'var(--font-weight-medium)' }}>{CLIENT.name}</span>
+            </span>
+          </div>
+          <div className="settings-row">
+            <span className="flex-1">
+              <span className="caption block">Deposit protection</span>
+              <span>Protected by esisuisse up to CHF 100'000 ⟨TO CONFIRM⟩</span>
+            </span>
+          </div>
+          <div className="settings-row">
+            <span className="flex-1" style={{ fontWeight: 'var(--font-weight-medium)' }}>Statements</span>
+            <span className="product-row__chevron" aria-hidden="true">›</span>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }

@@ -12,7 +12,15 @@ import type { EngineState } from './types';
 /** Bottom-tab of the host app. Everyday lives entirely inside 'bank'. */
 export type AppTab = 'home' | 'trade' | 'bank' | 'search';
 /** Screens within the Bank tab ('home' = the Everyday hub). */
-export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions';
+export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions' | 'card';
+
+/** Debit-card settings — UI state, not part of the liquidity engine. */
+export interface CardSettings {
+  frozen: boolean;
+  onlinePayments: boolean;
+  monthlyLimit: number;
+  contactlessLimit: number;
+}
 
 export interface Nav {
   tab: AppTab;
@@ -49,6 +57,8 @@ interface Store {
   forecast: Forecast;
   buyingPower: BuyingPower;
   nav: Nav;
+  card: CardSettings;
+  setCard: (patch: Partial<CardSettings>) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -92,6 +102,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [screen, setScreen] = useState<Screen>('home');
   const [txnDetailId, setTxnDetailId] = useState<string | null>(null);
   const [buyingPowerOpen, setBuyingPowerOpen] = useState(false);
+  const [card, setCardState] = useState<CardSettings>({
+    frozen: false,
+    onlinePayments: true,
+    monthlyLimit: 10_000,
+    contactlessLimit: 100,
+  });
 
   const forecast = useMemo(() => computeForecast(state), [state]);
   const buyingPower = useMemo(() => computeBuyingPower(state), [state]);
@@ -119,7 +135,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   // Reset is handled in App by remounting the provider with a new key.
-  const store: Store = { state, dispatch, forecast, buyingPower, nav };
+  const store: Store = {
+    state,
+    dispatch,
+    forecast,
+    buyingPower,
+    nav,
+    card,
+    setCard: (patch) => setCardState((c) => ({ ...c, ...patch })),
+  };
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
