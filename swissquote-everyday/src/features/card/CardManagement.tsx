@@ -25,7 +25,7 @@ export function BankCardVisual({ variant, frozen }: { variant: 'mini' | 'hero'; 
 }
 
 export function CardManagement() {
-  const { card, setCard } = useStore();
+  const { card, setCard, nav } = useStore();
   const [detailsRevealed, setDetailsRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -133,17 +133,9 @@ export function CardManagement() {
         </div>
       </section>
 
-      <section className="card" aria-label="Wallets">
-        <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Pay with your phone</h2>
-        {['Apple Pay', 'Google Pay', 'TWINT'].map((wallet) => (
-          <div key={wallet} className="settings-row">
-            <span className="flex-1" style={{ fontWeight: 'var(--font-weight-medium)' }}>{wallet}</span>
-            <span className="caption">{wallet === 'TWINT' ? 'Connected' : 'Add'}</span>
-            <span className="product-row__chevron" aria-hidden="true">›</span>
-          </div>
-        ))}
-      </section>
-
+      <button type="button" className="btn btn--ghost" style={{ alignSelf: 'flex-start' }} onClick={() => nav.go('pay')}>
+        Apple Pay, Google Pay &amp; TWINT →
+      </button>
       <button type="button" className="btn btn--ghost" style={{ alignSelf: 'flex-start' }}>
         Replace lost or damaged card
       </button>

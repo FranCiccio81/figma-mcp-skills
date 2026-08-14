@@ -18,7 +18,7 @@ import type { EngineState } from './types';
 /** Bottom-tab of the host app. Everyday lives entirely inside 'bank'. */
 export type AppTab = 'home' | 'trade' | 'bank' | 'search';
 /** Screens within the Bank tab ('home' = the Everyday hub). */
-export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions' | 'card';
+export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions' | 'card' | 'pay';
 
 /** Debit-card settings — UI state, not part of the liquidity engine. */
 export interface CardSettings {

@@ -12,12 +12,11 @@ import { AutomationStatusCard } from '../../components/AutomationStatusCard';
 import { BuyingPowerBar } from '../../components/BuyingPowerBar';
 import { ForecastSparkline } from '../../components/LiquidityForecastChart';
 import { Sheet } from '../../components/ui';
-import { BankCardVisual } from '../card/CardManagement';
 import { useStore } from '../../state/store';
 import { TxnRow } from '../transactions/TxnRow';
 
 export function EverydayHome() {
-  const { state, dispatch, forecast, nav, card } = useStore();
+  const { state, dispatch, forecast, nav } = useStore();
   const [ibanRevealed, setIbanRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -104,7 +103,7 @@ export function EverydayHome() {
         {[
           {
             label: 'Pay',
-            to: null,
+            to: 'pay' as const,
             icon: <path d="M11 17V5M5.5 10.5 11 5l5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />,
           },
           {
@@ -146,16 +145,6 @@ export function EverydayHome() {
           </button>
         ))}
       </nav>
-
-      {/* Elite card — entry to card management */}
-      <button type="button" className="card flex items-center" style={{ gap: 'var(--space-sm)', width: '100%' }} onClick={() => nav.go('card')}>
-        <BankCardVisual variant="mini" frozen={card.frozen} />
-        <span className="flex-1 min-w-0">
-          <span className="block" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Elite card •••• 1234</span>
-          <span className="caption block">{card.frozen ? 'Blocked — tap to manage' : 'Manage card'}</span>
-        </span>
-        <span className="product-row__chevron" aria-hidden="true">›</span>
-      </button>
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between">

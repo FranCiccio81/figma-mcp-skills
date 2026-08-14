@@ -11,6 +11,7 @@ import { ConceptBadge } from './components/ui';
 import { AutoCover } from './features/auto-cover/AutoCover';
 import { AiBudgeting } from './features/budgeting/AiBudgeting';
 import { CardManagement } from './features/card/CardManagement';
+import { PayHub } from './features/pay/PayHub';
 import { BuyingPowerSheet } from './features/buying-power/BuyingPowerSheet';
 import { EverydayHome } from './features/home/EverydayHome';
 import { SmartSalaryAllocation } from './features/allocation/SmartSalaryAllocation';
@@ -29,6 +30,7 @@ const BANK_SUBSCREEN_TITLES: Record<Exclude<Screen, 'home'>, string> = {
   autoCover: 'Auto Cover',
   transactions: 'Transactions',
   card: 'Card',
+  pay: 'Pay',
 };
 
 function Phone() {
@@ -66,6 +68,8 @@ function Phone() {
         <AiBudgeting />
       ) : nav.screen === 'card' ? (
         <CardManagement />
+      ) : nav.screen === 'pay' ? (
+        <PayHub />
       ) : (
         <AutoCover />
       );
