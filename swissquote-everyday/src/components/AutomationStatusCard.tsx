@@ -7,6 +7,7 @@ import { money, roundTo, shortDate, swissNumber } from '../lib/format';
 import { CLIENT } from '../data/mockLedger';
 import { nextSalaryDayAfter } from '../state/forecast';
 import { useStore } from '../state/store';
+import { PlanBar } from './PlanBar';
 import { StatusPill } from './ui';
 
 export function AutomationStatusCard() {
@@ -47,7 +48,9 @@ export function AutomationStatusCard() {
   } else {
     line = 'Smart Salary Allocation is off. Your salary stays in Everyday.';
   }
-  const destinations = allocation.splits.map((s) => s.label.replace('Global ETF ', 'ETF ')).join(' · ');
+  const destinations = allocation.splits
+    .map((s) => `${s.label.replace('Global ETF ', 'ETF ')} ${s.percent}%`)
+    .join(' · ');
 
   return (
     <section className="sl-card" aria-label="Smart Liquidity status">
@@ -69,9 +72,14 @@ export function AutomationStatusCard() {
         </div>
       )}
       {stats && (
-        <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-xs)' }}>
-          Allocate excess to {destinations}.
-        </p>
+        <>
+          <div style={{ marginTop: 'var(--space-sm)' }}>
+            <PlanBar buffer={buffer} estTotal={estTotal} splits={allocation.splits} />
+          </div>
+          <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-xs)' }}>
+            {destinations}
+          </p>
+        </>
       )}
       {autoCover.enabled && !paused && (
         <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-sm)' }}>
@@ -80,7 +88,7 @@ export function AutomationStatusCard() {
       )}
       <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-md)' }}>
         <button type="button" className="btn btn--inverse" onClick={() => nav.go('allocation')}>
-          Review
+          View plan
         </button>
         <button
           type="button"
