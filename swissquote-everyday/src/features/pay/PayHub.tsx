@@ -50,15 +50,15 @@ export function PayHub() {
   return (
     <div className="screen">
       <p className="caption m-0">
-        Paying from Everyday · {money(a.everyday)} available
+        From Everyday · {money(a.everyday)} ready
       </p>
 
       <Group
         title="Send money"
         rows={[
-          { label: 'Standard payment', hint: 'Arrives in 1–2 business days', meta: 'Free' },
-          { label: 'Instant payment', hint: 'Arrives in seconds, 24/7' },
-          { label: 'Scan a QR-bill', hint: 'Pay a Swiss QR invoice with your camera' },
+          { label: 'Standard payment', hint: 'There in 1–2 business days', meta: 'Free' },
+          { label: 'Instant payment', hint: 'There in seconds. Any day, any hour.' },
+          { label: 'Scan a QR-bill', hint: 'Point your camera at a Swiss QR invoice' },
           {
             label: 'Standing orders',
             hint: `${standingOrders.map((r) => r.label.split(' — ')[0]).join(', ')} · ${money(standingTotal, 'CHF', 0)}/month`,
@@ -80,24 +80,24 @@ export function PayHub() {
             hint: card.frozen ? 'Card blocked — payments are declined' : 'Elite card •••• 1234',
             meta: card.frozen ? 'Blocked' : 'Active',
           },
-          { label: 'Apple Pay', hint: 'Pay with your iPhone or Watch', meta: 'Add' },
-          { label: 'Google Pay', hint: 'Pay with your Android phone', meta: 'Add' },
-          { label: 'TWINT', hint: 'Swiss mobile payments and P2P', meta: 'Connected' },
+          { label: 'Apple Pay', hint: 'Your iPhone or Watch', meta: 'Add' },
+          { label: 'Google Pay', hint: 'Your Android phone', meta: 'Add' },
+          { label: 'TWINT', hint: 'Swiss mobile payments, and paying people back', meta: 'Connected' },
         ]}
       />
 
       <Group
         title="Spending in other currencies"
         rows={[
-          { label: 'EUR', hint: 'Spend directly from your EUR balance', meta: `${swissNumber(a.eurWallet, 0)} EUR` },
-          { label: 'USD', hint: 'Spend directly from your USD balance', meta: `${swissNumber(a.usdWallet, 0)} USD` },
+          { label: 'EUR', hint: 'Spend it as it is. No conversion.', meta: `${swissNumber(a.eurWallet, 0)} EUR` },
+          { label: 'USD', hint: 'Spend it as it is. No conversion.', meta: `${swissNumber(a.usdWallet, 0)} USD` },
           {
             label: 'Auto FX',
-            hint: 'Convert automatically when you pay in a currency you don’t hold',
+            hint: "Converts for you when you pay in a currency you don't hold",
             meta: 'Off',
           },
         ]}
-        footer={`Conversions use the applicable rate plus a spread of about ${FX.spreadPct}%, always shown before you pay.`}
+        footer={`Conversions carry a spread of about ${FX.spreadPct}%. You see it before you pay, not after.`}
       />
     </div>
   );

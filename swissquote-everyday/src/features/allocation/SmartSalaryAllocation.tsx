@@ -32,7 +32,7 @@ export function SmartSalaryAllocation() {
         <section className={`notice ${pending.anomaly ? 'notice--warning' : 'notice--info'}`} aria-label="Allocation awaiting approval">
           <strong>{pending.anomaly ? 'This payment looks different' : 'Your salary plan is ready'}</strong>
           <p className="m-0 caption" style={{ color: 'var(--color-text-primary)', marginTop: 'var(--space-2xs)' }}>
-            {pending.anomaly ?? `${money(pending.total)} can be allocated according to your plan.`}
+            {pending.anomaly ?? `${money(pending.total)} ready to move, exactly as your plan says.`}
           </p>
           <ul className="m-0 list-none caption amount" style={{ padding: 0, marginTop: 'var(--space-2xs)' }}>
             {pending.amounts.map((a) => (
@@ -44,7 +44,7 @@ export function SmartSalaryAllocation() {
               Allocate {money(pending.total, 'CHF', 0)}
             </button>
             <button type="button" className="btn btn--secondary" onClick={() => dispatch({ type: 'skipPendingAllocation' })}>
-              Skip this time
+              Not this time
             </button>
           </div>
         </section>
@@ -55,8 +55,8 @@ export function SmartSalaryAllocation() {
       {!editing && <ActivityCard onOpenTransactions={() => nav.go('transactions')} />}
 
       <p className="micro m-0">
-        Trigger: confirmed salary from {CLIENT.employer}. Executes on income + 1 business day. Each destination keeps
-        its own product, suitability and disclosure requirements.
+        Runs one business day after your salary from {CLIENT.employer} lands. Every destination keeps its own product,
+        suitability and disclosure rules — we don't bend those.
       </p>
     </div>
   );
@@ -79,7 +79,7 @@ function PlanSummary({ onEdit, estTotal, buffer }: { onEdit: () => void; estTota
         <span className="caption">Next salary ~{shortDate(nextSalaryDayAfter(state.day))}</span>
       </div>
       <p className="m-0" style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--space-sm)' }}>
-        Keep {money(buffer, 'CHF', 0)} available, then put ≈ {money(estTotal, 'CHF', 0)} to work.
+        Keep {money(buffer, 'CHF', 0)}. Put ≈ {money(estTotal, 'CHF', 0)} to work.
       </p>
 
       <PlanBar buffer={buffer} estTotal={estTotal} splits={rule.splits} />
@@ -87,7 +87,7 @@ function PlanSummary({ onEdit, estTotal, buffer }: { onEdit: () => void; estTota
       <div style={{ marginTop: 'var(--space-sm)' }}>
         <div className="plan-row" style={{ padding: 'var(--space-2xs) 0' }}>
           <span className="plan-row__swatch plan-bar__segment--keep" aria-hidden="true" />
-          <span className="flex-1 caption" style={{ color: 'var(--color-text-primary)' }}>Keep in Banking</span>
+          <span className="flex-1 caption" style={{ color: 'var(--color-text-primary)' }}>Stays in Banking</span>
           <span className="amount caption" style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
             ≥ {swissNumber(buffer, 0)}
           </span>
@@ -105,7 +105,7 @@ function PlanSummary({ onEdit, estTotal, buffer }: { onEdit: () => void; estTota
       </div>
 
       <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-        {rule.mode === 'automatic' ? 'Runs automatically' : 'Asks for approval before each run'} · max {money(rule.maxPerSalary, 'CHF', 0)} per salary
+        {rule.mode === 'automatic' ? 'Runs on its own' : 'Asks you first, every time'} · never more than {money(rule.maxPerSalary, 'CHF', 0)} a salary
       </p>
 
       <div className="flex items-center flex-wrap" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
@@ -161,9 +161,9 @@ function ActivityCard({ onOpenTransactions }: { onOpenTransactions: () => void }
           </button>
         );
       })}
-      {history.length === 0 && <p className="caption m-0">No allocations yet — the first runs one business day after your salary.</p>}
+      {history.length === 0 && <p className="caption m-0">Nothing yet. The first runs a business day after your salary.</p>}
       <p className="caption m-0" style={{ marginTop: 'var(--space-xs)', borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--space-xs)' }}>
-        Automatically saved/invested so far: <strong className="amount">{money(yearAllocated, 'CHF', 0)}</strong>
+        Put to work so far: <strong className="amount">{money(yearAllocated, 'CHF', 0)}</strong>
       </p>
     </section>
   );
@@ -195,7 +195,7 @@ function PlanEditor({ onDone }: { onDone: () => void }) {
         </button>
       </div>
       <p className="caption m-0" style={{ marginTop: 'calc(-1 * var(--space-sm))' }}>
-        Changes apply from your next salary allocation.
+        Changes count from your next salary.
       </p>
 
       <section className="card" aria-label="Split the excess">
@@ -224,7 +224,7 @@ function PlanEditor({ onDone }: { onDone: () => void }) {
           </div>
         ))}
         <p className="caption m-0" role="status">
-          Stays in Banking beyond the buffer: <strong className="amount">{remainder}%</strong>
+          Left in Banking: <strong className="amount">{remainder}%</strong>
           {remainder < 0 && ' — splits cannot exceed 100%'}
         </p>
       </section>
@@ -235,7 +235,7 @@ function PlanEditor({ onDone }: { onDone: () => void }) {
         <p className="caption m-0">
           {rule.bufferMode === 'ai'
             ? `Recommended from your recent Banking activity (range ${money(forecast.bufferLow, 'CHF', 0)}–${money(forecast.bufferHigh, 'CHF', 0)}). Smart Liquidity only allocates money above this amount.`
-            : 'Your own amount. Smart Liquidity only allocates money above it.'}
+            : 'Your number. Nothing below it ever moves.'}
         </p>
         <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
           <button type="button" className={`btn ${rule.bufferMode === 'ai' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => dispatch({ type: 'setBufferMode', mode: 'ai' })}>
@@ -269,14 +269,14 @@ function PlanEditor({ onDone }: { onDone: () => void }) {
             <span className="choice-row__dot" aria-hidden="true" />
             <span>
               <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Automatic</span>
-              <span className="caption block">Allocate my salary automatically when it arrives. I'm notified every time.</span>
+              <span className="caption block">It just happens when your salary lands. You're told every time.</span>
             </span>
           </button>
           <button type="button" className="choice-row" role="radio" aria-checked={rule.mode === 'review'} onClick={() => dispatch({ type: 'setAllocationMode', mode: 'review' })}>
             <span className="choice-row__dot" aria-hidden="true" />
             <span>
               <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Review before allocation</span>
-              <span className="caption block">Prepare the allocation and ask me to approve it. If I don't approve, nothing moves.</span>
+              <span className="caption block">We prepare it, you approve it. No approval, no movement.</span>
             </span>
           </button>
         </div>
@@ -302,13 +302,12 @@ function PlanEditor({ onDone }: { onDone: () => void }) {
         <label className="flex items-center justify-between" style={{ gap: 'var(--space-sm)' }}>
           <span>
             <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Salary variation protection</span>
-            <span className="caption block">If the salary differs by more than ±{rule.variancePct}%, ask me first.</span>
+            <span className="caption block">More than ±{rule.variancePct}% off your usual salary? Ask me first.</span>
           </span>
           <Toggle checked={rule.askOnVariance} onChange={(v) => dispatch({ type: 'setAskOnVariance', value: v })} label="Ask first on unusual salary" />
         </label>
         <p className="caption m-0" style={{ marginTop: 'var(--space-sm)' }}>
-          Minimum allocation {money(rule.minAllocation, 'CHF', 0)} — below that, everything stays in Banking. An
-          allocation can never create a negative Banking balance.
+          Below {money(rule.minAllocation, 'CHF', 0)}, nothing moves. An allocation can never push your balance negative.
         </p>
       </section>
     </>

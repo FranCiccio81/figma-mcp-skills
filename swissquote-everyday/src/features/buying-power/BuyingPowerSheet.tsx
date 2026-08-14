@@ -72,7 +72,7 @@ export function BuyingPowerSheet() {
   return (
     <Sheet title="Everyday Buying Power" onClose={() => nav.setBuyingPowerOpen(false)}>
       <p className="caption" style={{ marginTop: 0 }}>
-        Your accessible cash across Swissquote — and, separately, credit you could use.
+        Your money, wherever it sits. Credit kept separate — because it isn't yours.
       </p>
 
       {/* 1 & 2 — own cash, source by source */}
@@ -98,7 +98,7 @@ export function BuyingPowerSheet() {
           <span className="amount">CHF {swissNumber(bp.flexible, 0)}</span>
         </div>
         <p className="micro m-0" style={{ marginTop: 'var(--space-2xs)' }}>
-          Protected money is still yours and still accessible — it's set aside for what we expect before your next salary.
+          Still yours, still reachable. Just spoken for, until your next salary.
         </p>
       </div>
 
@@ -107,7 +107,7 @@ export function BuyingPowerSheet() {
         <div className="flex items-center justify-between" style={{ gap: 'var(--space-sm)' }}>
           <span className="flex-1">
             <span className="block" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Show Lombard credit</span>
-            <span className="caption block">Credit capacity, not your money</span>
+            <span className="caption block">Capacity to borrow. Not money you own.</span>
           </span>
           <Toggle
             checked={bpSettings.showLombard}
@@ -128,8 +128,8 @@ export function BuyingPowerSheet() {
               <span>{LOMBARD_RATE_PA}% p.a.</span>
             </div>
             <p className="caption m-0" style={{ marginTop: 'var(--space-2xs)', color: 'var(--color-text-primary)' }}>
-              Borrowing against your portfolio. Capacity can change with the value of your pledged assets. Showing it
-              here never borrows anything.
+              Borrowing against your portfolio. Capacity moves with the value of your pledged assets. Showing it here
+              borrows nothing.
             </p>
           </>
         )}
@@ -137,7 +137,7 @@ export function BuyingPowerSheet() {
 
       {/* 5 — the maximum, secondary by design */}
       <div className="flex items-baseline justify-between" style={{ marginTop: 'var(--space-md)' }}>
-        <span className="caption">Maximum accessible capacity {bpSettings.showLombard && '(cash + credit)'}</span>
+        <span className="caption">The most you could reach {bpSettings.showLombard && '(cash + credit)'}</span>
         <span className="amount" style={{ fontWeight: 'var(--font-weight-semibold)' }}>CHF {swissNumber(bp.maximum, 0)}</span>
       </div>
 
@@ -154,7 +154,7 @@ export function BuyingPowerSheet() {
         ))}
       </ul>
       <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-        Invested money isn't cash. Buying Power counts only balances you can actually use.
+        Invested money isn't cash. We count only what you can actually use.
       </p>
     </Sheet>
   );

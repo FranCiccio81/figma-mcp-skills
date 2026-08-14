@@ -4,7 +4,7 @@
  *
  * Kept to a glance: the KEEP / GROW split (§59) with the forecast horizon,
  * the projection, and one control (safety level). The calculation breakdown,
- * boundaries and planned expenses sit behind "Adjust forecast" (§41).
+ * boundaries and planned expenses sit behind "Change the rules" (§41).
  */
 import { useState } from 'react';
 import { money, shortDate, swissNumber } from '../../lib/format';
@@ -15,9 +15,9 @@ import { useStore } from '../../state/store';
 import type { SafetyLevel } from '../../state/types';
 
 const SAFETY_LABELS: Record<SafetyLevel, { title: string; blurb: string }> = {
-  efficient: { title: 'Efficient', blurb: 'Smaller cash reserve' },
+  efficient: { title: 'Efficient', blurb: 'Keep less. Invest more.' },
   balanced: { title: 'Balanced', blurb: 'Recommended' },
-  cautious: { title: 'Cautious', blurb: 'Larger cash reserve' },
+  cautious: { title: 'Cautious', blurb: 'Keep more. Sleep easier.' },
 };
 
 /**
@@ -42,15 +42,15 @@ function PutToWorkCard({ grow }: { grow: number }) {
     return (
       <section className="card" aria-label="Surplus put to work">
         <div className="flex items-baseline justify-between" style={{ marginBottom: 'var(--space-2xs)' }}>
-          <h2 className="section-title m-0">Done today</h2>
+          <h2 className="section-title m-0">Done</h2>
           <span className="status-pill status-pill--healthy">
             <span className="status-pill__dot" aria-hidden="true" />
             Working
           </span>
         </div>
         <p className="m-0">
-          <strong className="amount">{money(total, 'CHF', 0)}</strong> went to work through your plan across{' '}
-          {doneToday.length} destinations. {money(grow, 'CHF', 0)} of flexible cash remains.
+          <strong className="amount">{money(total, 'CHF', 0)}</strong> is working, across {doneToday.length} destinations.{' '}
+          {money(grow, 'CHF', 0)} still free.
         </p>
         <button
           type="button"
@@ -58,7 +58,7 @@ function PutToWorkCard({ grow }: { grow: number }) {
           style={{ marginTop: 'var(--space-sm)' }}
           onClick={() => nav.go('transactions')}
         >
-          See the movements
+          See where it went
         </button>
       </section>
     );
@@ -73,10 +73,10 @@ function PutToWorkCard({ grow }: { grow: number }) {
     <section className="card" aria-label="Put your surplus to work">
       <div className="flex items-baseline justify-between" style={{ marginBottom: 'var(--space-2xs)' }}>
         <h2 className="section-title m-0">Put it to work</h2>
-        <span className="caption">Your plan · unchanged</span>
+        <span className="caption">Your plan. Unchanged.</span>
       </div>
       <p className="m-0" style={{ marginBottom: 'var(--space-sm)' }}>
-        {money(grow, 'CHF', 0)} is sitting above what you'll likely need. Your plan would send it here:
+        {money(grow, 'CHF', 0)} is sitting idle. Your plan would send it here:
       </p>
 
       {rule.splits.map((s) => (
@@ -122,7 +122,7 @@ function PutToWorkCard({ grow }: { grow: number }) {
         </button>
       </div>
       <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-        Moves cash through the plan you already set — it doesn't choose investments for you, and the{' '}
+        Your plan moves the cash. We don't pick investments for you, and the{' '}
         <button
           type="button"
           className="link micro"
@@ -131,7 +131,7 @@ function PutToWorkCard({ grow }: { grow: number }) {
         >
           plan is editable
         </button>{' '}
-        at any time. Nothing happens automatically until your next salary.
+        whenever you want. Nothing else moves until your next salary.
       </p>
     </section>
   );
@@ -163,35 +163,34 @@ export function AiBudgeting() {
           <div className="keep-grow__side">
             <span className="keep-grow__label">Keep</span>
             <span className="keep-grow__value amount">CHF {swissNumber(forecast.keep, 0)}</span>
-            <span className="caption">For spending &amp; safety until your next salary</span>
+            <span className="caption">What life costs until then</span>
           </div>
           <div className="keep-grow__side keep-grow__side--grow">
             <span className="keep-grow__label">Grow</span>
             <span className="keep-grow__value amount">CHF {swissNumber(grow, 0)}</span>
-            <span className="caption">Available for your financial plan</span>
+            <span className="caption">Free to go to work</span>
           </div>
         </div>
 
         <p className="caption m-0" style={{ marginTop: 'var(--space-sm)' }}>
-          We expect about {money(forecast.expectedRequirement, 'CHF', 0)} of spending before{' '}
-          {shortDate(forecast.horizonEnd)} and added a {money(forecast.safetyMargin, 'CHF', 0)} safety margin.
+          About {money(forecast.expectedRequirement, 'CHF', 0)} of spending before {shortDate(forecast.horizonEnd)}, plus a{' '}
+          {money(forecast.safetyMargin, 'CHF', 0)} margin.
           {forecast.confidence !== 'high' && ` ${forecast.confidenceNote}`}
         </p>
         {forecast.liftedByMin && (
           <p className="caption m-0" style={{ marginTop: 'var(--space-2xs)', color: 'var(--color-text-primary)' }}>
-            Your own minimum of {money(rule.minKeep, 'CHF', 0)} applies — it is higher than the{' '}
-            {money(forecast.keepRaw, 'CHF', 0)} we predicted.
+            Your own floor of {money(rule.minKeep, 'CHF', 0)} wins — we predicted {money(forecast.keepRaw, 'CHF', 0)}.
           </p>
         )}
         {forecast.aboveMax && (
           <div className="notice notice--warning" style={{ marginTop: 'var(--space-xs)' }}>
-            Your predicted expenses are above your preferred maximum of {money(rule.maxKeep, 'CHF', 0)}. We're keeping
-            the higher amount so your payments are covered — review the forecast before your next allocation.
+            Your expenses run above your {money(rule.maxKeep, 'CHF', 0)} ceiling. We keep the higher amount — your payments
+            come first. Worth a look before your next allocation.
           </div>
         )}
         {forecast.fallbackUsed && (
           <div className="notice notice--info" style={{ marginTop: 'var(--space-xs)' }}>
-            Using your fixed buffer of {money(rule.manualBuffer, 'CHF', 0)} instead of the prediction.
+            Your fixed buffer of {money(rule.manualBuffer, 'CHF', 0)} is in charge, not the estimate.
           </div>
         )}
       </section>
@@ -210,7 +209,7 @@ export function AiBudgeting() {
       {/* One control by default; everything else behind Adjust */}
       {!adjusting ? (
         <button type="button" className="btn btn--secondary" onClick={() => setAdjusting(true)}>
-          Adjust forecast
+          Change the rules
         </button>
       ) : (
         <>
@@ -253,8 +252,8 @@ export function AiBudgeting() {
               (l) => keepForSafetyLevel(forecast, l, rule.minKeep).clampedByMin,
             ) && (
               <p className="caption m-0" style={{ marginTop: 'var(--space-xs)' }}>
-                All three land on your {money(rule.minKeep, 'CHF', 0)} minimum right now — we predict less than that
-                before your next salary. Lower your minimum below to let the estimate decide.
+                All three hit your {money(rule.minKeep, 'CHF', 0)} floor: we predict less than that before your next salary.
+                Lower the floor to let the estimate decide.
               </p>
             )}
           </section>
@@ -262,7 +261,7 @@ export function AiBudgeting() {
           <section className="card" aria-label="Your limits">
             <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Your limits</h2>
             <label className="block" style={{ marginBottom: 'var(--space-sm)' }}>
-              <span className="caption">Never keep less than <strong className="amount">{money(rule.minKeep, 'CHF', 0)}</strong></span>
+              <span className="caption">Never below <strong className="amount">{money(rule.minKeep, 'CHF', 0)}</strong></span>
               <input
                 type="range"
                 className="slider"
@@ -275,7 +274,7 @@ export function AiBudgeting() {
               />
             </label>
             <label className="block">
-              <span className="caption">Normal maximum <strong className="amount">{money(rule.maxKeep, 'CHF', 0)}</strong></span>
+              <span className="caption">Normally no more than <strong className="amount">{money(rule.maxKeep, 'CHF', 0)}</strong></span>
               <input
                 type="range"
                 className="slider"
@@ -308,7 +307,7 @@ export function AiBudgeting() {
           <section className="card" aria-label="Planned expenses">
             <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Planned expenses</h2>
             <p className="caption m-0" style={{ marginBottom: 'var(--space-xs)' }}>
-              Tell us about spending we can't see in your history yet — we'll protect it.
+              Spending we can't see yet? Tell us. We'll protect it.
             </p>
             {state.plannedExpenses.map((p) => (
               <div key={p.id} className="settings-row">
@@ -350,15 +349,15 @@ export function AiBudgeting() {
       {/* Explainability — always reachable, never in the way (§54) */}
       <details className="card">
         <summary className="disclosure" style={{ listStyle: 'none', cursor: 'pointer' }}>
-          How we calculated {money(forecast.keep, 'CHF', 0)}
+          Where {money(forecast.keep, 'CHF', 0)} comes from
           <span className="disclosure__chevron" aria-hidden="true">›</span>
         </summary>
         <div style={{ marginTop: 'var(--space-xs)' }}>
           {[
-            { label: 'Confirmed upcoming', value: forecast.confirmedUpcoming, note: `incl. ${money(forecast.pendingCard, 'CHF', 0)} authorised card payments` },
+            { label: 'Already committed', value: forecast.confirmedUpcoming, note: `incl. ${money(forecast.pendingCard, 'CHF', 0)} on your card, not yet booked` },
             { label: 'Recurring bills', value: forecast.recurringPredicted, note: f.recurring.filter((r) => r.dueInCycle).map((r) => r.label.split(' — ')[0]).join(', ') || 'none due this cycle' },
-            { label: 'Everyday spending', value: forecast.variablePredicted, note: `${money(Math.round(f.avgDailyCardSpend), 'CHF', 0)}/day over ${forecast.horizonDays} days` },
-            { label: 'Safety margin', value: forecast.safetyMargin, note: `${SAFETY_LABELS[rule.safetyLevel].title} level` },
+            { label: 'Everyday spending', value: forecast.variablePredicted, note: `${money(Math.round(f.avgDailyCardSpend), 'CHF', 0)} a day, ${forecast.horizonDays} days` },
+            { label: 'Safety margin', value: forecast.safetyMargin, note: `${SAFETY_LABELS[rule.safetyLevel].title}` },
           ].map((row) => (
             <div key={row.label} className="factor-row" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
               <span className="factor-row__label">{row.label}</span>
@@ -375,9 +374,9 @@ export function AiBudgeting() {
             </span>
           </div>
           <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-            An estimate from your Swissquote account and card history only — that data stays within Swissquote.
+            An estimate, from your Swissquote history alone. That data stays here.
             {f.oneOffsExcluded.length > 0 &&
-              ` One-off payments (${f.oneOffsExcluded.map((o) => o.label).join(', ')}) are excluded so they don't inflate it.`}
+              ` One-offs left out (${f.oneOffsExcluded.map((o) => o.label).join(', ')}) — they'd skew it.`}
           </p>
         </div>
       </details>

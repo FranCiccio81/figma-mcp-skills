@@ -78,7 +78,7 @@ export function SourceWaterfallList({ editing = false }: { editing?: boolean }) 
           <span className="caption block">
             {cfg.lombardEnabled && cfg.lombardAcknowledged
               ? `Up to ${money(cfg.lombardPerCoverMax, 'CHF', 0)} per cover · ${LOMBARD_RATE_PA}% p.a.`
-              : 'Off — automatic borrowing is never on by default'}
+              : 'Off. We never borrow on your behalf by default.'}
           </span>
         </span>
       </li>
@@ -87,7 +87,7 @@ export function SourceWaterfallList({ editing = false }: { editing?: boolean }) 
         <span className="waterfall-row__rank" aria-hidden="true">—</span>
         <span className="flex-1 min-w-0">
           <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Invest Easy &amp; Saving Plan</span>
-          <span className="caption block">Never used — Auto Cover doesn't sell your investments.</span>
+          <span className="caption block">Never touched. We don't sell your investments to pay a bill.</span>
         </span>
       </li>
     </ol>

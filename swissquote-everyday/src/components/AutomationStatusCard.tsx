@@ -25,28 +25,28 @@ export function AutomationStatusCard() {
   let line: string;
   let stats: { label: string; value: string }[] | null = null;
   if (paused) {
-    line = 'All automations are paused. Nothing moves until you resume.';
+    line = 'Paused. Nothing moves until you say so.';
   } else if (status === 'autoCoverFailed') {
-    line = 'Auto Cover could not top up your balance — action needed below.';
+    line = 'Auto Cover came up short. Your move.';
   } else if (state.pendingAllocation) {
     line = state.pendingAllocation.anomaly
-      ? 'Your salary looked different than usual — the allocation is waiting for your review.'
-      : `${money(state.pendingAllocation.total)} is ready to allocate — waiting for your approval.`;
+      ? 'This payment looks different. Nothing moves until you check it.'
+      : `${money(state.pendingAllocation.total)} ready to go. Your call.`;
   } else if (state.pendingSettlements.length > 0) {
     const p = state.pendingSettlements[0];
-    line = `${money(p.amount)} from a sale settles on ${shortDate(p.settlesOnDay)} — not spendable until then.`;
+    line = `${money(p.amount)} settles ${shortDate(p.settlesOnDay)}. Not spendable before then.`;
   } else if (allocation.enabled) {
     line =
       allocation.scheduledForDay !== null
-        ? 'Salary received. Your plan runs one business day later.'
-        : 'Your salary lands, the buffer stays, the rest goes to work.';
+        ? 'Salary in. Your plan runs tomorrow.'
+        : 'Your salary lands. The rest goes to work.';
     stats = [
       { label: 'Next run', value: shortDate(nextRunDay) },
       { label: 'Keep in Banking', value: `≥ ${swissNumber(buffer, 0)}` },
       { label: 'Allocate excess', value: `≈ ${swissNumber(roundTo(estTotal, 50), 0)}` },
     ];
   } else {
-    line = 'Smart Salary Allocation is off. Your salary stays in Everyday.';
+    line = 'Allocation is off. Your salary sits still.';
   }
   const destinations = allocation.splits
     .map((s) => `${s.label.replace('Global ETF ', 'ETF ')} ${s.percent}%`)
@@ -83,7 +83,7 @@ export function AutomationStatusCard() {
       )}
       {autoCover.enabled && !paused && (
         <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-sm)' }}>
-          Auto Cover is on — if a payment needs more than Everyday holds, we bring it back from your sources.
+          Auto Cover is on. Short on a payment? We bring your cash back.
         </p>
       )}
       <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-md)' }}>

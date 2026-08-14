@@ -41,7 +41,7 @@ export function EverydayHome() {
           Everyday
         </span>
         <AmountXL value={state.accounts.everyday} />
-        <p className="micro m-0 text-center">In the account now</p>
+        <p className="micro m-0 text-center">Yours, right now</p>
       </header>
 
       <BuyingPowerBar onOpen={() => nav.setBuyingPowerOpen(true)} />
@@ -61,7 +61,7 @@ export function EverydayHome() {
             {money(forecast.buffer)}
           </span>
           <span className="caption block" style={{ marginTop: 'var(--space-2xs)' }}>
-            Likely needed before your next salary · based on your last 3 months
+            What you'll likely need before your next salary
           </span>
         </span>
         <ForecastSparkline forecast={forecast} />

@@ -55,35 +55,34 @@ export function AutoCover() {
           </span>
         </div>
         <p className="m-0" style={{ marginTop: 'var(--space-xs)' }}>
-          If a payment needs more than Everyday holds, we move money from your sources — in your order — so it goes
-          through.
+          A payment bigger than your balance shouldn't fail when the cash is just sitting elsewhere. We bring it back,
+          in the order you set.
         </p>
         <div className="sl-card__stats" style={{ borderTopColor: 'var(--color-border-subtle)' }}>
           <div className="sl-card__stat">
-            <span className="micro block" style={{ color: 'var(--color-text-secondary)' }}>Backup from your cash</span>
+            <span className="micro block" style={{ color: 'var(--color-text-secondary)' }}>Your cash, on standby</span>
             <span className="amount block" style={{ fontWeight: 'var(--font-weight-bold)' }}>
               CHF {swissNumber(capacity.own, 0)}
             </span>
           </div>
           <div className="sl-card__stat" style={{ borderLeft: '1px solid var(--color-border-subtle)', paddingLeft: 'var(--space-md)' }}>
-            <span className="micro block" style={{ color: 'var(--color-text-secondary)' }}>Lombard backup</span>
+            <span className="micro block" style={{ color: 'var(--color-text-secondary)' }}>Credit, if you allow it</span>
             <span className="amount block" style={{ fontWeight: 'var(--font-weight-bold)' }}>
               {cfg.lombardEnabled ? `CHF ${swissNumber(capacity.credit, 0)}` : 'Off'}
             </span>
           </div>
         </div>
         <p className="micro m-0" style={{ marginTop: 'var(--space-xs)' }}>
-          Max {money(cfg.perTransactionMax, 'CHF', 0)} per payment · {money(usedThisMonth, 'CHF', 0)} of{' '}
-          {money(cfg.monthlyCap, 'CHF', 0)} used this month
+          Up to {money(cfg.perTransactionMax, 'CHF', 0)} a payment. {money(usedThisMonth, 'CHF', 0)} of{' '}
+          {money(cfg.monthlyCap, 'CHF', 0)} used this month.
         </p>
       </section>
 
       {failed && (
         <section className="notice notice--error" aria-label="Auto Cover failure">
-          <strong>Auto Cover couldn't fully fund a payment</strong>
+          <strong>We couldn't cover it in full</strong>
           <p className="m-0 caption" style={{ color: 'var(--color-text-primary)', marginTop: 'var(--space-2xs)' }}>
-            No money was moved — Auto Cover only acts when it can cover the whole amount. Add money to Everyday, or
-            authorise another source below.
+            So nothing moved. Half a transfer solves nothing. Add money, or authorise another source below.
           </p>
           <div className="flex" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-xs)' }}>
             <button
@@ -130,7 +129,7 @@ export function AutoCover() {
                 <span className="choice-row__dot" aria-hidden="true" />
                 <span>
                   <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Exact cover</span>
-                  <span className="caption block">Move only what the payment is short.</span>
+                  <span className="caption block">Only what the payment is short.</span>
                 </span>
               </button>
               <button
@@ -145,7 +144,7 @@ export function AutoCover() {
                   <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>
                     Cover + {money(cfg.bufferAmount, 'CHF', 0)} buffer
                   </span>
-                  <span className="caption block">Leave a little in Everyday so small payments don't trigger it again.</span>
+                  <span className="caption block">A little extra, so the next small payment doesn't trigger it again.</span>
                 </span>
               </button>
             </div>
@@ -197,7 +196,7 @@ export function AutoCover() {
                 <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>
                   Also keep Everyday above {money(cfg.minBalance, 'CHF', 0)}
                 </span>
-                <span className="caption block">Advanced — tops up at the end of the day, not only for payments.</span>
+                <span className="caption block">Advanced. Tops up at day's end, not just for payments.</span>
               </span>
               <Toggle
                 checked={cfg.keepMinimumEnabled}
@@ -207,12 +206,12 @@ export function AutoCover() {
             </label>
           </section>
 
-          <section className="lombard-block" aria-label="Lombard backup">
+          <section className="lombard-block" aria-label="Credit, if you allow it">
             <div className="flex items-center justify-between" style={{ gap: 'var(--space-sm)' }}>
               <span className="flex-1">
                 <span className="block" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Lombard as last resort</span>
                 <span className="caption block">
-                  Borrowing at {LOMBARD_RATE_PA}% p.a. — used only after your own cash, never before.
+                  Borrowing at {LOMBARD_RATE_PA}% p.a. Your own cash goes first, always.
                 </span>
               </span>
               <Toggle
@@ -271,13 +270,12 @@ export function AutoCover() {
               </span>
             </div>
           ))}
-          {recent.length === 0 && <p className="caption m-0">No covers yet — nothing has needed one.</p>}
+          {recent.length === 0 && <p className="caption m-0">Nothing has needed covering yet.</p>}
         </section>
       )}
 
       <p className="micro m-0">
-        Auto Cover moves cash only. It never sells your investments, and it never borrows unless you switch Lombard on
-        yourself.
+        Cash only. We never sell your investments. We never borrow unless you switch Lombard on yourself.
       </p>
     </div>
   );

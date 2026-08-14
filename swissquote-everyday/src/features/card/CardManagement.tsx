@@ -35,7 +35,7 @@ export function CardManagement() {
       <div className="text-center">
         <p className="m-0" style={{ fontWeight: 'var(--font-weight-semibold)' }}>Elite card •••• 1234</p>
         <p className="caption m-0">
-          Swiss Debit Mastercard · {card.frozen ? 'blocked — payments are declined' : 'active'}
+          Swiss Debit Mastercard · {card.frozen ? 'blocked. Payments are declined.' : 'active'}
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export function CardManagement() {
       </button>
       {card.frozen && (
         <p className="caption m-0 text-center" style={{ marginTop: 'calc(-1 * var(--space-xs))' }}>
-          Blocked instantly. Recurring payments already authorised may still complete. Unblock any time.
+          Blocked instantly. Payments already authorised may still land. Unblock whenever you like.
         </p>
       )}
 
@@ -87,7 +87,7 @@ export function CardManagement() {
         <div className="settings-row" style={{ marginTop: 'var(--space-2xs)' }}>
           <span className="flex-1">
             <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>Online payments</span>
-            <span className="caption block">Turn off to decline e-commerce payments while keeping the card active in shops.</span>
+            <span className="caption block">Off means online payments are declined. Your card still works in shops.</span>
           </span>
           <Toggle checked={card.onlinePayments} onChange={(v) => setCard({ onlinePayments: v })} label="Online payments" />
         </div>
