@@ -21,8 +21,15 @@ export function LiquidityForecastChart({ forecast, minBalance }: { forecast: For
   const [picked, setPicked] = useState<number | null>(null);
   const pts = forecast.points;
   const values = pts.flatMap((p) => [p.typical, p.high]);
-  const max = Math.max(...values, minBalance) * 1.05;
-  const min = Math.min(...values, 0, minBalance) - 200;
+  // Fit the domain to the projection so its shape stays readable; pull the
+  // minimum-balance line in only when it is near the data, otherwise the
+  // whole story flattens against an axis stretched to a far-away floor.
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  const pad = Math.max((dataMax - dataMin) * 0.15, 300);
+  const minRelevant = minBalance > dataMin - 3 * pad;
+  const max = dataMax + pad;
+  const min = (minRelevant ? Math.min(dataMin, minBalance) : dataMin) - pad;
 
   const x = (i: number) => PAD_L + (i / (pts.length - 1)) * (W - PAD_L - PAD_R);
   const y = (v: number) => PAD_T + (1 - (v - min) / (max - min)) * (H - PAD_T - PAD_B);
@@ -53,17 +60,19 @@ export function LiquidityForecastChart({ forecast, minBalance }: { forecast: For
         }}
         onPointerLeave={() => setPicked(null)}
       >
-        {/* recessive grid: zero line + minimum-balance line */}
-        <line x1={PAD_L} x2={W - PAD_R} y1={y(0)} y2={y(0)} stroke="var(--color-dataviz-grid)" strokeWidth="1" />
-        <line
-          x1={PAD_L}
-          x2={W - PAD_R}
-          y1={y(minBalance)}
-          y2={y(minBalance)}
-          stroke="var(--color-feedback-warning)"
-          strokeWidth="1"
-          strokeDasharray="3 4"
-        />
+        {/* recessive grid + minimum-balance line (only when near the data) */}
+        <line x1={PAD_L} x2={W - PAD_R} y1={H - PAD_B} y2={H - PAD_B} stroke="var(--color-dataviz-grid)" strokeWidth="1" />
+        {minRelevant && (
+          <line
+            x1={PAD_L}
+            x2={W - PAD_R}
+            y1={y(minBalance)}
+            y2={y(minBalance)}
+            stroke="var(--color-feedback-warning)"
+            strokeWidth="1"
+            strokeDasharray="3 4"
+          />
+        )}
         <path d={bandPath} fill="var(--color-dataviz-band)" stroke="none" />
         <path d={linePath} fill="none" stroke="var(--color-dataviz-line)" strokeWidth="2" />
         {events.map((e) => (
@@ -91,7 +100,9 @@ export function LiquidityForecastChart({ forecast, minBalance }: { forecast: For
       <figcaption className="caption" aria-live="polite">
         {sel
           ? `${shortDate(sel.day)} — likely around CHF ${swissNumber(sel.typical, 0)} (high-spend: CHF ${swissNumber(sel.high, 0)})`
-          : `Lowest likely point: ${money(lowestTypical.typical)} on ${shortDate(lowestTypical.day)} · dashed line = your CHF ${swissNumber(minBalance, 0)} minimum`}
+          : minRelevant
+            ? `Lowest likely point: ${money(lowestTypical.typical)} on ${shortDate(lowestTypical.day)} · dashed line = your CHF ${swissNumber(minBalance, 0)} minimum`
+            : `Lowest likely point: ${money(lowestTypical.typical, 'CHF', 0)} on ${shortDate(lowestTypical.day)} — comfortably above your CHF ${swissNumber(minBalance, 0)} minimum`}
       </figcaption>
     </figure>
   );
