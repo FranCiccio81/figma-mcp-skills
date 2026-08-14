@@ -26,7 +26,7 @@ export const FX = {
 export const LOMBARD_RATE_PA = 4.25; // §10 ⟨rate TO CONFIRM⟩
 
 export const INITIAL_ACCOUNTS: Accounts = {
-  everyday: 12_840.5,
+  everyday: 165_880.5, // 1'880.10 + 1'000 Auto Cover + 163'000.40 annual bonus (day 0)
   eurWallet: 8_612.0,
   usdWallet: 12_050.0,
   saveEasy: 86_400.0,
@@ -251,7 +251,8 @@ export function generateHistory(): Txn[] {
   }
 
   // ----- Day 0, in order: the debit that breached the minimum, the Auto Cover
-  // top-up, then the reimbursement that explains today's balance.
+  // top-up, then the annual bonus that explains today's balance — and gives
+  // the next Smart Salary Allocation something spectacular to sweep.
   push({
     day: 0,
     label: 'Beau-Rivage Palace',
@@ -280,9 +281,9 @@ export function generateHistory(): Txn[] {
   });
   push({
     day: 0,
-    label: `Expense reimbursement — ${CLIENT.employer}`,
-    category: 'transfer',
-    amount: 9_960.4,
+    label: `Annual bonus — ${CLIENT.employer}`,
+    category: 'salary',
+    amount: 163_000.4,
     currency: 'CHF',
     status: 'booked',
   });

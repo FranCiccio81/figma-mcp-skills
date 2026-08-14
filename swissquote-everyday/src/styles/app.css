@@ -468,16 +468,18 @@ button {
 .bp-bar__track {
   display: flex;
   align-items: stretch;
-  height: var(--space-md);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  height: var(--size-bp-bar);
 }
 .bp-bar__segment {
   height: 100%;
   min-width: var(--space-2xs);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-bar-gloss);
   transform-origin: left center;
   animation: bp-fill var(--motion-duration-orchestrated) var(--motion-easing-default) backwards;
 }
+.bp-bar__segment:first-child { border-top-left-radius: var(--radius-pill); border-bottom-left-radius: var(--radius-pill); }
+.bp-bar__segment:last-child { border-top-right-radius: var(--radius-pill); border-bottom-right-radius: var(--radius-pill); }
 /* Segments distinguished by hue AND pattern (never colour alone) */
 .bp-bar__segment--cash { background: var(--color-dataviz-cash); }
 .bp-bar__segment--fx {
@@ -495,6 +497,7 @@ button {
   background-image: linear-gradient(135deg, transparent 42%, var(--color-dataviz-pattern-overlay-soft) 42%, var(--color-dataviz-pattern-overlay-soft) 58%, transparent 58%);
   background-size: var(--space-xs) var(--space-xs);
 }
+/* Credit: ink + hatch — a different encoding class, not a fifth own-funds hue */
 .bp-bar__segment--credit {
   background: var(--color-dataviz-credit);
   background-image: repeating-linear-gradient(
@@ -516,8 +519,15 @@ button {
 @keyframes bp-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 .bp-legend { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-sm); }
-.bp-legend__item { display: inline-flex; align-items: center; gap: var(--space-2xs); font-size: var(--font-size-micro); color: var(--color-text-secondary); }
-.bp-legend__swatch { width: 10px; height: 10px; border-radius: var(--radius-sm); flex: none; }
+.bp-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+.bp-legend__swatch { width: 12px; height: 12px; border-radius: var(--radius-sm); flex: none; box-shadow: var(--shadow-bar-gloss); }
 
 /* Buying Power sheet rows */
 .bp-row { display: flex; align-items: flex-start; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border-subtle); }

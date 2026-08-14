@@ -33,9 +33,10 @@ src/
                               (core primitives → semantic aliases).
     app.css                 BEM component styles, tokens only; Tailwind = layout.
   lib/format.ts             Swiss formatting (CHF 8'400.00), sim calendar, PRNG.
-  data/mockLedger.ts        §10 verbatim + 90 days of deterministic synthetic
-                            history (rent 1'950/1st, insurance 385/5th, card
-                            ≈1'800/month, salary 8'400/25th).
+  data/mockLedger.ts        Wealthy demo profile (evolved from §10 on request:
+                            salary 21'000, Everyday 165'880.50 incl. a day-0
+                            annual bonus, card ≈5'500/month) + 90 days of
+                            deterministic synthetic history.
   state/
     types.ts                Domain model shared by engine, data and UI.
     liquidityEngine.ts      The real state machine (§6): allocation, Auto Cover
@@ -106,9 +107,10 @@ Market closed skips Trading cash and says why. A margin call is an interruptive
 3. **Bridge token export not attached**: `tokens.css` marks every value standing
    in for an unknown Bridge primitive with `⟨PLACEHOLDER⟩`; the file is the
    single swap point.
-4. The forecast is calibrated so the computed buffer lands at §10's CHF 4'150
-   (range 3'700–4'850) — computed from the synthetic ledger, not hardcoded;
-   turning on "Irregular income (Marc)" widens the band and the copy says so.
+4. The forecast is computed from the synthetic ledger, never hardcoded — at
+   the current wealthy calibration it lands at CHF 11'400 (range
+   10'000–13'500); turning on "Irregular income (Marc)" widens the band and
+   the copy says so. (The original §10 calibration reproduced CHF 4'150.)
 5. Salary trigger threshold (CHF 2'000), FX spread (0.95%), Lombard rate
    (4.25%), esisuisse line — all rendered with `⟨TO CONFIRM⟩` per the brief.
 

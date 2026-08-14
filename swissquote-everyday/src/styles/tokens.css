@@ -45,13 +45,15 @@
   --core-shadow-soft: rgba(23, 24, 28, 0.07);
   --core-shadow-strong: rgba(23, 24, 28, 0.22);
 
-  /* Dataviz primitives — validated categorical set for Buying Power
-     (CVD + contrast checks passed; do not re-order). */
-  --core-dv-blue: #0057ff;
-  --core-dv-magenta: #b4438f;
-  --core-dv-green: #1e7d46;
-  --core-dv-violet: #7a3fc4;
-  --core-dv-amber: #b25e09;
+  /* Dataviz primitives — Swissquote-brand categorical set for the Buying
+     Power own-funds segments (CVD + contrast checks passed; do not
+     re-order). Credit is deliberately outside this set: ink + hatch, a
+     different encoding class after the structural divider. */
+  --core-dv-orange: #ee4d22; /* = brand accent — Everyday cash, the hero */
+  --core-dv-blue-deep: #2a5cc0;
+  --core-dv-green: #0f9d63;
+  --core-dv-blue: #3d7ff5;
+  --core-dv-credit: #3f434a;
 
   /* ---------------------------------------------------------------- */
   /* Tier 2 — semantic aliases (what components consume)              */
@@ -109,11 +111,11 @@
   --color-chart-line: var(--core-blue-500);
   --color-chart-fill: var(--core-blue-100);
 
-  --color-dataviz-cash: var(--core-dv-blue);
-  --color-dataviz-fx: var(--core-dv-magenta);
+  --color-dataviz-cash: var(--core-dv-orange);
+  --color-dataviz-fx: var(--core-dv-blue-deep);
   --color-dataviz-save: var(--core-dv-green);
-  --color-dataviz-trading: var(--core-dv-violet);
-  --color-dataviz-credit: var(--core-dv-amber);
+  --color-dataviz-trading: var(--core-dv-blue);
+  --color-dataviz-credit: var(--core-dv-credit);
   --color-dataviz-band: var(--core-blue-100);
   --color-dataviz-line: var(--core-blue-600);
   --color-dataviz-grid: var(--core-grey-200);
@@ -160,6 +162,11 @@
   /* Elevation — app cards float on soft, wide shadows */
   --shadow-card: 0 2px 10px var(--core-shadow-soft);
   --shadow-keyboard-key: 0 1px 0 var(--core-shadow-strong);
+  /* Soft top highlight that gives the Buying Power segments their sheen */
+  --shadow-bar-gloss: inset 0 4px 6px -2px var(--core-overlay-light);
+
+  /* Buying Power bar geometry */
+  --size-bp-bar: 1.25rem; /* 20px */
   --shadow-sheet: 0 -8px 32px var(--core-shadow-strong);
   --shadow-input-focus: 0 0 0 3px var(--core-blue-100);
 
