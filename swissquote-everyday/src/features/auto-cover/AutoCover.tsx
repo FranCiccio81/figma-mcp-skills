@@ -8,10 +8,10 @@ import { money } from '../../lib/format';
 import { LOMBARD_RATE_PA } from '../../data/mockLedger';
 import { SourceWaterfallList } from '../../components/SourceWaterfallList';
 import { useStore } from '../../state/store';
-import { ScreenHeader, Toggle } from '../../components/ui';
+import { Toggle } from '../../components/ui';
 
 export function AutoCover() {
-  const { state, dispatch, nav } = useStore();
+  const { state, dispatch } = useStore();
   const cfg = state.autoCover;
   const [ackChecked, setAckChecked] = useState(cfg.lombardAcknowledged);
   const failed = state.status === 'autoCoverFailed';
@@ -19,8 +19,6 @@ export function AutoCover() {
 
   return (
     <div className="screen">
-      <ScreenHeader title="Auto Cover" onBack={() => nav.go('home')} />
-
       <section className="card">
         <label className="flex items-center justify-between" style={{ gap: 'var(--space-sm)' }}>
           <span>

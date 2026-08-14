@@ -5,8 +5,9 @@
  * quick actions and recent activity.
  */
 import { useState } from 'react';
-import { money, swissNumber } from '../../lib/format';
+import { money } from '../../lib/format';
 import { CLIENT } from '../../data/mockLedger';
+import { AmountXL } from '../../app-shell/shell';
 import { AutomationStatusCard } from '../../components/AutomationStatusCard';
 import { BuyingPowerBar } from '../../components/BuyingPowerBar';
 import { ForecastSparkline } from '../../components/LiquidityForecastChart';
@@ -23,17 +24,24 @@ export function EverydayHome() {
 
   return (
     <div className="screen">
-      <header>
-        <div className="flex items-center justify-between">
-          <h1 className="m-0" style={{ fontSize: 'var(--font-size-heading)', fontWeight: 'var(--font-weight-semibold)' }}>
-            Everyday
-          </h1>
-          <span className="sim-panel__chip" aria-label="Account currency">CHF ▾</span>
-        </div>
+      {/* Bank-section tabs, as in the production app; Everyday is the Overview. */}
+      <div className="chip-row" role="tablist" aria-label="Bank sections">
+        {['Overview', 'Save & Invest', 'Credits', 'Insurance'].map((t, i) => (
+          <button key={t} type="button" role="tab" aria-selected={i === 0} className="chip">
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* The one number. Money in the account right now — nothing else added. */}
+      <header className="flex flex-col items-center" style={{ gap: 'var(--space-2xs)' }} aria-label="Everyday balance">
+        <span className="caption" style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+          Everyday
+        </span>
         <button
           type="button"
           className="caption amount"
-          style={{ minHeight: 'var(--size-touch-target)', display: 'inline-flex', alignItems: 'center' }}
+          style={{ minHeight: 'var(--space-lg)', display: 'inline-flex', alignItems: 'center' }}
           onClick={() => {
             if (!ibanRevealed) {
               setIbanRevealed(true);
@@ -49,21 +57,11 @@ export function EverydayHome() {
             {copied ? 'Copied' : ibanRevealed ? 'Copy' : 'Show'}
           </span>
         </button>
-      </header>
-
-      {/* The one number. Money in the account right now — nothing else added. */}
-      <section aria-label="Everyday balance">
-        <p className="m-0 caption">Balance</p>
-        <p
-          className="m-0 amount"
-          style={{ fontSize: 'var(--font-size-display)', fontWeight: 'var(--font-weight-bold)', lineHeight: 'var(--line-height-tight)' }}
-        >
-          CHF {swissNumber(state.accounts.everyday)}
-        </p>
-        <p className="micro m-0">
+        <AmountXL value={state.accounts.everyday} />
+        <p className="micro m-0 text-center">
           In the account now · protected by esisuisse up to CHF 100'000 ⟨TO CONFIRM⟩
         </p>
-      </section>
+      </header>
 
       <BuyingPowerBar onOpen={() => nav.setBuyingPowerOpen(true)} />
 
@@ -110,22 +108,49 @@ export function EverydayHome() {
         </div>
       )}
 
-      {/* Quick actions */}
+      {/* Quick actions — app-style circular icon buttons */}
       <nav className="grid grid-cols-4" style={{ gap: 'var(--space-xs)' }} aria-label="Quick actions">
         {[
-          { label: 'Pay', to: null },
-          { label: 'Scan QR-bill', to: null },
-          { label: 'Move money', to: 'autoCover' as const },
-          { label: 'Card', to: null },
+          {
+            label: 'Pay',
+            to: null,
+            icon: <path d="M11 17V5M5.5 10.5 11 5l5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />,
+          },
+          {
+            label: 'Scan QR-bill',
+            to: null,
+            icon: (
+              <path d="M4 8V4h4M14 4h4v4M18 14v4h-4M8 18H4v-4M4 11h14" strokeLinecap="round" strokeLinejoin="round" />
+            ),
+          },
+          {
+            label: 'Move money',
+            to: 'autoCover' as const,
+            icon: <path d="M4 8h12l-3-3M18 14H6l3 3" strokeLinecap="round" strokeLinejoin="round" />,
+          },
+          {
+            label: 'Card',
+            to: null,
+            icon: (
+              <>
+                <rect x="3" y="5.5" width="16" height="11" rx="2" />
+                <path d="M3 9.5h16" />
+              </>
+            ),
+          },
         ].map((a) => (
           <button
             key={a.label}
             type="button"
-            className="card--subtle card flex flex-col items-center justify-center"
-            style={{ minHeight: 'var(--space-2xl)', padding: 'var(--space-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 'var(--font-weight-medium)', textAlign: 'center' }}
+            className="quick-action"
             onClick={() => (a.to ? nav.go(a.to) : undefined)}
             aria-disabled={a.to === null}
           >
+            <span className="quick-action__icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6">
+                {a.icon}
+              </svg>
+            </span>
             {a.label}
           </button>
         ))}

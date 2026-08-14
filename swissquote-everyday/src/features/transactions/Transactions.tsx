@@ -3,7 +3,6 @@
 import { longDate, money, shortDate, signedMoney } from '../../lib/format';
 import { SOURCE_LABELS } from '../../state/liquidityEngine';
 import { useStore } from '../../state/store';
-import { ScreenHeader } from '../../components/ui';
 import { TxnRow } from './TxnRow';
 
 export function Transactions() {
@@ -14,7 +13,6 @@ export function Transactions() {
     const smart = detail.smart;
     return (
       <div className="screen">
-        <ScreenHeader title="Transaction" onBack={() => nav.closeTxn()} />
         <section className="card">
           <p className="caption m-0">{longDate(detail.day)}</p>
           <p className="m-0" style={{ fontSize: 'var(--font-size-heading)', fontWeight: 'var(--font-weight-semibold)' }}>
@@ -91,7 +89,6 @@ export function Transactions() {
   const txns = [...state.txns].sort((a, b) => b.day - a.day || b.id.localeCompare(a.id)).slice(0, 60);
   return (
     <div className="screen">
-      <ScreenHeader title="Transactions" onBack={() => nav.go('home')} />
       <ul className="m-0 list-none" style={{ padding: 0 }}>
         {txns.map((t) => (
           <TxnRow key={t.id} txn={t} onOpen={() => nav.openTxn(t.id)} />

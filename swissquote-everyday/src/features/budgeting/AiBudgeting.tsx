@@ -7,10 +7,9 @@
 import { money } from '../../lib/format';
 import { LiquidityForecastChart } from '../../components/LiquidityForecastChart';
 import { useStore } from '../../state/store';
-import { ScreenHeader } from '../../components/ui';
 
 export function AiBudgeting() {
-  const { state, dispatch, forecast, nav } = useStore();
+  const { state, dispatch, forecast } = useStore();
   const rule = state.allocation;
   const activeBuffer = rule.bufferMode === 'ai' ? forecast.buffer : rule.manualBuffer;
   const delta = activeBuffer - forecast.buffer;
@@ -18,8 +17,6 @@ export function AiBudgeting() {
 
   return (
     <div className="screen">
-      <ScreenHeader title="AI Budgeting" onBack={() => nav.go('home')} />
-
       <section aria-label="Recommended buffer">
         <p className="caption m-0">Liquidity you'll likely need over the next 30 days</p>
         <p className="m-0 amount" style={{ fontSize: 'var(--font-size-display)', fontWeight: 'var(--font-weight-bold)', lineHeight: 'var(--line-height-tight)' }}>

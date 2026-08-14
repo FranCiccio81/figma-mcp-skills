@@ -9,12 +9,17 @@ import { computeForecast, type Forecast } from './forecast';
 import { initialState, reduce, type EngineAction } from './liquidityEngine';
 import type { EngineState } from './types';
 
+/** Bottom-tab of the host app. Everyday lives entirely inside 'bank'. */
+export type AppTab = 'home' | 'trade' | 'bank' | 'search';
+/** Screens within the Bank tab ('home' = the Everyday hub). */
 export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions';
 
 export interface Nav {
+  tab: AppTab;
   screen: Screen;
   txnDetailId: string | null;
   buyingPowerOpen: boolean;
+  setTab: (tab: AppTab) => void;
   go: (screen: Screen) => void;
   openTxn: (id: string) => void;
   closeTxn: () => void;
@@ -83,6 +88,7 @@ export function computeBuyingPower(state: EngineState): BuyingPower {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduce, undefined, initialState);
+  const [tab, setTab] = useState<AppTab>('bank');
   const [screen, setScreen] = useState<Screen>('home');
   const [txnDetailId, setTxnDetailId] = useState<string | null>(null);
   const [buyingPowerOpen, setBuyingPowerOpen] = useState(false);
@@ -91,13 +97,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const buyingPower = useMemo(() => computeBuyingPower(state), [state]);
 
   const nav: Nav = {
+    tab,
     screen,
     txnDetailId,
     buyingPowerOpen,
+    setTab: (t) => {
+      setTxnDetailId(null);
+      setBuyingPowerOpen(false);
+      setScreen('home');
+      setTab(t);
+    },
     go: (s) => {
       setTxnDetailId(null);
       setBuyingPowerOpen(false);
       setScreen(s);
+      setTab('bank');
     },
     openTxn: (id) => setTxnDetailId(id),
     closeTxn: () => setTxnDetailId(null),

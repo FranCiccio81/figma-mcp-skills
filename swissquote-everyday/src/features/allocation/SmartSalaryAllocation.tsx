@@ -8,11 +8,11 @@ import { money, shortDate } from '../../lib/format';
 import { CLIENT } from '../../data/mockLedger';
 import { nextSalaryDayAfter } from '../../state/forecast';
 import { useStore } from '../../state/store';
-import { ScreenHeader, Toggle } from '../../components/ui';
+import { Toggle } from '../../components/ui';
 import type { AllocationSplit } from '../../state/types';
 
 export function SmartSalaryAllocation() {
-  const { state, dispatch, forecast, nav } = useStore();
+  const { state, dispatch, forecast } = useStore();
   const rule = state.allocation;
   const buffer = rule.bufferMode === 'ai' ? forecast.buffer : rule.manualBuffer;
   const splitTotal = rule.splits.reduce((a, s) => a + s.percent, 0);
@@ -32,8 +32,6 @@ export function SmartSalaryAllocation() {
 
   return (
     <div className="screen">
-      <ScreenHeader title="Smart Salary Allocation" onBack={() => nav.go('home')} />
-
       <section className="card" aria-label="Running state">
         <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-xs)' }}>Running state</h2>
         {rule.paused ? (
