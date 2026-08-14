@@ -44,7 +44,9 @@ export interface Forecast {
   };
 }
 
-const ONE_OFF_THRESHOLD = 300;
+/* Above this, a single debit is treated as a one-off, not routine spend.
+   Scaled with the wealthy profile so ordinary card spend stays in the average. */
+const ONE_OFF_THRESHOLD = 1_500;
 
 function isDiscretionary(t: Txn): boolean {
   return (
@@ -136,7 +138,8 @@ export function computeForecast(state: EngineState): Forecast {
         if (dayOfMonth(d) === r.dayOfMonth) {
           typical -= r.amount;
           high -= r.amount;
-          if (r.amount >= 300) event = r.label.split(' — ')[0].split(' · ')[0];
+          // Label only headline debits — smaller ones would collide on the axis.
+          if (r.amount >= 800) event = r.label.split(' — ')[0].split(' · ')[0];
         }
       }
       if (d === salaryDay && !flags.salaryMissing) {

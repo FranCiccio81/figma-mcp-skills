@@ -68,14 +68,23 @@ export function EverydayHome() {
       <AutomationStatusCard />
 
       {/* Forecast teaser → AI Budgeting */}
-      <button type="button" className="card flex items-center" style={{ gap: 'var(--space-sm)', width: '100%' }} onClick={() => nav.go('budgeting')}>
+      <button type="button" className="ai-card" onClick={() => nav.go('budgeting')}>
         <span className="flex-1 min-w-0">
-          <span className="block" style={{ fontWeight: 'var(--font-weight-medium)' }}>
-            You'll likely need {money(forecast.buffer)} before your next salary.
+          <span className="ai-card__eyebrow" style={{ marginBottom: 'var(--space-2xs)' }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+              <path d="M6 0c.5 3.2 2.3 5 5.5 5.5C8.3 6 6.5 7.8 6 11 5.5 7.8 3.7 6 .5 5.5 3.7 5 5.5 3.2 6 0z" />
+            </svg>
+            AI Budgeting
           </span>
-          <span className="caption block">Based on your last 3 months · tap for the forecast</span>
+          <span className="block amount" style={{ fontSize: 'var(--font-size-title)', fontWeight: 'var(--font-weight-bold)', lineHeight: 'var(--line-height-tight)' }}>
+            {money(forecast.buffer)}
+          </span>
+          <span className="caption block" style={{ marginTop: 'var(--space-2xs)' }}>
+            Likely needed before your next salary · based on your last 3 months
+          </span>
         </span>
         <ForecastSparkline forecast={forecast} />
+        <span className="product-row__chevron" aria-hidden="true">›</span>
       </button>
 
       {failNotices.length > 0 && (

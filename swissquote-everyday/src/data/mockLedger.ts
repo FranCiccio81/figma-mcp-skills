@@ -13,7 +13,7 @@ export const CLIENT = {
   ibanMasked: 'CH•• •••• •••• •••• 4 291',
   ibanFull: 'CH93 0076 2011 6238 5295 7', // sample-format IBAN, prototype only
   employer: 'Employer SA',
-  salaryNet: 8_400,
+  salaryNet: 21_000, // wealthy profile — senior executive net salary
   salaryDayOfMonth: 25,
 };
 
@@ -26,13 +26,13 @@ export const FX = {
 export const LOMBARD_RATE_PA = 4.25; // §10 ⟨rate TO CONFIRM⟩
 
 export const INITIAL_ACCOUNTS: Accounts = {
-  everyday: 3_840.5,
-  eurWallet: 612.0,
-  usdWallet: 1_050.0,
-  saveEasy: 12_400.0,
-  tradingCash: 4_260.0,
-  investEasy: 28_900.0,
-  lombardAvailable: 18_600.0,
+  everyday: 12_840.5,
+  eurWallet: 8_612.0,
+  usdWallet: 12_050.0,
+  saveEasy: 86_400.0,
+  tradingCash: 24_260.0,
+  investEasy: 428_900.0,
+  lombardAvailable: 118_600.0,
   lombardDrawn: 0,
 };
 
@@ -52,28 +52,29 @@ export const INITIAL_ALLOCATION: AllocationRule = {
   lastRun: {
     day: -18, // Monday 27 July — salary landed Friday 24 July (25th was a Saturday)
     moved: [
-      { destination: 'investEasy', amount: 2_250 },
-      { destination: 'saveEasy', amount: 900 },
+      { destination: 'investEasy', amount: 14_800 },
+      { destination: 'saveEasy', amount: 6_100 },
     ],
   },
 };
 
 export const INITIAL_AUTO_COVER: AutoCoverConfig = {
-  enabled: true, // pre-enabled in the demo so the recent Auto Cover of §10 exists; product default is OFF
-  minBalance: 500,
+  enabled: true, // pre-enabled in the demo so the recent Auto Cover exists; product default is OFF
+  minBalance: 2_000,
   waterfall: ['saveEasy', 'tradingCash', 'investEasy', 'eurWallet', 'usdWallet'],
   lombardEnabled: false,
   lombardAcknowledged: false,
-  topUpIncrement: 400,
-  monthlyCap: 2_000,
+  topUpIncrement: 1_000,
+  monthlyCap: 6_000,
   cooldownDays: 1,
-  usedThisMonth: 400, // the 14 August top-up
+  usedThisMonth: 1_000, // the 14 August top-up
   lastTopUpDay: 0,
 };
 
-/** Scales synthetic card spend so the computed 30-day need lands in the §10
- * neighbourhood (~CHF 1'700–1'800 card spend per month). One calibration knob. */
-export const SPEND_SCALE = 1.38;
+/** Scales synthetic card spend to the wealthy profile (~CHF 5'500 card spend
+ * per month), keeping the computed buffer and the Auto Cover demo loop in
+ * proportion with the CHF 21'000 salary. One calibration knob. */
+export const SPEND_SCALE = 4.2;
 
 interface MerchantSpec {
   label: string;
@@ -107,10 +108,10 @@ interface RecurringSpec {
 }
 
 export const RECURRING_DEBITS: RecurringSpec[] = [
-  { label: 'Rent — Régie du Léman', category: 'housing', amount: 1_950, dayOfMonth: 1 },
-  { label: 'Sanitas — health insurance', category: 'insurance', amount: 385, dayOfMonth: 5 },
-  { label: 'NonStop Gym Lausanne', category: 'subscription', amount: 89, dayOfMonth: 3 },
-  { label: 'Swisscom', category: 'subscription', amount: 65, dayOfMonth: 8 },
+  { label: 'Rent — Régie du Léman', category: 'housing', amount: 4_950, dayOfMonth: 1 },
+  { label: 'Sanitas — health insurance', category: 'insurance', amount: 885, dayOfMonth: 5 },
+  { label: 'Country Club Lausanne', category: 'subscription', amount: 389, dayOfMonth: 3 },
+  { label: 'Swisscom', category: 'subscription', amount: 95, dayOfMonth: 8 },
   { label: 'Netflix', category: 'subscription', amount: 18.9, dayOfMonth: 12 },
 ];
 
@@ -174,8 +175,8 @@ export function generateHistory(): Txn[] {
     // Smart Salary Allocation runs from history (26 May, 26 June, 27 July).
     if (day === -80 || day === -49 || day === -18) {
       const pairs: [number, number] =
-        day === -18 ? [2_250, 900] : day === -49 ? [2_050, 850] : [2_200, 900];
-      const before = 6_900 + Math.round(rng() * 400);
+        day === -18 ? [14_800, 6_100] : day === -49 ? [13_900, 5_700] : [14_200, 5_900];
+      const before = 33_000 + Math.round(rng() * 2_000);
       push({
         day,
         label: 'Smart Salary Allocation · to Invest Easy',
@@ -218,16 +219,16 @@ export function generateHistory(): Txn[] {
         day,
         label: 'SWISS International Air Lines',
         category: 'leisure',
-        amount: -486,
+        amount: -2_486,
         currency: 'CHF',
         status: 'booked',
       });
     }
     if (day === -61) {
-      push({ day, label: 'Amazon.de', category: 'shopping', amount: -74.9, currency: 'EUR', status: 'booked' });
+      push({ day, label: 'Amazon.de', category: 'shopping', amount: -374.9, currency: 'EUR', status: 'booked' });
     }
     if (day === -26) {
-      push({ day, label: 'Airbnb', category: 'leisure', amount: -212.0, currency: 'EUR', status: 'booked' });
+      push({ day, label: 'Airbnb', category: 'leisure', amount: -1_212.0, currency: 'EUR', status: 'booked' });
     }
 
     // Everyday card spend — calibrated to ≈ CHF 1'650–1'800/month.
@@ -250,12 +251,12 @@ export function generateHistory(): Txn[] {
   }
 
   // ----- Day 0, in order: the debit that breached the minimum, the Auto Cover
-  // top-up (§10 verbatim), then the reimbursement that explains today's balance.
+  // top-up, then the reimbursement that explains today's balance.
   push({
     day: 0,
-    label: 'SBB CFF FFS',
-    category: 'transport',
-    amount: -86.4,
+    label: 'Beau-Rivage Palace',
+    category: 'dining',
+    amount: -486.4,
     currency: 'CHF',
     status: 'booked',
   });
@@ -263,7 +264,7 @@ export function generateHistory(): Txn[] {
     day: 0,
     label: 'Auto Cover · from Save Easy',
     category: 'smart-liquidity',
-    amount: 400,
+    amount: 1_000,
     currency: 'CHF',
     status: 'booked',
     smart: {
@@ -272,16 +273,16 @@ export function generateHistory(): Txn[] {
       source: 'saveEasy',
       destination: 'everyday',
       reason:
-        'Your Everyday balance fell to CHF 480.00, below your minimum of CHF 500.00. Auto Cover topped up one increment of CHF 400.00 from Save Easy, the first source in your list (instant, no cost).',
-      balanceBefore: 480.0,
-      balanceAfter: 880.0,
+        "Your Everyday balance fell to CHF 1'880.10, below your minimum of CHF 2'000.00. Auto Cover topped up one increment of CHF 1'000.00 from Save Easy, the first source in your list (instant, no cost).",
+      balanceBefore: 1_880.1,
+      balanceAfter: 2_880.1,
     },
   });
   push({
     day: 0,
     label: `Expense reimbursement — ${CLIENT.employer}`,
     category: 'transfer',
-    amount: 2_960.5,
+    amount: 9_960.4,
     currency: 'CHF',
     status: 'booked',
   });

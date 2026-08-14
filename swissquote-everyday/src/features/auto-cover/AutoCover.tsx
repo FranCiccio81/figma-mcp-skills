@@ -61,8 +61,8 @@ export function AutoCover() {
             type="range"
             className="slider"
             min={0}
-            max={3000}
-            step={50}
+            max={8000}
+            step={100}
             value={cfg.minBalance}
             onChange={(e) => dispatch({ type: 'setMinBalance', value: Number(e.target.value) })}
             aria-label="Minimum balance"

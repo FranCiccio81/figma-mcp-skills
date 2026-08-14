@@ -41,7 +41,7 @@ export function SmartSalaryAllocation() {
         ) : (
           <p className="m-0">
             Waiting for salary — expected around {shortDate(nextSalaryDayAfter(state.day))}. Any credit of
-            CHF 2'000 or more recognised as recurring income triggers the rule. ⟨threshold TO CONFIRM⟩
+            CHF 5'000 or more recognised as recurring income triggers the rule. ⟨threshold TO CONFIRM⟩
           </p>
         )}
         {rule.lastRun && (
@@ -101,9 +101,9 @@ export function SmartSalaryAllocation() {
             <input
               type="range"
               className="slider"
-              min={1000}
-              max={8000}
-              step={50}
+              min={4000}
+              max={24000}
+              step={100}
               value={rule.manualBuffer}
               onChange={(e) => dispatch({ type: 'setBufferMode', mode: 'manual', manualBuffer: Number(e.target.value) })}
               aria-label="Manual buffer amount"
@@ -161,7 +161,7 @@ export function SmartSalaryAllocation() {
       </section>
 
       <p className="micro m-0">
-        Trigger: any credit ≥ CHF 2'000 recognised as recurring income from {CLIENT.employer}, or a payer you nominate.
+        Trigger: any credit ≥ CHF 5'000 recognised as recurring income from {CLIENT.employer}, or a payer you nominate.
         Executes on income + 1 business day.
       </p>
     </div>

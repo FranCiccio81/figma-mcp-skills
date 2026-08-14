@@ -141,7 +141,7 @@ function deriveStatus(s: EngineState): void {
     s.status = 'autoCoverExecuted';
     return;
   }
-  if (accounts.everyday < autoCover.minBalance + 500) {
+  if (accounts.everyday < autoCover.minBalance + 1_000) {
     s.status = 'approachingMinimum';
     return;
   }
@@ -469,7 +469,7 @@ function advanceDay(prev: EngineState): EngineState {
   const delayedArrival = s.flags.salaryDelayed && salaryCreditDay(s.day - 3);
   if ((expectedToday && !s.flags.salaryDelayed && !s.flags.salaryMissing) || delayedArrival) {
     const amount = s.flags.irregularIncome
-      ? Math.round((9_000 + mulberry32(s.day)() * 15_000) / 100) * 100
+      ? Math.round((12_000 + mulberry32(s.day)() * 30_000) / 100) * 100
       : CLIENT.salaryNet;
     s.accounts.everyday += amount;
     addTxn(s, {
@@ -607,14 +607,14 @@ export function reduce(prev: EngineState, action: EngineAction): EngineState {
       // Markets fell: the Lombard line shrinks below what is drawn.
       const s = draft(prev);
       s.flags.marginCall = true;
-      const drawn = Math.max(s.accounts.lombardDrawn, 4_800);
+      const drawn = Math.max(s.accounts.lombardDrawn, 28_800);
       s.accounts.lombardDrawn = drawn;
-      s.accounts.lombardAvailable = Math.max(0, drawn - 3_200);
+      s.accounts.lombardAvailable = Math.max(0, drawn - 13_200);
       addNotice(s, {
         kind: 'marginCall',
         title: 'Margin call on your Lombard credit',
-        shortfall: 3_200,
-        body: `Markets have fallen and your portfolio no longer fully covers what you have borrowed. Add ${money(3_200)} by tomorrow 16:00, or Swissquote may sell positions to restore cover.`,
+        shortfall: 13_200,
+        body: `Markets have fallen and your portfolio no longer fully covers what you have borrowed. Add ${money(13_200)} by tomorrow 16:00, or Swissquote may sell positions to restore cover.`,
       });
       announce(s, 'Margin call on your Lombard credit. Action required.');
       return s;

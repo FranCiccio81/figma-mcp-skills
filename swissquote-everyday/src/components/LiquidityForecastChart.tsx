@@ -97,20 +97,29 @@ export function LiquidityForecastChart({ forecast, minBalance }: { forecast: For
   );
 }
 
-/** Home-screen teaser sparkline of the typical path — decorative; the sentence beside it carries the value. */
+/** Home-screen teaser sparkline of the typical path — decorative; the text beside it carries the value. */
 export function ForecastSparkline({ forecast }: { forecast: Forecast }) {
   const pts = forecast.points;
   const values = pts.map((p) => p.typical);
   const max = Math.max(...values);
   const min = Math.min(...values, 0);
-  const w = 88;
-  const h = 28;
-  const x = (i: number) => (i / (pts.length - 1)) * w;
-  const y = (v: number) => 2 + (1 - (v - min) / (max - min || 1)) * (h - 4);
+  const w = 92;
+  const h = 40;
+  const x = (i: number) => 2 + (i / (pts.length - 1)) * (w - 8);
+  const y = (v: number) => 4 + (1 - (v - min) / (max - min || 1)) * (h - 8);
   const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(' ');
+  const last = pts[pts.length - 1];
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden="true" style={{ flex: 'none' }}>
-      <path d={d} fill="none" stroke="var(--color-dataviz-line)" strokeWidth="2" />
+      <path d={d} fill="none" stroke="var(--color-chart-line)" strokeWidth="2" strokeLinecap="round" />
+      <circle
+        cx={x(pts.length - 1)}
+        cy={y(last.typical)}
+        r="3.5"
+        fill="var(--color-chart-line)"
+        stroke="var(--color-surface-default)"
+        strokeWidth="2"
+      />
     </svg>
   );
 }

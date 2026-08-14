@@ -1,10 +1,10 @@
 /**
- * AutomationStatusCard — new component introduced by this concept (§7).
- * Current Smart Liquidity state in plain language, with Review and a pause
- * control always one tap away (§5.3: an automation the client cannot stop
- * instantly is a design failure).
+ * AutomationStatusCard — the Smart Liquidity engine card on the Everyday hub.
+ * Dark feature card: the one bold surface on the page. Current state in plain
+ * language, next-run figures as stats, Review and Pause one tap away (§5.3).
  */
-import { money, shortDate } from '../lib/format';
+import { money, roundTo, shortDate, swissNumber } from '../lib/format';
+import { CLIENT } from '../data/mockLedger';
 import { nextSalaryDayAfter } from '../state/forecast';
 import { useStore } from '../state/store';
 import { StatusPill } from './ui';
@@ -14,7 +14,12 @@ export function AutomationStatusCard() {
   const { allocation, autoCover, status } = state;
   const paused = allocation.paused;
 
+  const buffer = allocation.bufferMode === 'ai' ? forecast.buffer : allocation.manualBuffer;
+  const surplus = Math.max(0, CLIENT.salaryNet - buffer);
+  const nextRunDay = allocation.scheduledForDay ?? nextSalaryDayAfter(state.day) + 1;
+
   let line: string;
+  let stats: { label: string; value: string }[] | null = null;
   if (paused) {
     line = 'All automations are paused. Nothing moves until you resume.';
   } else if (status === 'autoCoverFailed') {
@@ -22,36 +27,53 @@ export function AutomationStatusCard() {
   } else if (state.pendingSettlements.length > 0) {
     const p = state.pendingSettlements[0];
     line = `${money(p.amount)} from a sale settles on ${shortDate(p.settlesOnDay)} — not spendable until then.`;
-  } else if (allocation.scheduledForDay !== null) {
-    line = `Allocation runs on ${shortDate(allocation.scheduledForDay)}, one business day after your salary.`;
   } else if (allocation.enabled) {
-    const salaryDay = nextSalaryDayAfter(state.day);
-    const buffer = allocation.bufferMode === 'ai' ? forecast.buffer : allocation.manualBuffer;
-    const surplusHint = Math.max(0, 8_400 - buffer);
-    line = `Next allocation after salary on ${shortDate(salaryDay)}: roughly ${money(Math.round((surplusHint * (allocation.splits[0]?.percent ?? 0)) / 100 / 10) * 10)} to ${allocation.splits[0]?.label ?? 'Invest Easy'} and ${money(Math.round((surplusHint * (allocation.splits[1]?.percent ?? 0)) / 100 / 10) * 10)} to ${allocation.splits[1]?.label ?? 'Save Easy'}.`;
+    line =
+      allocation.scheduledForDay !== null
+        ? 'Salary received. Your rule runs one business day later.'
+        : 'Your salary lands, the buffer stays, the rest goes to work.';
+    stats = [
+      { label: 'Next run', value: shortDate(nextRunDay) },
+      ...allocation.splits.map((s) => ({
+        label: s.label,
+        value: `≈ ${swissNumber(roundTo((surplus * s.percent) / 100, 50), 0)}`,
+      })),
+    ];
   } else {
     line = 'Smart Salary Allocation is off. Your salary stays in Everyday.';
   }
 
   return (
-    <section className="card" aria-label="Smart Liquidity status">
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-xs)' }}>
-        <span className="section-title">Smart Liquidity</span>
+    <section className="sl-card" aria-label="Smart Liquidity status">
+      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-sm)' }}>
+        <span className="sl-card__eyebrow">Smart Liquidity</span>
         <StatusPill status={status} />
       </div>
-      <p className="m-0" style={{ marginBottom: 'var(--space-sm)' }}>{line}</p>
+      <p className="m-0" style={{ fontSize: 'var(--font-size-heading)', fontWeight: 'var(--font-weight-medium)', lineHeight: 'var(--line-height-tight)' }}>
+        {line}
+      </p>
+      {stats && (
+        <div className="sl-card__stats">
+          {stats.map((s) => (
+            <div key={s.label} className="sl-card__stat">
+              <span className="sl-card__muted block" style={{ fontSize: 'var(--font-size-micro)' }}>{s.label}</span>
+              <span className="sl-card__stat-value block">{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {autoCover.enabled && !paused && (
-        <p className="caption m-0" style={{ marginBottom: 'var(--space-sm)' }}>
-          Auto Cover is on — below {money(autoCover.minBalance)}, Everyday tops up from your sources.
+        <p className="sl-card__muted m-0" style={{ marginTop: 'var(--space-sm)' }}>
+          Auto Cover is on — below {money(autoCover.minBalance, 'CHF', 0)}, Everyday tops up from your sources.
         </p>
       )}
-      <div className="flex items-center" style={{ gap: 'var(--space-xs)' }}>
-        <button type="button" className="btn btn--secondary" onClick={() => nav.go('allocation')}>
+      <div className="flex items-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-md)' }}>
+        <button type="button" className="btn btn--inverse" onClick={() => nav.go('allocation')}>
           Review
         </button>
         <button
           type="button"
-          className="btn btn--ghost"
+          className="btn btn--ghost-inverse"
           onClick={() => dispatch({ type: paused ? 'resumeAll' : 'pauseAll' })}
         >
           {paused ? 'Resume automations' : 'Pause all'}

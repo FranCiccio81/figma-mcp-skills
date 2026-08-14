@@ -68,9 +68,9 @@ export function AiBudgeting() {
           <input
             type="range"
             className="slider"
-            min={1000}
-            max={8000}
-            step={50}
+            min={4000}
+            max={24000}
+            step={100}
             value={activeBuffer}
             onChange={(e) => dispatch({ type: 'setBufferMode', mode: 'manual', manualBuffer: Number(e.target.value) })}
             aria-label="Buffer override"
