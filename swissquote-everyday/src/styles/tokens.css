@@ -1,0 +1,151 @@
+/**
+ * Swissquote Everyday — Bridge Design System token bridge.
+ *
+ * THE ONLY FILE IN THE PROJECT ALLOWED TO CONTAIN RAW VALUES.
+ * Every colour, type, spacing, radius, shadow and motion value used anywhere
+ * else must resolve to a custom property defined here, so the whole prototype
+ * can be re-skinned by swapping this file for the real Bridge DTCG export.
+ *
+ * Tier 1 (core) values below are PLACEHOLDERS standing in for the Bridge core
+ * palette — the export was not attached to the brief. Tokens whose real Bridge
+ * value is unknown are marked ⟨PLACEHOLDER⟩; treat each as a governance
+ * finding to resolve against the export, not a design decision.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- */
+  /* Tier 1 — core primitives (never referenced by components)        */
+  /* ---------------------------------------------------------------- */
+  --core-grey-900: #1a1d21;
+  --core-grey-700: #40474f;
+  --core-grey-600: #565d66; /* 6.5:1 on white */
+  --core-grey-400: #a8b0b9; /* 2.85:1 on white — NEVER for text */
+  --core-grey-300: #d3d8de;
+  --core-grey-200: #e6eaee;
+  --core-grey-100: #f4f6f8;
+  --core-white: #ffffff;
+  --core-primary-700: #0041bd;
+  --core-primary-500: #0057ff;
+  --core-primary-100: #e5eeff;
+  --core-green-600: #1e7d46;
+  --core-green-100: #e3f3e9;
+  --core-amber-600: #b25e09; /* 4.6:1 on white */
+  --core-amber-100: #fdf0e0;
+  --core-red-500: #c7302b;
+  --core-red-100: #fbe9e8;
+  --core-magenta-500: #b4438f; /* ⟨PLACEHOLDER⟩ Bridge dataviz ramp */
+  --core-violet-500: #7a3fc4;  /* ⟨PLACEHOLDER⟩ Bridge dataviz ramp */
+  --core-scrim: rgba(26, 29, 33, 0.5);
+  --core-overlay-light: rgba(255, 255, 255, 0.55);
+  --core-overlay-light-soft: rgba(255, 255, 255, 0.28);
+  --core-shadow-soft: rgba(26, 29, 33, 0.1);
+  --core-shadow-strong: rgba(26, 29, 33, 0.22);
+
+  /* ---------------------------------------------------------------- */
+  /* Tier 2 — semantic aliases (what components consume)              */
+  /* ---------------------------------------------------------------- */
+  --color-text-primary: var(--core-grey-900);        /* Figma Grey/900 */
+  --color-text-secondary: var(--core-grey-600);
+  --color-text-disabled: var(--core-grey-400);       /* Figma Grey/400 — non-text use only */
+  --color-text-on-action: var(--core-white);
+  --color-text-positive: var(--core-green-600);
+  --color-text-warning: var(--core-amber-600);
+  --color-text-error: var(--core-red-500);
+  --color-text-link: var(--core-primary-700);
+
+  --color-surface-default: var(--core-white);        /* Figma Shades/White */
+  --color-surface-muted: var(--core-grey-100);
+  --color-surface-raised: var(--core-white);
+  --color-surface-brand-subtle: var(--core-primary-100);
+  --color-surface-positive-subtle: var(--core-green-100);
+  --color-surface-warning-subtle: var(--core-amber-100);
+  --color-surface-error-subtle: var(--core-red-100);
+  --color-surface-scrim: var(--core-scrim);
+
+  --color-border-default: var(--core-grey-300);      /* Figma Grey/300 */
+  --color-border-subtle: var(--core-grey-200);
+  --color-border-strong: var(--core-grey-600);
+  --color-border-error: var(--core-red-500);
+
+  --color-action-primary: var(--core-primary-500);   /* Figma Primary/500 */
+  --color-action-primary-hover: var(--core-primary-700);
+  --color-feedback-error: var(--core-red-500);       /* Figma Danger/500 */
+  --color-feedback-warning: var(--core-amber-600);
+  --color-feedback-positive: var(--core-green-600);
+
+  --color-focus-ring: var(--core-primary-700);
+
+  /* Dataviz — validated categorical set for the Buying Power segments.
+     Adjacent-pair CVD & normal-vision separation checked (all pass, 3:1+ on
+     surface). Order is fixed; never re-map by rank. */
+  --color-dataviz-cash: var(--core-primary-500);
+  --color-dataviz-fx: var(--core-magenta-500);
+  --color-dataviz-save: var(--core-green-600);
+  --color-dataviz-trading: var(--core-violet-500);
+  --color-dataviz-credit: var(--core-amber-600);
+  --color-dataviz-band: var(--core-primary-100);
+  --color-dataviz-line: var(--core-primary-700);
+  --color-dataviz-grid: var(--core-grey-200);
+  --color-dataviz-pattern-overlay: var(--core-overlay-light);
+  --color-dataviz-pattern-overlay-soft: var(--core-overlay-light-soft);
+
+  /* ---------------------------------------------------------------- */
+  /* Type — Inter, Bridge scale ⟨PLACEHOLDER sizes — swap for export⟩ */
+  /* ---------------------------------------------------------------- */
+  --font-family-default: 'Inter', 'Inter var', system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --font-size-display: 2.125rem;  /* 34 — the one big number */
+  --font-size-title: 1.25rem;     /* 20 */
+  --font-size-heading: 1rem;      /* 16 */
+  --font-size-body: 0.9375rem;    /* 15 */
+  --font-size-caption: 0.8125rem; /* 13 */
+  --font-size-micro: 0.6875rem;   /* 11 — labels/badges only, never body copy */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-default: 1.45;
+  --font-feature-numeric: 'tnum' 1; /* tabular figures for amounts */
+
+  /* ---------------------------------------------------------------- */
+  /* Spacing — 8pt base, 4pt inline                                   */
+  /* ---------------------------------------------------------------- */
+  --space-2xs: 0.25rem; /* 4  */
+  --space-xs: 0.5rem;   /* 8  */
+  --space-sm: 0.75rem;  /* 12 */
+  --space-md: 1rem;     /* 16 */
+  --space-lg: 1.5rem;   /* 24 */
+  --space-xl: 2rem;     /* 32 */
+  --space-2xl: 3rem;    /* 48 */
+
+  /* Radii */
+  --radius-sm: 0.25rem;  /* 4  */
+  --radius-md: 0.5rem;   /* 8  */
+  --radius-lg: 0.75rem;  /* 12 */
+  --radius-xl: 1.25rem;  /* 20 — sheets */
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px var(--core-shadow-soft);
+  --shadow-sheet: 0 -8px 32px var(--core-shadow-strong);
+  --shadow-input-focus: 0 0 0 3px var(--core-primary-100); /* Figma Input/Focus */
+
+  /* Motion — Bridge motion tokens ⟨PLACEHOLDER durations⟩ */
+  --motion-duration-fast: 120ms;
+  --motion-duration-default: 200ms;
+  --motion-duration-orchestrated: 600ms; /* Buying Power bar fill — the one moment */
+  --motion-easing-default: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout */
+  --size-touch-target: 44px;
+  --size-viewport-ref: 390px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0ms;
+    --motion-duration-default: 0ms;
+    --motion-duration-orchestrated: 0ms;
+  }
+}

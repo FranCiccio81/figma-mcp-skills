@@ -1,0 +1,116 @@
+/**
+ * LiquidityForecastChart — new component introduced by this concept (§7).
+ *
+ * 30-day projected balance: one line (typical scenario) over a shaded
+ * uncertainty band down to the high-spend scenario, with known events marked
+ * on the x-axis. One series → no legend box; the title names it. Numbers are
+ * never conveyed by chart position alone — key values are rendered as text.
+ */
+import { useState } from 'react';
+import { money, shortDate, swissNumber } from '../lib/format';
+import type { Forecast } from '../state/forecast';
+
+const W = 340;
+const H = 150;
+const PAD_L = 8;
+const PAD_R = 8;
+const PAD_T = 10;
+const PAD_B = 26;
+
+export function LiquidityForecastChart({ forecast, minBalance }: { forecast: Forecast; minBalance: number }) {
+  const [picked, setPicked] = useState<number | null>(null);
+  const pts = forecast.points;
+  const values = pts.flatMap((p) => [p.typical, p.high]);
+  const max = Math.max(...values, minBalance) * 1.05;
+  const min = Math.min(...values, 0, minBalance) - 200;
+
+  const x = (i: number) => PAD_L + (i / (pts.length - 1)) * (W - PAD_L - PAD_R);
+  const y = (v: number) => PAD_T + (1 - (v - min) / (max - min)) * (H - PAD_T - PAD_B);
+
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(' ');
+  const bandPath =
+    pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(' ') +
+    ' ' +
+    [...pts].reverse().map((p, i) => `${i === 0 ? 'L' : 'L'}${x(pts.length - 1 - i).toFixed(1)},${y(p.high).toFixed(1)}`).join(' ') +
+    ' Z';
+
+  const events = pts.map((p, i) => ({ ...p, i })).filter((p) => p.event);
+  const lowestTypical = pts.reduce((a, b) => (b.typical < a.typical ? b : a));
+  const sel = picked !== null ? pts[picked] : null;
+
+  return (
+    <figure className="m-0">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label={`Projected Everyday balance over the next 30 days. Typical scenario reaches its lowest point, ${money(lowestTypical.typical)}, on ${shortDate(lowestTypical.day)}. In a high-spend scenario the balance runs lower — the shaded band shows the range.`}
+        style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'manipulation' }}
+        onPointerMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const rel = ((e.clientX - rect.left) / rect.width) * W;
+          const i = Math.round(((rel - PAD_L) / (W - PAD_L - PAD_R)) * (pts.length - 1));
+          setPicked(Math.max(0, Math.min(pts.length - 1, i)));
+        }}
+        onPointerLeave={() => setPicked(null)}
+      >
+        {/* recessive grid: zero line + minimum-balance line */}
+        <line x1={PAD_L} x2={W - PAD_R} y1={y(0)} y2={y(0)} stroke="var(--color-dataviz-grid)" strokeWidth="1" />
+        <line
+          x1={PAD_L}
+          x2={W - PAD_R}
+          y1={y(minBalance)}
+          y2={y(minBalance)}
+          stroke="var(--color-feedback-warning)"
+          strokeWidth="1"
+          strokeDasharray="3 4"
+        />
+        <path d={bandPath} fill="var(--color-dataviz-band)" stroke="none" />
+        <path d={linePath} fill="none" stroke="var(--color-dataviz-line)" strokeWidth="2" />
+        {events.map((e) => (
+          <g key={`${e.day}-${e.event}`}>
+            <line x1={x(e.i)} x2={x(e.i)} y1={y(e.typical)} y2={H - PAD_B + 4} stroke="var(--color-dataviz-grid)" strokeWidth="1" />
+            <circle cx={x(e.i)} cy={y(e.typical)} r="4" fill="var(--color-dataviz-line)" stroke="var(--color-surface-default)" strokeWidth="2" />
+            <text
+              x={x(e.i)}
+              y={H - PAD_B + 16}
+              textAnchor={e.i > pts.length - 6 ? 'end' : e.i < 5 ? 'start' : 'middle'}
+              fontSize="9"
+              fill="var(--color-text-secondary)"
+            >
+              {e.event}
+            </text>
+          </g>
+        ))}
+        {sel && picked !== null && (
+          <g>
+            <line x1={x(picked)} x2={x(picked)} y1={PAD_T} y2={H - PAD_B} stroke="var(--color-border-strong)" strokeWidth="1" />
+            <circle cx={x(picked)} cy={y(sel.typical)} r="4" fill="var(--color-dataviz-line)" stroke="var(--color-surface-default)" strokeWidth="2" />
+          </g>
+        )}
+      </svg>
+      <figcaption className="caption" aria-live="polite">
+        {sel
+          ? `${shortDate(sel.day)} — likely around CHF ${swissNumber(sel.typical, 0)} (high-spend: CHF ${swissNumber(sel.high, 0)})`
+          : `Lowest likely point: ${money(lowestTypical.typical)} on ${shortDate(lowestTypical.day)} · dashed line = your CHF ${swissNumber(minBalance, 0)} minimum`}
+      </figcaption>
+    </figure>
+  );
+}
+
+/** Home-screen teaser sparkline of the typical path — decorative; the sentence beside it carries the value. */
+export function ForecastSparkline({ forecast }: { forecast: Forecast }) {
+  const pts = forecast.points;
+  const values = pts.map((p) => p.typical);
+  const max = Math.max(...values);
+  const min = Math.min(...values, 0);
+  const w = 88;
+  const h = 28;
+  const x = (i: number) => (i / (pts.length - 1)) * w;
+  const y = (v: number) => 2 + (1 - (v - min) / (max - min || 1)) * (h - 4);
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.typical).toFixed(1)}`).join(' ');
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden="true" style={{ flex: 'none' }}>
+      <path d={d} fill="none" stroke="var(--color-dataviz-line)" strokeWidth="2" />
+    </svg>
+  );
+}
