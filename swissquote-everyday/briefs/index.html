@@ -1,0 +1,381 @@
+<title>Smart Liquidity Briefs</title>
+<style>
+:root{
+  --ink:#17181c; --ink-2:#4a4f57; --ink-3:#767c86;
+  --paper:#f4f3f1; --card:#ffffff; --line:#e4e2de; --line-2:#f0efec;
+  --accent:#ee4d22; --accent-soft:#fdece6;
+  --ok:#17864b; --warn:#b25e09;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --w:min(1120px,100%);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#f2f1ef; --ink-2:#b9bcc2; --ink-3:#8b9098;
+  --paper:#131417; --card:#1b1d21; --line:#2c2f35; --line-2:#232529;
+  --accent:#ff6a42; --accent-soft:#33190f;
+  --ok:#4ec98a; --warn:#e0994a;
+}}
+:root[data-theme="dark"]{
+  --ink:#f2f1ef; --ink-2:#b9bcc2; --ink-3:#8b9098;
+  --paper:#131417; --card:#1b1d21; --line:#2c2f35; --line-2:#232529;
+  --accent:#ff6a42; --accent-soft:#33190f;
+  --ok:#4ec98a; --warn:#e0994a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.wrap{width:var(--w);margin:0 auto;padding:0 24px 96px}
+
+/* Cover */
+.cover{padding:88px 0 40px;border-bottom:1px solid var(--line)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-soft);padding:5px 10px;border-radius:3px}
+.cover h1{font-size:clamp(38px,6vw,68px);line-height:1.02;letter-spacing:-.03em;margin:22px 0 0;
+  font-weight:800;text-wrap:balance;max-width:15ch}
+.cover p.lede{font-size:clamp(17px,2vw,20px);color:var(--ink-2);max-width:58ch;margin:20px 0 0}
+.cover .meta{margin-top:28px;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.9}
+
+/* Loop */
+.loop{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.loop b{flex:1 1 180px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+  font-size:13px;font-weight:600;display:block;position:relative}
+.loop b span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:6px;font-weight:700}
+.loop b em{display:block;font-style:normal;font-weight:400;color:var(--ink-2);font-size:12.5px;margin-top:3px}
+
+/* Index */
+.index{margin:44px 0 0;border-top:1px solid var(--line);padding-top:24px}
+.index h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  margin:0 0 14px;font-weight:600}
+.index ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px}
+.index a{display:flex;gap:10px;align-items:baseline;padding:9px 10px;border-radius:7px;text-decoration:none;color:inherit}
+.index a:hover{background:var(--card)}
+.index a i{font-family:var(--mono);font-style:normal;font-size:11px;color:var(--ink-3)}
+.index a span{font-weight:600;font-size:14px}
+
+/* Foundations */
+.found{margin-top:56px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:36px}
+.found > h2{font-size:26px;letter-spacing:-.02em;margin:6px 0 6px;font-weight:800}
+.found .job{color:var(--ink-2);margin:0 0 26px;max-width:62ch}
+.found .cols{columns:2;column-gap:44px}
+@media(max-width:760px){.found .cols{columns:1}.found{padding:24px}}
+.found section{break-inside:avoid;margin:0 0 22px}
+.found h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);
+  margin:0 0 7px;font-weight:700}
+.found p{margin:0 0 8px;font-size:14px;color:var(--ink-2)}
+.found strong{color:var(--ink);font-weight:650}
+
+/* Sheets */
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:36px;margin-top:22px;
+  position:relative;overflow:hidden}
+.sheet::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--accent)}
+.sheet__head{max-width:70ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.sheet h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.025em;margin:8px 0 12px;font-weight:800;text-wrap:balance}
+.job{font-size:17px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.why{margin:0;color:var(--ink-2);font-size:14.5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:30px}
+@media(max-width:820px){.grid{grid-template-columns:1fr;gap:26px}.sheet{padding:24px}}
+.col h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);
+  margin:0 0 9px;font-weight:700}
+.col h3 .hint{color:var(--ink-3);text-transform:none;letter-spacing:0;font-weight:400}
+.col > * + h3{margin-top:24px}
+.list{margin:0;padding:0;list-style:none}
+.list li{position:relative;padding:0 0 0 16px;margin:0 0 8px;font-size:14px;color:var(--ink-2)}
+.list li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--line);
+  outline:1px solid var(--ink-3);outline-offset:-1px}
+.list--rules li::before{background:var(--warn);outline-color:var(--warn)}
+.list--check li{padding-left:24px}
+.list--check li::before{content:"";left:0;top:3px;width:13px;height:13px;border-radius:3px;background:transparent;
+  border:1.5px solid var(--ok);outline:none}
+.chips{margin:0;display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--ink-2);
+  background:var(--paper)}
+.data{margin:0;display:grid;gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.data > div{display:flex;justify-content:space-between;gap:14px;background:var(--card);padding:8px 11px}
+.data dt{font-size:13px;color:var(--ink-2);margin:0}
+.data dd{margin:0;font-family:var(--mono);font-size:12.5px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.quotes{margin:0;padding:0;list-style:none}
+.quotes li{font-size:14px;color:var(--ink);border-left:2px solid var(--accent);padding:2px 0 2px 12px;margin:0 0 9px}
+.sheet__foot{display:flex;justify-content:space-between;margin:30px 0 0;padding-top:14px;border-top:1px solid var(--line-2);
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+code{font-family:var(--mono);font-size:.9em;background:var(--paper);padding:1px 5px;border-radius:4px}
+
+@media print{
+  body{background:#fff}
+  .wrap{width:auto;padding:0}
+  .cover,.found,.sheet{break-inside:avoid;page-break-after:always;border-radius:0;border:none;padding:0 0 24px}
+  .index{display:none}
+  .sheet::before{display:none}
+}
+</style>
+
+<div class="wrap">
+  <header class="cover">
+    <span class="tag">Concept — not a product commitment</span>
+    <h1>Smart Liquidity, brief by brief.</h1>
+    <p class="lede">Smart Liquidity: four features that make everyday cash and invested wealth behave as one balance sheet.</p>
+    <div class="loop">
+      <b><span>See</span>Everyday Buying Power<em>What liquidity exists</em></b>
+      <b><span>Protect</span>AI Budgeting<em>What life will cost</em></b>
+      <b><span>Grow</span>Smart Salary Allocation<em>Where the rest goes</em></b>
+      <b><span>Cover</span>Auto Cover<em>Bring it back when needed</em></b>
+    </div>
+    <p class="meta">One page per feature. If a brief needs two, the feature needs splitting.<br>Interactive prototype: open export/swissquote-everyday.html, or the Claude Design folder beside it.</p>
+    <nav class="index">
+      <h2>Briefs</h2>
+      <ol>
+        <li><a href="#foundations"><i>00</i><span>Foundations — read first</span></a></li>
+        <li><a href="#hub"><i>01</i><span>Everyday — the hub</span></a></li>
+        <li><a href="#buying-power"><i>02</i><span>Everyday Buying Power</span></a></li>
+        <li><a href="#ai-budgeting"><i>03</i><span>AI Budgeting</span></a></li>
+        <li><a href="#allocation"><i>04</i><span>Smart Salary Allocation</span></a></li>
+        <li><a href="#auto-cover"><i>05</i><span>Auto Cover</span></a></li>
+        <li><a href="#transactions"><i>06</i><span>Transactions &amp; explainability</span></a></li>
+        <li><a href="#card"><i>07</i><span>Card</span></a></li>
+        <li><a href="#pay"><i>08</i><span>Pay</span></a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section class="found" id="foundations">
+    <p class="eyebrow">00 · Read first</p>
+    <h2>Foundations</h2>
+    <p class="job">The rules that apply to all eight briefs. Read once; every other page assumes them.</p>
+    <div class="cols">
+      <section><h3>The loop</h3><p><strong>SEE</strong> what liquidity exists (Buying Power) → <strong>PROTECT</strong> what life costs (AI Budgeting) → <strong>GROW</strong> the rest (Smart Salary Allocation) → <strong>COVER</strong> the account when a payment needs it (Auto Cover).</p><p>Each feature answers one question. Never let a screen answer two.</p></section>
+      <section><h3>Who</h3><p>Léa Baumann, 34, Lausanne. Senior product manager, salary CHF 21'000 net on the 25th. About CHF 970'000 with Swissquote across trading, Invest Easy, Save Easy, 3a and cash. High digital literacy, moderate financial literacy, no appetite for a monthly admin ritual.</p></section>
+      <section><h3>Canvas &amp; system</h3><p>Mobile first: 390 × 844 reference, must hold at 320. 8pt grid, 4pt for icon and inline spacing.</p><p>Bridge Design System is the source of truth. Semantic tokens only — no raw hex in a design. If a token is missing, flag it as a governance finding rather than inventing a value.</p><p>Inter, Bridge type scale. Tabular figures wherever amounts align.</p></section>
+      <section><h3>Numbers</h3><p>Swiss convention throughout: <code>CHF 8'400.00</code> — currency code first, apostrophe thousands separator.</p><p>Round only where it aids reading (headline figures may drop decimals); never round in a way that changes a total.</p></section>
+      <section><h3>Tone of voice</h3><p><strong>Straight to the point</strong> — less words, more action. "Your salary lands. The rest goes to work."</p><p><strong>Impertinence</strong> — the truth, even if it disrupts. "A payment bigger than your balance shouldn't fail when the cash is just sitting elsewhere."</p><p><strong>Frankness</strong> — say it how it is. "Capacity to borrow. Not money you own."</p><p>Impertinence is for feature intros and empty states. Never on a risk disclosure, an error, or a regulatory line — there, plain and precise wins.</p></section>
+      <section><h3>Accessibility</h3><p>WCAG 2.1 AA. 4.5:1 text, 3:1 non-text and focus. Touch targets ≥ 44 × 44pt.</p><p>Never encode meaning by colour alone — pair with label, pattern or icon.</p><p>Balance changes announced to screen readers. <code>prefers-reduced-motion</code> respected. Chart values always available as text.</p></section>
+      <section><h3>Motion</h3><p>One orchestrated moment in the whole product: the Buying Power bar filling segment by segment on first load. Everything else is quiet.</p></section>
+      <section><h3>Non-negotiables everywhere</h3><p>Credit is never presented as balance, in any total, on any screen.</p><p>Automation is execution of a client instruction — never advice. Never recommend a product, a weighting, or a moment to invest.</p><p>Every automation can be paused in one tap and skipped without being rebuilt.</p><p>Every automated movement explains itself: what happened, why, where the money went, what it changed.</p><p>Every screen carries the concept label. Unverified facts are marked ⟨TO CONFIRM⟩.</p></section>
+    </div>
+  </section>
+
+  
+<section class="sheet" id="hub">
+  <header class="sheet__head">
+    <p class="eyebrow">01 · Banking</p>
+    <h2>Everyday — the hub</h2>
+    <p class="job">Make one balance, its context and today's decisions legible in five seconds.</p>
+    <p class="why">This is where the client decides whether they need to do anything at all. Most days the honest answer is no — the screen has to earn that trust without hiding anything.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>Bank tab, Overview: section chips, balance, Buying Power strip, Smart Liquidity card, AI Budgeting teaser, quick actions (Pay · Scan QR-bill · Move money · Card), 5 recent movements, Account details entry.</li><li>Account details sheet: IBAN (masked, show/copy), holder, deposit protection, statements.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Everyday balance</dt><dd>CHF 165'880.50</dd></div><div><dt>Own accessible cash</dt><dd>CHF 225'646</dd></div><div><dt>Lombard available</dt><dd>CHF 118'600 (credit)</dd></div><div><dt>Keep until next salary</dt><dd>CHF 3'850</dd></div><div><dt>Next salary</dt><dd>25 August · CHF 21'000</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"Your salary lands. The rest goes to work."</li><li>"Yours, right now."</li><li>"Auto Cover is on. Short on a payment? We bring your cash back."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Healthy</span><span class="chip">Approaching minimum</span><span class="chip">Cover executed</span><span class="chip">Cover failed</span><span class="chip">Approval pending</span><span class="chip">Unusual salary</span><span class="chip">Rules paused</span><span class="chip">Margin call (interruptive)</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>The big number is money in the account right now. Nothing is added to it — not credit, not other products.</li><li>The IBAN does not belong in the header. It lives in Account details.</li><li>Deposit protection is disclosed where the balance is explained.</li><li>Anything needing a decision appears above the fold, with its action attached.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>A reviewer can say what Everyday is, from this screen alone.</li><li>Own money and borrowed money are distinguishable without reading a caption.</li><li>Every automation can be paused within two taps from here.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>01 / 08</span></p>
+</section>
+  
+<section class="sheet" id="buying-power">
+  <header class="sheet__head">
+    <p class="eyebrow">02 · Smart Liquidity</p>
+    <h2>Everyday Buying Power</h2>
+    <p class="job">Answer "how much can I actually use right now?" without ever mixing cash and credit.</p>
+    <p class="why">A Swissquote client's liquidity is scattered across products, so a plain account balance under-reports it. But borrowed capacity is not wealth — and must never look like it.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>The strip on the hub — the signature element of the concept.</li><li>Detail sheet, in this order: available now → accessible cash → own accessible cash (subtotal) → protected vs flexible → Lombard, separately → maximum, as a secondary figure.</li><li>Each source expands: what was deducted, why, and the action it offers (Move to Everyday).</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Everyday, available now</dt><dd>CHF 164'640 (after CHF 1'240 authorised card)</dd></div><div><dt>Trading cash</dt><dd>CHF 18'260 (after CHF 6'000 open orders)</dd></div><div><dt>Save Easy</dt><dd>CHF 25'000 penalty-free, of CHF 86'400</dd></div><div><dt>Other currencies</dt><dd>≈ CHF 17'745 indicative</dd></div><div><dt>Own accessible cash</dt><dd>CHF 225'646</dd></div><div><dt>Lombard</dt><dd>CHF 118'600 drawable of a CHF 150'000 limit</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"Your money, wherever it sits. Credit kept separate — because it isn't yours."</li><li>"Capacity to borrow. Not money you own."</li><li>"Invested money isn't cash."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Cash only</span><span class="chip">Several sources</span><span class="chip">Multi-currency</span><span class="chip">AI Budgeting on</span><span class="chip">Lombard shown / hidden / partly used</span><span class="chip">Source unavailable</span><span class="chip">Reserved for open orders</span><span class="chip">Conditional Save Easy</span><span class="chip">Privacy mode</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Never render one total that includes credit. The own-cash subtotal is always visible on its own.</li><li>Reservations are shown where they are deducted, not netted invisibly.</li><li>Invested money (Invest Easy, Saving Plan) is listed as explicitly NOT included, with the reason.</li><li>Protected liquidity is identified, never silently subtracted — it is still the client's money.</li><li>Segments must be readable without colour: label, pattern and text amount.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>A user can point at what is theirs without reading a caption.</li><li>Every source can explain what was held back and why.</li><li>Showing Lombard is an explicit choice, and showing it borrows nothing.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>02 / 08</span></p>
+</section>
+  
+<section class="sheet" id="ai-budgeting">
+  <header class="sheet__head">
+    <p class="eyebrow">03 · Smart Liquidity</p>
+    <h2>AI Budgeting</h2>
+    <p class="job">Say how much cash to keep before the next salary — and make the number believable.</p>
+    <p class="why">Clients don't want to run a budget. They want to know how much they can safely put to work. This feature produces the number the allocation engine then obeys.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>KEEP / GROW hero with the forecast horizon and a confidence signal.</li><li>Projection to the next salary, with known events marked.</li><li>"Put it to work" — the action GROW implies, showing how the existing plan would split it.</li><li>"Change the rules" — safety level, minimum and maximum, planned expenses.</li><li>"Where the number comes from" — the breakdown, on demand.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Horizon</dt><dd>14 → 25 August (to next salary)</dd></div><div><dt>Expected requirement</dt><dd>CHF 3'154 + CHF 700 margin</dd></div><div><dt>KEEP / GROW</dt><dd>CHF 3'850 / CHF 160'791</dd></div><div><dt>Safety levels now</dt><dd>3'450 · 3'800 · 4'300</dd></div><div><dt>Same, over a full cycle</dt><dd>14'450 · 15'750 · 17'800</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>KEEP: "What life costs until then" · GROW: "Free to go to work"</li><li>"CHF 160'791 is sitting idle. Your plan would send it here:"</li><li>"An estimate, from your Swissquote history alone."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">High / medium / low confidence</span><span class="chip">Client minimum applies</span><span class="chip">Above preferred maximum (warn)</span><span class="chip">Fixed buffer fallback</span><span class="chip">No surplus</span><span class="chip">Salary late</span><span class="chip">Forecast unavailable</span><span class="chip">Paused</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Probabilistic language only — "likely", "based on your last 3 months". Never a guarantee, never a projected return.</li><li>The client's minimum always wins over the prediction. Say so on the row it affects.</li><li>A prediction above the preferred maximum warns; it never silently caps. Payments come first.</li><li>Safety levels are shown in francs, never as labels alone — and the three must genuinely differ.</li><li>The breakdown is always reachable, and states which data is used and that it stays within Swissquote.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>The client can explain, from the UI, why the number is what it is.</li><li>Changing the safety level visibly changes the amounts.</li><li>The action never proposes touching protected liquidity.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>03 / 08</span></p>
+</section>
+  
+<section class="sheet" id="allocation">
+  <header class="sheet__head">
+    <p class="eyebrow">04 · Smart Liquidity</p>
+    <h2>Smart Salary Allocation</h2>
+    <p class="job">Turn "salary arrived" into "money placed" — inside limits the client set.</p>
+    <p class="why">A standing order moves a fixed amount whether or not it is wise. This moves what is genuinely spare, after protecting what life costs.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>Plan summary: one sentence, the plan bar, keep + destinations with % and CHF, mode and cap, then Edit · Pause · Skip next.</li><li>Pending approval and unusual-salary cards, with amounts per destination.</li><li>Edit plan: splits, Cash Safety Buffer, execution mode, guardrails.</li><li>Activity: recent runs and the running total put to work.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Salary</dt><dd>CHF 21'000, 25th of the month</dd></div><div><dt>Keep</dt><dd>CHF 3'850 (from AI Budgeting)</dd></div><div><dt>Allocate</dt><dd>≈ CHF 25'000 — the client's per-salary cap</dd></div><div><dt>Plan</dt><dd>Save Easy 30 · Invest Easy 40 · Trading 10 · ETF Plan 20</dd></div><div><dt>Guardrails</dt><dd>max 25'000/salary · min 500 · ask above ±20%</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"Keep CHF 3'850. Put ≈ CHF 25'000 to work."</li><li>"Runs on its own · never more than CHF 25'000 a salary"</li><li>"Not this time."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Active</span><span class="chip">Waiting for salary</span><span class="chip">Awaiting approval</span><span class="chip">Executed</span><span class="chip">Partially completed</span><span class="chip">No surplus</span><span class="chip">Unusual salary</span><span class="chip">Skipping next</span><span class="chip">Paused</span><span class="chip">Destination unavailable</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Allocatable = available balance − protected liquidity, then capped. Never a flat percentage of salary.</li><li>The cap and the minimum are visible where the amounts are shown.</li><li>A salary differing by more than ±20% pauses and asks first, whatever the execution mode.</li><li>A destination that fails keeps its share in Banking. Never redirect investment money to another product.</li><li>Changes apply from the next salary — say it on the edit screen.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>A reviewer can trace one salary end to end: received → protected → split → placed.</li><li>Skip and pause are one tap, and neither destroys the setup.</li><li>Every run explains its own arithmetic.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>04 / 08</span></p>
+</section>
+  
+<section class="sheet" id="auto-cover">
+  <header class="sheet__head">
+    <p class="eyebrow">05 · Smart Liquidity</p>
+    <h2>Auto Cover</h2>
+    <p class="job">Stop a payment failing when the money is simply sitting in another Swissquote product.</p>
+    <p class="why">The mirror of allocation. Money goes out when it is spare and comes back when it is needed — which is what makes clients comfortable letting it leave in the first place.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>Status: on/off, health, capacity split into own cash and credit, limits used this month.</li><li>Funding order: the client's sources with what each can actually contribute right now.</li><li>Edit rules: cover amount (exact or + buffer), limits, trading reserve, Lombard consent.</li><li>Recent covers, and the failure state with its two manual routes.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Capacity, own cash</dt><dd>CHF 32'260 (Save Easy 24'000 + Trading 8'260)</dd></div><div><dt>Credit</dt><dd>Off by default</dd></div><div><dt>Cover amount</dt><dd>Exact shortfall, or + CHF 1'000 buffer</dd></div><div><dt>Limits</dt><dd>25'000 per payment · 40'000 per month</dd></div><div><dt>Trading reserve</dt><dd>CHF 10'000 kept for trading</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"A payment bigger than your balance shouldn't fail when the cash is just sitting elsewhere."</li><li>"Half a transfer solves nothing."</li><li>"Never touched. We don't sell your investments to pay a bill."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Off</span><span class="chip">Ready</span><span class="chip">Limited</span><span class="chip">Credit only</span><span class="chip">Unavailable</span><span class="chip">Covered — one source / several / with FX / with Lombard</span><span class="chip">Full cover impossible</span><span class="chip">Limit reached</span><span class="chip">Source unavailable</span><span class="chip">Paused</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Opt-in only. Off until the client turns it on.</li><li>Own cash before credit, always. Lombard is last, needs separate consent, and carries its own per-cover and monthly ceilings.</li><li>All or nothing: if the authorised sources cannot cover the whole shortfall, nothing moves. A partial transfer solves nothing.</li><li>It never sells investments — put that on the screen, not in a footnote.</li><li>Product conditions are respected and shown: open orders, penalty-free limits, market hours.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>The client can predict what would happen before it happens.</li><li>A credit-funded cover looks and reads differently from a cash-funded one.</li><li>Turning it off keeps the configuration.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>05 / 08</span></p>
+</section>
+  
+<section class="sheet" id="transactions">
+  <header class="sheet__head">
+    <p class="eyebrow">06 · Banking</p>
+    <h2>Transactions &amp; explainability</h2>
+    <p class="job">Make an automated movement as understandable as one the client made themselves.</p>
+    <p class="why">Automation is only trusted if it can be audited casually — in the moment, on the phone, without support.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>List: Smart Liquidity movements distinct from ordinary spending, with a plain inline label.</li><li>Detail: amount and status, "Why this happened", the before/after balances, and a link to edit the rule that caused it.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Example</dt><dd>Auto Cover · from Save Easy, + CHF 13'260.00</dd></div><div><dt>Before → after</dt><dd>CHF 165'880.50 → CHF 179'140.50</dd></div><div><dt>Reason</dt><dd>shortfall, source chosen, amount rule applied</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"Why this happened"</li><li>"Edit the rule that caused this"</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Booked</span><span class="chip">Pending settlement (T+2)</span><span class="chip">Failed / declined</span><span class="chip">Smart movement — allocation · surplus · cover · with FX · with credit</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Four questions answered every time: what happened, why, where the money went, what it changed.</li><li>A borrowed amount is labelled as borrowing, with its rate — never as a transfer.</li><li>Pending cash is never shown as spendable.</li><li>The rule that caused the movement is one tap away.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>Someone who has never opened the settings understands an automated movement from its detail alone.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>06 / 08</span></p>
+</section>
+  
+<section class="sheet" id="card">
+  <header class="sheet__head">
+    <p class="eyebrow">07 · Banking</p>
+    <h2>Card</h2>
+    <p class="job">Block, limit and check the card in seconds.</p>
+    <p class="why">Card management is a panic-moment feature. The primary action has to be obvious and reversible.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>Card hero with the state visible on the card itself.</li><li>Block / unblock as the primary action.</li><li>Limits: monthly spend, contactless without PIN, online payments toggle.</li><li>Details masked by default, with show then copy. Link across to Pay for the wallets. Replace card.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Card</dt><dd>Elite card •••• 1234, Swiss Debit Mastercard</dd></div><div><dt>Monthly limit</dt><dd>CHF 10'000 against ≈ CHF 6'048 typical spend</dd></div><div><dt>Contactless</dt><dd>CHF 100 per payment without PIN</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"Blocked instantly. Payments already authorised may still land."</li><li>"Off means online payments are declined. Your card still works in shops."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Active</span><span class="chip">Blocked</span><span class="chip">Online payments off</span><span class="chip">Details revealed</span><span class="chip">Replacement ordered</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Blocking is one tap, instantly reversible, and states its real consequence.</li><li>Card state must be visible everywhere the card appears, not only here.</li><li>Sensitive details masked by default.</li><li>Wallets live in Pay — this screen links to them rather than duplicating them.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>Blocking takes one tap and the state is unmistakable across the app.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>07 / 08</span></p>
+</section>
+  
+<section class="sheet" id="pay">
+  <header class="sheet__head">
+    <p class="eyebrow">08 · Banking</p>
+    <h2>Pay</h2>
+    <p class="job">One place for every way money leaves Everyday.</p>
+    <p class="why">Clients think in "how do I pay this?", not in payment rails. Group by their question, not by the back office.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <h3>Screens to design</h3>
+      <ul class="list"><li>Send money: standard, instant, QR-bill scan, standing orders, eBill.</li><li>Card &amp; phone: debit card with live state, Apple Pay, Google Pay, TWINT.</li><li>Other currencies: EUR and USD balances, Auto FX, with the conversion cost stated.</li></ul>
+      <h3>Data to use <span class="hint">no placeholders</span></h3>
+      <dl class="data"><div><dt>Standing orders</dt><dd>2 active · CHF 5'339/month</dd></div><div><dt>eBill</dt><dd>2 due · CHF 980/month</dd></div><div><dt>Wallets</dt><dd>EUR 8'612 · USD 12'050</dd></div><div><dt>FX spread</dt><dd>≈ 0.95% ⟨TO CONFIRM⟩</dd></div></dl>
+      <h3>Copy, in tone</h3>
+      <ul class="quotes"><li>"You see it before you pay, not after."</li><li>"There in seconds. Any day, any hour."</li></ul>
+    </div>
+    <div class="col">
+      <h3>States to cover</h3>
+      <p class="chips"><span class="chip">Card active / blocked</span><span class="chip">Wallet added / not added</span><span class="chip">Auto FX on / off</span><span class="chip">Not enough balance → route to liquidity, never a dead end</span></p>
+      <h3>Rules the design must respect</h3>
+      <ul class="list list--rules"><li>Conversion cost is shown before the payment, never after.</li><li>A shortfall offers the liquidity that exists elsewhere — it does not simply refuse.</li><li>Counts and totals shown here must match the real ledger.</li></ul>
+      <h3>Done when</h3>
+      <ul class="list list--check"><li>Any payment method is reachable in one tap from the hub.</li></ul>
+    </div>
+  </div>
+  <p class="sheet__foot"><span>Concept — not a product commitment</span><span>08 / 08</span></p>
+</section>
+</div>
