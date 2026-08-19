@@ -37,6 +37,7 @@ The same rig forces every state each concept has to survive:
 | `shared.tsx` | Balance masking, the visibility toggle, skeletons, the AI label. |
 | `actions.tsx` | The money actions, and the rule for which ones a client sees. |
 | `charts.tsx` | The three charts Variant D plots, in plain SVG on the project's tokens. |
+| `WealthAnalysis.tsx` | Variant D's AI tile: three levels of disclosure over findings the adapter computes. |
 | `BENCHMARK.md` | Two benchmarks: how banking apps open (C, with the FCA line it does not cross) and what the best analytical dashboards show (D). |
 
 Rules the mock enforces, and a real service would have to keep:
@@ -175,11 +176,30 @@ devices that make saving stick make trading dangerous.
 
 ## Variant D — The dashboard
 
-**Shape.** Total wealth with the change over the selected range · a wealth
-trend chart with 1W / 1M / 3M chips, crosshair and tooltip · allocation as
-one stacked bar whose legend rows are the navigation · the cash-flow triad
-(in / out / net) over a per-month diverging column chart · three ratios ·
-a table view of the same numbers.
+**Shape.** Total wealth with the change over the selected range · a
+**wealth-analysis tile**, closed by default · a wealth trend chart with
+1W / 1M / 3M chips, crosshair and tooltip · allocation as one stacked bar
+whose legend rows are the navigation · the cash-flow triad (in / out / net)
+over a per-month diverging column chart · three ratios · a table view of the
+same numbers.
+
+**The wealth-analysis tile.** Three levels, each earning the space it takes:
+
+1. *Closed* — one line: how many things stand out, and what the first one is
+   about, with **no figure in it**. Enough to be worth opening; nothing given
+   away to someone reading over a shoulder.
+2. *Open* — up to three findings, ranked by what the client could actually do
+   about them (cash held above the forecast › an allowance with a date on it ›
+   structural observations), each with its action beside it.
+3. *The figures* — per finding, the arithmetic: balance, minus authorised card
+   payments, minus the forecast need, equals what is left over.
+
+The findings are computed in the adapter from the same numbers the charts
+plot. The service re-words them and writes the summary line; it cannot add a
+finding, drop one, reorder them, or move money. When it is unavailable the
+same findings appear in the app's own words, and the tile says so. Every
+action opens a screen where the client decides — the copy observes, it does
+not recommend.
 
 **Hypothesis.** A client with roughly a million francs across five products
 does not want to be greeted, told what to do, or congratulated. They want
@@ -196,7 +216,11 @@ concentration (60%) visible in a way no list of balances would, and every
 chart is honest about its own limits.
 
 **Risk.** It is the densest of the four and the least welcoming: a client
-who only wants to pay a bill has to scroll past three charts. It rewards
+who only wants to pay a bill has to scroll past a tile and three charts. The
+analysis tile also carries the concept's sharpest regulatory edge — "CHF
+160'791 is doing nothing" is one careless rewrite away from advice, which is
+why the findings are computed rather than generated and why every one of
+them ends with the client deciding. It rewards
 financial literacy, which is a way of saying it excludes people without it.
 It is also the most expensive to build honestly — the wealth line here is
 reconstructed from cash movements, and doing it properly needs a daily
@@ -212,6 +236,9 @@ valuation service that does not exist yet.
 - Compare with A directly on time-to-Bank: does the density cost navigation
   speed, or does the allocation row absorb it?
 - Does anyone open the table view — and who?
+- The tile specifically: what share of clients open it, how many go a level
+  deeper into the figures, and does seeing the arithmetic increase or reduce
+  their trust in the finding?
 
 ---
 
@@ -230,4 +257,5 @@ they isolate density; B and C are both proactive, so they isolate tone.
 Worth measuring across all four: time to the day's actual task, first-tap
 location, self-reported confidence in the numbers, and — for the three that
 carry an AI surface — whether clients can tell what the assistant did and
-did not do. (D carries none: it is the control.)
+did not do. (D's AI is the most restrained of the four: computed findings,
+re-worded — so it is the cleanest test of whether phrasing alone adds value.)

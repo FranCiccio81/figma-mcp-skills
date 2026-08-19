@@ -148,6 +148,34 @@ export interface AllocationSlice {
   destination: Destination;
 }
 
+/** One line of proof under a finding — the figure, named. */
+export interface Evidence {
+  label: string;
+  value: string;
+}
+
+/**
+ * A finding about the client's own position.
+ *
+ * Computed here, from the same numbers the charts plot. The AI layer may
+ * re-word a finding; it may not invent one, rank one differently, or act on
+ * one. Anything transactional goes through the app's normal confirmation.
+ */
+export interface Finding {
+  id: string;
+  headline: string;
+  /**
+   * What the finding is about, with no figure in it. The closed tile uses
+   * this: enough to be worth opening, nothing given away to someone reading
+   * over a shoulder.
+   */
+  teaser: string;
+  /** The plain-language version, used verbatim when the service is down. */
+  detail: string;
+  evidence: Evidence[];
+  cta?: { label: string; destination: Destination };
+}
+
 export interface Analytics {
   /** Daily total wealth, oldest first. */
   trend: TrendPoint[];
@@ -161,6 +189,8 @@ export interface Analytics {
   monthsOfCover: number;
   typicalSpend: number;
   windowDays: number;
+  /** Ranked by how much a client could actually do about them. */
+  findings: Finding[];
 }
 
 export interface HomeData {
@@ -685,11 +715,100 @@ function buildMonths(state: EngineState): MonthFlow[] {
   return rows;
 }
 
+/**
+ * What stands out in this position. Ranked by actionability: something the
+ * client can do this week outranks something structural, which outranks an
+ * observation. Thresholds are product decisions, written here in the open —
+ * no model chooses what counts as notable.
+ */
+function buildFindings(
+  state: EngineState,
+  forecast: Forecast,
+  analytics: Omit<Analytics, 'findings'>,
+  chf: Money,
+  owned: Set<UniverseKey>,
+): Finding[] {
+  const a = state.accounts;
+  const findings: Finding[] = [];
+
+  // 1. Cash held above what the next cycle is forecast to need.
+  const idle = Math.max(0, a.everyday - PENDING_CARD_RESERVED - forecast.keep);
+  if (owned.has('bank') && idle >= 5_000) {
+    findings.push({
+      id: 'idle-cash',
+      teaser: 'the cash you are not using',
+      headline: `${chf(idle, 0)} is sitting in Everyday doing nothing`,
+      detail: `AI Budgeting expects this cycle to need ${chf(forecast.keep, 0)}. Everything above that is yours to place — or to leave exactly where it is.`,
+      evidence: [
+        { label: 'Everyday balance', value: chf(a.everyday, 0) },
+        { label: 'Authorised card payments', value: `− ${chf(PENDING_CARD_RESERVED, 0)}` },
+        { label: 'Forecast need before your next salary', value: `− ${chf(forecast.keep, 0)}` },
+        { label: 'Left over', value: chf(idle, 0) },
+      ],
+      cta: { label: 'See the options', destination: { tab: 'bank', screen: 'budgeting' } },
+    });
+  }
+
+  // 2. An allowance with a date on it beats an observation without one.
+  const room = PILLAR_3A_ALLOWANCE - PILLAR_3A_PAID_IN;
+  if (owned.has('plan') && room > 0) {
+    findings.push({
+      id: 'pillar-3a-room',
+      teaser: 'an allowance with a deadline',
+      headline: `${chf(room, 0)} of 3a allowance expires on 31 December`,
+      detail: 'Unused allowance does not carry over to next year. Paying it in is a decision only you can make.',
+      evidence: [
+        { label: 'Paid in this year', value: chf(PILLAR_3A_PAID_IN, 0) },
+        { label: 'Annual maximum', value: `${chf(PILLAR_3A_ALLOWANCE, 0)} ⟨TO CONFIRM⟩` },
+        { label: 'Still open', value: chf(room, 0) },
+      ],
+      cta: { label: 'Open 3a', destination: { tab: 'plan' } },
+    });
+  }
+
+  // 3. Liquidity far beyond the usual rule of thumb.
+  if (analytics.monthsOfCover >= 9) {
+    findings.push({
+      id: 'over-covered',
+      teaser: 'how much you hold as cash',
+      headline: `${analytics.monthsOfCover.toFixed(1)} months of spending held as cash`,
+      detail: `A safety net is usually put at three to six months. Yours is well past that, so part of it could be doing more — at whatever risk you decide is right.`,
+      evidence: [
+        { label: 'Typical monthly spending', value: chf(analytics.typicalSpend, 0) },
+        { label: 'Liquid cash and savings', value: chf(analytics.typicalSpend * analytics.monthsOfCover, 0) },
+        { label: 'Common rule of thumb', value: '3–6 months ⟨TO CONFIRM⟩' },
+      ],
+      cta: { label: 'Open Plan', destination: { tab: 'plan' } },
+    });
+  }
+
+  // 4. Concentration — one space holding most of the position.
+  const biggest = [...analytics.allocation].sort((x, y) => y.pct - x.pct)[0];
+  if (biggest && biggest.pct >= 50) {
+    findings.push({
+      id: 'concentration',
+      teaser: 'where most of your wealth sits',
+      headline: `${biggest.label} holds ${biggest.pct.toFixed(0)}% of everything you have`,
+      detail: `Not a problem in itself — worth knowing, because one space moving takes most of your position with it.`,
+      evidence: analytics.allocation.map((s) => ({
+        label: s.label,
+        value: `${s.pct.toFixed(1)}% · ${chf(s.value, 0)}`,
+      })),
+      cta: { label: `Open ${biggest.label}`, destination: biggest.destination },
+    });
+  }
+
+  return findings;
+}
+
 function buildAnalytics(
   state: EngineState,
+  forecast: Forecast,
   universes: Universe[],
   totalWealth: number,
   snapshot: Snapshot,
+  chf: Money,
+  ownedKeys: Set<UniverseKey>,
 ): Analytics {
   const a = state.accounts;
   const owned = universes.filter((u) => u.owned);
@@ -711,7 +830,7 @@ function buildAnalytics(
   const spend = typicalMonthlySpend(state);
   const liquid = a.everyday + a.saveEasy + a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
 
-  return {
+  const base: Omit<Analytics, 'findings'> = {
     trend: buildTrend(state, totalWealth),
     months: buildMonths(state),
     allocation,
@@ -721,6 +840,8 @@ function buildAnalytics(
     typicalSpend: spend,
     windowDays: snapshot.days,
   };
+
+  return { ...base, findings: buildFindings(state, forecast, base, chf, ownedKeys) };
 }
 
 /* ------------------------------------------------------------------ */
@@ -766,7 +887,7 @@ export function useHomeData(): HomeData {
     aiUnavailable: home.scenario === 'aiError',
     snapshot,
     goals: buildGoals(state, chf, ownedKeys),
-    analytics: buildAnalytics(state, universes, totalWealth, snapshot),
+    analytics: buildAnalytics(state, forecast, universes, totalWealth, snapshot, chf, ownedKeys),
     streak: ownedKeys.has('bank') ? buildStreak(state) : null,
     scenario: home.scenario,
     firstName: 'Léa',

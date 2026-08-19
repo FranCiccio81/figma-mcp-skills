@@ -7,7 +7,15 @@
  * here, so neither variant knows whether it is talking to a mock.
  */
 import { useEffect, useState } from 'react';
-import { fallbackBrief, failingHomeAi, mockHomeAi, toAiContext, type AiBrief } from './ai';
+import {
+  fallbackAnalysis,
+  fallbackBrief,
+  failingHomeAi,
+  mockHomeAi,
+  toAiContext,
+  type AiAnalysis,
+  type AiBrief,
+} from './ai';
 import type { HomeData } from './homeData';
 
 export type AiStatus = 'loading' | 'ready' | 'unavailable';
@@ -66,6 +74,33 @@ export function useHomeAiPrompts(data: HomeData): { status: AiStatus; prompts: s
             prompts: ['What is my buying power right now?', 'How much did I spend last month?'],
           }),
       );
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  return state;
+}
+
+/** The analytical read, for Variant D's wealth-analysis tile. */
+export function useHomeAiAnalysis(data: HomeData): { status: AiStatus; analysis: AiAnalysis | null } {
+  const [state, setState] = useState<{ status: AiStatus; analysis: AiAnalysis | null }>({
+    status: 'loading',
+    analysis: null,
+  });
+  const key = `${data.scenario}|${data.analytics.findings.map((f) => f.id).join(',')}|${data.chf(0)}`;
+
+  useEffect(() => {
+    let live = true;
+    setState({ status: 'loading', analysis: null });
+    const ctx = toAiContext(data);
+    const service = data.aiUnavailable ? failingHomeAi : mockHomeAi;
+    service
+      .analysis(ctx)
+      .then((analysis) => live && setState({ status: 'ready', analysis }))
+      // The findings are computed locally, so an outage costs phrasing only.
+      .catch(() => live && setState({ status: 'unavailable', analysis: fallbackAnalysis(ctx) }));
     return () => {
       live = false;
     };

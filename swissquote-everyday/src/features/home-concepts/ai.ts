@@ -15,7 +15,7 @@
  *      statements written deterministically from the data. The client loses
  *      the phrasing, not the information.
  */
-import type { HomeData, TodayItem } from './homeData';
+import type { Finding, HomeData, TodayItem } from './homeData';
 
 export interface AiStatement {
   text: string;
@@ -31,6 +31,17 @@ export interface AiBrief {
   fallback: boolean;
 }
 
+/**
+ * A read of the client's position: one summary line, then a re-wording of
+ * each finding the adapter computed. The service never adds a finding, drops
+ * one, or changes their order.
+ */
+export interface AiAnalysis {
+  summary: string;
+  statements: AiStatement[];
+  fallback: boolean;
+}
+
 /** What the service is allowed to see. Balances only — no identifiers. */
 export interface AiContext {
   firstName: string;
@@ -38,6 +49,8 @@ export interface AiContext {
   totalWealth: string;
   universes: { key: string; title: string; value: number; signal: string }[];
   today: TodayItem[];
+  /** Already computed, already ranked. The service only phrases these. */
+  findings: Finding[];
 }
 
 export interface HomeAiService {
@@ -45,6 +58,8 @@ export interface HomeAiService {
   dailyBrief(ctx: AiContext): Promise<AiBrief>;
   /** Questions worth asking right now, given what the data currently says. */
   prompts(ctx: AiContext): Promise<string[]>;
+  /** A read of the position, for the analytical Home. */
+  analysis(ctx: AiContext): Promise<AiAnalysis>;
 }
 
 export function toAiContext(data: HomeData): AiContext {
@@ -58,6 +73,7 @@ export function toAiContext(data: HomeData): AiContext {
       signal: u.signal.text,
     })),
     today: data.today,
+    findings: data.analytics.findings,
   };
 }
 
@@ -84,6 +100,22 @@ export function fallbackBrief(ctx: AiContext): AiBrief {
   }
 
   return { statements: statements.slice(0, 3), fallback: true };
+}
+
+/**
+ * The analysis as the data alone would state it: the adapter's own sentences,
+ * in the adapter's own order. This is what the client reads when the service
+ * is unavailable, and it is deliberately no less true.
+ */
+export function fallbackAnalysis(ctx: AiContext): AiAnalysis {
+  return {
+    summary:
+      ctx.findings.length > 0
+        ? `${ctx.findings.length} thing${ctx.findings.length === 1 ? '' : 's'} stand out in your position.`
+        : 'Nothing stands out in your position right now.',
+    statements: ctx.findings.map((f) => ({ text: f.detail, basis: f.evidence[0]?.label ?? '', itemId: f.id })),
+    fallback: true,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -144,10 +176,36 @@ export const mockHomeAi: HomeAiService = {
     if (out.length < 3) out.push('What is my buying power right now?', 'Is my spending higher than usual?');
     return delay([...new Set(out)].slice(0, 3));
   },
+
+  async analysis(ctx) {
+    if (ctx.findings.length === 0) return delay(fallbackAnalysis(ctx));
+    return delay({
+      summary: `Across ${ctx.totalWealth}, the largest single thing you could change is the cash you are holding above what this cycle needs. Everything below is yours to act on or ignore.`,
+      statements: ctx.findings.map((f) => ({
+        text: ANALYSIS_PHRASING[f.id] ? ANALYSIS_PHRASING[f.id](f) : f.detail,
+        basis: f.evidence[0]?.label ?? '',
+        itemId: f.id,
+      })),
+      fallback: false,
+    });
+  },
+};
+
+/**
+ * Re-wordings, keyed to the finding they belong to. Same constraint as the
+ * daily brief: the service can change how something is said, never what the
+ * numbers are — and never into advice. These observe; they do not recommend.
+ */
+const ANALYSIS_PHRASING: Record<string, (f: Finding) => string> = {
+  'idle-cash': (f) => `${f.detail} It is the largest single thing you could change today.`,
+  'over-covered': (f) => `${f.detail} Nothing forces the question — it is simply more cushion than most people hold.`,
+  concentration: (f) => `${f.detail} Worth revisiting when you next add to a space.`,
+  'pillar-3a-room': (f) => `${f.detail} It is the one item here with a date on it.`,
 };
 
 /** A service that always fails — the Simulate rig's "AI unavailable" state. */
 export const failingHomeAi: HomeAiService = {
   dailyBrief: () => new Promise((_, reject) => setTimeout(() => reject(new Error('unavailable')), LATENCY_MS)),
   prompts: () => new Promise((_, reject) => setTimeout(() => reject(new Error('unavailable')), LATENCY_MS)),
+  analysis: () => new Promise((_, reject) => setTimeout(() => reject(new Error('unavailable')), LATENCY_MS)),
 };

@@ -1255,6 +1255,83 @@ button {
 .data-table th { color: var(--color-text-secondary); }
 .data-table td { text-align: right; }
 
+/* ---- Variant D · the wealth-analysis tile ------------------------ */
+.analysis {
+  background: var(--gradient-card-ai);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+.analysis--open { border-color: var(--color-focus-ring); }
+.analysis__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-md);
+  min-height: var(--size-touch-target);
+}
+.analysis__mark {
+  width: var(--space-lg);
+  height: var(--space-lg);
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-link);
+  color: var(--color-text-on-action);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.analysis__title { display: block; font-weight: var(--font-weight-bold); }
+.analysis__summary { display: block; font-size: var(--font-size-caption); color: var(--color-text-secondary); margin-top: 2px; }
+.analysis__chevron {
+  flex: none;
+  color: var(--color-text-secondary);
+  transition: transform var(--motion-duration-default) var(--motion-easing-default);
+}
+.analysis--open .analysis__chevron { transform: rotate(180deg); }
+.analysis__body {
+  padding: 0 var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.analysis__degraded { color: var(--color-text-warning); }
+.analysis__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+
+.finding {
+  display: flex;
+  gap: var(--space-sm);
+  background: var(--color-surface-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+.finding__rank {
+  width: var(--space-lg);
+  height: var(--space-lg);
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  font-feature-settings: var(--font-feature-numeric);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.finding__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2xs); }
+.finding__headline { font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
+.finding__detail { font-size: var(--font-size-caption); color: var(--color-text-secondary); line-height: var(--line-height-default); }
+.finding__foot { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.finding__foot .disclosure { width: auto; min-height: var(--space-xl); font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); color: var(--color-text-secondary); }
+.btn--compact { min-height: var(--space-xl); font-size: var(--font-size-caption); padding: 0 var(--space-sm); }
+
+.proof { margin: 0; border-top: 1px solid var(--color-border-subtle); padding-top: var(--space-2xs); }
+.proof__row { display: flex; justify-content: space-between; gap: var(--space-sm); padding: 2px 0; }
+.proof__label { font-size: var(--font-size-caption); color: var(--color-text-secondary); }
+.proof__value { font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
+
 /* ------------------------------------------------------------------ */
 /* Simulate rig (prototype control, outside the product surface)       */
 /* ------------------------------------------------------------------ */

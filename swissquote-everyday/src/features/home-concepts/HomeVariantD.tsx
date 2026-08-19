@@ -23,6 +23,8 @@ import { useStore } from '../../state/store';
 import { AllocationBar, NetFlowBars, TrendChart } from './charts';
 import { useHomeData, type TrendPoint } from './homeData';
 import { BalanceVisibilityButton, BigAmount, HomeSkeleton, useGoTo } from './shared';
+import { useHomeAiAnalysis } from './useHomeAi';
+import { WealthAnalysis } from './WealthAnalysis';
 
 /** Windows the client can put the position in. Bounded by the history held. */
 const RANGES = [
@@ -57,6 +59,7 @@ export function HomeVariantD() {
   const goTo = useGoTo();
   const [range, setRange] = useState<RangeKey>('3M');
   const [tableOpen, setTableOpen] = useState(false);
+  const ai = useHomeAiAnalysis(data);
 
   const a = data.analytics;
   const days = RANGES.find((r) => r.key === range)!.days;
@@ -89,6 +92,11 @@ export function HomeVariantD() {
           {Math.abs(changePct).toFixed(2)}% over {range === '1W' ? '7 days' : range === '1M' ? '30 days' : '3 months'}
         </p>
       </section>
+
+      {/* ---- What stands out — closed by default, so density stays low.
+              It reads as an executive summary: conclusions first, with the
+              charts below as the evidence. ---------------------------------- */}
+      <WealthAnalysis findings={a.findings} analysis={ai.analysis} status={ai.status} />
 
       {/* ---- Wealth over time ----------------------------------------- */}
       <section className="card" aria-label="Wealth over time">
