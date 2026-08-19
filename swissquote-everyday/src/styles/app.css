@@ -1030,6 +1030,117 @@ button {
   min-height: var(--size-touch-target);
 }
 
+/* ---- Variant C · Good to see you --------------------------------- */
+/* The hero runs to the screen edge, so this variant loses the page inset. */
+.screen--c { padding-top: 0; }
+.screen--c > .hero { margin: 0 calc(var(--space-md) * -1); border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+
+.hero {
+  background: var(--gradient-hero-warm);
+  color: var(--color-text-on-inverse);
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); }
+.hero__greeting { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.hero__sub { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); color: var(--color-text-on-inverse-muted); margin-top: var(--space-2xs); }
+.hero__amount { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); width: 100%; text-align: left; }
+.hero__label { font-size: var(--font-size-caption); color: var(--color-text-on-inverse-muted); }
+/* The decimals inherit the muted-on-ink colour rather than the grey used on white. */
+.hero__amount .amount-xl__frac, .hero__amount .amount-hidden { color: var(--color-text-on-inverse-muted); }
+.hero__delta { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); font-feature-settings: var(--font-feature-numeric); }
+.hero__delta--up { color: var(--core-green-100); }
+.hero__delta--down { color: var(--core-red-100); }
+.hero__actions { display: flex; align-items: center; gap: var(--space-xs); }
+.hero__actions .btn { flex: 1; }
+.hero__actions .top-bar__icon { color: var(--color-text-on-inverse); flex: none; }
+
+.celebrate {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  background: var(--color-surface-positive-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+}
+.celebrate__mark {
+  width: var(--space-lg);
+  height: var(--space-lg);
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-feedback-positive);
+  color: var(--color-text-on-action);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+}
+.celebrate__title { display: block; font-weight: var(--font-weight-semibold); }
+.celebrate__body { display: block; font-size: var(--font-size-caption); color: var(--color-text-secondary); }
+
+.momentum { display: flex; flex-direction: column; gap: var(--space-sm); }
+.momentum__row { display: flex; gap: var(--space-sm); }
+.momentum__stat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.momentum__stat + .momentum__stat { border-left: 1px solid var(--color-border-subtle); padding-left: var(--space-sm); }
+.momentum__value { font-weight: var(--font-weight-bold); font-feature-settings: var(--font-feature-numeric); }
+.momentum__stat--in .momentum__value { color: var(--color-text-positive); }
+.momentum__stat--work .momentum__value { color: var(--color-text-accent); }
+.momentum__label { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+.momentum__streak { font-size: var(--font-size-caption); color: var(--color-text-secondary); line-height: var(--line-height-default); }
+
+.goal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+}
+.goal--done { background: var(--color-surface-positive-subtle); box-shadow: none; }
+.goal__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); }
+.goal__title { font-weight: var(--font-weight-semibold); }
+.goal__pct { font-size: var(--font-size-caption); font-weight: var(--font-weight-bold); font-feature-settings: var(--font-feature-numeric); }
+.goal__badge {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-positive);
+  background: var(--color-surface-default);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-xs);
+}
+.goal .progress { display: block; width: 100%; }
+.goal .progress__fill { display: block; }
+.goal--done .progress__fill { background: var(--color-feedback-positive); }
+.goal__note { font-size: var(--font-size-caption); color: var(--color-text-secondary); line-height: var(--line-height-default); }
+
+.space-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); }
+.space-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-sm);
+  border-top: 3px solid var(--color-border-default);
+  min-height: var(--size-touch-target);
+  text-align: left;
+}
+.space-tile--trade { border-top-color: var(--color-dataviz-trading); }
+.space-tile--bank { border-top-color: var(--color-dataviz-cash); }
+.space-tile--plan { border-top-color: var(--color-dataviz-save); }
+.space-tile--empty { background: transparent; box-shadow: none; border: 1px dashed var(--color-border-default); border-top-width: 3px; border-top-style: solid; }
+.space-tile__icon { font-size: var(--font-size-body); color: var(--color-text-secondary); }
+.space-tile__name { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+.space-tile__value { font-size: var(--font-size-caption); font-feature-settings: var(--font-feature-numeric); color: var(--color-text-secondary); }
+
 /* ------------------------------------------------------------------ */
 /* Simulate rig (prototype control, outside the product surface)       */
 /* ------------------------------------------------------------------ */

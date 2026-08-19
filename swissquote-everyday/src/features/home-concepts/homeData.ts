@@ -19,8 +19,8 @@ import {
   TRADING_ORDERS_RESERVED,
   TRADING_POSITIONS,
 } from '../../data/mockLedger';
-import { money, swissNumber } from '../../lib/format';
-import type { Forecast } from '../../state/forecast';
+import { dateOf, longDate, money, swissNumber } from '../../lib/format';
+import { nextSalaryDayAfter, type Forecast } from '../../state/forecast';
 import type { AppTab, HomeScenario, Screen } from '../../state/store';
 import { useStore } from '../../state/store';
 import type { EngineState } from '../../state/types';
@@ -89,6 +89,40 @@ export interface TodayItem {
   cta?: { label: string; destination: Destination };
 }
 
+/**
+ * A rolling window rather than the calendar month: on the 2nd of a month a
+ * month-to-date figure is nearly empty and says nothing useful.
+ */
+export interface Snapshot {
+  days: number;
+  inflow: number;
+  /** Spending only — money moved into savings is not "out". */
+  outflow: number;
+  /** Moved into Save Easy, Invest Easy, Trading or the Saving Plan. */
+  putToWork: number;
+}
+
+/**
+ * Something the client is working towards, with a real number behind it.
+ * A goal is only here if the app can measure it honestly — no invented
+ * targets, and nothing the client did not choose or the law did not set.
+ */
+export interface Goal {
+  id: string;
+  title: string;
+  note: string;
+  current: number;
+  target: number;
+  done: boolean;
+  destination: Destination;
+}
+
+/** Consecutive months in which the salary allocation ran. Habit, not activity. */
+export interface Streak {
+  months: number;
+  nextRun: string;
+}
+
 export interface HomeData {
   /** Sum of everything owned, less anything borrowed. */
   totalWealth: number;
@@ -105,10 +139,16 @@ export interface HomeData {
   loading: boolean;
   /** The AI service is down — variants must still be useful. */
   aiUnavailable: boolean;
+  /** Last 30 days, for the momentum strip. */
+  snapshot: Snapshot;
+  goals: Goal[];
+  streak: Streak | null;
   scenario: HomeScenario;
   firstName: string;
   /** Formats CHF for display, masking every figure when balances are hidden. */
   chf: Money;
+  /** The client's privacy choice — screens need it for accessible labels too. */
+  balancesHidden: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -405,6 +445,123 @@ export function prioritise(items: TodayItem[]): TodayItem[] {
   return [...lead, ...held];
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Momentum, goals and habit                                           */
+/* ------------------------------------------------------------------ */
+
+const WINDOW_DAYS = 30;
+
+/** Destinations that count as money put to work rather than money spent. */
+const AT_WORK = new Set(['saveEasy', 'investEasy', 'tradingCash', 'savingPlan']);
+
+// BACKEND: categorised transaction history across the relationship. The
+// prototype reads the same ledger every other screen reads.
+function buildSnapshot(state: EngineState): Snapshot {
+  const from = state.day - WINDOW_DAYS;
+  let inflow = 0;
+  let outflow = 0;
+  let putToWork = 0;
+
+  for (const t of state.txns) {
+    if (t.day <= from || t.day > state.day || t.status === 'failed') continue;
+    const moved = t.smart?.destination;
+    if (moved && AT_WORK.has(moved)) {
+      // A transfer into savings leaves Everyday but does not leave the client.
+      putToWork += Math.abs(t.amount);
+      continue;
+    }
+    // Auto Cover brings the client's own money back in — not income.
+    if (t.smart?.engine === 'autoCover') continue;
+    if (t.amount > 0) inflow += t.amount;
+    else outflow += -t.amount;
+  }
+
+  return { days: WINDOW_DAYS, inflow, outflow, putToWork };
+}
+
+/** Typical monthly spending, from the client's own history. */
+function typicalMonthlySpend(state: EngineState): number {
+  const from = state.day - 90;
+  let total = 0;
+  for (const t of state.txns) {
+    if (t.day <= from || t.day > state.day || t.status === 'failed') continue;
+    if (t.amount >= 0 || t.category === 'smart-liquidity') continue;
+    total += -t.amount;
+  }
+  return total / 3;
+}
+
+function buildGoals(state: EngineState, chf: Money, owned: Set<UniverseKey>): Goal[] {
+  const goals: Goal[] = [];
+
+  // BACKEND: contributions paid in this tax year, and the year's maximum.
+  if (owned.has('plan')) {
+    const room = Math.max(0, PILLAR_3A_ALLOWANCE - PILLAR_3A_PAID_IN);
+    goals.push({
+      id: 'pillar-3a',
+      title: 'Your 3a, this year',
+      note:
+        room > 0
+          ? `${chf(room, 0)} to go before 31 December. After that the allowance is gone.`
+          : 'Paid in full. Nothing left to do this year.',
+      current: PILLAR_3A_PAID_IN,
+      target: PILLAR_3A_ALLOWANCE,
+      done: room === 0,
+      destination: { tab: 'plan' },
+    });
+  }
+
+  // Six months of the client's own spending — a rule of thumb, and labelled
+  // as one. Not a target the bank invented for them.
+  if (owned.has('plan') && owned.has('bank')) {
+    const target = Math.round((typicalMonthlySpend(state) * 6) / 500) * 500;
+    const current = Math.min(state.accounts.saveEasy, target);
+    goals.push({
+      id: 'safety-net',
+      title: 'Six months of spending, set aside',
+      note:
+        current >= target
+          ? `Save Easy covers six months at your usual pace — about ${chf(target, 0)}.`
+          : `${chf(target - current, 0)} more and Save Easy covers six months at your usual pace.`,
+      current,
+      target,
+      done: current >= target,
+      destination: { tab: 'plan' },
+    });
+  }
+
+  return goals;
+}
+
+/**
+ * Consecutive months in which the salary allocation ran. This counts a habit
+ * the client set up, not activity the bank wants more of — the distinction
+ * matters, and it is why nothing here counts trades.
+ */
+function buildStreak(state: EngineState): Streak | null {
+  const months = new Set<string>();
+  for (const t of state.txns) {
+    if (t.smart?.engine !== 'allocation' || t.status === 'failed') continue;
+    const d = dateOf(t.day);
+    months.add(`${d.getUTCFullYear()}-${d.getUTCMonth()}`);
+  }
+  if (months.size === 0) return null;
+
+  // Walk back month by month from the most recent run; stop at the first gap.
+  const keys = [...months].sort();
+  const [lastY, lastM] = keys[keys.length - 1].split('-').map(Number);
+  let count = 0;
+  for (let i = 0; ; i += 1) {
+    const m = lastM - i;
+    const y = lastY + Math.floor(m / 12);
+    if (!months.has(`${y}-${((m % 12) + 12) % 12}`)) break;
+    count += 1;
+  }
+
+  return { months: count, nextRun: longDate(nextSalaryDayAfter(state.day) + 1) };
+}
+
 /* ------------------------------------------------------------------ */
 /* Hook                                                                */
 /* ------------------------------------------------------------------ */
@@ -432,6 +589,7 @@ export function useHomeData(): HomeData {
     : null;
 
   const today = home.scenario === 'quiet' ? [] : buildToday(state, forecast, universes, chf);
+  const ownedKeys = new Set(owned.map((u) => u.key));
 
   return {
     totalWealth,
@@ -440,8 +598,16 @@ export function useHomeData(): HomeData {
     today,
     loading: home.scenario === 'loading',
     aiUnavailable: home.scenario === 'aiError',
+    // Money in, money out and the salary habit all live in the Bank space —
+    // a client without one has no such history to show.
+    snapshot: ownedKeys.has('bank')
+      ? buildSnapshot(state)
+      : { days: WINDOW_DAYS, inflow: 0, outflow: 0, putToWork: 0 },
+    goals: buildGoals(state, chf, ownedKeys),
+    streak: ownedKeys.has('bank') ? buildStreak(state) : null,
     scenario: home.scenario,
     firstName: 'Léa',
     chf,
+    balancesHidden: home.balancesHidden,
   };
 }

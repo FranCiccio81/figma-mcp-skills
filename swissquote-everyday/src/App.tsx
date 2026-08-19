@@ -20,6 +20,7 @@ import { Transactions } from './features/transactions/Transactions';
 import { HomeTab } from './features/wealth-home/HomeTab';
 import { HomeVariantA } from './features/home-concepts/HomeVariantA';
 import { HomeVariantB } from './features/home-concepts/HomeVariantB';
+import { HomeVariantC } from './features/home-concepts/HomeVariantC';
 import { PlanTab } from './features/plan/PlanTab';
 import { SearchTab } from './features/search/SearchTab';
 import { TradeTab } from './features/trade/TradeTab';
@@ -49,7 +50,7 @@ function Phone() {
     content = <HomeTab />;
   } else if (nav.tab === 'home') {
     header = <TopBar />;
-    content = home.variant === 'A' ? <HomeVariantA /> : <HomeVariantB />;
+    content = home.variant === 'A' ? <HomeVariantA /> : home.variant === 'B' ? <HomeVariantB /> : <HomeVariantC />;
   } else if (nav.tab === 'plan') {
     header = <TopBar />;
     content = <PlanTab />;

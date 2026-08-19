@@ -1,8 +1,8 @@
-# Swissquote Mobile — Home redesign, two concepts
+# Swissquote Mobile — Home redesign, three concepts
 
 > Concept — not a product commitment.
 
-Two Home screens built as **different product hypotheses**, not two skins of
+Three Home screens built as **different product hypotheses**, not skins of
 the same layout. Both keep the five-tab navigation (Home · Trade · Bank ·
 Plan · Search), reuse the existing design system and engine, and add no
 third-party dependencies. The rest of the app is untouched.
@@ -10,7 +10,8 @@ third-party dependencies. The rest of the app is untouched.
 ## Switching between them
 
 Both live behind a development-only switch in the **Simulate** rig beside the
-phone: `Home concept → A · Universe-first / B · Smart Today`. Production
+phone: `Home concept → A · Universe-first / B · Smart Today / C · Good to
+see you`. Production
 navigation is unchanged — the switch is prototype scaffolding, and neither
 variant is reachable from the product surface.
 
@@ -34,6 +35,8 @@ The same rig forces every state each concept has to survive:
 | `ai.ts` | The **AI seam**: `HomeAiService` + a mock, a deliberately failing mock, and a deterministic fallback. No model, no network. |
 | `useHomeAi.ts` | React binding — loading / ready / unavailable, with the fallback wired into the error path. |
 | `shared.tsx` | Balance masking, the visibility toggle, skeletons, the AI label. |
+| `actions.tsx` | The money actions, and the rule for which ones a client sees. |
+| `BENCHMARK.md` | How other banking apps open, what the evidence says, and the FCA line Variant C does not cross. |
 
 Rules the mock enforces, and a real service would have to keep:
 
@@ -124,13 +127,60 @@ versus "here is what you should do".
 
 ---
 
+## Variant C — Good to see you
+
+**Shape.** A warm full-bleed hero (greeting, one consolidated number,
+today's movement, two actions) · a dismissible moment when something is
+finished · "your last 30 days" in three figures plus a habit streak · goals
+with real progress · the three spaces as compact tiles, same order · one
+friendly AI line with a way to ask.
+
+**Hypothesis.** People do not open a banking app to read a report; they open
+it to feel in control. If Home greets you by name, shows one confident
+number and then talks about momentum — what you put to work, what you are
+working towards, how long you have kept it up — the relationship stops being
+transactional. Derived from what the market actually does at the moment of
+opening: see `BENCHMARK.md`.
+
+**Strength.** It is the only one of the three that makes the client feel
+*good*, and the mechanics behind that are evidence-backed — progress
+visualisation and streaks are among the few engagement devices with real
+measured effect on saving behaviour. It also flatters what Swissquote
+already built: the salary allocation running quietly every month is exactly
+the kind of habit worth reflecting back. And every celebrated thing is
+saving, contributing or keeping a habit — never trading.
+
+**Risk.** Warmth in a bank is a short step from patronising, and the tone
+does not survive translation to every client: a private-banking client with
+CHF 970k may find "months running" trivialising. Momentum framing can also
+crowd out the thing that actually needs attention today — C has no priority
+mechanism, so a failed payment sits below a streak. And the FCA's evidence
+is a permanent constraint on how far this direction can be pushed: the same
+devices that make saving stick make trading dangerous.
+
+**What to test.**
+- Does the greeting read as warm or as filler? Ask clients to describe the
+  first screen in their own words, before prompting.
+- Does the streak change behaviour — do clients keep the allocation on
+  longer than in A or B? That is the only claim worth the risk.
+- Segment the tone: does it hold for a CHF 20k client and a CHF 1m client,
+  or does it need to soften as balances rise?
+- Comprehension: with a warm hero above them, can clients still find Trade,
+  Bank and Plan as fast as in A? Compare first-tap times directly.
+- Regulatory read of the celebration and streak copy, and a check that
+  nothing on the screen rewards trading.
+
+---
+
 ## Comparing them
 
-They differ on one question: **should Home be stable or should it be
-smart?** A tells the client where things are; B tells them what to do about
-it. Both use the same data, so any difference in the test comes from the
-hypothesis rather than from the numbers.
+They differ on one question each. **A: should Home be stable?** — it tells
+the client where things are. **B: should Home be smart?** — it tells them
+what to do about it. **C: should Home be warm?** — it tells them how they
+are doing. All three read the same adapter, so any difference in a test
+comes from the hypothesis rather than from the numbers.
 
-Worth measuring across both: time to the day's actual task, first-tap
-location, self-reported confidence in the numbers, and — since both carry an
-AI surface — whether clients can tell what the assistant did and did not do.
+Worth measuring across all three: time to the day's actual task, first-tap
+location, self-reported confidence in the numbers, and — since all three
+carry an AI surface — whether clients can tell what the assistant did and
+did not do.

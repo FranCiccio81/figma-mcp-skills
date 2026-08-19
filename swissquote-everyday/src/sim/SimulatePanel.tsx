@@ -13,6 +13,7 @@ import type { SimFlags } from '../state/types';
 const HOME_VARIANTS: { value: HomeVariant; label: string }[] = [
   { value: 'A', label: 'A · Universe-first' },
   { value: 'B', label: 'B · Smart Today' },
+  { value: 'C', label: 'C · Good to see you' },
 ];
 
 const HOME_SCENARIOS: { value: HomeScenario; label: string }[] = [

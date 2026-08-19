@@ -33,6 +33,8 @@
   --core-red-100: #fdeae9;
   --core-ink-surface: #17181c;      /* dark feature-card ground */
   --core-ink-surface-high: #2c3040; /* dark feature-card highlight */
+  --core-ink-warm: #33201a;         /* warm hero mid-tone ⟨sampled from brand⟩ */
+  --core-brand-900: #6b2a12;        /* deepest brand shade — white text passes AA */
   --core-on-ink: #ffffff;
   --core-on-ink-muted: rgba(255, 255, 255, 0.72);
   --core-on-ink-faint: rgba(255, 255, 255, 0.16);
@@ -103,6 +105,13 @@
   /* Feature cards (Smart Liquidity, AI Budgeting) */
   --gradient-card-inverse: linear-gradient(140deg, var(--core-ink-surface) 20%, var(--core-ink-surface-high) 100%);
   --gradient-card-ai: linear-gradient(160deg, var(--core-blue-050) 20%, var(--core-blue-100) 100%);
+  /* Warm welcome hero — brand heat over ink, so white text still passes AA. */
+  --gradient-hero-warm: linear-gradient(
+    155deg,
+    var(--core-ink-surface) 8%,
+    var(--core-ink-warm) 55%,
+    var(--core-brand-900) 100%
+  );
   --color-surface-inverse: var(--core-ink-surface);
   --color-text-on-inverse: var(--core-on-ink);
   --color-text-on-inverse-muted: var(--core-on-ink-muted);
