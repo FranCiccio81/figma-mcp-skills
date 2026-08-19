@@ -74,8 +74,35 @@ src/
     ui.tsx                    shared atoms (Toggle, Sheet, StatusPill…)
   features/                 One folder per P0 screen:
     home/  buying-power/  allocation/  budgeting/  auto-cover/  transactions/
+    card/  pay/  plan/  trade/  search/  wealth-home/
+    home-concepts/          The two Home redesign concepts + their design note.
   sim/SimulatePanel.tsx     Prototype rig, outside the phone frame.
 ```
+
+## Home redesign — two concepts
+
+The Home tab renders one of two competing designs, switched from the
+**Simulate** rig (`Home concept → A / B`). They are different product
+hypotheses, not two skins:
+
+- **A · Universe-first** — a stable map. Total wealth, then Trade / Bank /
+  Plan, each with its value and one signal. Same layout every day; AI appears
+  once, at the bottom, as a removable insight.
+- **B · Smart Today** — answers "is anything wrong, is there anything to do?"
+  first. Up to three prioritised items (needs you › changed › opportunity ›
+  good to know), then the same spaces in a fixed order, then Ask Swissquote
+  with contextual prompts.
+
+Both read `features/home-concepts/homeData.ts` — one adapter, every mocked
+value marked `BACKEND:` with the capability it needs — and talk to AI only
+through `HomeAiService` (`ai.ts`): a mock, a failing mock, and a
+deterministic fallback, with no model and no network. The rig also forces
+each required state: trade-only, bank-only, nothing today, loading, AI
+unavailable, balances hidden (which masks **every** figure, including the
+ones inside sentences).
+
+Full design note, per variant — hypothesis, strength, risk, what to test:
+[`src/features/home-concepts/README.md`](src/features/home-concepts/README.md).
 
 ## Liquidity engine — state transitions (§6)
 

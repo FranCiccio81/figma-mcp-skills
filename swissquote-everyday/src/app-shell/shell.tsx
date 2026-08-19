@@ -1,7 +1,7 @@
 /**
  * App shell replicated from the production Swissquote app reference:
  * iOS status bar, top bar (shield / search / avatar, or back + centred title),
- * bottom tab bar (Home · Trade · Bank · Search), and the app's signature
+ * bottom tab bar (Home · Trade · Bank · Plan · Search), and the app's signature
  * amount treatment (large integer, smaller grey decimals + currency).
  */
 import type { ReactNode } from 'react';
@@ -86,7 +86,7 @@ export function DetailTopBar({ title, onBack, onCard = false }: { title: string;
   );
 }
 
-export type AppTab = 'home' | 'trade' | 'bank' | 'search';
+export type AppTab = 'home' | 'trade' | 'bank' | 'plan' | 'search';
 
 const TAB_ICONS: Record<AppTab, ReactNode> = {
   home: (
@@ -106,10 +106,22 @@ const TAB_ICONS: Record<AppTab, ReactNode> = {
       <path d="M6 13.5h4" strokeLinecap="round" />
     </svg>
   ),
+  plan: (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path d="M11 2.5a8.5 8.5 0 1 0 8.5 8.5" strokeLinecap="round" />
+      <path d="M11 11 11 5.2M11 11l4.6 3" strokeLinecap="round" />
+    </svg>
+  ),
   search: <SearchIcon plus />,
 };
 
-const TAB_LABELS: Record<AppTab, string> = { home: 'Home', trade: 'Trade', bank: 'Bank', search: 'Search' };
+const TAB_LABELS: Record<AppTab, string> = {
+  home: 'Home',
+  trade: 'Trade',
+  bank: 'Bank',
+  plan: 'Plan',
+  search: 'Search',
+};
 
 export function BottomNav({ active, onSelect }: { active: AppTab; onSelect: (t: AppTab) => void }) {
   return (

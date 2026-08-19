@@ -16,9 +16,38 @@ import { initialState, reduce, type EngineAction } from './liquidityEngine';
 import type { EngineState } from './types';
 
 /** Bottom-tab of the host app. Everyday lives entirely inside 'bank'. */
-export type AppTab = 'home' | 'trade' | 'bank' | 'search';
+export type AppTab = 'home' | 'trade' | 'bank' | 'plan' | 'search';
 /** Screens within the Bank tab ('home' = the Everyday hub). */
 export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transactions' | 'card' | 'pay';
+
+/**
+ * Home redesign — the two concepts under evaluation. Development-only switch;
+ * production ships whichever concept wins the test, not a toggle.
+ */
+export type HomeVariant = 'A' | 'B';
+
+/**
+ * States the Home has to hold up in. Driven from the Simulate rig so a
+ * reviewer can see each one without editing code or waiting for a real
+ * backend to misbehave.
+ */
+export type HomeScenario =
+  | 'full' // multi-product client — the default
+  | 'tradeOnly' // client who only trades
+  | 'bankOnly' // client who only banks
+  | 'quiet' // nothing happened today
+  | 'loading' // data not back yet
+  | 'aiError'; // the AI service is unavailable
+
+export interface HomeDemo {
+  variant: HomeVariant;
+  scenario: HomeScenario;
+  /** Client-controlled privacy toggle, persisted per session in the real app. */
+  balancesHidden: boolean;
+  setVariant: (v: HomeVariant) => void;
+  setScenario: (s: HomeScenario) => void;
+  setBalancesHidden: (v: boolean) => void;
+}
 
 /** Debit-card settings — UI state, not part of the liquidity engine. */
 export interface CardSettings {
@@ -33,11 +62,17 @@ export interface Nav {
   screen: Screen;
   txnDetailId: string | null;
   buyingPowerOpen: boolean;
+  /** Sub-screen of the Home tab: the full wealth breakdown. */
+  wealthOpen: boolean;
+  /** Question carried from Home into the Search tab's Ask AI mode. */
+  askPrefill: string | null;
   setTab: (tab: AppTab) => void;
   go: (screen: Screen) => void;
   openTxn: (id: string) => void;
   closeTxn: () => void;
   setBuyingPowerOpen: (open: boolean) => void;
+  setWealthOpen: (open: boolean) => void;
+  ask: (question: string) => void;
 }
 
 /**
@@ -95,6 +130,7 @@ interface Store {
   setCard: (patch: Partial<CardSettings>) => void;
   bpSettings: BuyingPowerSettings;
   setBpSettings: (patch: Partial<BuyingPowerSettings>) => void;
+  home: HomeDemo;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -219,6 +255,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [screen, setScreen] = useState<Screen>('home');
   const [txnDetailId, setTxnDetailId] = useState<string | null>(null);
   const [buyingPowerOpen, setBuyingPowerOpen] = useState(false);
+  const [wealthOpen, setWealthOpen] = useState(false);
+  const [askPrefill, setAskPrefill] = useState<string | null>(null);
+  const [homeVariant, setHomeVariant] = useState<HomeVariant>('A');
+  const [homeScenario, setHomeScenario] = useState<HomeScenario>('full');
+  const [balancesHidden, setBalancesHidden] = useState(false);
   const [card, setCardState] = useState<CardSettings>({
     frozen: false,
     onlinePayments: true,
@@ -244,21 +285,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     screen,
     txnDetailId,
     buyingPowerOpen,
+    wealthOpen,
+    askPrefill,
     setTab: (t) => {
       setTxnDetailId(null);
       setBuyingPowerOpen(false);
+      setWealthOpen(false);
+      if (t !== 'search') setAskPrefill(null);
       setScreen('home');
       setTab(t);
     },
     go: (s) => {
       setTxnDetailId(null);
       setBuyingPowerOpen(false);
+      setWealthOpen(false);
       setScreen(s);
       setTab('bank');
     },
     openTxn: (id) => setTxnDetailId(id),
     closeTxn: () => setTxnDetailId(null),
     setBuyingPowerOpen,
+    setWealthOpen,
+    ask: (question) => {
+      setAskPrefill(question);
+      setTab('search');
+    },
   };
 
   // Reset is handled in App by remounting the provider with a new key.
@@ -272,6 +323,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCard: (patch) => setCardState((c) => ({ ...c, ...patch })),
     bpSettings,
     setBpSettings: (patch) => setBpSettingsState((c) => ({ ...c, ...patch })),
+    home: {
+      variant: homeVariant,
+      scenario: homeScenario,
+      balancesHidden,
+      setVariant: setHomeVariant,
+      setScenario: setHomeScenario,
+      setBalancesHidden,
+    },
   };
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;

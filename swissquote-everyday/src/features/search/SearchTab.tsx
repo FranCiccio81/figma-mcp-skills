@@ -149,7 +149,8 @@ function Keyboard({ onKey }: { onKey: (key: string) => void }) {
 export function SearchTab() {
   const { nav } = useStore();
   const [mode, setMode] = useState<'search' | 'ai'>('ai');
-  const [query, setQuery] = useState('');
+  // A question tapped on Home arrives already typed.
+  const [query, setQuery] = useState(nav.askPrefill ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onKey = (key: string) => {

@@ -829,6 +829,200 @@ button {
 .slider { width: 100%; accent-color: var(--color-action-primary); min-height: var(--size-touch-target); }
 
 /* ------------------------------------------------------------------ */
+/* Home redesign — shared between both concepts                        */
+/* ------------------------------------------------------------------ */
+.home-greeting {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+/* Hidden balances: same visual weight as the number it replaces. */
+.amount-hidden {
+  letter-spacing: 0.12em;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-bold);
+}
+.amount-hidden--xl { font-size: var(--font-size-display); line-height: var(--line-height-tight); }
+
+.ai-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-link);
+  background: var(--color-surface-info-subtle);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-xs);
+}
+
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  /* Visible on both the grey app background and a white card. */
+  background: linear-gradient(
+    90deg,
+    var(--color-border-subtle) 25%,
+    var(--color-border-default) 50%,
+    var(--color-border-subtle) 75%
+  );
+  background-size: 300% 100%;
+  animation: skeleton-sweep 1.4s var(--motion-easing-default) infinite;
+}
+@keyframes skeleton-sweep {
+  from { background-position: 150% 0; }
+  to { background-position: -150% 0; }
+}
+
+/* ---- Variant A · Universe-first ---------------------------------- */
+.wealth-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 100%;
+  padding: var(--space-xs) 0;
+}
+
+.universe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  border-left: 3px solid var(--color-border-default);
+}
+.universe--trade { border-left-color: var(--color-dataviz-trading); }
+.universe--bank { border-left-color: var(--color-dataviz-cash); }
+.universe--plan { border-left-color: var(--color-dataviz-save); }
+.universe__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.universe__title { font-size: var(--font-size-heading); font-weight: var(--font-weight-bold); }
+.universe__open { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); color: var(--color-text-link); }
+.universe__value { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.universe__purpose { font-size: var(--font-size-caption); color: var(--color-text-secondary); }
+.universe__signal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-caption);
+  margin-top: var(--space-2xs);
+}
+.universe__dot { width: var(--space-xs); height: var(--space-xs); border-radius: var(--radius-pill); background: currentColor; flex: none; }
+.universe__signal--positive { color: var(--color-text-positive); }
+.universe__signal--neutral { color: var(--color-text-secondary); }
+.universe__signal--attention { color: var(--color-text-warning); font-weight: var(--font-weight-semibold); }
+
+.insight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  background: var(--gradient-card-ai);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+.insight__head { display: flex; align-items: center; gap: var(--space-xs); }
+.insight__title { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); flex: 1; min-width: 0; }
+.insight__close {
+  min-width: var(--size-touch-target);
+  min-height: var(--size-touch-target);
+  margin: calc(var(--space-sm) * -1) calc(var(--space-xs) * -1) calc(var(--space-sm) * -1) 0;
+  font-size: var(--font-size-title);
+  color: var(--color-text-secondary);
+}
+.insight__text { font-size: var(--font-size-body); line-height: var(--line-height-default); }
+.insight__degraded { color: var(--color-text-warning); }
+.insight .disclosure {
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  min-height: var(--space-xl);
+}
+
+/* ---- Variant B · Smart Today ------------------------------------- */
+.wealth-strip { display: flex; align-items: center; gap: var(--space-sm); }
+.wealth-strip__amount { display: flex; align-items: center; gap: var(--space-2xs); }
+
+.today {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+}
+/* The one thing that needs a decision is the only thing that looks urgent. */
+.today--primary.today--action { border: 1px solid var(--color-border-error); }
+.today--primary.today--opportunity { border: 1px solid var(--color-action-accent); }
+.today__badge {
+  align-self: flex-start;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-xs);
+  margin-bottom: var(--space-2xs);
+}
+.today__badge--action { background: var(--color-surface-error-subtle); color: var(--color-text-error); }
+.today__badge--change { background: var(--color-surface-info-subtle); color: var(--color-text-link); }
+.today__badge--opportunity { background: var(--color-surface-brand-subtle); color: var(--color-text-accent); }
+.today__badge--insight { background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.today__title { font-size: var(--font-size-heading); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.today__body { font-size: var(--font-size-caption); color: var(--color-text-secondary); line-height: var(--line-height-default); }
+.today__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; }
+.today__foot .disclosure {
+  width: auto;
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+.today-empty { display: flex; flex-direction: column; gap: var(--space-xs); align-items: flex-start; }
+
+.space-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--size-touch-target);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+}
+.space-row:last-child { border-bottom: none; }
+.space-row__title { display: block; font-weight: var(--font-weight-semibold); }
+.space-row__value { font-weight: var(--font-weight-bold); font-feature-settings: var(--font-feature-numeric); }
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: flex-start;
+  background: var(--gradient-card-ai);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+.ask__head { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: var(--space-sm); }
+.ask__title { display: inline-flex; align-items: center; gap: var(--space-2xs); font-weight: var(--font-weight-bold); }
+.ask__prompts { display: flex; flex-direction: column; gap: var(--space-xs); width: 100%; }
+.ask__chip {
+  text-align: left;
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-caption);
+  min-height: var(--size-touch-target);
+}
+
+/* ------------------------------------------------------------------ */
 /* Simulate rig (prototype control, outside the product surface)       */
 /* ------------------------------------------------------------------ */
 .sim-panel {
@@ -841,6 +1035,13 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+.sim-panel__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  border-top: 1px dashed var(--color-border-default);
+  padding-top: var(--space-sm);
 }
 .sim-panel__chip {
   display: inline-flex;
@@ -874,4 +1075,6 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .bp-bar__segment, .sheet { animation: none; }
+  /* The loading shape stays; only the sweep goes. */
+  .skeleton { animation: none; background: var(--color-border-subtle); }
 }
