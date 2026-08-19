@@ -19,8 +19,8 @@ The same rig forces every state each concept has to survive:
 | Chip | What it does |
 |---|---|
 | Multi-product | The default client: trades, banks and saves. |
-| Trade only | Client with a trading account and nothing else. |
-| Bank only | Client who only banks. |
+| Trade only | Client with a trading account and nothing else — Bank and Plan keep their slot and become "Discover". |
+| Bank only | Client who only banks; Trade and Plan stay discoverable. |
 | Nothing today | No activity — the empty state, on purpose. |
 | Loading | Positions not back yet: skeleton, no layout jump. |
 | AI unavailable | The service fails; the deterministic fallback takes over. |
@@ -48,6 +48,10 @@ Rules the mock enforces, and a real service would have to keep:
 ---
 
 ## Variant A — Universe-first
+
+**Shape.** Greeting · total wealth with today's movement · three universe
+cards (value, purpose, one signal, Open →) · four fixed quick actions · one
+removable AI insight.
 
 **Hypothesis.** Clients hold three mental accounts — *what I trade*, *what I
 bank with*, *what I'm building* — and Home's job is to show the state of each
@@ -79,6 +83,11 @@ proactive, and it is below the fold.
 ---
 
 ## Variant B — Smart Today
+
+**Shape.** Compact wealth strip · Today (≤3 prioritised cards, each with a
+CTA and "why you're seeing this") · the same three spaces in fixed order ·
+contextual actions (Top up 3a appears only while allowance remains) · Ask
+Swissquote with prompts drawn from what is actually going on.
 
 **Hypothesis.** Clients open the app with a question — *is anything wrong,
 and is there anything I should do?* Home should answer it before showing

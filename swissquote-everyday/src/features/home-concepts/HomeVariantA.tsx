@@ -14,11 +14,31 @@
  */
 import { useState } from 'react';
 import { useStore } from '../../state/store';
+import { availableActions, FIXED_ACTIONS } from './actions';
 import { useHomeData, type Universe } from './homeData';
 import { AiLabel, Amount, BalanceVisibilityButton, BigAmount, HomeSkeleton, useGoTo } from './shared';
 import { useHomeAiBrief } from './useHomeAi';
 
 function UniverseCard({ universe, onOpen }: { universe: Universe; onOpen: () => void }) {
+  // A space the client has not opened keeps its position and its label, and
+  // says so plainly — no balance, no invented number.
+  if (!universe.owned) {
+    return (
+      <button
+        type="button"
+        className={`universe universe--${universe.key} universe--empty`}
+        onClick={onOpen}
+      >
+        <span className="universe__head">
+          <span className="universe__title">{universe.title}</span>
+          <span className="universe__open">
+            Discover <span aria-hidden="true">→</span>
+          </span>
+        </span>
+        <span className="universe__purpose">{universe.signal.text}</span>
+      </button>
+    );
+  }
   return (
     <button type="button" className={`universe universe--${universe.key}`} onClick={onOpen}>
       <span className="universe__head">
@@ -39,42 +59,6 @@ function UniverseCard({ universe, onOpen }: { universe: Universe; onOpen: () => 
   );
 }
 
-/**
- * Quick actions — the four things clients start from, not a feature menu.
- * `needs` keeps a client from being offered a space they do not have.
- */
-const ACTIONS = [
-  {
-    label: 'Move money',
-    needs: 'bank' as const,
-    destination: { tab: 'bank' as const, screen: 'autoCover' as const },
-    icon: (
-      <>
-        <path d="M7 3.5v15M7 18.5l-3-3M7 18.5l3-3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M15 18.5v-15M15 3.5l-3 3M15 3.5l3 3" strokeLinecap="round" strokeLinejoin="round" />
-      </>
-    ),
-  },
-  {
-    label: 'Add money',
-    needs: null,
-    destination: { tab: 'bank' as const, screen: 'home' as const },
-    icon: <path d="M11 4.5v13M4.5 11h13" strokeLinecap="round" />,
-  },
-  {
-    label: 'Exchange',
-    needs: 'bank' as const,
-    destination: { tab: 'bank' as const, screen: 'pay' as const },
-    icon: <path d="M4 8h11l-3-3M18 14H7l3 3" strokeLinecap="round" strokeLinejoin="round" />,
-  },
-  {
-    label: 'Invest',
-    needs: 'plan' as const,
-    destination: { tab: 'plan' as const },
-    icon: <path d="M4 15.5 9 10l3.5 3L18 6.5M18 6.5h-4M18 6.5v4" strokeLinecap="round" strokeLinejoin="round" />,
-  },
-];
-
 export function HomeVariantA() {
   const data = useHomeData();
   const { nav } = useStore();
@@ -86,13 +70,7 @@ export function HomeVariantA() {
   // The headline always comes from the data, never from the service.
   const statementTitle = data.today.find((t) => t.id === statement?.itemId)?.title ?? null;
 
-  // A client without a Bank space is not offered bank actions.
-  const has = (key: string) => data.universes.some((u) => u.key === key);
-  const actions = ACTIONS.filter((a) => a.needs === null || has(a.needs)).map((a) =>
-    a.label === 'Add money' && !has('bank')
-      ? { ...a, destination: { tab: 'trade' as const, screen: undefined } }
-      : a,
-  );
+  const actions = availableActions(data, FIXED_ACTIONS);
 
   if (data.loading) return <HomeSkeleton rows={3} />;
 
@@ -112,9 +90,14 @@ export function HomeVariantA() {
       >
         <span className="caption">Total wealth</span>
         <BigAmount value={data.totalWealth} />
+        {data.dayChange && (
+          <span className={`delta amount ${data.dayChange.amount >= 0 ? 'delta--up' : 'delta--down'}`}>
+            {data.dayChange.amount >= 0 ? '▲' : '▼'} {data.chf.signed(data.dayChange.amount)} today ·{' '}
+            {Math.abs(data.dayChange.pct).toFixed(2)}%
+          </span>
+        )}
         <span className="micro">
-          Across {data.universes.length} {data.universes.length === 1 ? 'space' : 'spaces'} · see the breakdown{' '}
-          <span aria-hidden="true">›</span>
+          See the breakdown <span aria-hidden="true">›</span>
         </span>
       </button>
 
@@ -126,7 +109,8 @@ export function HomeVariantA() {
 
       <nav
         className="grid"
-        style={{ gap: 'var(--space-xs)', gridTemplateColumns: `repeat(${Math.max(actions.length, 1)}, minmax(0, 1fr))` }}
+        /* Always a four-column grid, so a shorter row starts at the left edge. */
+        style={{ gap: 'var(--space-xs)', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
         aria-label="Quick actions"
       >
         {actions.map((a) => (

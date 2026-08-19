@@ -15,6 +15,7 @@
  */
 import { useState } from 'react';
 import { useStore } from '../../state/store';
+import { contextualActions } from './actions';
 import { TODAY_LABELS, useHomeData, type TodayItem } from './homeData';
 /* The list is already prioritised by the adapter — this screen only cuts it. */
 import { AiLabel, Amount, BalanceVisibilityButton, BigAmount, HomeSkeleton, SparkIcon, useGoTo } from './shared';
@@ -73,6 +74,9 @@ export function HomeVariantB() {
   const askPrompts = useHomeAiPrompts(data);
 
   const items = data.today.slice(0, MAX_TODAY);
+  // Derived from the client's situation, not a fixed row: "Top up 3a" is here
+  // only while there is allowance left to use.
+  const actions = contextualActions(data);
   const rest = data.today.length - items.length;
   // The service re-words an item; if it has nothing for one, the adapter's own
   // sentence is used. Either way the client reads the same facts.
@@ -155,16 +159,39 @@ export function HomeVariantB() {
             <button key={u.key} type="button" className="space-row" onClick={() => goTo(u.destination)}>
               <span className="flex-1 min-w-0">
                 <span className="space-row__title">{u.title}</span>
-                <span className="caption block">{u.purpose}</span>
+                <span className="caption block">{u.owned ? u.purpose : u.signal.text}</span>
               </span>
-              <span className="space-row__value">
-                <Amount value={u.value} />
-              </span>
+              {u.owned ? (
+                <span className="space-row__value">
+                  <Amount value={u.value} />
+                </span>
+              ) : (
+                <span className="caption">Discover</span>
+              )}
               <span className="product-row__chevron" aria-hidden="true">›</span>
             </button>
           ))}
         </div>
       </section>
+
+      {actions.length > 0 && (
+        <nav
+          className="grid"
+          style={{ gap: 'var(--space-xs)', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
+          aria-label="Things you can do now"
+        >
+          {actions.map((a) => (
+            <button key={a.label} type="button" className="quick-action" onClick={() => goTo(a.destination)}>
+              <span className="quick-action__icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  {a.icon}
+                </svg>
+              </span>
+              {a.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* Ask — the entry point, with questions this client can actually ask today. */}
       <section className="ask" aria-label="Ask Swissquote">

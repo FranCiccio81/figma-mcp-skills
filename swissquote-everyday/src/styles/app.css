@@ -900,6 +900,14 @@ button {
 .universe--trade { border-left-color: var(--color-dataviz-trading); }
 .universe--bank { border-left-color: var(--color-dataviz-cash); }
 .universe--plan { border-left-color: var(--color-dataviz-save); }
+/* A space the client has not opened: same slot, no balance, less weight. */
+.universe--empty {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--color-border-default);
+  border-left-width: 3px;
+  border-left-style: solid;
+}
 .universe__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
 .universe__title { font-size: var(--font-size-heading); font-weight: var(--font-weight-bold); }
 .universe__open { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); color: var(--color-text-link); }

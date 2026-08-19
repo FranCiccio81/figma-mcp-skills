@@ -43,13 +43,19 @@ export interface Destination {
 export interface Universe {
   key: UniverseKey;
   title: string;
-  /** What the client owns in this space, in CHF. */
+  /** What the client owns in this space, in CHF. Zero when they have not opened it. */
   value: number;
   /** One line under the title — what the space is for. */
   purpose: string;
   /** Exactly one signal per card. More than one and the card stops being scannable. */
   signal: { tone: Tone; text: string };
   destination: Destination;
+  /**
+   * False when the client has no product in this space. The card stays on the
+   * screen — a trade-only client must still be able to find Bank — but it
+   * carries no balance and reads as an invitation, not a holding.
+   */
+  owned: boolean;
 }
 
 /**
@@ -86,6 +92,12 @@ export interface TodayItem {
 export interface HomeData {
   /** Sum of everything owned, less anything borrowed. */
   totalWealth: number;
+  /**
+   * Movement since yesterday's close, across everything owned.
+   * BACKEND: an end-of-previous-day valuation snapshot per product. Null when
+   * nothing the client holds actually moves daily.
+   */
+  dayChange: { amount: number; pct: number } | null;
   universes: Universe[];
   /** Already sorted by priority and capped by the caller. */
   today: TodayItem[];
@@ -164,6 +176,7 @@ function buildUniverses(
               text: `Down ${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}% today · ${chf.signed(tradeChange)}`,
             },
       destination: { tab: 'trade' },
+      owned: scenario !== 'bankOnly',
     },
     {
       key: 'bank',
@@ -176,6 +189,7 @@ function buildUniverses(
           ? { tone: 'neutral', text: 'Auto Cover moved money to keep a payment going through' }
           : { tone: 'neutral', text: `${chf(availableNow)} ready to spend now` },
       destination: { tab: 'bank', screen: 'home' },
+      owned: scenario !== 'tradeOnly',
     },
     {
       key: 'plan',
@@ -187,17 +201,23 @@ function buildUniverses(
           ? { tone: 'neutral', text: `${chf(pillarRoom, 0)} of 3a allowance still open this year` }
           : { tone: 'positive', text: "This year's 3a allowance is fully paid in" },
       destination: { tab: 'plan' },
+      owned: scenario !== 'tradeOnly' && scenario !== 'bankOnly',
     },
   ];
 
-  // A client who only trades, or only banks, sees only what they hold. The
-  // Home must not look broken for them — it just has fewer cards.
-  if (scenario === 'tradeOnly') return all.filter((u) => u.key === 'trade');
-  if (scenario === 'bankOnly') return all.filter((u) => u.key === 'bank');
+  // A space the client has not opened keeps its place in the layout — the
+  // order never changes — but shows an invitation instead of a balance.
+  const INVITATION: Record<UniverseKey, string> = {
+    trade: 'Open a trading account and start investing',
+    bank: 'Open an Everyday account, with a card and payments',
+    plan: 'Start a 3a or a saving plan',
+  };
   // `forecast` is read by the Today builder; kept in the signature so the
   // adapter has one entry point per screen load.
   void forecast;
-  return all;
+  return all.map((u) =>
+    u.owned ? u : { ...u, value: 0, signal: { tone: 'neutral' as Tone, text: INVITATION[u.key] } },
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -215,7 +235,7 @@ function buildToday(
   universes: Universe[],
   chf: Money,
 ): TodayItem[] {
-  const shown = new Set(universes.map((u) => u.key));
+  const shown = new Set(universes.filter((u) => u.owned).map((u) => u.key));
   const items: TodayItem[] = [];
   const a = state.accounts;
 
@@ -396,15 +416,26 @@ export function useHomeData(): HomeData {
   const chf = makeMoney(home.balancesHidden);
   const universes = buildUniverses(state, forecast, home.scenario, chf);
 
-  // The roll-up of what is listed, less what is borrowed — the same
-  // arithmetic as the wealth breakdown, so the two always agree.
-  const totalWealth =
-    universes.reduce((s, u) => s + u.value, 0) - (universes.length === 3 ? a.lombardDrawn : 0);
+  // The roll-up of what is owned, less what is borrowed — the same arithmetic
+  // as the wealth breakdown, so the two always agree.
+  const owned = universes.filter((u) => u.owned);
+  const totalWealth = owned.reduce((sum, u) => sum + u.value, 0) - a.lombardDrawn;
+
+  // Only the trading account moves intraday; cash and savings do not. Passing
+  // that through honestly beats inventing a whole-portfolio tick.
+  const tradeUniverse = owned.find((u) => u.key === 'trade');
+  const dayChange = tradeUniverse
+    ? (() => {
+        const delta = tradeUniverse.value - tradeUniverse.value / (1 + TRADING_DAY_CHANGE_PCT / 100);
+        return { amount: delta, pct: totalWealth > 0 ? (delta / (totalWealth - delta)) * 100 : 0 };
+      })()
+    : null;
 
   const today = home.scenario === 'quiet' ? [] : buildToday(state, forecast, universes, chf);
 
   return {
     totalWealth,
+    dayChange,
     universes,
     today,
     loading: home.scenario === 'loading',
