@@ -1,19 +1,19 @@
-# Swissquote Mobile — Home redesign, three concepts
+# Swissquote Mobile — Home redesign, four concepts
 
 > Concept — not a product commitment.
 
-Three Home screens built as **different product hypotheses**, not skins of
-the same layout. Both keep the five-tab navigation (Home · Trade · Bank ·
+Four Home screens built as **different product hypotheses**, not skins of
+the same layout. All keep the five-tab navigation (Home · Trade · Bank ·
 Plan · Search), reuse the existing design system and engine, and add no
 third-party dependencies. The rest of the app is untouched.
 
 ## Switching between them
 
-Both live behind a development-only switch in the **Simulate** rig beside the
-phone: `Home concept → A · Universe-first / B · Smart Today / C · Good to
-see you`. Production
-navigation is unchanged — the switch is prototype scaffolding, and neither
-variant is reachable from the product surface.
+All four live behind a development-only switch in the **Simulate** rig beside
+the phone: `Home concept → A · Universe-first / B · Smart Today / C · Good to
+see you / D · The dashboard`. Production navigation is unchanged — the switch
+is prototype scaffolding, and no variant is reachable from the product
+surface.
 
 The same rig forces every state each concept has to survive:
 
@@ -36,7 +36,8 @@ The same rig forces every state each concept has to survive:
 | `useHomeAi.ts` | React binding — loading / ready / unavailable, with the fallback wired into the error path. |
 | `shared.tsx` | Balance masking, the visibility toggle, skeletons, the AI label. |
 | `actions.tsx` | The money actions, and the rule for which ones a client sees. |
-| `BENCHMARK.md` | How other banking apps open, what the evidence says, and the FCA line Variant C does not cross. |
+| `charts.tsx` | The three charts Variant D plots, in plain SVG on the project's tokens. |
+| `BENCHMARK.md` | Two benchmarks: how banking apps open (C, with the FCA line it does not cross) and what the best analytical dashboards show (D). |
 
 Rules the mock enforces, and a real service would have to keep:
 
@@ -172,15 +173,61 @@ devices that make saving stick make trading dangerous.
 
 ---
 
+## Variant D — The dashboard
+
+**Shape.** Total wealth with the change over the selected range · a wealth
+trend chart with 1W / 1M / 3M chips, crosshair and tooltip · allocation as
+one stacked bar whose legend rows are the navigation · the cash-flow triad
+(in / out / net) over a per-month diverging column chart · three ratios ·
+a table view of the same numbers.
+
+**Hypothesis.** A client with roughly a million francs across five products
+does not want to be greeted, told what to do, or congratulated. They want
+the position: what it is worth, how it got there, how it is split, and
+whether the month was net positive. Benchmarked on Empower's net-worth
+trajectory, Fidelity Full View, Monarch's dashboard composition and
+Copilot's cash-flow triad — see `BENCHMARK.md`.
+
+**Strength.** It is the only variant that answers *how did I get here*, and
+the only one where the analysis is also the navigation — the allocation rows
+open Trade, Bank and Plan, so density costs no taps. It suits Swissquote's
+actual client base better than a warm hero does, it makes the Plan
+concentration (60%) visible in a way no list of balances would, and every
+chart is honest about its own limits.
+
+**Risk.** It is the densest of the four and the least welcoming: a client
+who only wants to pay a bill has to scroll past three charts. It rewards
+financial literacy, which is a way of saying it excludes people without it.
+It is also the most expensive to build honestly — the wealth line here is
+reconstructed from cash movements, and doing it properly needs a daily
+valuation service that does not exist yet.
+
+**What to test.**
+- Can clients read the trend correctly — including that it does not contain
+  market performance? Ask them what the line shows.
+- Does the allocation bar change any intention? "Plan is 60% of your wealth"
+  is the kind of fact that should move a decision, or it does not belong.
+- Do the ratios mean anything to them, or are they adviser vocabulary?
+  "Months of cover" especially.
+- Compare with A directly on time-to-Bank: does the density cost navigation
+  speed, or does the allocation row absorb it?
+- Does anyone open the table view — and who?
+
+---
+
 ## Comparing them
 
 They differ on one question each. **A: should Home be stable?** — it tells
 the client where things are. **B: should Home be smart?** — it tells them
 what to do about it. **C: should Home be warm?** — it tells them how they
-are doing. All three read the same adapter, so any difference in a test
-comes from the hypothesis rather than from the numbers.
+are doing. **D: should Home be analytical?** — it tells them how they got
+here. All four read the same adapter, so any difference in a test comes from
+the hypothesis rather than from the numbers.
 
-Worth measuring across all three: time to the day's actual task, first-tap
-location, self-reported confidence in the numbers, and — since all three
+A useful pairing for research: A and D are both "no personalisation", so
+they isolate density; B and C are both proactive, so they isolate tone.
+
+Worth measuring across all four: time to the day's actual task, first-tap
+location, self-reported confidence in the numbers, and — for the three that
 carry an AI surface — whether clients can tell what the assistant did and
-did not do.
+did not do. (D carries none: it is the control.)

@@ -182,7 +182,7 @@
       __name(T, "T");
       var U = { current: null };
       var V = { transition: null };
-      var W2 = { ReactCurrentDispatcher: U, ReactCurrentBatchConfig: V, ReactCurrentOwner: K };
+      var W3 = { ReactCurrentDispatcher: U, ReactCurrentBatchConfig: V, ReactCurrentOwner: K };
       function X() {
         throw Error("act(...) is not supported in production builds of React.");
       }
@@ -211,7 +211,7 @@
       exports.PureComponent = G;
       exports.StrictMode = q;
       exports.Suspense = w;
-      exports.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = W2;
+      exports.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = W3;
       exports.act = X;
       exports.cloneElement = function(a, b, e) {
         if (null === a || void 0 === a) throw Error("React.cloneElement(...): The argument must be a React element, but you passed " + a + ".");
@@ -5346,7 +5346,7 @@
         if (null !== c) if ("function" === typeof c) try {
           c(null);
         } catch (d) {
-          W2(a, b, d);
+          W3(a, b, d);
         }
         else c.current = null;
       }
@@ -5355,7 +5355,7 @@
         try {
           c();
         } catch (d) {
-          W2(a, b, d);
+          W3(a, b, d);
         }
       }
       __name(Mj, "Mj");
@@ -5434,7 +5434,7 @@
                 throw Error(p(163));
             }
           } catch (F) {
-            W2(b, b.return, F);
+            W3(b, b.return, F);
           }
           a = b.sibling;
           if (null !== a) {
@@ -5597,7 +5597,7 @@
             if (!U && (Lj(c, b), d = c.stateNode, "function" === typeof d.componentWillUnmount)) try {
               d.props = c.memoizedProps, d.state = c.memoizedState, d.componentWillUnmount();
             } catch (h) {
-              W2(c, b, h);
+              W3(c, b, h);
             }
             Yj(a, b, c);
             break;
@@ -5656,7 +5656,7 @@
             null !== k && (k.return = null);
             e.return = null;
           } catch (l) {
-            W2(e, b, l);
+            W3(e, b, l);
           }
         }
         if (b.subtreeFlags & 12854) for (b = b.child; null !== b; ) dk(b, a), b = b.sibling;
@@ -5675,12 +5675,12 @@
               try {
                 Pj(3, a, a.return), Qj(3, a);
               } catch (t) {
-                W2(a, a.return, t);
+                W3(a, a.return, t);
               }
               try {
                 Pj(5, a, a.return);
               } catch (t) {
-                W2(a, a.return, t);
+                W3(a, a.return, t);
               }
             }
             break;
@@ -5698,7 +5698,7 @@
               try {
                 ob(e, "");
               } catch (t) {
-                W2(a, a.return, t);
+                W3(a, a.return, t);
               }
             }
             if (d & 4 && (e = a.stateNode, null != e)) {
@@ -5732,7 +5732,7 @@
                 }
                 e[Pf] = f;
               } catch (t) {
-                W2(a, a.return, t);
+                W3(a, a.return, t);
               }
             }
             break;
@@ -5746,7 +5746,7 @@
               try {
                 e.nodeValue = f;
               } catch (t) {
-                W2(a, a.return, t);
+                W3(a, a.return, t);
               }
             }
             break;
@@ -5756,7 +5756,7 @@
             if (d & 4 && null !== c && c.memoizedState.isDehydrated) try {
               bd(b.containerInfo);
             } catch (t) {
-              W2(a, a.return, t);
+              W3(a, a.return, t);
             }
             break;
           case 4:
@@ -5796,7 +5796,7 @@
                         try {
                           b = d, n.props = b.memoizedProps, n.state = b.memoizedState, n.componentWillUnmount();
                         } catch (t) {
-                          W2(d, c, t);
+                          W3(d, c, t);
                         }
                       }
                       break;
@@ -5820,14 +5820,14 @@
                     try {
                       e = q.stateNode, l ? (f = e.style, "function" === typeof f.setProperty ? f.setProperty("display", "none", "important") : f.display = "none") : (h = q.stateNode, k = q.memoizedProps.style, g = void 0 !== k && null !== k && k.hasOwnProperty("display") ? k.display : null, h.style.display = rb("display", g));
                     } catch (t) {
-                      W2(a, a.return, t);
+                      W3(a, a.return, t);
                     }
                   }
                 } else if (6 === q.tag) {
                   if (null === m) try {
                     q.stateNode.nodeValue = l ? "" : q.memoizedProps;
                   } catch (t) {
-                    W2(a, a.return, t);
+                    W3(a, a.return, t);
                   }
                 } else if ((22 !== q.tag && 23 !== q.tag || null === q.memoizedState || q === a) && null !== q.child) {
                   q.child.return = q;
@@ -5891,7 +5891,7 @@
                 throw Error(p(161));
             }
           } catch (k) {
-            W2(a, a.return, k);
+            W3(a, a.return, k);
           }
           a.flags &= -3;
         }
@@ -6007,7 +6007,7 @@
               }
               U || b.flags & 512 && Rj(b);
             } catch (r) {
-              W2(b, b.return, r);
+              W3(b, b.return, r);
             }
           }
           if (b === a) {
@@ -6053,7 +6053,7 @@
                 try {
                   Qj(4, b);
                 } catch (k) {
-                  W2(b, c, k);
+                  W3(b, c, k);
                 }
                 break;
               case 1:
@@ -6063,14 +6063,14 @@
                   try {
                     d.componentDidMount();
                   } catch (k) {
-                    W2(b, e, k);
+                    W3(b, e, k);
                   }
                 }
                 var f = b.return;
                 try {
                   Rj(b);
                 } catch (k) {
-                  W2(b, f, k);
+                  W3(b, f, k);
                 }
                 break;
               case 5:
@@ -6078,11 +6078,11 @@
                 try {
                   Rj(b);
                 } catch (k) {
-                  W2(b, g, k);
+                  W3(b, g, k);
                 }
             }
           } catch (k) {
-            W2(b, b.return, k);
+            W3(b, b.return, k);
           }
           if (b === a) {
             V = null;
@@ -6783,7 +6783,7 @@
                         Qj(9, h);
                     }
                   } catch (na) {
-                    W2(h, h.return, na);
+                    W3(h, h.return, na);
                   }
                   if (h === g) {
                     V = null;
@@ -6822,7 +6822,7 @@
         null !== a && (Ac(a, 1, b), Dk(a, b));
       }
       __name(Xk, "Xk");
-      function W2(a, b, c) {
+      function W3(a, b, c) {
         if (3 === a.tag) Xk(a, a, c);
         else for (; null !== b; ) {
           if (3 === b.tag) {
@@ -6842,7 +6842,7 @@
           b = b.return;
         }
       }
-      __name(W2, "W");
+      __name(W3, "W");
       function Ti(a, b, c) {
         var d = a.pingCache;
         null !== d && d.delete(b);
@@ -7678,11 +7678,11 @@
   });
 
   // src/main.tsx
-  var import_react17 = __toESM(require_react(), 1);
+  var import_react19 = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
 
   // src/App.tsx
-  var import_react16 = __toESM(require_react(), 1);
+  var import_react18 = __toESM(require_react(), 1);
 
   // src/lib/format.ts
   function swissNumber(value, decimals = 2) {
@@ -11923,6 +11923,87 @@
     return { months: count, nextRun: longDate(nextSalaryDayAfter(state.day) + 1) };
   }
   __name(buildStreak, "buildStreak");
+  var TREND_DAYS = 90;
+  var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function isExternal(t) {
+    if (t.smart?.engine === "autoCover") return false;
+    if (t.smart?.destination && AT_WORK.has(t.smart.destination)) return false;
+    return t.category !== "smart-liquidity";
+  }
+  __name(isExternal, "isExternal");
+  function buildTrend(state, today) {
+    const byDay = /* @__PURE__ */ new Map();
+    for (const t of state.txns) {
+      if (t.status === "failed" || !isExternal(t)) continue;
+      byDay.set(t.day, (byDay.get(t.day) ?? 0) + t.amount);
+    }
+    const points = [{ day: state.day, value: today }];
+    let running = today;
+    for (let d = state.day; d > state.day - TREND_DAYS; d -= 1) {
+      running -= byDay.get(d) ?? 0;
+      points.unshift({ day: d - 1, value: running });
+    }
+    return points;
+  }
+  __name(buildTrend, "buildTrend");
+  function buildMonths(state) {
+    const acc = /* @__PURE__ */ new Map();
+    const currentKey = (() => {
+      const d = dateOf(state.day);
+      return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    })();
+    for (const t of state.txns) {
+      if (t.status === "failed" || !isExternal(t) || t.day > state.day) continue;
+      const d = dateOf(t.day);
+      const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+      const row = acc.get(key) ?? {
+        key,
+        label: `${MONTH_NAMES[d.getUTCMonth()]}`,
+        inflow: 0,
+        outflow: 0,
+        net: 0,
+        partial: key === currentKey
+      };
+      if (t.amount > 0) row.inflow += t.amount;
+      else row.outflow += -t.amount;
+      row.net = row.inflow - row.outflow;
+      acc.set(key, row);
+    }
+    const rows = [...acc.values()].sort((a, b) => {
+      const [ay, am] = a.key.split("-").map(Number);
+      const [by, bm] = b.key.split("-").map(Number);
+      return ay - by || am - bm;
+    });
+    const historyStart = dateOf(state.day - TREND_DAYS + 1);
+    if (rows.length > 0 && historyStart.getUTCDate() !== 1) rows[0].partial = true;
+    return rows;
+  }
+  __name(buildMonths, "buildMonths");
+  function buildAnalytics(state, universes, totalWealth, snapshot) {
+    const a = state.accounts;
+    const owned = universes.filter((u) => u.owned);
+    const allocation = owned.map((u) => ({
+      key: u.key,
+      label: u.title,
+      value: u.value,
+      pct: totalWealth > 0 ? u.value / totalWealth * 100 : 0,
+      destination: u.destination
+    }));
+    const invested = (owned.some((u) => u.key === "trade") ? TRADING_POSITIONS : 0) + (owned.some((u) => u.key === "plan") ? a.investEasy + a.savingPlan + PILLAR_3A : 0);
+    const spend = typicalMonthlySpend(state);
+    const liquid = a.everyday + a.saveEasy + a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+    return {
+      trend: buildTrend(state, totalWealth),
+      months: buildMonths(state),
+      allocation,
+      investedShare: totalWealth > 0 ? invested / totalWealth * 100 : 0,
+      putToWorkRate: snapshot.inflow > 0 ? snapshot.putToWork / snapshot.inflow * 100 : 0,
+      monthsOfCover: spend > 0 ? liquid / spend : 0,
+      typicalSpend: spend,
+      windowDays: snapshot.days
+    };
+  }
+  __name(buildAnalytics, "buildAnalytics");
   function useHomeData() {
     const { state, forecast, home } = useStore();
     const a = state.accounts;
@@ -11937,6 +12018,7 @@
     })() : null;
     const today = home.scenario === "quiet" ? [] : buildToday(state, forecast, universes, chf);
     const ownedKeys = new Set(owned.map((u) => u.key));
+    const snapshot = ownedKeys.has("bank") ? buildSnapshot(state) : { days: WINDOW_DAYS, inflow: 0, outflow: 0, putToWork: 0 };
     return {
       totalWealth,
       dayChange,
@@ -11944,10 +12026,9 @@
       today,
       loading: home.scenario === "loading",
       aiUnavailable: home.scenario === "aiError",
-      // Money in, money out and the salary habit all live in the Bank space —
-      // a client without one has no such history to show.
-      snapshot: ownedKeys.has("bank") ? buildSnapshot(state) : { days: WINDOW_DAYS, inflow: 0, outflow: 0, putToWork: 0 },
+      snapshot,
       goals: buildGoals(state, chf, ownedKeys),
+      analytics: buildAnalytics(state, universes, totalWealth, snapshot),
       streak: ownedKeys.has("bank") ? buildStreak(state) : null,
       scenario: home.scenario,
       firstName: "L\xE9a",
@@ -12626,8 +12707,377 @@
   }
   __name(HomeVariantC, "HomeVariantC");
 
-  // src/features/plan/PlanTab.tsx
+  // src/features/home-concepts/HomeVariantD.tsx
+  var import_react16 = __toESM(require_react(), 1);
+
+  // src/features/home-concepts/charts.tsx
+  var import_react15 = __toESM(require_react(), 1);
   var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
+  var W2 = 320;
+  function TrendChart({
+    points,
+    hidden,
+    label
+  }) {
+    const H2 = 120;
+    const [active, setActive] = (0, import_react15.useState)(null);
+    if (points.length < 2) return null;
+    const values = points.map((p2) => p2.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const pad = (max - min) * 0.12 || 1;
+    const lo = min - pad;
+    const hi = max + pad;
+    const x = /* @__PURE__ */ __name((i) => i / (points.length - 1) * W2, "x");
+    const y = /* @__PURE__ */ __name((v) => H2 - (v - lo) / (hi - lo) * H2, "y");
+    const line = points.map((p2, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p2.value).toFixed(1)}`).join(" ");
+    const area = `${line} L${W2},${H2} L0,${H2} Z`;
+    const onMove = /* @__PURE__ */ __name((e) => {
+      const box = e.currentTarget.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+      setActive(Math.round(ratio * (points.length - 1)));
+    }, "onMove");
+    const p = active !== null ? points[active] : null;
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
+      "div",
+      {
+        className: "chart",
+        onPointerMove: onMove,
+        onPointerDown: onMove,
+        onPointerLeave: () => setActive(null),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("svg", { viewBox: `0 0 ${W2} ${H2}`, className: "chart__svg", role: "img", "aria-label": label, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("path", { d: area, fill: "var(--color-chart-fill)" }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("path", { d: line, fill: "none", stroke: "var(--color-chart-line)", strokeWidth: "2", strokeLinejoin: "round" }),
+            p && active !== null && /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("g", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+                "line",
+                {
+                  x1: x(active),
+                  x2: x(active),
+                  y1: "0",
+                  y2: H2,
+                  stroke: "var(--color-border-default)",
+                  strokeWidth: "1"
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("circle", { cx: x(active), cy: y(p.value), r: "5", fill: "var(--color-surface-default)" }),
+              /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("circle", { cx: x(active), cy: y(p.value), r: "3.5", fill: "var(--color-chart-line)" })
+            ] })
+          ] }),
+          p ? /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "chart__tip", style: { left: `${x(active) / W2 * 100}%` }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "chart__tip-date", children: shortDate(p.day) }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "chart__tip-value", children: hidden ? "CHF \u2022\u2022\u2022" : `CHF ${swissNumber(p.value, 0)}` })
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "chart__axis", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { children: shortDate(points[0].day) }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { children: shortDate(points[points.length - 1].day) })
+          ] })
+        ]
+      }
+    );
+  }
+  __name(TrendChart, "TrendChart");
+  function AllocationBar({ slices, hidden }) {
+    const total = slices.reduce((s, x) => s + x.value, 0);
+    if (total <= 0) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+      "div",
+      {
+        className: "alloc",
+        role: "img",
+        "aria-label": slices.map((s) => `${s.label} ${Math.round(s.pct)} per cent${hidden ? "" : `, ${swissNumber(s.value, 0)} francs`}`).join("; "),
+        children: slices.map((s) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+          "span",
+          {
+            className: `alloc__seg alloc__seg--${s.key}`,
+            style: { flexGrow: s.value },
+            title: `${s.label} ${Math.round(s.pct)}%`
+          },
+          s.key
+        ))
+      }
+    );
+  }
+  __name(AllocationBar, "AllocationBar");
+  function NetFlowBars({
+    months,
+    hidden
+  }) {
+    const [active, setActive] = (0, import_react15.useState)(null);
+    if (months.length === 0) return null;
+    const peak = Math.max(...months.map((m) => Math.abs(m.net)), 1);
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "flowbars", children: months.map((m) => {
+      const share = Math.abs(m.net) / peak;
+      const up = m.net >= 0;
+      const open = active === m.key;
+      return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
+        "button",
+        {
+          type: "button",
+          className: `flowbar ${open ? "flowbar--active" : ""}`,
+          onPointerEnter: () => setActive(m.key),
+          onPointerLeave: () => setActive(null),
+          onClick: () => setActive(open ? null : m.key),
+          "aria-label": `${m.label}${m.partial ? ", partial month" : ""}: ${hidden ? "hidden" : `${up ? "plus" : "minus"} ${swissNumber(Math.abs(m.net), 0)} francs`}`,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "flowbar__half flowbar__half--up", children: up && /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+              "span",
+              {
+                className: `flowbar__mark flowbar__mark--up ${m.partial ? "flowbar__mark--partial" : ""}`,
+                style: { height: `${Math.max(share * 100, 4)}%` }
+              }
+            ) }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "flowbar__zero", "aria-hidden": "true" }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "flowbar__half flowbar__half--down", children: !up && /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+              "span",
+              {
+                className: `flowbar__mark flowbar__mark--down ${m.partial ? "flowbar__mark--partial" : ""}`,
+                style: { height: `${Math.max(share * 100, 4)}%` }
+              }
+            ) }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "flowbar__label", children: [
+              m.label,
+              m.partial && "*"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "flowbar__value", children: hidden ? "\u2022\u2022\u2022" : `${up ? "+" : "\u2212"}${swissNumber(Math.abs(m.net), 0)}` }),
+            open && /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "flowbar__tip", children: hidden ? "CHF \u2022\u2022\u2022" : `${up ? "+" : "\u2212"}${swissNumber(Math.abs(m.net), 0)}` })
+          ]
+        },
+        m.key
+      );
+    }) });
+  }
+  __name(NetFlowBars, "NetFlowBars");
+
+  // src/features/home-concepts/HomeVariantD.tsx
+  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
+  var RANGES = [
+    { key: "1W", days: 7 },
+    { key: "1M", days: 30 },
+    { key: "3M", days: 90 }
+  ];
+  function Stat({
+    label,
+    value,
+    note
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "stat", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "stat__label", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "stat__value", children: value }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "stat__note", children: note })
+    ] });
+  }
+  __name(Stat, "Stat");
+  function HomeVariantD() {
+    const data = useHomeData();
+    const { nav } = useStore();
+    const goTo = useGoTo();
+    const [range, setRange] = (0, import_react16.useState)("3M");
+    const [tableOpen, setTableOpen] = (0, import_react16.useState)(false);
+    const a = data.analytics;
+    const days = RANGES.find((r) => r.key === range).days;
+    const window2 = a.trend.slice(Math.max(0, a.trend.length - days - 1));
+    const first = window2[0]?.value ?? data.totalWealth;
+    const change = data.totalWealth - first;
+    const changePct = first > 0 ? change / first * 100 : 0;
+    if (data.loading) return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(HomeSkeleton, { rows: 3 });
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { "aria-label": "Total wealth", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex items-start justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+            "button",
+            {
+              type: "button",
+              className: "flex flex-col items-start",
+              style: { gap: "var(--space-2xs)" },
+              onClick: () => nav.setWealthOpen(true),
+              "aria-label": "Total wealth \u2014 see the full breakdown",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "caption", children: "Total wealth" }),
+                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BigAmount, { value: data.totalWealth })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BalanceVisibilityButton, {})
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("p", { className: `m-0 amount delta ${change >= 0 ? "delta--up" : "delta--down"}`, children: [
+          change >= 0 ? "\u25B2" : "\u25BC",
+          " ",
+          data.chf.signed(change),
+          " \xB7 ",
+          changePct >= 0 ? "+" : "\u2212",
+          Math.abs(changePct).toFixed(2),
+          "% over ",
+          range === "1W" ? "7 days" : range === "1M" ? "30 days" : "3 months"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { className: "card", "aria-label": "Wealth over time", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Time range", style: { marginBottom: "var(--space-sm)" }, children: RANGES.map((r) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+          "button",
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": range === r.key,
+            className: "chip",
+            onClick: () => setRange(r.key),
+            children: r.key
+          },
+          r.key
+        )) }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+          TrendChart,
+          {
+            points: window2,
+            hidden: data.balancesHidden,
+            label: `Total wealth over the last ${days} days`
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: "Built from money in and out of your accounts. Market performance before today is not in this line \u27E8valuation history TO CONFIRM\u27E9." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { className: "card", "aria-label": "How your wealth is split", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "How it's split" }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(AllocationBar, { slices: a.allocation, hidden: data.balancesHidden }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { style: { marginTop: "var(--space-sm)" }, children: a.allocation.map((s) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: "alloc-row",
+            onClick: () => goTo(s.destination),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `alloc-row__swatch alloc-row__swatch--${s.key}`, "aria-hidden": "true" }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "flex-1 min-w-0", children: s.label }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "alloc-row__pct amount", children: [
+                s.pct.toFixed(1),
+                "%"
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "alloc-row__value amount", children: data.chf(s.value, 0) }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+            ]
+          },
+          s.key
+        )) })
+      ] }),
+      a.months.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { className: "card", "aria-label": "Money in and out, by month", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "section-title m-0", children: "Net, by month" }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flow-triad", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: `In \xB7 ${a.windowDays}d`,
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.inflow, 0),
+              note: "CHF"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: `Out \xB7 ${a.windowDays}d`,
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.outflow, 0),
+              note: "CHF"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: "Net",
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : `${data.snapshot.inflow - data.snapshot.outflow >= 0 ? "+" : "\u2212"}${swissNumber(
+                Math.abs(data.snapshot.inflow - data.snapshot.outflow),
+                0
+              )}`,
+              note: "CHF"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(NetFlowBars, { months: a.months, hidden: data.balancesHidden }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flow-legend", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flow-legend__item", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--up", "aria-hidden": "true" }),
+            "Above the line: more came in than went out"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flow-legend__item", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--down", "aria-hidden": "true" }),
+            "Below: more went out"
+          ] })
+        ] }),
+        a.months.some((m) => m.partial) && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "micro m-0", children: "* Not a full month: the oldest one starts where your history does, and this one is still running." })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { className: "card", "aria-label": "Ratios", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "Where you stand" }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "ratio-grid", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: "Invested",
+              value: `${a.investedShare.toFixed(0)}%`,
+              note: "of your wealth, rather than held as cash"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: "Months of cover",
+              value: a.monthsOfCover.toFixed(1),
+              note: `liquid cash \xF7 ${data.chf(a.typicalSpend, 0)} typical monthly spending`
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+            Stat,
+            {
+              label: "Put to work",
+              value: `${a.putToWorkRate.toFixed(0)}%`,
+              note: `of what came in over ${a.windowDays} days went to savings or investments`
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { "aria-label": "The numbers as a table", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: "disclosure disclosure--start",
+            "aria-expanded": tableOpen,
+            onClick: () => setTableOpen((v) => !v),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "disclosure__chevron", "aria-hidden": "true", children: "\u203A" }),
+              "Show the numbers as a table"
+            ]
+          }
+        ),
+        tableOpen && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "card", style: { marginTop: "var(--space-xs)" }, children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("table", { className: "data-table", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("caption", { className: "sr-only", children: "Wealth split and monthly net cash flow" }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("tbody", { children: [
+            a.allocation.map((s) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("tr", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("th", { scope: "row", children: s.label }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("td", { className: "amount", children: data.chf(s.value, 0) }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("td", { className: "amount", children: [
+                s.pct.toFixed(1),
+                "%"
+              ] })
+            ] }, s.key)),
+            a.months.map((m) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("tr", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("th", { scope: "row", children: [
+                m.label,
+                m.partial ? " (so far)" : ""
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("td", { className: "amount", children: [
+                "in ",
+                data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(m.inflow, 0)
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("td", { className: "amount", children: [
+                "out ",
+                data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(m.outflow, 0)
+              ] })
+            ] }, m.key))
+          ] })
+        ] }) })
+      ] })
+    ] });
+  }
+  __name(HomeVariantD, "HomeVariantD");
+
+  // src/features/plan/PlanTab.tsx
+  var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
   function PlanTab() {
     const { state, nav } = useStore();
     const a = state.accounts;
@@ -12639,46 +13089,46 @@
       {
         name: "Invest Easy 291034",
         amount: a.investEasy,
-        note: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(import_jsx_runtime25.Fragment, { children: [
+        note: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(import_jsx_runtime27.Fragment, { children: [
           "Performance ",
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Delta, { pct: INVEST_EASY_PERF_PCT, amount: investEasyGain })
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(Delta, { pct: INVEST_EASY_PERF_PCT, amount: investEasyGain })
         ] })
       },
       { name: "Save Easy 517823", amount: a.saveEasy, note: "Interest paid yearly" },
       { name: "Global ETF Saving Plan", amount: a.savingPlan, note: "Funded monthly by your Smart Salary Allocation" }
     ];
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "screen", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex flex-col items-center", style: { gap: "var(--space-2xs)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption", children: "What you're building" }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(AmountXL, { value: total }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "micro", children: "Saving, investing and retirement" })
+    return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "flex flex-col items-center", style: { gap: "var(--space-2xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption", children: "What you're building" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(AmountXL, { value: total }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "micro", children: "Saving, investing and retirement" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("section", { className: "card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "product-row", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "flex-1 min-w-0", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: "3A" }),
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption", children: "Performance" }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("section", { className: "card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "product-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: "3A" }),
+            /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption", children: "Performance" }),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Delta, { pct: PILLAR_3A_PERF_PCT, amount: pillarGain })
+            /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(Delta, { pct: PILLAR_3A_PERF_PCT, amount: pillarGain })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
             swissNumber(PILLAR_3A),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption", children: "CHF" })
+            /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption", children: "CHF" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
           "div",
           {
             className: "progress",
             style: { marginTop: "var(--space-sm)" },
             role: "img",
             "aria-label": `${swissNumber(PILLAR_3A_PAID_IN, 0)} of ${swissNumber(PILLAR_3A_ALLOWANCE, 0)} CHF annual allowance paid in`,
-            children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "progress__fill", style: { width: `${PILLAR_3A_PAID_IN / PILLAR_3A_ALLOWANCE * 100}%` } })
+            children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "progress__fill", style: { width: `${PILLAR_3A_PAID_IN / PILLAR_3A_ALLOWANCE * 100}%` } })
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("p", { className: "m-0 caption amount", style: { marginTop: "var(--space-2xs)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("strong", { style: { color: "var(--color-text-primary)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("p", { className: "m-0 caption amount", style: { marginTop: "var(--space-2xs)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("strong", { style: { color: "var(--color-text-primary)" }, children: [
             swissNumber(PILLAR_3A_PAID_IN, 0),
             " CHF"
           ] }),
@@ -12687,36 +13137,36 @@
           swissNumber(PILLAR_3A_ALLOWANCE, 0),
           " annual allowance"
         ] }),
-        room > 0 && /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: [
+        room > 0 && /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("p", { className: "m-0 caption", style: { marginTop: "var(--space-2xs)" }, children: [
           swissNumber(room, 0),
           " CHF still open this year."
         ] })
       ] }),
-      rows.map((r) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("section", { className: "card", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "product-row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: r.name }),
-          r.note && /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption block", children: r.note })
+      rows.map((r) => /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("section", { className: "card", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "product-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-semibold)" }, children: r.name }),
+          r.note && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption block", children: r.note })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "amount", style: { fontWeight: "var(--font-weight-bold)" }, children: [
           swissNumber(r.amount),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption", children: "CHF" })
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption", children: "CHF" })
         ] })
       ] }) }, r.name)),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("button", { type: "button", className: "settings-row", style: { borderBottom: "none" }, onClick: () => nav.go("allocation"), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("span", { className: "flex-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Smart Salary Allocation" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "caption block", children: "What funds all of this, every month" })
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("button", { type: "button", className: "settings-row", style: { borderBottom: "none" }, onClick: () => nav.go("allocation"), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: "Smart Salary Allocation" }),
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption block", children: "What funds all of this, every month" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
       ] })
     ] });
   }
   __name(PlanTab, "PlanTab");
 
   // src/features/search/SearchTab.tsx
-  var import_react15 = __toESM(require_react(), 1);
-  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
+  var import_react17 = __toESM(require_react(), 1);
+  var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
   var RECENT = [
     { query: "BTC", type: "Crypto" },
     { query: "SQN", type: "Shares" },
@@ -12749,40 +13199,40 @@
     "Is my spending higher than usual?"
   ];
   function SearchIcon2({ size = 16 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("svg", { width: size, height: size, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: "1.7", "aria-hidden": "true", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("circle", { cx: "8.5", cy: "8.5", r: "5.5" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "m13 13 4.5 4.5", strokeLinecap: "round" })
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("svg", { width: size, height: size, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: "1.7", "aria-hidden": "true", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("circle", { cx: "8.5", cy: "8.5", r: "5.5" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "m13 13 4.5 4.5", strokeLinecap: "round" })
     ] });
   }
   __name(SearchIcon2, "SearchIcon");
   function SparkIcon2() {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("svg", { width: "14", height: "14", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "M6 0c.5 3.2 2.3 5 5.5 5.5C8.3 6 6.5 7.8 6 11 5.5 7.8 3.7 6 .5 5.5 3.7 5 5.5 3.2 6 0z" }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("svg", { width: "14", height: "14", viewBox: "0 0 12 12", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "M6 0c.5 3.2 2.3 5 5.5 5.5C8.3 6 6.5 7.8 6 11 5.5 7.8 3.7 6 .5 5.5 3.7 5 5.5 3.2 6 0z" }) });
   }
   __name(SparkIcon2, "SparkIcon");
   function ShiftIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("svg", { width: "18", height: "16", viewBox: "0 0 18 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "M9 1.5 2 8.5h3.5V14h7V8.5H16L9 1.5z", strokeLinejoin: "round" }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("svg", { width: "18", height: "16", viewBox: "0 0 18 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "M9 1.5 2 8.5h3.5V14h7V8.5H16L9 1.5z", strokeLinejoin: "round" }) });
   }
   __name(ShiftIcon, "ShiftIcon");
   function BackspaceIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("svg", { width: "20", height: "15", viewBox: "0 0 20 15", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "M6.6 1h11.2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6.6a1 1 0 0 1-.74-.33L1 7.5l4.86-6.17A1 1 0 0 1 6.6 1z", strokeLinejoin: "round" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "m9.5 5 5 5m0-5-5 5", strokeLinecap: "round" })
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("svg", { width: "20", height: "15", viewBox: "0 0 20 15", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "M6.6 1h11.2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6.6a1 1 0 0 1-.74-.33L1 7.5l4.86-6.17A1 1 0 0 1 6.6 1z", strokeLinejoin: "round" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "m9.5 5 5 5m0-5-5 5", strokeLinecap: "round" })
     ] });
   }
   __name(BackspaceIcon, "BackspaceIcon");
   function EmojiIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("circle", { cx: "11", cy: "11", r: "9" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "M7.5 13a4.5 4.5 0 0 0 7 0", strokeLinecap: "round" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("circle", { cx: "8", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("circle", { cx: "14", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" })
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("svg", { width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("circle", { cx: "11", cy: "11", r: "9" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "M7.5 13a4.5 4.5 0 0 0 7 0", strokeLinecap: "round" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("circle", { cx: "8", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("circle", { cx: "14", cy: "8.5", r: "0.6", fill: "currentColor", stroke: "none" })
     ] });
   }
   __name(EmojiIcon, "EmojiIcon");
   function MicIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("svg", { width: "16", height: "22", viewBox: "0 0 16 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("rect", { x: "5", y: "1", width: "6", height: "11", rx: "3" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("path", { d: "M2 10a6 6 0 0 0 12 0M8 16v4", strokeLinecap: "round" })
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("svg", { width: "16", height: "22", viewBox: "0 0 16 22", fill: "none", stroke: "currentColor", strokeWidth: "1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("rect", { x: "5", y: "1", width: "6", height: "11", rx: "3" }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: "M2 10a6 6 0 0 0 12 0M8 16v4", strokeLinecap: "round" })
     ] });
   }
   __name(MicIcon, "MicIcon");
@@ -12790,49 +13240,49 @@
     const row1 = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
     const row2 = ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
     const row3 = ["Z", "X", "C", "V", "B", "N", "M"];
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "keyboard", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "keyboard__row", children: row1.map((k) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "keyboard__row keyboard__row--inset", children: row2.map((k) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "keyboard__row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "keyboard__key keyboard__key--mod", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ShiftIcon, {}) }),
-        row3.map((k) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--mod", onClick: () => onKey("\u232B"), "aria-label": "Backspace", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BackspaceIcon, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "keyboard", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "keyboard__row", children: row1.map((k) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "keyboard__row keyboard__row--inset", children: row2.map((k) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "keyboard__row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "keyboard__key keyboard__key--mod", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ShiftIcon, {}) }),
+        row3.map((k) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "keyboard__key", onClick: () => onKey(k), "aria-label": k, children: k }, k)),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--mod", onClick: () => onKey("\u232B"), "aria-label": "Backspace", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(BackspaceIcon, {}) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "keyboard__row", style: { marginBottom: 0 }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "123" }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--space", onClick: () => onKey(" "), "aria-label": "Space", children: "space" }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "return" })
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "keyboard__row", style: { marginBottom: 0 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "123" }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "keyboard__key keyboard__key--space", onClick: () => onKey(" "), "aria-label": "Space", children: "space" }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "keyboard__key keyboard__key--sys keyboard__key--edge", "aria-hidden": "true", children: "return" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "keyboard__footer", "aria-hidden": "true", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmojiIcon, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MicIcon, {})
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "keyboard__footer", "aria-hidden": "true", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(EmojiIcon, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(MicIcon, {})
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "keyboard__home-indicator", "aria-hidden": "true" })
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "keyboard__home-indicator", "aria-hidden": "true" })
     ] });
   }
   __name(Keyboard, "Keyboard");
   function SearchTab() {
     const { nav } = useStore();
-    const [mode, setMode] = (0, import_react15.useState)("ai");
-    const [query, setQuery] = (0, import_react15.useState)(nav.askPrefill ?? "");
-    const inputRef = (0, import_react15.useRef)(null);
+    const [mode, setMode] = (0, import_react17.useState)("ai");
+    const [query, setQuery] = (0, import_react17.useState)(nav.askPrefill ?? "");
+    const inputRef = (0, import_react17.useRef)(null);
     const onKey = /* @__PURE__ */ __name((key) => {
       setQuery((q2) => key === "\u232B" ? q2.slice(0, -1) : q2 + (q2.length === 0 ? key : key.toLowerCase()));
     }, "onKey");
     const q = query.trim().toLowerCase();
-    const questionMatches = (0, import_react15.useMemo)(
+    const questionMatches = (0, import_react17.useMemo)(
       () => q ? QUESTIONS.filter((s) => s.toLowerCase().includes(q)) : QUESTIONS.slice(0, 4),
       [q]
     );
-    const instrumentMatches = (0, import_react15.useMemo)(
+    const instrumentMatches = (0, import_react17.useMemo)(
       () => q ? INSTRUMENTS.filter((i) => i.name.toLowerCase().includes(q) || i.ticker.toLowerCase().includes(q)) : [],
       [q]
     );
     const showRecent = mode === "search" && q.length === 0;
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex flex-col", style: { minHeight: "100%" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "screen", style: { flex: 1 }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex items-center justify-between", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex flex-col", style: { minHeight: "100%" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "screen", style: { flex: 1 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
             "button",
             {
               type: "button",
@@ -12843,15 +13293,15 @@
               children: "\xD7"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "seg-control", role: "tablist", "aria-label": "Search mode", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "search", className: "seg-control__item", onClick: () => setMode("search"), children: "Search" }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "ai", className: "seg-control__item", onClick: () => setMode("ai"), children: "Ask AI" })
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "seg-control", role: "tablist", "aria-label": "Search mode", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "search", className: "seg-control__item", onClick: () => setMode("search"), children: "Search" }),
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", role: "tab", "aria-selected": mode === "ai", className: "seg-control__item", onClick: () => setMode("ai"), children: "Ask AI" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { style: { width: "var(--space-xl)" } })
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { style: { width: "var(--space-xl)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("label", { className: "search-field", style: { marginBottom: "var(--space-2xs)" }, children: [
-          mode === "ai" ? /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SparkIcon2, {}) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SearchIcon2, {}),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("label", { className: "search-field", style: { marginBottom: "var(--space-2xs)" }, children: [
+          mode === "ai" ? /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(SparkIcon2, {}) : /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(SearchIcon2, {}),
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
             "input",
             {
               ref: inputRef,
@@ -12871,18 +13321,18 @@
               }
             }
           ),
-          query && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "caption", onClick: () => setQuery(""), "aria-label": "Clear input", children: "\u2715" })
+          query && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "caption", onClick: () => setQuery(""), "aria-label": "Clear input", children: "\u2715" })
         ] }),
-        showRecent ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(import_jsx_runtime26.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex items-center justify-between", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: "Recent searches" }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { type: "button", className: "caption", style: { color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: "Clear" })
+        showRecent ? /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(import_jsx_runtime28.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: "Recent searches" }),
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "caption", style: { color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: "Clear" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex justify-between caption", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { children: "Your search" }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { children: "Product type" })
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex justify-between caption", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { children: "Your search" }),
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { children: "Product type" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: RECENT.map((r) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: RECENT.map((r) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
             "button",
             {
               type: "button",
@@ -12890,14 +13340,14 @@
               style: { width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
               onClick: () => setQuery(r.query),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { style: { fontWeight: "var(--font-weight-medium)" }, children: r.query }),
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "caption", children: r.type })
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { style: { fontWeight: "var(--font-weight-medium)" }, children: r.query }),
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "caption", children: r.type })
               ]
             }
           ) }, r.query)) })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(import_jsx_runtime26.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: mode === "ai" ? q ? "Ask Swissquote" : "Try asking" : "Results" }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, "aria-live": "polite", children: mode === "ai" ? questionMatches.map((s) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(import_jsx_runtime28.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h2", { className: "m-0", style: { fontSize: "var(--font-size-body)", fontWeight: "var(--font-weight-semibold)" }, children: mode === "ai" ? q ? "Ask Swissquote" : "Try asking" : "Results" }),
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, "aria-live": "polite", children: mode === "ai" ? questionMatches.map((s) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
             "button",
             {
               type: "button",
@@ -12905,12 +13355,12 @@
               style: { gap: "var(--space-sm)", width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
               onClick: () => setQuery(s),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { style: { color: "var(--color-text-link)" }, children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SparkIcon2, {}) }),
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "flex-1", children: s }),
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { style: { color: "var(--color-text-link)" }, children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(SparkIcon2, {}) }),
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flex-1", children: s }),
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
               ]
             }
-          ) }, s)) : instrumentMatches.map((i) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+          ) }, s)) : instrumentMatches.map((i) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
             "button",
             {
               type: "button",
@@ -12918,29 +13368,29 @@
               style: { gap: "var(--space-sm)", width: "100%", padding: "var(--space-xs) 0", borderBottom: "1px solid var(--color-border-subtle)", minHeight: "var(--size-touch-target)" },
               onClick: () => setQuery(i.ticker),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flex-1 min-w-0", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: i.name }),
-                  /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "caption block", children: i.ticker })
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "flex-1 min-w-0", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "block", style: { fontWeight: "var(--font-weight-medium)" }, children: i.name }),
+                  /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "caption block", children: i.ticker })
                 ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "caption", children: i.type })
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "caption", children: i.type })
               ]
             }
           ) }, i.ticker)) }),
-          mode === "ai" && q.length > 0 && questionMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "caption m-0", children: "Ask it in your own words \u2014 Swissquote will use your accounts, cards and Smart Liquidity settings to answer." }),
-          mode === "search" && q.length > 0 && instrumentMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("p", { className: "caption m-0", children: [
+          mode === "ai" && q.length > 0 && questionMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "caption m-0", children: "Ask it in your own words \u2014 Swissquote will use your accounts, cards and Smart Liquidity settings to answer." }),
+          mode === "search" && q.length > 0 && instrumentMatches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("p", { className: "caption m-0", children: [
             "No instruments match \u201C",
             query,
             "\u201D."
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(Keyboard, { onKey })
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(Keyboard, { onKey })
     ] });
   }
   __name(SearchTab, "SearchTab");
 
   // src/features/trade/TradeTab.tsx
-  var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
   var ROWS = [
     { name: "Apple Inc", ticker: "APPL", price: "184.92", change: "\u22122.34 (\u22121.25%)", up: false, bg: "var(--color-action-primary)", initial: "" },
     { name: "Nike", ticker: "NKE", price: "412.85", change: "+5.60 (+1.37%)", up: true, bg: "var(--color-action-primary)", initial: "\u2713" },
@@ -12954,29 +13404,29 @@
     { name: "Amazon.com", ticker: "AMZN", price: "78.56", change: "\u22120.92 (\u22121.16%)", up: false, bg: "var(--color-action-primary)", initial: "a" }
   ];
   function TradeTab() {
-    return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "screen", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Trade sections", children: ["Watchlists", "Inspiration", "Markets", "News"].map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { type: "button", role: "tab", "aria-selected": i === 0, className: "chip", children: t }, t)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { type: "button", className: "chip", children: "My favourite \u25BE" }),
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "flex items-center caption", style: { gap: "var(--space-sm)", color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { children: "Edit" }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { children: "\u2193 Sort" }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { "aria-hidden": "true", children: "\u22EE" })
+    return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "screen", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Trade sections", children: ["Watchlists", "Inspiration", "Markets", "News"].map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", role: "tab", "aria-selected": i === 0, className: "chip", children: t }, t)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", className: "chip", children: "My favourite \u25BE" }),
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("span", { className: "flex items-center caption", style: { gap: "var(--space-sm)", color: "var(--color-text-accent)", fontWeight: "var(--font-weight-semibold)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { children: "Edit" }),
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { children: "\u2193 Sort" }),
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { "aria-hidden": "true", children: "\u22EE" })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: ROWS.map((r) => /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("button", { type: "button", className: "trade-row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "logo-dot", style: { background: r.bg }, "aria-hidden": "true", children: r.initial }),
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "block truncate", style: { fontWeight: "var(--font-weight-semibold)" }, children: r.name }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption block", children: r.ticker })
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("ul", { className: "m-0 list-none", style: { padding: 0 }, children: ROWS.map((r) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("button", { type: "button", className: "trade-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "logo-dot", style: { background: r.bg }, "aria-hidden": "true", children: r.initial }),
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "block truncate", style: { fontWeight: "var(--font-weight-semibold)" }, children: r.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "caption block", children: r.ticker })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "text-right", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("span", { className: "block amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("span", { className: "text-right", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("span", { className: "block amount", style: { fontWeight: "var(--font-weight-semibold)" }, children: [
             r.price,
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "caption", children: "USD" })
+            /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "caption", children: "USD" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: `delta ${r.up ? "delta--up" : "delta--down"} amount`, children: r.change })
+          /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: `delta ${r.up ? "delta--up" : "delta--down"} amount`, children: r.change })
         ] })
       ] }) }, r.ticker)) })
     ] });
@@ -12984,11 +13434,12 @@
   __name(TradeTab, "TradeTab");
 
   // src/sim/SimulatePanel.tsx
-  var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
   var HOME_VARIANTS = [
     { value: "A", label: "A \xB7 Universe-first" },
     { value: "B", label: "B \xB7 Smart Today" },
-    { value: "C", label: "C \xB7 Good to see you" }
+    { value: "C", label: "C \xB7 Good to see you" },
+    { value: "D", label: "D \xB7 The dashboard" }
   ];
   var HOME_SCENARIOS = [
     { value: "full", label: "Multi-product" },
@@ -13013,20 +13464,20 @@
       for (let i = 0; i < n; i += 1) dispatch({ type: "advanceDay" });
     }, "advance");
     const daysToAllocation = nextSalaryDayAfter(state.day) + 1 - state.day;
-    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("aside", { className: "sim-panel", "aria-label": "Prototype simulation controls", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex items-baseline justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("strong", { children: "Simulate" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "caption", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("aside", { className: "sim-panel", "aria-label": "Prototype simulation controls", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "flex items-baseline justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("strong", { children: "Simulate" }),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("span", { className: "caption", children: [
           longDate(state.day),
           " \xB7 day ",
           state.day
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--primary", onClick: () => advance(1), children: "+1 day" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(7), children: "+7 days" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(daysToAllocation), children: "To salary + allocation" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--primary", onClick: () => advance(1), children: "+1 day" }),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(7), children: "+7 days" }),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => advance(daysToAllocation), children: "To salary + allocation" }),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
           "button",
           {
             type: "button",
@@ -13039,10 +13490,10 @@
             children: "Payment bigger than balance"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "triggerMarginCall" }), children: "Force margin call" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: onReset, children: "Reset demo" })
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--secondary", onClick: () => dispatch({ type: "triggerMarginCall" }), children: "Force margin call" }),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: onReset, children: "Reset demo" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Failure states", children: FLAG_LABELS.map(({ flag, label }) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Failure states", children: FLAG_LABELS.map(({ flag, label }) => /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
         "button",
         {
           type: "button",
@@ -13053,12 +13504,12 @@
         },
         flag
       )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "sim-panel__block", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex items-baseline justify-between", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("strong", { children: "Home concept" }),
-          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => nav.setTab("home"), children: "Go to Home" })
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "sim-panel__block", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "flex items-baseline justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("strong", { children: "Home concept" }),
+          /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("button", { type: "button", className: "btn btn--ghost", onClick: () => nav.setTab("home"), children: "Go to Home" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Home variant", children: HOME_VARIANTS.map((v) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Home variant", children: HOME_VARIANTS.map((v) => /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
           "button",
           {
             type: "button",
@@ -13069,8 +13520,8 @@
           },
           v.value
         )) }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Home state", children: [
-          HOME_SCENARIOS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "flex flex-wrap", style: { gap: "var(--space-xs)" }, role: "group", "aria-label": "Home state", children: [
+          HOME_SCENARIOS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
             "button",
             {
               type: "button",
@@ -13081,7 +13532,7 @@
             },
             s.value
           )),
-          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
             "button",
             {
               type: "button",
@@ -13093,13 +13544,13 @@
           )
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "micro m-0", children: "The demo loop: turn on a failure state (or none), then advance to salary + allocation and keep pressing +1 day \u2014 spending draws the balance down until Auto Cover fires and its transaction appears with an explanation. In-memory only; Reset restores 14 August 2026." })
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("p", { className: "micro m-0", children: "The demo loop: turn on a failure state (or none), then advance to salary + allocation and keep pressing +1 day \u2014 spending draws the balance down until Auto Cover fires and its transaction appears with an explanation. In-memory only; Reset restores 14 August 2026." })
     ] });
   }
   __name(SimulatePanel, "SimulatePanel");
 
   // src/App.tsx
-  var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
   var BANK_SUBSCREEN_TITLES = {
     allocation: "Smart Salary Allocation",
     budgeting: "AI Budgeting",
@@ -13114,60 +13565,60 @@
     let content;
     let header;
     if (nav.tab === "home" && nav.wealthOpen) {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(DetailTopBar, { title: "Your wealth", onBack: () => nav.setWealthOpen(false) });
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(HomeTab, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(DetailTopBar, { title: "Your wealth", onBack: () => nav.setWealthOpen(false) });
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HomeTab, {});
     } else if (nav.tab === "home") {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TopBar, {});
-      content = home.variant === "A" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(HomeVariantA, {}) : home.variant === "B" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(HomeVariantB, {}) : /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(HomeVariantC, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(TopBar, {});
+      content = home.variant === "A" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HomeVariantA, {}) : home.variant === "B" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HomeVariantB, {}) : home.variant === "C" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HomeVariantC, {}) : /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HomeVariantD, {});
     } else if (nav.tab === "plan") {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TopBar, {});
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(PlanTab, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(PlanTab, {});
     } else if (nav.tab === "trade") {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TopBar, {});
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TradeTab, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(TradeTab, {});
     } else if (nav.tab === "search") {
       header = null;
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(SearchTab, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(SearchTab, {});
     } else if (!onBankSubScreen) {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(TopBar, {});
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(EverydayHome, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(TopBar, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(EverydayHome, {});
     } else if (nav.screen === "transactions" || nav.txnDetailId !== null) {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
         DetailTopBar,
         {
           title: nav.txnDetailId !== null ? "Transaction" : "Transactions",
           onBack: () => nav.txnDetailId !== null ? nav.closeTxn() : nav.go("home")
         }
       );
-      content = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(Transactions, {});
+      content = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(Transactions, {});
     } else {
-      header = /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(DetailTopBar, { title: BANK_SUBSCREEN_TITLES[nav.screen], onBack: () => nav.go("home") });
-      content = nav.screen === "allocation" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(SmartSalaryAllocation, {}) : nav.screen === "budgeting" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(AiBudgeting, {}) : nav.screen === "card" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(CardManagement, {}) : nav.screen === "pay" ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(PayHub, {}) : /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(AutoCover, {});
+      header = /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(DetailTopBar, { title: BANK_SUBSCREEN_TITLES[nav.screen], onBack: () => nav.go("home") });
+      content = nav.screen === "allocation" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(SmartSalaryAllocation, {}) : nav.screen === "budgeting" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(AiBudgeting, {}) : nav.screen === "card" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(CardManagement, {}) : nav.screen === "pay" ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(PayHub, {}) : /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(AutoCover, {});
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "phone", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(ConceptBadge, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(StatusBar, {}),
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "phone", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(ConceptBadge, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(StatusBar, {}),
       header,
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "phone__scroll", children: content }),
-      !onBankSubScreen && nav.tab !== "search" && /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(BottomNav, { active: nav.tab, onSelect: nav.setTab }),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(BuyingPowerSheet, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(MarginCallModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { "aria-live": "polite", className: "sr-only", children: state.announcement })
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "phone__scroll", children: content }),
+      !onBankSubScreen && nav.tab !== "search" && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(BottomNav, { active: nav.tab, onSelect: nav.setTab }),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(BuyingPowerSheet, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(MarginCallModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { "aria-live": "polite", className: "sr-only", children: state.announcement })
     ] });
   }
   __name(Phone, "Phone");
   function App() {
-    const [runId, setRunId] = (0, import_react16.useState)(0);
-    return /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(StoreProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("main", { className: "stage", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(Phone, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(SimulatePanel, { onReset: () => setRunId((x) => x + 1) })
+    const [runId, setRunId] = (0, import_react18.useState)(0);
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(StoreProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("main", { className: "stage", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(Phone, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(SimulatePanel, { onReset: () => setRunId((x) => x + 1) })
     ] }) }, runId);
   }
   __name(App, "App");
 
   // src/main.tsx
-  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
   (0, import_client.createRoot)(document.getElementById("root")).render(
-    /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(import_react17.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(App, {}) })
+    /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(import_react19.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(App, {}) })
   );
 })();

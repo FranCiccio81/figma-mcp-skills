@@ -128,6 +128,17 @@
   --color-dataviz-invest: var(--core-dv-blue-deep);
   --color-dataviz-plan: var(--core-dv-magenta);
   --color-dataviz-credit: var(--core-dv-credit);
+  /* The three spaces carry one hue each, everywhere they appear (cards,
+     tiles, the allocation bar). Validated as a categorical trio: CVD ΔE 9.8
+     worst adjacent pair, normal-vision 30.6, all ≥ 3:1 on white. */
+  --color-space-trade: var(--core-dv-blue);
+  --color-space-bank: var(--core-dv-orange);
+  --color-space-plan: var(--core-dv-green);
+  /* Net cash flow is polarity, not identity: a cool pole, a warm pole, and a
+     neutral zero line. Direction encodes it too, so it is never colour alone. */
+  --color-flow-positive: var(--core-dv-blue-deep);
+  --color-flow-negative: var(--core-dv-magenta);
+
   --color-dataviz-band: var(--core-blue-100);
   --color-dataviz-line: var(--core-blue-600);
   --color-dataviz-grid: var(--core-grey-200);

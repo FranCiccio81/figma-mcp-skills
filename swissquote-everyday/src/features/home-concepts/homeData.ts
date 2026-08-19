@@ -123,6 +123,46 @@ export interface Streak {
   nextRun: string;
 }
 
+/* ---- Analytics (Variant D) --------------------------------------- */
+
+export interface TrendPoint {
+  day: number;
+  value: number;
+}
+
+export interface MonthFlow {
+  key: string;
+  label: string;
+  inflow: number;
+  outflow: number;
+  net: number;
+  /** The current month is not over — say so rather than comparing it as if it were. */
+  partial: boolean;
+}
+
+export interface AllocationSlice {
+  key: UniverseKey;
+  label: string;
+  value: number;
+  pct: number;
+  destination: Destination;
+}
+
+export interface Analytics {
+  /** Daily total wealth, oldest first. */
+  trend: TrendPoint[];
+  months: MonthFlow[];
+  allocation: AllocationSlice[];
+  /** Share of wealth held in securities, funds and retirement rather than cash. */
+  investedShare: number;
+  /** Of everything that came in over the window, how much was put to work. */
+  putToWorkRate: number;
+  /** Liquid cash ÷ typical monthly spending. */
+  monthsOfCover: number;
+  typicalSpend: number;
+  windowDays: number;
+}
+
 export interface HomeData {
   /** Sum of everything owned, less anything borrowed. */
   totalWealth: number;
@@ -143,6 +183,7 @@ export interface HomeData {
   snapshot: Snapshot;
   goals: Goal[];
   streak: Streak | null;
+  analytics: Analytics;
   scenario: HomeScenario;
   firstName: string;
   /** Formats CHF for display, masking every figure when balances are hidden. */
@@ -562,6 +603,126 @@ function buildStreak(state: EngineState): Streak | null {
   return { months: count, nextRun: longDate(nextSalaryDayAfter(state.day) + 1) };
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Analytics — the numbers Variant D plots                             */
+/* ------------------------------------------------------------------ */
+
+const TREND_DAYS = 90;
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Does this transaction move money in or out of the relationship? */
+function isExternal(t: { category: string; smart?: { engine?: string; destination?: string } }): boolean {
+  if (t.smart?.engine === 'autoCover') return false; // own money coming back
+  if (t.smart?.destination && AT_WORK.has(t.smart.destination)) return false; // own money moving across
+  return t.category !== 'smart-liquidity';
+}
+
+/**
+ * Total wealth per day, walked backwards from today.
+ *
+ * BACKEND: a daily valuation snapshot per product. The prototype reconstructs
+ * the line from cash movements only, so market performance before today is
+ * NOT in it — the chart is labelled accordingly rather than implying a
+ * precision the data does not have.
+ */
+function buildTrend(state: EngineState, today: number): TrendPoint[] {
+  const byDay = new Map<number, number>();
+  for (const t of state.txns) {
+    if (t.status === 'failed' || !isExternal(t)) continue;
+    byDay.set(t.day, (byDay.get(t.day) ?? 0) + t.amount);
+  }
+
+  const points: TrendPoint[] = [{ day: state.day, value: today }];
+  let running = today;
+  for (let d = state.day; d > state.day - TREND_DAYS; d -= 1) {
+    running -= byDay.get(d) ?? 0;
+    points.unshift({ day: d - 1, value: running });
+  }
+  return points;
+}
+
+/** Money in and money out per calendar month, most recent last. */
+function buildMonths(state: EngineState): MonthFlow[] {
+  const acc = new Map<string, MonthFlow>();
+  const currentKey = (() => {
+    const d = dateOf(state.day);
+    return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+  })();
+
+  for (const t of state.txns) {
+    if (t.status === 'failed' || !isExternal(t) || t.day > state.day) continue;
+    const d = dateOf(t.day);
+    const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    const row =
+      acc.get(key) ??
+      {
+        key,
+        label: `${MONTH_NAMES[d.getUTCMonth()]}`,
+        inflow: 0,
+        outflow: 0,
+        net: 0,
+        partial: key === currentKey,
+      };
+    if (t.amount > 0) row.inflow += t.amount;
+    else row.outflow += -t.amount;
+    row.net = row.inflow - row.outflow;
+    acc.set(key, row);
+  }
+
+  const rows = [...acc.values()].sort((a, b) => {
+    const [ay, am] = a.key.split('-').map(Number);
+    const [by, bm] = b.key.split('-').map(Number);
+    return ay - by || am - bm;
+  });
+
+  // The oldest month is cut off by where the history starts, exactly as the
+  // current one is cut off by today. Both are marked, or the first bar reads
+  // as a good month when it is really half a month.
+  const historyStart = dateOf(state.day - TREND_DAYS + 1);
+  if (rows.length > 0 && historyStart.getUTCDate() !== 1) rows[0].partial = true;
+
+  return rows;
+}
+
+function buildAnalytics(
+  state: EngineState,
+  universes: Universe[],
+  totalWealth: number,
+  snapshot: Snapshot,
+): Analytics {
+  const a = state.accounts;
+  const owned = universes.filter((u) => u.owned);
+
+  const allocation: AllocationSlice[] = owned.map((u) => ({
+    key: u.key,
+    label: u.title,
+    value: u.value,
+    pct: totalWealth > 0 ? (u.value / totalWealth) * 100 : 0,
+    destination: u.destination,
+  }));
+
+  // Invested = securities, funds and retirement. Cash and savings accounts
+  // are not "invested", however large they are.
+  const invested =
+    (owned.some((u) => u.key === 'trade') ? TRADING_POSITIONS : 0) +
+    (owned.some((u) => u.key === 'plan') ? a.investEasy + a.savingPlan + PILLAR_3A : 0);
+
+  const spend = typicalMonthlySpend(state);
+  const liquid = a.everyday + a.saveEasy + a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+
+  return {
+    trend: buildTrend(state, totalWealth),
+    months: buildMonths(state),
+    allocation,
+    investedShare: totalWealth > 0 ? (invested / totalWealth) * 100 : 0,
+    putToWorkRate: snapshot.inflow > 0 ? (snapshot.putToWork / snapshot.inflow) * 100 : 0,
+    monthsOfCover: spend > 0 ? liquid / spend : 0,
+    typicalSpend: spend,
+    windowDays: snapshot.days,
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Hook                                                                */
 /* ------------------------------------------------------------------ */
@@ -590,6 +751,11 @@ export function useHomeData(): HomeData {
 
   const today = home.scenario === 'quiet' ? [] : buildToday(state, forecast, universes, chf);
   const ownedKeys = new Set(owned.map((u) => u.key));
+  // Money in, money out and the salary habit all live in the Bank space —
+  // a client without one has no such history to show.
+  const snapshot: Snapshot = ownedKeys.has('bank')
+    ? buildSnapshot(state)
+    : { days: WINDOW_DAYS, inflow: 0, outflow: 0, putToWork: 0 };
 
   return {
     totalWealth,
@@ -598,12 +764,9 @@ export function useHomeData(): HomeData {
     today,
     loading: home.scenario === 'loading',
     aiUnavailable: home.scenario === 'aiError',
-    // Money in, money out and the salary habit all live in the Bank space —
-    // a client without one has no such history to show.
-    snapshot: ownedKeys.has('bank')
-      ? buildSnapshot(state)
-      : { days: WINDOW_DAYS, inflow: 0, outflow: 0, putToWork: 0 },
+    snapshot,
     goals: buildGoals(state, chf, ownedKeys),
+    analytics: buildAnalytics(state, universes, totalWealth, snapshot),
     streak: ownedKeys.has('bank') ? buildStreak(state) : null,
     scenario: home.scenario,
     firstName: 'Léa',

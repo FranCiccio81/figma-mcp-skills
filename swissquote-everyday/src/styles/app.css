@@ -424,6 +424,7 @@ button {
   color: var(--color-text-secondary);
 }
 .disclosure[aria-expanded='true'] .disclosure__chevron { transform: rotate(90deg); }
+.disclosure--start { justify-content: flex-start; gap: var(--space-xs); }
 
 .factor-row { display: flex; gap: var(--space-sm); padding: var(--space-2xs) 0; font-size: var(--font-size-caption); }
 .factor-row__label { color: var(--color-text-secondary); flex: none; width: 38%; }
@@ -1140,6 +1141,119 @@ button {
 .space-tile__icon { font-size: var(--font-size-body); color: var(--color-text-secondary); }
 .space-tile__name { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
 .space-tile__value { font-size: var(--font-size-caption); font-feature-settings: var(--font-feature-numeric); color: var(--color-text-secondary); }
+
+/* ---- Variant D · The dashboard ----------------------------------- */
+.chart { position: relative; width: 100%; }
+.chart__svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart__axis { display: flex; justify-content: space-between; font-size: var(--font-size-micro); color: var(--color-text-secondary); margin-top: var(--space-2xs); }
+/* Tooltip sits under the plot so it never covers the line it describes. */
+.chart__tip {
+  position: absolute;
+  bottom: var(--space-2xs);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2xs) var(--space-xs);
+  font-feature-settings: var(--font-feature-numeric);
+  pointer-events: none;
+}
+.chart__tip-date { font-size: var(--font-size-micro); color: var(--color-text-on-inverse-muted); }
+.chart__tip-value { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+/* The tooltip is absolutely positioned; reserve its row so nothing jumps. */
+.chart { padding-bottom: var(--space-2xl); }
+.chart__axis { position: absolute; left: 0; right: 0; bottom: var(--space-xs); margin: 0; }
+
+.alloc { display: flex; height: var(--size-bp-bar); width: 100%; }
+.alloc__seg { min-width: var(--space-2xs); border-radius: var(--radius-sm); box-shadow: var(--shadow-bar-gloss); }
+.alloc__seg + .alloc__seg { margin-left: 2px; }
+.alloc__seg--trade { background: var(--color-space-trade); }
+.alloc__seg--bank { background: var(--color-space-bank); }
+.alloc__seg--plan { background: var(--color-space-plan); }
+
+.alloc-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--size-touch-target);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.alloc-row:last-child { border-bottom: none; }
+.alloc-row__swatch { width: 10px; height: 10px; border-radius: var(--radius-sm); flex: none; }
+.alloc-row__swatch--trade { background: var(--color-space-trade); }
+.alloc-row__swatch--bank { background: var(--color-space-bank); }
+.alloc-row__swatch--plan { background: var(--color-space-plan); }
+.alloc-row__pct { font-weight: var(--font-weight-semibold); }
+.alloc-row__value { color: var(--color-text-secondary); font-size: var(--font-size-caption); }
+
+.flow-triad, .ratio-grid { display: flex; gap: var(--space-sm); }
+.ratio-grid { flex-wrap: wrap; }
+.flow-triad { margin: var(--space-sm) 0; }
+.stat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.stat + .stat { border-left: 1px solid var(--color-border-subtle); padding-left: var(--space-sm); }
+.stat__label { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+.stat__value { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); font-feature-settings: var(--font-feature-numeric); line-height: var(--line-height-tight); }
+.stat__note { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+
+.flowbars { display: flex; align-items: stretch; gap: var(--space-xs); height: 132px; }
+.flowbar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.flowbar__half { flex: 1; display: flex; }
+.flowbar__half--up { align-items: flex-end; }
+.flowbar__half--down { align-items: flex-start; }
+.flowbar__zero { display: block; height: 1px; background: var(--color-dataviz-grid); }
+.flowbar__mark { width: 100%; }
+/* 4px rounded end away from the baseline; the baseline end stays square. */
+.flowbar__mark--up { background: var(--color-flow-positive); border-radius: 4px 4px 0 0; }
+.flowbar__mark--down { background: var(--color-flow-negative); border-radius: 0 0 4px 4px; }
+.flowbar__mark--partial { opacity: 0.55; }
+.flowbar__label { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-align: center; padding-top: var(--space-2xs); }
+.flowbar__value {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  font-feature-settings: var(--font-feature-numeric);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flowbar--active .flowbar__label { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); }
+.flowbar__tip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-xs);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  font-feature-settings: var(--font-feature-numeric);
+  pointer-events: none;
+}
+.flow-legend { display: flex; flex-direction: column; gap: var(--space-2xs); margin-top: var(--space-sm); }
+.flow-legend__item { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+.flow-legend__swatch { width: 12px; height: 8px; border-radius: 2px; flex: none; }
+.flow-legend__swatch--up { background: var(--color-flow-positive); }
+.flow-legend__swatch--down { background: var(--color-flow-negative); }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-caption); }
+.data-table th, .data-table td { text-align: left; padding: var(--space-2xs) 0; border-bottom: 1px solid var(--color-border-subtle); font-weight: var(--font-weight-regular); }
+.data-table th { color: var(--color-text-secondary); }
+.data-table td { text-align: right; }
 
 /* ------------------------------------------------------------------ */
 /* Simulate rig (prototype control, outside the product surface)       */

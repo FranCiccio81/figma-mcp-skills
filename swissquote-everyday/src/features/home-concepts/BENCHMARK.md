@@ -1,4 +1,4 @@
-# How banking apps welcome you — benchmark for Variant C
+# Benchmarks — how banking apps welcome you (C), and how the good dashboards work (D)
 
 > Concept — not a product commitment. Desk research, August 2026. Sources at
 > the end; where a claim comes from a vendor blog rather than primary
@@ -77,6 +77,63 @@ Six rules, each traceable to the rows above:
    hide; the AI line is labelled and never required to understand the
    screen. (Consumer-duty posture, and consistent with A and B.)
 
+---
+
+# Part two — analytical dashboards, for Variant D
+
+Different question, different field: not "how do apps greet you" but "what
+does a good financial dashboard actually put on one screen".
+
+## What the best-in-class dashboards show
+
+| Product | What it does on the main screen |
+|---|---|
+| **Empower Personal Dashboard** | The reference net-worth chart: wealth trajectory over months and years, with the trend as the headline object rather than a decoration. |
+| **Fidelity Full View** | Rated best overall portfolio dashboard; all accounts in one customisable view — investment performance, asset distribution, net worth. Customisation is the differentiator. |
+| **Monarch** | Dashboard composition worth copying wholesale: net worth, recent transactions, month-over-month spending, income month-to-date, upcoming bills, investments snapshot, goals, and a link into a month-in-review that carries cash-flow trends and asset/liability breakdowns. |
+| **Copilot Money** | The cash-flow triad — income, spending, net income — as the way to answer "how am I doing" in three numbers. The most visually polished consumer finance app of the current crop. |
+| **Sharesight** | Reporting as the product: performance, asset allocation, tax — each a defined report rather than a wall of numbers. |
+
+## What that means for Variant D
+
+1. **The trend is the hero, not the balance.** A number tells you where you
+   are; a line tells you how you got there. Range chips (1W / 1M / 3M) let
+   the client choose the question.
+2. **Three numbers for cash flow, then the shape.** Copilot's triad
+   (in / out / net) above a per-month chart — the summary answers first, the
+   chart explains.
+3. **Allocation as one bar plus rows, and the rows are the navigation.**
+   Tapping "Plan · 60.0%" opens Plan. The analytical view *is* the menu, so
+   the dashboard does not cost the client a tap.
+4. **Ratios, not just totals.** Invested share, months of cover, share of
+   income put to work — the three things a wealthy client's adviser would
+   compute by hand.
+5. **Say what the data cannot do.** The wealth line is reconstructed from
+   cash movements, so market performance before today is not in it, and the
+   chart says so. A partial month is marked as partial rather than compared
+   as if it were whole.
+
+## Chart rules D follows
+
+The `dataviz` procedure, in order: form chosen by the data's job, then colour,
+then validation, then marks, then the hover layer, then accessibility.
+
+- **Wealth over time** → area + line, one series, so no legend; crosshair and
+  tooltip; data-fitted y-domain (forcing zero would flatten the whole story
+  into a stripe).
+- **Allocation** → one 100% stacked bar, three categorical hues in fixed
+  order, 2px surface gaps, and a labelled row per segment.
+- **Net by month** → diverging columns around a zero baseline. Cool pole up,
+  warm pole down, and **direction** carries the meaning as well as colour.
+  Every bar is labelled with its value, because one bonus month dwarfs the
+  rest and an honest linear scale would otherwise leave three bars unreadable.
+- **Palettes validated, not eyeballed** (`validate_palette.js`): spaces trio
+  `#3d7ff5,#ee4d22,#0f9d63` — worst adjacent CVD ΔE 9.8, normal-vision 30.6;
+  flow pair `#2a5cc0,#b4438f` — ΔE 8.6 / 22.6; all ≥ 3:1 on white. Direct
+  labels throughout as the required secondary encoding.
+- **A table view** of the same numbers sits under the charts, and every
+  figure masks when balances are hidden.
+
 ## Sources
 
 - [Top 15 Banking Apps with Exceptional UX Design (2026) — Wavespace](https://www.wavespace.agency/blog/banking-app-ux)
@@ -93,3 +150,10 @@ Six rules, each traceable to the rows above:
 - [FCA issues warning about trading app gamification — Finextra](https://www.finextra.com/newsarticle/41350/fca-issues-warning-about-trading-app-gamification)
 - [Gamification in Banking: Strategies, Examples, and Business Impact — Dashdevs](https://dashdevs.com/blog/gamification-in-financial-apps-unlocking-new-opportunities-for-growth-and-engagement/)
 - [Gamification in fintech: Financial literacy or just engagement? — 11:FS](https://www.11fs.com/article/gamification-in-fintech-financial-literacy-or-just-engagement)
+- [The Best Portfolio Management Apps of 2026 — Forbes Advisor](https://www.forbes.com/advisor/investing/best-investment-managing-apps/)
+- [Best Net Worth Tracking Apps and Web Apps 2026](https://webapprater.com/articles/finance/best-net-worth-tracking-apps.html)
+- [Top Wealth Management Apps in 2026 — Finder](https://www.finder.com/investments/wealth-management-apps)
+- [The best budgeting apps for 2026 — Engadget](https://www.engadget.com/apps/best-budgeting-apps-120036303.html)
+- [Copilot Help Center — Cash Flow tab overview](https://help.copilot.money/en/articles/9682232-cash-flow-tab-overview) · [Dashboard tab overview](https://help.copilot.money/en/articles/6045480-dashboard-tab-overview)
+- [Monarch — track, budget, plan](https://www.monarch.com/)
+- [Copilot vs Monarch — Origin](https://useorigin.com/resources/blog/copilot-vs-monarch-which-is-better-for-your-financial-life)

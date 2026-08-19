@@ -24,7 +24,7 @@ export type Screen = 'home' | 'allocation' | 'budgeting' | 'autoCover' | 'transa
  * Home redesign — the two concepts under evaluation. Development-only switch;
  * production ships whichever concept wins the test, not a toggle.
  */
-export type HomeVariant = 'A' | 'B' | 'C';
+export type HomeVariant = 'A' | 'B' | 'C' | 'D';
 
 /**
  * States the Home has to hold up in. Driven from the Simulate rig so a
