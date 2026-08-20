@@ -19,7 +19,7 @@
  */
 import { useState, type PointerEvent } from 'react';
 import { shortDate, swissNumber } from '../../lib/format';
-import type { AllocationSlice, MonthFlow, TrendPoint } from './homeData';
+import type { AllocationSlice, MonthFlow, Ring, TrendPoint } from './homeData';
 
 const W = 320;
 
@@ -202,5 +202,50 @@ export function NetFlowBars({
         );
       })}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Ring gauge — the daily state, one arc each                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A single-value arc. The number inside is the truth; the arc only says
+ * where that number sits in a stated range, which is why every ring carries
+ * a caption naming the range. Not a score the client cannot reconstruct.
+ */
+export function RingGauge({ ring, onOpen }: { ring: Ring; onOpen: () => void }) {
+  const R = 26;
+  const C = 2 * Math.PI * R;
+  const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * C;
+
+  return (
+    <button
+      type="button"
+      className="gauge"
+      onClick={onOpen}
+      // The caption names the range the arc is drawn against — it belongs in
+      // the accessible name even though the strip has no room to print it.
+      aria-label={`${ring.label}: ${ring.display}, ${ring.caption}`}
+    >
+      <span className="gauge__dial">
+      <svg viewBox="0 0 64 64" className="gauge__svg" aria-hidden="true">
+        <circle cx="32" cy="32" r={R} fill="none" stroke="var(--color-dataviz-grid)" strokeWidth="5" />
+        <circle
+          cx="32"
+          cy="32"
+          r={R}
+          fill="none"
+          className={`gauge__arc gauge__arc--${ring.tone}`}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
+          transform="rotate(-90 32 32)"
+        />
+      </svg>
+        <span className="gauge__value">{ring.display}</span>
+      </span>
+      <span className="gauge__label">{ring.label}</span>
+    </button>
   );
 }

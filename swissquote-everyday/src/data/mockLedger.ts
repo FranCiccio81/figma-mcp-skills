@@ -133,6 +133,51 @@ export const TRADING_PERIOD_GAIN = 12_854.41; // 1-week absolute performance
 export const INVEST_EASY_PERF_PCT = 0.45;
 export const PILLAR_3A_PERF_PCT = 7.83;
 
+/* ------------------------------------------------------------------ */
+/* Trading detail — what an analytical Home needs and the ledger has    */
+/* no way to know. Realistic values for a CHF 204k trading account.     */
+/* ------------------------------------------------------------------ */
+
+export interface Position {
+  name: string;
+  ticker: string;
+  value: number;
+  /** Move since yesterday's close, in per cent. */
+  dayPct: number;
+}
+
+/** BACKEND: positions with live valuation and intraday performance. */
+export const POSITIONS: Position[] = [
+  { name: 'iShares Core MSCI World', ticker: 'IWDA', value: 42_300.0, dayPct: 0.94 },
+  { name: 'Nestlé', ticker: 'NESN', value: 24_380.0, dayPct: 0.41 },
+  { name: 'Roche', ticker: 'ROG', value: 21_150.0, dayPct: -0.28 },
+  { name: 'Novartis', ticker: 'NOVN', value: 18_900.0, dayPct: 1.12 },
+  { name: 'ASML', ticker: 'ASML', value: 17_420.0, dayPct: 2.63 },
+  { name: 'Apple', ticker: 'AAPL', value: 16_980.0, dayPct: 0.77 },
+  { name: 'Swissquote Group', ticker: 'SQN', value: 12_600.0, dayPct: 1.85 },
+  { name: 'Bitcoin ETP', ticker: 'ABTC', value: 9_800.0, dayPct: -1.42 },
+  { name: 'Other holdings', ticker: '—', value: 16_544.41, dayPct: 0.22 },
+];
+
+/** BACKEND: risk analytics — annualised 30-day volatility of the portfolio. */
+export const PORTFOLIO_VOLATILITY_30D = 12.8;
+/** BACKEND: peak-to-trough over the last 90 days, from valuation history. */
+export const PORTFOLIO_DRAWDOWN_90D = -4.6;
+/** BACKEND: booked commissions and custody fees. */
+export const FEES_THIS_MONTH = 78.5;
+export const FEES_LAST_MONTH = 124.0;
+export const FEES_YTD = 612.0;
+/** BACKEND: dividend and coupon ledger, paid and announced. */
+export const DIVIDENDS_YTD = 1_842.3;
+export const NEXT_DIVIDEND = { label: 'Nestlé', amount: 410.0, inDays: 38 };
+/** BACKEND: order book — open, and filled since midnight. */
+export const OPEN_ORDERS = 2;
+export const ORDERS_FILLED_TODAY = 0;
+/** BACKEND: exchange calendars. `⟨hours TO CONFIRM per venue⟩` */
+export const MARKET = { open: true, venue: 'SIX Swiss Exchange', closesAt: '17:30' };
+/** BACKEND: corporate-actions and earnings calendar for held instruments. */
+export const NEXT_EARNINGS = { ticker: 'ASML', label: 'ASML', inDays: 6 };
+
 /** Fine calibration of synthetic card spend; merchant ranges carry the profile. */
 export const SPEND_SCALE = 1.1;
 

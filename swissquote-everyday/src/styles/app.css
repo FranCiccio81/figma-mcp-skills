@@ -1255,6 +1255,104 @@ button {
 .data-table th { color: var(--color-text-secondary); }
 .data-table td { text-align: right; }
 
+/* ---- Variant D · rings, monitors, metric rows -------------------- */
+/* The day's state survives scrolling: on a dashboard this long, losing the
+   headline to a scroll is losing the point of it. */
+.rings {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-around;
+  gap: var(--space-xs);
+  background: var(--color-surface-app);
+  padding: var(--space-2xs) 0 var(--space-xs);
+  margin: 0 calc(var(--space-md) * -1);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.gauge { display: flex; flex-direction: column; align-items: center; gap: var(--space-2xs); min-width: 0; }
+/* The value sits inside its own arc, so the dial is the positioning context. */
+.gauge__dial { position: relative; display: inline-flex; }
+.gauge__svg { width: 52px; height: 52px; display: block; }
+.gauge__arc--positive { stroke: var(--color-feedback-positive); }
+.gauge__arc--neutral { stroke: var(--color-chart-line); }
+.gauge__arc--attention { stroke: var(--color-feedback-warning); }
+.gauge__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  font-feature-settings: var(--font-feature-numeric);
+}
+.gauge__label { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Expanding one monitor must not stretch the other. */
+.monitors { display: flex; align-items: flex-start; gap: var(--space-sm); }
+.monitor {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border-left: 3px solid var(--color-border-default);
+  overflow: hidden;
+}
+.monitor--positive { border-left-color: var(--color-feedback-positive); }
+.monitor--attention { border-left-color: var(--color-feedback-warning); }
+.monitor--neutral { border-left-color: var(--color-chart-line); }
+.monitor__head { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: var(--space-sm) var(--space-md); min-height: var(--size-touch-target); }
+.monitor__title { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.monitor__state { font-weight: var(--font-weight-bold); }
+.monitor__detail { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+.monitor__checks { list-style: none; margin: 0; padding: 0 var(--space-md) var(--space-sm); display: flex; flex-direction: column; gap: var(--space-xs); }
+.monitor__check { display: flex; gap: var(--space-xs); }
+.monitor__dot {
+  width: var(--space-md);
+  height: var(--space-md);
+  flex: none;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  margin-top: 2px;
+}
+.monitor__dot--ok { background: var(--color-surface-positive-subtle); color: var(--color-text-positive); }
+.monitor__dot--flag { background: var(--color-surface-warning-subtle); color: var(--color-text-warning); }
+.monitor__check-label { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
+.monitor__check-note { display: block; font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+
+.metric-list { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.metric {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--size-touch-target);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+}
+.metric__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.metric__figures { display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex: none; max-width: 52%; }
+.metric__value { font-size: var(--font-size-heading); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); white-space: nowrap; }
+.metric__trend { margin-left: var(--space-2xs); font-size: var(--font-size-caption); }
+.metric__trend--good { color: var(--color-text-positive); }
+.metric__trend--bad { color: var(--color-feedback-warning); }
+.metric__trend--neutral { color: var(--color-text-disabled); }
+.metric__baseline { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-align: right; }
+
 /* ---- Variant D · the wealth-analysis tile ------------------------ */
 .analysis {
   background: var(--gradient-card-ai);

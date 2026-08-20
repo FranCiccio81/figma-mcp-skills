@@ -10,7 +10,22 @@
  * app.
  */
 import {
+  DIVIDENDS_YTD,
+  FEES_LAST_MONTH,
+  FEES_THIS_MONTH,
   FX,
+  LOMBARD_LIMIT,
+  LOMBARD_RATE_PA,
+  MARKET,
+  NEXT_DIVIDEND,
+  NEXT_EARNINGS,
+  OPEN_ORDERS,
+  ORDERS_FILLED_TODAY,
+  PORTFOLIO_DRAWDOWN_90D,
+  PORTFOLIO_VOLATILITY_30D,
+  POSITIONS,
+  RECURRING_DEBITS,
+  TRADING_PERIOD_GAIN,
   PENDING_CARD_RESERVED,
   PILLAR_3A,
   PILLAR_3A_ALLOWANCE,
@@ -19,7 +34,7 @@ import {
   TRADING_ORDERS_RESERVED,
   TRADING_POSITIONS,
 } from '../../data/mockLedger';
-import { dateOf, longDate, money, swissNumber } from '../../lib/format';
+import { dateOf, dayOfMonth, longDate, money, shortDate, swissNumber } from '../../lib/format';
 import { nextSalaryDayAfter, type Forecast } from '../../state/forecast';
 import type { AppTab, HomeScenario, Screen } from '../../state/store';
 import { useStore } from '../../state/store';
@@ -148,6 +163,57 @@ export interface AllocationSlice {
   destination: Destination;
 }
 
+/**
+ * The three states a financial life is in on any given day, as rings.
+ * Deliberately parallel to a fitness dashboard's readiness rings: one for
+ * what you can spend, one for how the position moved, one for how much of
+ * it is at risk.
+ */
+export interface Ring {
+  key: 'liquidity' | 'performance' | 'exposure';
+  label: string;
+  /** 0–100, for the arc. */
+  pct: number;
+  /** The figure itself — the ring is the shape, this is the truth. */
+  display: string;
+  caption: string;
+  /** How the arc's fill should read. */
+  tone: Tone;
+  destination: Destination;
+}
+
+/** Which client a metric is for. Most people are one; some are both. */
+export type MetricPreset = 'everyday' | 'trader';
+
+/**
+ * A dashboard row: a figure, what it is usually, and which way it moved.
+ * Direction is never carried by colour alone — the arrow and the note say it.
+ */
+export interface Metric {
+  id: string;
+  label: string;
+  value: string;
+  /** The comparison figure, printed under the value. */
+  baseline?: string;
+  /** What the baseline is, for the accessible name. */
+  baselineLabel?: string;
+  trend: 'up' | 'down' | 'flat';
+  /** Whether the move is good, bad or simply a fact for this metric. */
+  sentiment: 'good' | 'bad' | 'neutral';
+  presets: MetricPreset[];
+  destination?: Destination;
+}
+
+/** A monitor card: a handful of checks reduced to one state. */
+export interface Monitor {
+  key: 'risk' | 'market';
+  title: string;
+  state: string;
+  detail: string;
+  tone: Tone;
+  checks?: { label: string; ok: boolean; note: string }[];
+}
+
 /** One line of proof under a finding — the figure, named. */
 export interface Evidence {
   label: string;
@@ -191,7 +257,13 @@ export interface Analytics {
   windowDays: number;
   /** Ranked by how much a client could actually do about them. */
   findings: Finding[];
+  rings: Ring[];
+  metrics: Metric[];
+  monitors: Monitor[];
 }
+
+/** The measured part of the analytics, before anything is derived from it. */
+type AnalyticsBase = Omit<Analytics, 'findings' | 'rings' | 'metrics' | 'monitors'>;
 
 export interface HomeData {
   /** Sum of everything owned, less anything borrowed. */
@@ -715,6 +787,436 @@ function buildMonths(state: EngineState): MonthFlow[] {
   return rows;
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Rings, metrics and monitors — the at-a-glance layer                  */
+/* ------------------------------------------------------------------ */
+
+/** Average Everyday balance over the window, walked back from today. */
+function averageEverydayBalance(state: EngineState, days: number): number {
+  let running = state.accounts.everyday;
+  let total = running;
+  const byDay = new Map<number, number>();
+  for (const t of state.txns) {
+    if (t.status === 'failed') continue;
+    byDay.set(t.day, (byDay.get(t.day) ?? 0) + t.amount);
+  }
+  for (let d = state.day; d > state.day - days; d -= 1) {
+    running -= byDay.get(d) ?? 0;
+    total += running;
+  }
+  return total / (days + 1);
+}
+
+/** Recurring debits still to be taken before the next salary lands. */
+function committedBeforeSalary(state: EngineState): { total: number; next: { label: string; amount: number; day: number } | null } {
+  const salaryDay = nextSalaryDayAfter(state.day);
+  let total = 0;
+  let next: { label: string; amount: number; day: number } | null = null;
+  // Look a full cycle ahead so the row still says something useful on a day
+  // when nothing happens to fall before the next salary.
+  for (let d = state.day + 1; d <= state.day + 45; d += 1) {
+    const dom = dayOfMonth(d);
+    for (const r of RECURRING_DEBITS) {
+      if (r.dayOfMonth !== dom) continue;
+      if (d <= salaryDay) total += r.amount;
+      if (!next) next = { label: r.label.split(' — ')[0], amount: r.amount, day: d };
+    }
+  }
+  return { total, next };
+}
+
+/**
+ * The daily state, in three rings.
+ *
+ * Each is a percentage of something stated, never a score the client cannot
+ * reconstruct: cover against a six-month rule of thumb, today's move inside a
+ * ±2% band, and the share of wealth actually at risk.
+ */
+function buildRings(
+  analytics: AnalyticsBase,
+  dayChangePct: number,
+  chf: Money,
+  owned: Set<UniverseKey>,
+): Ring[] {
+  const rings: Ring[] = [];
+
+  if (owned.has('bank')) {
+    const cover = analytics.monthsOfCover;
+    rings.push({
+      key: 'liquidity',
+      label: 'Liquidity',
+      pct: Math.max(0, Math.min(100, (cover / 6) * 100)),
+      // Two characters plus a unit is all the dial holds; the metric row
+      // below carries the precise figure.
+      display: cover >= 10 ? `${Math.round(cover)}mo` : `${cover.toFixed(1)}mo`,
+      caption: `${chf(analytics.typicalSpend, 0)} a month`,
+      tone: cover >= 3 ? 'positive' : 'attention',
+      destination: { tab: 'bank', screen: 'home' },
+    });
+  }
+
+  if (owned.has('trade')) {
+    // A ±2% band: wide enough that an ordinary day sits mid-ring, narrow
+    // enough that a real move is visible. The number is the truth; the arc
+    // only says where in the band it fell.
+    const BAND = 2;
+    rings.push({
+      key: 'performance',
+      label: 'Day move',
+      pct: Math.max(0, Math.min(100, ((dayChangePct + BAND) / (BAND * 2)) * 100)),
+      display: `${dayChangePct >= 0 ? '+' : '−'}${Math.abs(dayChangePct).toFixed(2)}%`,
+      caption: 'inside a ±2% band',
+      tone: dayChangePct >= 0 ? 'positive' : 'attention',
+      destination: { tab: 'trade' },
+    });
+  }
+
+  rings.push({
+    key: 'exposure',
+    label: 'Exposure',
+    pct: Math.max(0, Math.min(100, analytics.investedShare)),
+    display: `${analytics.investedShare.toFixed(0)}%`,
+    caption: 'invested, not cash',
+    tone: 'neutral',
+    destination: { tab: 'plan' },
+  });
+
+  return rings;
+}
+
+/** Direction and whether that direction is good for THIS metric. */
+function move(
+  current: number,
+  baseline: number,
+  higherIsBetter: boolean,
+): { trend: Metric['trend']; sentiment: Metric['sentiment'] } {
+  // Under 2% apart is noise, not a move.
+  const delta = baseline === 0 ? current : (current - baseline) / Math.abs(baseline);
+  if (Math.abs(delta) < 0.02) return { trend: 'flat', sentiment: 'neutral' };
+  const up = delta > 0;
+  return { trend: up ? 'up' : 'down', sentiment: up === higherIsBetter ? 'good' : 'bad' };
+}
+
+function buildMetrics(
+  state: EngineState,
+  forecast: Forecast,
+  analytics: AnalyticsBase,
+  chf: Money,
+  hidden: boolean,
+  owned: Set<UniverseKey>,
+): Metric[] {
+  const a = state.accounts;
+  const metrics: Metric[] = [];
+  // A typographic minus, to match every other figure in the app.
+  const pct = (v: number, digits = 1) =>
+    hidden ? '•••' : `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(digits)}%`;
+
+  /* ---- The everyday client ------------------------------------- */
+  if (owned.has('bank')) {
+    const availableNow = Math.max(0, a.everyday - PENDING_CARD_RESERVED);
+    const avgBalance = averageEverydayBalance(state, 30);
+    metrics.push({
+      id: 'available',
+      label: 'Available to spend',
+      value: chf(availableNow, 0),
+      baseline: chf(avgBalance, 0),
+      baselineLabel: '30-day average',
+      ...move(availableNow, avgBalance, true),
+      presets: ['everyday'],
+      destination: { tab: 'bank', screen: 'home' },
+    });
+
+    const { total: committed, next: nextFixed } = committedBeforeSalary(state);
+    metrics.push({
+      id: 'committed',
+      label: 'Fixed costs before salary',
+      value: chf(committed, 0),
+      baseline: nextFixed
+        ? `next: ${nextFixed.label} ${chf(nextFixed.amount, 0)} on ${shortDate(nextFixed.day)}`
+        : chf(forecast.keep, 0),
+      baselineLabel: 'next standing debit',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['everyday'],
+      destination: { tab: 'bank', screen: 'pay' },
+    });
+
+    const spend30 = state.txns
+      .filter((t) => t.day > state.day - 30 && t.day <= state.day && t.amount < 0 && t.category !== 'smart-liquidity')
+      .reduce((sum, t) => sum + -t.amount, 0);
+    metrics.push({
+      id: 'spending',
+      label: 'Spending · 30 days',
+      value: chf(spend30, 0),
+      baseline: chf(analytics.typicalSpend, 0),
+      baselineLabel: 'your usual month',
+      ...move(spend30, analytics.typicalSpend, false),
+      presets: ['everyday'],
+      destination: { tab: 'bank', screen: 'transactions' },
+    });
+
+    const subs = RECURRING_DEBITS.reduce((sum, r) => sum + r.amount, 0);
+    metrics.push({
+      id: 'recurring',
+      label: 'Recurring, per month',
+      value: chf(subs, 0),
+      baseline: `${RECURRING_DEBITS.length} standing items`,
+      baselineLabel: 'count',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['everyday'],
+      destination: { tab: 'bank', screen: 'pay' },
+    });
+
+    // The comparison is the client's own three-month rate — not a target
+    // the bank invented for them.
+    let in90 = 0;
+    let work90 = 0;
+    for (const t of state.txns) {
+      if (t.day <= state.day - 90 || t.day > state.day || t.status === 'failed') continue;
+      const dest = t.smart?.destination;
+      if (dest && AT_WORK.has(dest)) work90 += Math.abs(t.amount);
+      else if (t.amount > 0 && isExternal(t)) in90 += t.amount;
+    }
+    const rate90 = in90 > 0 ? (work90 / in90) * 100 : 0;
+    metrics.push({
+      id: 'put-to-work',
+      label: 'Put to work · 30 days',
+      value: pct(analytics.putToWorkRate, 0),
+      baseline: `${pct(rate90, 0)} over 3 months`,
+      baselineLabel: 'your own rate',
+      ...move(analytics.putToWorkRate, rate90, true),
+      presets: ['everyday'],
+      destination: { tab: 'bank', screen: 'allocation' },
+    });
+  }
+
+  /* ---- The trader ------------------------------------------------ */
+  if (owned.has('trade')) {
+    const tradeValue = TRADING_POSITIONS + a.tradingCash;
+    const dayPnl = tradeValue - tradeValue / (1 + TRADING_DAY_CHANGE_PCT / 100);
+    metrics.push({
+      id: 'day-pnl',
+      label: 'Day P&L',
+      value: hidden ? 'CHF •••' : `${dayPnl >= 0 ? '+' : '−'}${swissNumber(Math.abs(dayPnl), 0)} CHF`,
+      baseline: `${TRADING_DAY_CHANGE_PCT >= 0 ? '+' : '−'}${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}%`,
+      baselineLabel: 'since yesterday’s close',
+      trend: dayPnl >= 0 ? 'up' : 'down',
+      sentiment: dayPnl >= 0 ? 'good' : 'bad',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'period-pnl',
+      label: 'P&L · this period',
+      value: hidden
+        ? 'CHF •••'
+        : `${TRADING_PERIOD_GAIN >= 0 ? '+' : '−'}${swissNumber(Math.abs(TRADING_PERIOD_GAIN), 0)} CHF`,
+      baseline: 'since the start of the week',
+      baselineLabel: 'period',
+      trend: TRADING_PERIOD_GAIN >= 0 ? 'up' : 'down',
+      sentiment: TRADING_PERIOD_GAIN >= 0 ? 'good' : 'bad',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    const buyingPower = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
+    metrics.push({
+      id: 'buying-power',
+      label: 'Buying power',
+      value: chf(buyingPower, 0),
+      baseline: `${chf(TRADING_ORDERS_RESERVED, 0)} reserved`,
+      baselineLabel: 'for open orders',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    const top = [...POSITIONS].sort((x, y) => y.value - x.value)[0];
+    const topWeight = (top.value / TRADING_POSITIONS) * 100;
+    metrics.push({
+      id: 'largest-position',
+      label: `Largest position · ${top.ticker}`,
+      value: pct(topWeight, 1),
+      baseline: chf(top.value, 0),
+      baselineLabel: 'of the trading account',
+      ...move(topWeight, 20, false),
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'volatility',
+      label: 'Volatility · 30 days',
+      value: pct(PORTFOLIO_VOLATILITY_30D, 1),
+      baseline: '12–15% typical ⟨TO CONFIRM⟩',
+      baselineLabel: 'reference range',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'drawdown',
+      label: 'Drawdown from peak · 90d',
+      value: pct(PORTFOLIO_DRAWDOWN_90D, 1),
+      baseline: 'peak-to-trough',
+      baselineLabel: 'over 90 days',
+      trend: 'down',
+      sentiment: 'neutral',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'orders',
+      label: 'Orders',
+      value: `${OPEN_ORDERS} open`,
+      baseline: `${ORDERS_FILLED_TODAY} filled today`,
+      baselineLabel: 'today',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'fees',
+      label: 'Fees · this month',
+      value: chf(FEES_THIS_MONTH, 0),
+      baseline: chf(FEES_LAST_MONTH, 0),
+      baselineLabel: 'last month',
+      ...move(FEES_THIS_MONTH, FEES_LAST_MONTH, false),
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'dividends',
+      label: 'Dividends · this year',
+      value: chf(DIVIDENDS_YTD, 0),
+      baseline: `${NEXT_DIVIDEND.label} ${chf(NEXT_DIVIDEND.amount, 0)} in ${NEXT_DIVIDEND.inDays} days`,
+      baselineLabel: 'next payment',
+      trend: 'up',
+      sentiment: 'good',
+      presets: ['trader'],
+      destination: { tab: 'trade' },
+    });
+
+    metrics.push({
+      id: 'lombard',
+      label: 'Lombard drawn',
+      value: chf(a.lombardDrawn, 0),
+      baseline: `${chf(a.lombardAvailable, 0)} available of ${chf(LOMBARD_LIMIT, 0)} · ${LOMBARD_RATE_PA}% p.a.`,
+      baselineLabel: 'credit line',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['trader'],
+      destination: { tab: 'bank', screen: 'autoCover' },
+    });
+  }
+
+  /* ---- Held by both — last, so each preset leads with its own ---- */
+  if (owned.has('bank')) {
+    const fx = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
+    metrics.push({
+      id: 'fx',
+      label: 'Held in other currencies',
+      value: chf(fx, 0),
+      baseline: `EUR ${hidden ? '•••' : swissNumber(a.eurWallet, 0)} · USD ${
+        hidden ? '•••' : swissNumber(a.usdWallet, 0)
+      }`,
+      baselineLabel: 'wallets',
+      trend: 'flat',
+      sentiment: 'neutral',
+      presets: ['everyday', 'trader'],
+      destination: { tab: 'bank', screen: 'pay' },
+    });
+  }
+
+  return metrics;
+}
+
+/**
+ * Two monitors, in the shape a health dashboard uses them: a set of checks
+ * reduced to one line, and a live state with a timestamp.
+ */
+function buildMonitors(
+  state: EngineState,
+  analytics: AnalyticsBase,
+  chf: Money,
+  owned: Set<UniverseKey>,
+): Monitor[] {
+  const a = state.accounts;
+  const monitors: Monitor[] = [];
+
+  // Thresholds are product decisions, written here rather than hidden.
+  const top = [...POSITIONS].sort((x, y) => y.value - x.value)[0];
+  const topWeight = (top.value / TRADING_POSITIONS) * 100;
+  const checks = [
+    {
+      label: 'Cash buffer',
+      ok: analytics.monthsOfCover >= 3,
+      note: `${analytics.monthsOfCover.toFixed(1)} months of spending, against a 3-month floor`,
+    },
+    {
+      label: 'Borrowing',
+      ok: a.lombardDrawn === 0,
+      note: a.lombardDrawn === 0 ? 'Nothing drawn on your credit line' : `${chf(a.lombardDrawn, 0)} drawn`,
+    },
+    {
+      label: 'Single position',
+      ok: topWeight < 25,
+      note: `${top.ticker} is ${topWeight.toFixed(1)}% of the trading account, against a 25% flag`,
+    },
+    {
+      label: 'Drawdown',
+      ok: PORTFOLIO_DRAWDOWN_90D > -10,
+      note: `−${Math.abs(PORTFOLIO_DRAWDOWN_90D).toFixed(1)}% from peak over 90 days, against a −10% flag`,
+    },
+    {
+      label: 'Payments',
+      ok: state.status !== 'autoCoverFailed',
+      note: state.status === 'autoCoverFailed' ? 'A payment could not go through' : 'Everything went through',
+    },
+  ];
+  const passing = checks.filter((c) => c.ok).length;
+
+  monitors.push({
+    key: 'risk',
+    title: 'Risk monitor',
+    state: passing === checks.length ? 'Within range' : `${checks.length - passing} to look at`,
+    detail: `${passing}/${checks.length} checks`,
+    tone: passing === checks.length ? 'positive' : 'attention',
+    checks,
+  });
+
+  if (owned.has('trade')) {
+    monitors.push({
+      key: 'market',
+      title: 'Market',
+      state: MARKET.open ? 'Open' : 'Closed',
+      detail: MARKET.open
+        ? `${MARKET.venue} · closes ${MARKET.closesAt}`
+        : `${MARKET.venue} · opens tomorrow`,
+      tone: 'neutral',
+      checks: [
+        {
+          label: 'Next earnings',
+          ok: true,
+          note: `${NEXT_EARNINGS.label} reports in ${NEXT_EARNINGS.inDays} days`,
+        },
+      ],
+    });
+  }
+
+  return monitors;
+}
+
 /**
  * What stands out in this position. Ranked by actionability: something the
  * client can do this week outranks something structural, which outranks an
@@ -724,7 +1226,7 @@ function buildMonths(state: EngineState): MonthFlow[] {
 function buildFindings(
   state: EngineState,
   forecast: Forecast,
-  analytics: Omit<Analytics, 'findings'>,
+  analytics: AnalyticsBase,
   chf: Money,
   owned: Set<UniverseKey>,
 ): Finding[] {
@@ -808,6 +1310,7 @@ function buildAnalytics(
   totalWealth: number,
   snapshot: Snapshot,
   chf: Money,
+  hidden: boolean,
   ownedKeys: Set<UniverseKey>,
 ): Analytics {
   const a = state.accounts;
@@ -830,7 +1333,7 @@ function buildAnalytics(
   const spend = typicalMonthlySpend(state);
   const liquid = a.everyday + a.saveEasy + a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
 
-  const base: Omit<Analytics, 'findings'> = {
+  const base: AnalyticsBase = {
     trend: buildTrend(state, totalWealth),
     months: buildMonths(state),
     allocation,
@@ -841,7 +1344,14 @@ function buildAnalytics(
     windowDays: snapshot.days,
   };
 
-  return { ...base, findings: buildFindings(state, forecast, base, chf, ownedKeys) };
+  const dayChangePct = ownedKeys.has('trade') ? TRADING_DAY_CHANGE_PCT : 0;
+  return {
+    ...base,
+    findings: buildFindings(state, forecast, base, chf, ownedKeys),
+    rings: buildRings(base, dayChangePct, chf, ownedKeys),
+    metrics: buildMetrics(state, forecast, base, chf, hidden, ownedKeys),
+    monitors: buildMonitors(state, base, chf, ownedKeys),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -887,7 +1397,16 @@ export function useHomeData(): HomeData {
     aiUnavailable: home.scenario === 'aiError',
     snapshot,
     goals: buildGoals(state, chf, ownedKeys),
-    analytics: buildAnalytics(state, forecast, universes, totalWealth, snapshot, chf, ownedKeys),
+    analytics: buildAnalytics(
+      state,
+      forecast,
+      universes,
+      totalWealth,
+      snapshot,
+      chf,
+      home.balancesHidden,
+      ownedKeys,
+    ),
     streak: ownedKeys.has('bank') ? buildStreak(state) : null,
     scenario: home.scenario,
     firstName: 'Léa',

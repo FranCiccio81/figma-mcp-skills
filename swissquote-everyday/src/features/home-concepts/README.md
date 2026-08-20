@@ -38,6 +38,7 @@ The same rig forces every state each concept has to survive:
 | `actions.tsx` | The money actions, and the rule for which ones a client sees. |
 | `charts.tsx` | The three charts Variant D plots, in plain SVG on the project's tokens. |
 | `WealthAnalysis.tsx` | Variant D's AI tile: three levels of disclosure over findings the adapter computes. |
+| `DashboardRows.tsx` | Variant D's metric rows and monitor cards, and the preset switch. |
 | `BENCHMARK.md` | Two benchmarks: how banking apps open (C, with the FCA line it does not cross) and what the best analytical dashboards show (D). |
 
 Rules the mock enforces, and a real service would have to keep:
@@ -176,8 +177,10 @@ devices that make saving stick make trading dangerous.
 
 ## Variant D — The dashboard
 
-**Shape.** Total wealth with the change over the selected range · a
-**wealth-analysis tile**, closed by default · a wealth trend chart with
+**Shape.** Three sticky rings (Liquidity · Day move · Exposure) · total
+wealth with the change over the selected range · a **wealth-analysis tile**,
+closed by default · two monitors (Risk · Market) · **My dashboard** — metric
+rows with baselines, under an Everyday / Trader preset switch · a wealth trend chart with
 1W / 1M / 3M chips, crosshair and tooltip · allocation as one stacked bar
 whose legend rows are the navigation · the cash-flow triad (in / out / net)
 over a per-month diverging column chart · three ratios · a table view of the
@@ -216,7 +219,10 @@ concentration (60%) visible in a way no list of balances would, and every
 chart is honest about its own limits.
 
 **Risk.** It is the densest of the four and the least welcoming: a client
-who only wants to pay a bill has to scroll past a tile and three charts. The
+who only wants to pay a bill scrolls past a tile, a metric list and three
+charts. The Everyday / Trader presets are also an admission that one
+dashboard cannot serve both — if the test shows clients never switch, the
+right answer is two products, not one screen with a toggle. The
 analysis tile also carries the concept's sharpest regulatory edge — "CHF
 160'791 is doing nothing" is one careless rewrite away from advice, which is
 why the findings are computed rather than generated and why every one of

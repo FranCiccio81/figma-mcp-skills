@@ -134,6 +134,69 @@ then validation, then marks, then the hover layer, then accessibility.
 - **A table view** of the same numbers sits under the charts, and every
   figure masks when balances are hidden.
 
+---
+
+# Part three — the health-dashboard grammar, applied to money
+
+A fitness dashboard (WHOOP) solves a problem banking has too: a person with
+a lot of measurements wants a state, not a spreadsheet. Three patterns port
+almost unchanged.
+
+| Health pattern | What it does there | The banking equivalent in D |
+|---|---|---|
+| **Three rings, always on screen** (sleep / recovery / strain) | One glance answers "how am I today" | **Liquidity / Day move / Exposure** — sticky, so the day's state survives a long scroll |
+| **A metric list with baselines** (23 today, 29 usually) | A number is trivia; a number *against its usual* is a judgement | Every dashboard row prints today's figure over what it usually is |
+| **Monitors** (Health monitor 5/5 · Stress monitor) | Several checks reduced to one word | **Risk monitor** (5 checks) and **Market** |
+| **Customize** | The dashboard is the client's, not the product's | **Everyday / Trader presets** — same account, two dashboards |
+
+Two things do **not** port, and pretending otherwise would be a design error:
+
+1. **Direction is not sentiment.** A higher recovery score is good; higher
+   spending is not. So the arrow shows the move and the colour shows whether
+   it is welcome — and since colour never carries meaning alone, the
+   accessible name says both ("higher than your usual month").
+2. **A score you cannot reconstruct is not acceptable here.** Recovery can be
+   a proprietary 0–100. A bank's ring has to be a percentage *of something
+   stated*: cover against a six-month rule of thumb, today's move inside a
+   ±2% band, invested share of wealth. Every ring names its range.
+
+## What each client wants at a glance
+
+**The everyday banker** — "can I spend, and am I on track?"
+
+| Metric | Baseline it is read against |
+|---|---|
+| Available to spend | 30-day average balance |
+| Fixed costs before salary | the next standing debit, named and dated |
+| Spending · 30 days | the client's usual month |
+| Recurring, per month | how many standing items |
+| Put to work · 30 days | the client's own 3-month rate |
+| Held in other currencies | the wallets behind it |
+
+**The expert trader** — "where do I stand, what is at risk, what does it cost?"
+
+| Metric | Baseline it is read against |
+|---|---|
+| Day P&L | today's percentage move |
+| P&L · this period | the period it covers |
+| Buying power | cash reserved for open orders |
+| Largest position | its weight in the trading account, flagged past 25% |
+| Volatility · 30 days | 12–15% typical for diversified equity ⟨TO CONFIRM⟩ |
+| Drawdown from peak · 90d | peak-to-trough |
+| Orders | open, and filled today |
+| Fees · this month | last month |
+| Dividends · this year | the next payment, named and dated |
+| Lombard drawn | available, limit, and the rate it costs |
+
+**Both**: currency exposure, the risk monitor's five checks (cash buffer,
+borrowing, single-position weight, drawdown, payments), and market state
+with the next earnings date for a held instrument.
+
+Everything above is either computed from the ledger or marked `BACKEND:` in
+the adapter with the capability it would need — positions with live
+valuation, risk analytics, the order book, the fee and dividend ledgers, and
+exchange calendars.
+
 ## Sources
 
 - [Top 15 Banking Apps with Exceptional UX Design (2026) — Wavespace](https://www.wavespace.agency/blog/banking-app-ux)

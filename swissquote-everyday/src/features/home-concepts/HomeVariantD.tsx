@@ -20,8 +20,9 @@
 import { useState } from 'react';
 import { swissNumber } from '../../lib/format';
 import { useStore } from '../../state/store';
-import { AllocationBar, NetFlowBars, TrendChart } from './charts';
-import { useHomeData, type TrendPoint } from './homeData';
+import { AllocationBar, NetFlowBars, RingGauge, TrendChart } from './charts';
+import { MetricList, Monitors } from './DashboardRows';
+import { useHomeData, type MetricPreset, type TrendPoint } from './homeData';
 import { BalanceVisibilityButton, BigAmount, HomeSkeleton, useGoTo } from './shared';
 import { useHomeAiAnalysis } from './useHomeAi';
 import { WealthAnalysis } from './WealthAnalysis';
@@ -68,10 +69,27 @@ export function HomeVariantD() {
   const change = data.totalWealth - first;
   const changePct = first > 0 ? (change / first) * 100 : 0;
 
+  // Which dashboard this client gets. Both are offered when they hold both.
+  const presets: MetricPreset[] = [];
+  if (data.analytics.metrics.some((m) => m.presets.includes('everyday'))) presets.push('everyday');
+  if (data.analytics.metrics.some((m) => m.presets.includes('trader'))) presets.push('trader');
+  const [preset, setPreset] = useState<MetricPreset>('everyday');
+  const activePreset = presets.includes(preset) ? preset : (presets[0] ?? 'everyday');
+
   if (data.loading) return <HomeSkeleton rows={3} />;
 
   return (
     <div className="screen">
+      {/* ---- The day's three states. Sticky: on a dashboard this long,
+              the top-level state has to survive scrolling. --------------- */}
+      {a.rings.length > 0 && (
+        <div className="rings" aria-label="Today at a glance">
+          {a.rings.map((r) => (
+            <RingGauge key={r.key} ring={r} onOpen={() => goTo(r.destination)} />
+          ))}
+        </div>
+      )}
+
       {/* ---- Position ------------------------------------------------- */}
       <section aria-label="Total wealth">
         <div className="flex items-start justify-between">
@@ -97,6 +115,17 @@ export function HomeVariantD() {
               It reads as an executive summary: conclusions first, with the
               charts below as the evidence. ---------------------------------- */}
       <WealthAnalysis findings={a.findings} analysis={ai.analysis} status={ai.status} />
+
+      {/* ---- Monitors: checks reduced to one state each ---------------- */}
+      <Monitors monitors={a.monitors} />
+
+      {/* ---- My dashboard: the metric rows, by preset ------------------ */}
+      <MetricList
+        metrics={a.metrics}
+        presets={presets}
+        preset={activePreset}
+        onPreset={setPreset}
+      />
 
       {/* ---- Wealth over time ----------------------------------------- */}
       <section className="card" aria-label="Wealth over time">
@@ -195,30 +224,6 @@ export function HomeVariantD() {
           )}
         </section>
       )}
-
-      {/* ---- Ratios ---------------------------------------------------- */}
-      <section className="card" aria-label="Ratios">
-        <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-sm)' }}>
-          Where you stand
-        </h2>
-        <div className="ratio-grid">
-          <Stat
-            label="Invested"
-            value={`${a.investedShare.toFixed(0)}%`}
-            note="of your wealth, rather than held as cash"
-          />
-          <Stat
-            label="Months of cover"
-            value={a.monthsOfCover.toFixed(1)}
-            note={`liquid cash ÷ ${data.chf(a.typicalSpend, 0)} typical monthly spending`}
-          />
-          <Stat
-            label="Put to work"
-            value={`${a.putToWorkRate.toFixed(0)}%`}
-            note={`of what came in over ${a.windowDays} days went to savings or investments`}
-          />
-        </div>
-      </section>
 
       {/* ---- The same numbers, as text -------------------------------- */}
       <section aria-label="The numbers as a table">
