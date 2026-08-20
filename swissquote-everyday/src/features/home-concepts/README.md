@@ -177,10 +177,10 @@ devices that make saving stick make trading dangerous.
 
 ## Variant D — The dashboard
 
-**Shape.** One headline card (total wealth, its move, range chips, the trend
-chart) · a **wealth-analysis tile**, closed by default · two monitors
-(Risk · Market) · **My dashboard** — three coloured subjects, each headed by
-its own ring and carrying the chart that belongs to it · a wealth trend chart with
+**Shape.** Three sticky rings (Liquidity · Day move · Exposure) · total
+wealth with the change over the selected range · a **wealth-analysis tile**,
+closed by default · two monitors (Risk · Market) · **My dashboard** — metric
+rows with baselines, under an Everyday / Trader preset switch · a wealth trend chart with
 1W / 1M / 3M chips, crosshair and tooltip · allocation as one stacked bar
 whose legend rows are the navigation · the cash-flow triad (in / out / net)
 over a per-month diverging column chart · three ratios · a table view of the
@@ -203,26 +203,6 @@ finding, drop one, reorder them, or move money. When it is unavailable the
 same findings appear in the app's own words, and the tile says so. Every
 action opens a screen where the client decides — the copy observes, it does
 not recommend.
-
-**Structure.** The screen is not a stack of cards but three subjects, in a
-fixed order, each in the colour of the space it belongs to:
-
-| Section | Ring | Colour | What hangs under it |
-|---|---|---|---|
-| Cash & everyday | Liquidity — months of cover | Bank orange | Net, by month |
-| Markets | Day move — inside a ±2% band | Trade blue | — |
-| The long view | Exposure — invested share | Plan green | How it's split |
-
-The rings began as a sticky strip at the top; it crowded the headline and
-told the client nothing about where to look. Each ring now heads the section
-it measures, which is also what makes the list scannable — find the section
-by colour, then the row by label. The hue marks the section as a tint behind
-the header and a rail down its side; the words stay in ink, because a 3:1
-dataviz colour is not a 4.5:1 text colour.
-
-The Everyday / Trader switch changes the **depth** of each section, never
-whether a subject exists: an everyday client with a trading account still
-sees Markets, with two rows instead of nine.
 
 **Hypothesis.** A client with roughly a million francs across five products
 does not want to be greeted, told what to do, or congratulated. They want

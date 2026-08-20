@@ -144,11 +144,10 @@ almost unchanged.
 
 | Health pattern | What it does there | The banking equivalent in D |
 |---|---|---|
-| **Three rings** (sleep / recovery / strain) | One glance answers "how am I today" | **Liquidity / Day move / Exposure** — one per dashboard section, heading the rows it measures. Tried sticky at the top first; it crowded the headline and pointed nowhere |
+| **Three rings, always on screen** (sleep / recovery / strain) | One glance answers "how am I today" | **Liquidity / Day move / Exposure** — sticky, so the day's state survives a long scroll |
 | **A metric list with baselines** (23 today, 29 usually) | A number is trivia; a number *against its usual* is a judgement | Every dashboard row prints today's figure over what it usually is |
 | **Monitors** (Health monitor 5/5 · Stress monitor) | Several checks reduced to one word | **Risk monitor** (5 checks) and **Market** |
-| **Customize** | The dashboard is the client's, not the product's | **Everyday / Trader presets** — same account, two depths of the same three sections |
-| **Colour-coded categories** (Monzo's spending colours) | Find the group by colour, then the item by label | Each section wears its space's hue — Bank orange, Trade blue, Plan green — the same three used in the allocation bar |
+| **Customize** | The dashboard is the client's, not the product's | **Everyday / Trader presets** — same account, two dashboards |
 
 Two things do **not** port, and pretending otherwise would be a design error:
 

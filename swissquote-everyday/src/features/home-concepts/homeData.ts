@@ -169,16 +169,8 @@ export interface AllocationSlice {
  * what you can spend, one for how the position moved, one for how much of
  * it is at risk.
  */
-/**
- * The dashboard's three subjects. Each one owns a ring, a colour and a block
- * of rows — and the colour is the space it belongs to, so Bank is orange
- * here exactly as it is on every other Home.
- */
-export type SectionKey = 'cash' | 'markets' | 'longterm';
-
 export interface Ring {
   key: 'liquidity' | 'performance' | 'exposure';
-  section: SectionKey;
   label: string;
   /** 0–100, for the arc. */
   pct: number;
@@ -199,7 +191,6 @@ export type MetricPreset = 'everyday' | 'trader';
  */
 export interface Metric {
   id: string;
-  section: SectionKey;
   label: string;
   value: string;
   /** The comparison figure, printed under the value. */
@@ -854,7 +845,6 @@ function buildRings(
     const cover = analytics.monthsOfCover;
     rings.push({
       key: 'liquidity',
-      section: 'cash',
       label: 'Liquidity',
       pct: Math.max(0, Math.min(100, (cover / 6) * 100)),
       // Two characters plus a unit is all the dial holds; the metric row
@@ -873,7 +863,6 @@ function buildRings(
     const BAND = 2;
     rings.push({
       key: 'performance',
-      section: 'markets',
       label: 'Day move',
       pct: Math.max(0, Math.min(100, ((dayChangePct + BAND) / (BAND * 2)) * 100)),
       display: `${dayChangePct >= 0 ? '+' : '−'}${Math.abs(dayChangePct).toFixed(2)}%`,
@@ -885,7 +874,6 @@ function buildRings(
 
   rings.push({
     key: 'exposure',
-    section: 'longterm',
     label: 'Exposure',
     pct: Math.max(0, Math.min(100, analytics.investedShare)),
     display: `${analytics.investedShare.toFixed(0)}%`,
@@ -930,7 +918,6 @@ function buildMetrics(
     const avgBalance = averageEverydayBalance(state, 30);
     metrics.push({
       id: 'available',
-      section: 'cash',
       label: 'Available to spend',
       value: chf(availableNow, 0),
       baseline: chf(avgBalance, 0),
@@ -943,7 +930,6 @@ function buildMetrics(
     const { total: committed, next: nextFixed } = committedBeforeSalary(state);
     metrics.push({
       id: 'committed',
-      section: 'cash',
       label: 'Fixed costs before salary',
       value: chf(committed, 0),
       baseline: nextFixed
@@ -961,7 +947,6 @@ function buildMetrics(
       .reduce((sum, t) => sum + -t.amount, 0);
     metrics.push({
       id: 'spending',
-      section: 'cash',
       label: 'Spending · 30 days',
       value: chf(spend30, 0),
       baseline: chf(analytics.typicalSpend, 0),
@@ -974,7 +959,6 @@ function buildMetrics(
     const subs = RECURRING_DEBITS.reduce((sum, r) => sum + r.amount, 0);
     metrics.push({
       id: 'recurring',
-      section: 'cash',
       label: 'Recurring, per month',
       value: chf(subs, 0),
       baseline: `${RECURRING_DEBITS.length} standing items`,
@@ -998,7 +982,6 @@ function buildMetrics(
     const rate90 = in90 > 0 ? (work90 / in90) * 100 : 0;
     metrics.push({
       id: 'put-to-work',
-      section: 'longterm',
       label: 'Put to work · 30 days',
       value: pct(analytics.putToWorkRate, 0),
       baseline: `${pct(rate90, 0)} over 3 months`,
@@ -1015,20 +998,18 @@ function buildMetrics(
     const dayPnl = tradeValue - tradeValue / (1 + TRADING_DAY_CHANGE_PCT / 100);
     metrics.push({
       id: 'day-pnl',
-      section: 'markets',
       label: 'Day P&L',
       value: hidden ? 'CHF •••' : `${dayPnl >= 0 ? '+' : '−'}${swissNumber(Math.abs(dayPnl), 0)} CHF`,
       baseline: `${TRADING_DAY_CHANGE_PCT >= 0 ? '+' : '−'}${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}%`,
       baselineLabel: 'since yesterday’s close',
       trend: dayPnl >= 0 ? 'up' : 'down',
       sentiment: dayPnl >= 0 ? 'good' : 'bad',
-      presets: ['everyday', 'trader'],
+      presets: ['trader'],
       destination: { tab: 'trade' },
     });
 
     metrics.push({
       id: 'period-pnl',
-      section: 'markets',
       label: 'P&L · this period',
       value: hidden
         ? 'CHF •••'
@@ -1037,14 +1018,13 @@ function buildMetrics(
       baselineLabel: 'period',
       trend: TRADING_PERIOD_GAIN >= 0 ? 'up' : 'down',
       sentiment: TRADING_PERIOD_GAIN >= 0 ? 'good' : 'bad',
-      presets: ['everyday', 'trader'],
+      presets: ['trader'],
       destination: { tab: 'trade' },
     });
 
     const buyingPower = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
     metrics.push({
       id: 'buying-power',
-      section: 'markets',
       label: 'Buying power',
       value: chf(buyingPower, 0),
       baseline: `${chf(TRADING_ORDERS_RESERVED, 0)} reserved`,
@@ -1059,7 +1039,6 @@ function buildMetrics(
     const topWeight = (top.value / TRADING_POSITIONS) * 100;
     metrics.push({
       id: 'largest-position',
-      section: 'markets',
       label: `Largest position · ${top.ticker}`,
       value: pct(topWeight, 1),
       baseline: chf(top.value, 0),
@@ -1071,7 +1050,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'volatility',
-      section: 'markets',
       label: 'Volatility · 30 days',
       value: pct(PORTFOLIO_VOLATILITY_30D, 1),
       baseline: '12–15% typical ⟨TO CONFIRM⟩',
@@ -1084,7 +1062,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'drawdown',
-      section: 'markets',
       label: 'Drawdown from peak · 90d',
       value: pct(PORTFOLIO_DRAWDOWN_90D, 1),
       baseline: 'peak-to-trough',
@@ -1097,7 +1074,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'orders',
-      section: 'markets',
       label: 'Orders',
       value: `${OPEN_ORDERS} open`,
       baseline: `${ORDERS_FILLED_TODAY} filled today`,
@@ -1110,7 +1086,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'fees',
-      section: 'markets',
       label: 'Fees · this month',
       value: chf(FEES_THIS_MONTH, 0),
       baseline: chf(FEES_LAST_MONTH, 0),
@@ -1122,7 +1097,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'dividends',
-      section: 'markets',
       label: 'Dividends · this year',
       value: chf(DIVIDENDS_YTD, 0),
       baseline: `${NEXT_DIVIDEND.label} ${chf(NEXT_DIVIDEND.amount, 0)} in ${NEXT_DIVIDEND.inDays} days`,
@@ -1135,7 +1109,6 @@ function buildMetrics(
 
     metrics.push({
       id: 'lombard',
-      section: 'cash',
       label: 'Lombard drawn',
       value: chf(a.lombardDrawn, 0),
       baseline: `${chf(a.lombardAvailable, 0)} available of ${chf(LOMBARD_LIMIT, 0)} · ${LOMBARD_RATE_PA}% p.a.`,
@@ -1147,56 +1120,11 @@ function buildMetrics(
     });
   }
 
-  /* ---- The long view — the same rows whichever client you are ----- */
-  if (owned.has('plan')) {
-    const room = PILLAR_3A_ALLOWANCE - PILLAR_3A_PAID_IN;
-    metrics.push({
-      id: 'pillar-3a',
-      section: 'longterm',
-      label: '3a paid in this year',
-      value: chf(PILLAR_3A_PAID_IN, 0),
-      baseline: room > 0 ? `${chf(room, 0)} left of ${chf(PILLAR_3A_ALLOWANCE, 0)}` : 'fully paid in',
-      baselineLabel: 'annual allowance',
-      // Progress against an allowance is not a move up or down — calling it
-      // "worse than the maximum" would be a scold, not a fact.
-      trend: 'flat',
-      sentiment: 'neutral',
-      presets: ['everyday', 'trader'],
-      destination: { tab: 'plan' },
-    });
-  }
-
-  metrics.push({
-    id: 'invested-share',
-    section: 'longterm',
-    label: 'Invested, not cash',
-    value: pct(analytics.investedShare, 0),
-    baseline: 'of everything you hold',
-    baselineLabel: 'share of wealth',
-    trend: 'flat',
-    sentiment: 'neutral',
-    presets: ['everyday', 'trader'],
-    destination: { tab: 'plan' },
-  });
-
-  metrics.push({
-    id: 'months-cover',
-    section: 'longterm',
-    label: 'Months of cover',
-    value: analytics.monthsOfCover.toFixed(1),
-    baseline: `3–6 months is the usual rule of thumb`,
-    baselineLabel: 'reference range',
-    ...move(analytics.monthsOfCover, 6, true),
-    presets: ['everyday', 'trader'],
-    destination: { tab: 'bank', screen: 'budgeting' },
-  });
-
   /* ---- Held by both — last, so each preset leads with its own ---- */
   if (owned.has('bank')) {
     const fx = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
     metrics.push({
       id: 'fx',
-      section: 'cash',
       label: 'Held in other currencies',
       value: chf(fx, 0),
       baseline: `EUR ${hidden ? '•••' : swissNumber(a.eurWallet, 0)} · USD ${

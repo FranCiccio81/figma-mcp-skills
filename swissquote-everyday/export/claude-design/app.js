@@ -12036,7 +12036,6 @@
       const cover = analytics.monthsOfCover;
       rings.push({
         key: "liquidity",
-        section: "cash",
         label: "Liquidity",
         pct: Math.max(0, Math.min(100, cover / 6 * 100)),
         // Two characters plus a unit is all the dial holds; the metric row
@@ -12051,7 +12050,6 @@
       const BAND = 2;
       rings.push({
         key: "performance",
-        section: "markets",
         label: "Day move",
         pct: Math.max(0, Math.min(100, (dayChangePct + BAND) / (BAND * 2) * 100)),
         display: `${dayChangePct >= 0 ? "+" : "\u2212"}${Math.abs(dayChangePct).toFixed(2)}%`,
@@ -12062,7 +12060,6 @@
     }
     rings.push({
       key: "exposure",
-      section: "longterm",
       label: "Exposure",
       pct: Math.max(0, Math.min(100, analytics.investedShare)),
       display: `${analytics.investedShare.toFixed(0)}%`,
@@ -12089,7 +12086,6 @@
       const avgBalance = averageEverydayBalance(state, 30);
       metrics.push({
         id: "available",
-        section: "cash",
         label: "Available to spend",
         value: chf(availableNow, 0),
         baseline: chf(avgBalance, 0),
@@ -12101,7 +12097,6 @@
       const { total: committed, next: nextFixed } = committedBeforeSalary(state);
       metrics.push({
         id: "committed",
-        section: "cash",
         label: "Fixed costs before salary",
         value: chf(committed, 0),
         baseline: nextFixed ? `next: ${nextFixed.label} ${chf(nextFixed.amount, 0)} on ${shortDate(nextFixed.day)}` : chf(forecast.keep, 0),
@@ -12114,7 +12109,6 @@
       const spend30 = state.txns.filter((t) => t.day > state.day - 30 && t.day <= state.day && t.amount < 0 && t.category !== "smart-liquidity").reduce((sum, t) => sum + -t.amount, 0);
       metrics.push({
         id: "spending",
-        section: "cash",
         label: "Spending \xB7 30 days",
         value: chf(spend30, 0),
         baseline: chf(analytics.typicalSpend, 0),
@@ -12126,7 +12120,6 @@
       const subs = RECURRING_DEBITS.reduce((sum, r) => sum + r.amount, 0);
       metrics.push({
         id: "recurring",
-        section: "cash",
         label: "Recurring, per month",
         value: chf(subs, 0),
         baseline: `${RECURRING_DEBITS.length} standing items`,
@@ -12147,7 +12140,6 @@
       const rate90 = in90 > 0 ? work90 / in90 * 100 : 0;
       metrics.push({
         id: "put-to-work",
-        section: "longterm",
         label: "Put to work \xB7 30 days",
         value: pct(analytics.putToWorkRate, 0),
         baseline: `${pct(rate90, 0)} over 3 months`,
@@ -12162,32 +12154,29 @@
       const dayPnl = tradeValue - tradeValue / (1 + TRADING_DAY_CHANGE_PCT / 100);
       metrics.push({
         id: "day-pnl",
-        section: "markets",
         label: "Day P&L",
         value: hidden ? "CHF \u2022\u2022\u2022" : `${dayPnl >= 0 ? "+" : "\u2212"}${swissNumber(Math.abs(dayPnl), 0)} CHF`,
         baseline: `${TRADING_DAY_CHANGE_PCT >= 0 ? "+" : "\u2212"}${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}%`,
         baselineLabel: "since yesterday\u2019s close",
         trend: dayPnl >= 0 ? "up" : "down",
         sentiment: dayPnl >= 0 ? "good" : "bad",
-        presets: ["everyday", "trader"],
+        presets: ["trader"],
         destination: { tab: "trade" }
       });
       metrics.push({
         id: "period-pnl",
-        section: "markets",
         label: "P&L \xB7 this period",
         value: hidden ? "CHF \u2022\u2022\u2022" : `${TRADING_PERIOD_GAIN >= 0 ? "+" : "\u2212"}${swissNumber(Math.abs(TRADING_PERIOD_GAIN), 0)} CHF`,
         baseline: "since the start of the week",
         baselineLabel: "period",
         trend: TRADING_PERIOD_GAIN >= 0 ? "up" : "down",
         sentiment: TRADING_PERIOD_GAIN >= 0 ? "good" : "bad",
-        presets: ["everyday", "trader"],
+        presets: ["trader"],
         destination: { tab: "trade" }
       });
       const buyingPower = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
       metrics.push({
         id: "buying-power",
-        section: "markets",
         label: "Buying power",
         value: chf(buyingPower, 0),
         baseline: `${chf(TRADING_ORDERS_RESERVED, 0)} reserved`,
@@ -12201,7 +12190,6 @@
       const topWeight = top.value / TRADING_POSITIONS * 100;
       metrics.push({
         id: "largest-position",
-        section: "markets",
         label: `Largest position \xB7 ${top.ticker}`,
         value: pct(topWeight, 1),
         baseline: chf(top.value, 0),
@@ -12212,7 +12200,6 @@
       });
       metrics.push({
         id: "volatility",
-        section: "markets",
         label: "Volatility \xB7 30 days",
         value: pct(PORTFOLIO_VOLATILITY_30D, 1),
         baseline: "12\u201315% typical \u27E8TO CONFIRM\u27E9",
@@ -12224,7 +12211,6 @@
       });
       metrics.push({
         id: "drawdown",
-        section: "markets",
         label: "Drawdown from peak \xB7 90d",
         value: pct(PORTFOLIO_DRAWDOWN_90D, 1),
         baseline: "peak-to-trough",
@@ -12236,7 +12222,6 @@
       });
       metrics.push({
         id: "orders",
-        section: "markets",
         label: "Orders",
         value: `${OPEN_ORDERS} open`,
         baseline: `${ORDERS_FILLED_TODAY} filled today`,
@@ -12248,7 +12233,6 @@
       });
       metrics.push({
         id: "fees",
-        section: "markets",
         label: "Fees \xB7 this month",
         value: chf(FEES_THIS_MONTH, 0),
         baseline: chf(FEES_LAST_MONTH, 0),
@@ -12259,7 +12243,6 @@
       });
       metrics.push({
         id: "dividends",
-        section: "markets",
         label: "Dividends \xB7 this year",
         value: chf(DIVIDENDS_YTD, 0),
         baseline: `${NEXT_DIVIDEND.label} ${chf(NEXT_DIVIDEND.amount, 0)} in ${NEXT_DIVIDEND.inDays} days`,
@@ -12271,7 +12254,6 @@
       });
       metrics.push({
         id: "lombard",
-        section: "cash",
         label: "Lombard drawn",
         value: chf(a.lombardDrawn, 0),
         baseline: `${chf(a.lombardAvailable, 0)} available of ${chf(LOMBARD_LIMIT, 0)} \xB7 ${LOMBARD_RATE_PA}% p.a.`,
@@ -12282,51 +12264,10 @@
         destination: { tab: "bank", screen: "autoCover" }
       });
     }
-    if (owned.has("plan")) {
-      const room = PILLAR_3A_ALLOWANCE - PILLAR_3A_PAID_IN;
-      metrics.push({
-        id: "pillar-3a",
-        section: "longterm",
-        label: "3a paid in this year",
-        value: chf(PILLAR_3A_PAID_IN, 0),
-        baseline: room > 0 ? `${chf(room, 0)} left of ${chf(PILLAR_3A_ALLOWANCE, 0)}` : "fully paid in",
-        baselineLabel: "annual allowance",
-        // Progress against an allowance is not a move up or down — calling it
-        // "worse than the maximum" would be a scold, not a fact.
-        trend: "flat",
-        sentiment: "neutral",
-        presets: ["everyday", "trader"],
-        destination: { tab: "plan" }
-      });
-    }
-    metrics.push({
-      id: "invested-share",
-      section: "longterm",
-      label: "Invested, not cash",
-      value: pct(analytics.investedShare, 0),
-      baseline: "of everything you hold",
-      baselineLabel: "share of wealth",
-      trend: "flat",
-      sentiment: "neutral",
-      presets: ["everyday", "trader"],
-      destination: { tab: "plan" }
-    });
-    metrics.push({
-      id: "months-cover",
-      section: "longterm",
-      label: "Months of cover",
-      value: analytics.monthsOfCover.toFixed(1),
-      baseline: `3\u20136 months is the usual rule of thumb`,
-      baselineLabel: "reference range",
-      ...move(analytics.monthsOfCover, 6, true),
-      presets: ["everyday", "trader"],
-      destination: { tab: "bank", screen: "budgeting" }
-    });
     if (owned.has("bank")) {
       const fx = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
       metrics.push({
         id: "fx",
-        section: "cash",
         label: "Held in other currencies",
         value: chf(fx, 0),
         baseline: `EUR ${hidden ? "\u2022\u2022\u2022" : swissNumber(a.eurWallet, 0)} \xB7 USD ${hidden ? "\u2022\u2022\u2022" : swissNumber(a.usdWallet, 0)}`,
@@ -13450,11 +13391,6 @@
     everyday: "Everyday",
     trader: "Trader"
   };
-  var SECTIONS = [
-    { key: "cash", title: "Cash & everyday" },
-    { key: "markets", title: "Markets" },
-    { key: "longterm", title: "The long view" }
-  ];
   function MetricRow({ metric }) {
     const goTo = useGoTo();
     const name = [
@@ -13484,42 +13420,16 @@
     );
   }
   __name(MetricRow, "MetricRow");
-  function Section({
-    section,
-    ring,
+  function MetricList({
     metrics,
-    children
-  }) {
-    const goTo = useGoTo();
-    if (metrics.length === 0 && !children) return null;
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { className: `dsection dsection--${section.key}`, "aria-label": section.title, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("header", { className: "dsection__head", children: [
-        ring && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(RingGauge, { ring, onOpen: () => goTo(ring.destination) }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h3", { className: "dsection__title m-0", children: section.title }),
-          ring && /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "dsection__caption", children: [
-            ring.label,
-            " \xB7 ",
-            ring.caption
-          ] })
-        ] })
-      ] }),
-      metrics.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "dsection__rows", children: metrics.map((m) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MetricRow, { metric: m }, m.id)) }),
-      children && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "dsection__extra", children })
-    ] });
-  }
-  __name(Section, "Section");
-  function MetricSections({
-    metrics,
-    rings,
     presets,
     preset,
-    onPreset,
-    extras
+    onPreset
   }) {
     const rows = metrics.filter((m) => m.presets.includes(preset));
+    if (rows.length === 0) return null;
     return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("section", { "aria-label": "My dashboard", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-sm)" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex items-center justify-between", style: { marginBottom: "var(--space-xs)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "section-title m-0", children: "My dashboard" }),
         presets.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "seg-control", role: "tablist", "aria-label": "Dashboard preset", children: presets.map((p) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
           "button",
@@ -13534,19 +13444,10 @@
           p
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex flex-col", style: { gap: "var(--space-md)" }, children: SECTIONS.map((sec) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-        Section,
-        {
-          section: sec,
-          ring: rings.find((r) => r.section === sec.key),
-          metrics: rows.filter((m) => m.section === sec.key),
-          children: extras?.[sec.key]
-        },
-        sec.key
-      )) })
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "metric-list", children: rows.map((m) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MetricRow, { metric: m }, m.id)) })
     ] });
   }
-  __name(MetricSections, "MetricSections");
+  __name(MetricList, "MetricList");
   function MonitorCard({ monitor }) {
     const [open, setOpen] = (0, import_react16.useState)(false);
     return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: `monitor monitor--${monitor.tone}`, children: [
@@ -13679,7 +13580,11 @@
     { key: "1M", days: 30 },
     { key: "3M", days: 90 }
   ];
-  function Stat({ label, value, note }) {
+  function Stat({
+    label,
+    value,
+    note
+  }) {
     return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "stat", children: [
       /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "stat__label", children: label }),
       /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "stat__value", children: value }),
@@ -13701,71 +13606,14 @@
     const change = data.totalWealth - first;
     const changePct = first > 0 ? change / first * 100 : 0;
     const presets = [];
-    if (a.metrics.some((m) => m.presets.includes("everyday"))) presets.push("everyday");
-    if (a.metrics.some((m) => m.presets.includes("trader"))) presets.push("trader");
+    if (data.analytics.metrics.some((m) => m.presets.includes("everyday"))) presets.push("everyday");
+    if (data.analytics.metrics.some((m) => m.presets.includes("trader"))) presets.push("trader");
     const [preset, setPreset] = (0, import_react18.useState)("everyday");
     const activePreset = presets.includes(preset) ? preset : presets[0] ?? "everyday";
     if (data.loading) return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(HomeSkeleton, { rows: 3 });
-    const cashFlow = a.months.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(import_jsx_runtime28.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h4", { className: "dsection__sub m-0", children: "Net, by month" }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flow-triad", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
-          Stat,
-          {
-            label: `In \xB7 ${a.windowDays}d`,
-            value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.inflow, 0),
-            note: "CHF"
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
-          Stat,
-          {
-            label: `Out \xB7 ${a.windowDays}d`,
-            value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.outflow, 0),
-            note: "CHF"
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
-          Stat,
-          {
-            label: "Net",
-            value: data.balancesHidden ? "\u2022\u2022\u2022" : `${data.snapshot.inflow - data.snapshot.outflow >= 0 ? "+" : "\u2212"}${swissNumber(
-              Math.abs(data.snapshot.inflow - data.snapshot.outflow),
-              0
-            )}`,
-            note: "CHF"
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(NetFlowBars, { months: a.months, hidden: data.balancesHidden }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flow-legend", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "flow-legend__item", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--up", "aria-hidden": "true" }),
-          "Above the line: more came in than went out"
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "flow-legend__item", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--down", "aria-hidden": "true" }),
-          "Below: more went out"
-        ] })
-      ] }),
-      a.months.some((m) => m.partial) && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "micro m-0", children: "* Not a full month: the oldest one starts where your history does, and this one is still running." })
-    ] });
-    const allocation = /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(import_jsx_runtime28.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h4", { className: "dsection__sub m-0", style: { marginBottom: "var(--space-sm)" }, children: "How it's split" }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(AllocationBar, { slices: a.allocation, hidden: data.balancesHidden }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { style: { marginTop: "var(--space-xs)" }, children: a.allocation.map((s) => /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("button", { type: "button", className: "alloc-row", onClick: () => goTo(s.destination), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: `alloc-row__swatch alloc-row__swatch--${s.key}`, "aria-hidden": "true" }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flex-1 min-w-0", children: s.label }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "alloc-row__pct amount", children: [
-          s.pct.toFixed(1),
-          "%"
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "alloc-row__value amount", children: data.chf(s.value, 0) }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
-      ] }, s.key)) })
-    ] });
     return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "screen", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { className: "card position", "aria-label": "Total wealth", children: [
+      a.rings.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "rings", "aria-label": "Today at a glance", children: a.rings.map((r) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(RingGauge, { ring: r, onOpen: () => goTo(r.destination) }, r.key)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { "aria-label": "Total wealth", children: [
         /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex items-start justify-between", children: [
           /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
             "button",
@@ -13777,24 +13625,36 @@
               "aria-label": "Total wealth \u2014 see the full breakdown",
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "caption", children: "Total wealth" }),
-                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(BigAmount, { value: data.totalWealth }),
-                /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: `amount delta ${change >= 0 ? "delta--up" : "delta--down"}`, children: [
-                  change >= 0 ? "\u25B2" : "\u25BC",
-                  " ",
-                  data.chf.signed(change),
-                  " \xB7 ",
-                  changePct >= 0 ? "+" : "\u2212",
-                  Math.abs(changePct).toFixed(2),
-                  "%",
-                  " ",
-                  range === "1W" ? "over 7 days" : range === "1M" ? "over 30 days" : "over 3 months"
-                ] })
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(BigAmount, { value: data.totalWealth })
               ]
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(BalanceVisibilityButton, {})
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Time range", style: { margin: "var(--space-sm) 0" }, children: RANGES.map((r) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("p", { className: `m-0 amount delta ${change >= 0 ? "delta--up" : "delta--down"}`, children: [
+          change >= 0 ? "\u25B2" : "\u25BC",
+          " ",
+          data.chf.signed(change),
+          " \xB7 ",
+          changePct >= 0 ? "+" : "\u2212",
+          Math.abs(changePct).toFixed(2),
+          "% over ",
+          range === "1W" ? "7 days" : range === "1M" ? "30 days" : "3 months"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(WealthAnalysis, { findings: a.findings, analysis: ai.analysis, status: ai.status }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(Monitors, { monitors: a.monitors }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+        MetricList,
+        {
+          metrics: a.metrics,
+          presets,
+          preset: activePreset,
+          onPreset: setPreset
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { className: "card", "aria-label": "Wealth over time", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Time range", style: { marginBottom: "var(--space-sm)" }, children: RANGES.map((r) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
           "button",
           {
             type: "button",
@@ -13806,22 +13666,83 @@
           },
           r.key
         )) }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(TrendChart, { points: window2, hidden: data.balancesHidden, label: `Total wealth over the last ${days} days` }),
-        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "micro m-0", children: "Built from money in and out of your accounts. Market performance before today is not in this line \u27E8valuation history TO CONFIRM\u27E9." })
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+          TrendChart,
+          {
+            points: window2,
+            hidden: data.balancesHidden,
+            label: `Total wealth over the last ${days} days`
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-xs)" }, children: "Built from money in and out of your accounts. Market performance before today is not in this line \u27E8valuation history TO CONFIRM\u27E9." })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(WealthAnalysis, { findings: a.findings, analysis: ai.analysis, status: ai.status }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(Monitors, { monitors: a.monitors }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
-        MetricSections,
-        {
-          metrics: a.metrics,
-          rings: a.rings,
-          presets,
-          preset: activePreset,
-          onPreset: setPreset,
-          extras: { cash: cashFlow || void 0, longterm: allocation }
-        }
-      ),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { className: "card", "aria-label": "How your wealth is split", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "How it's split" }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(AllocationBar, { slices: a.allocation, hidden: data.balancesHidden }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { style: { marginTop: "var(--space-sm)" }, children: a.allocation.map((s) => /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: "alloc-row",
+            onClick: () => goTo(s.destination),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: `alloc-row__swatch alloc-row__swatch--${s.key}`, "aria-hidden": "true" }),
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flex-1 min-w-0", children: s.label }),
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "alloc-row__pct amount", children: [
+                s.pct.toFixed(1),
+                "%"
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "alloc-row__value amount", children: data.chf(s.value, 0) }),
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "product-row__chevron", "aria-hidden": "true", children: "\u203A" })
+            ]
+          },
+          s.key
+        )) })
+      ] }),
+      a.months.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { className: "card", "aria-label": "Money in and out, by month", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("h2", { className: "section-title m-0", children: "Net, by month" }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flow-triad", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+            Stat,
+            {
+              label: `In \xB7 ${a.windowDays}d`,
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.inflow, 0),
+              note: "CHF"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+            Stat,
+            {
+              label: `Out \xB7 ${a.windowDays}d`,
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : swissNumber(data.snapshot.outflow, 0),
+              note: "CHF"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+            Stat,
+            {
+              label: "Net",
+              value: data.balancesHidden ? "\u2022\u2022\u2022" : `${data.snapshot.inflow - data.snapshot.outflow >= 0 ? "+" : "\u2212"}${swissNumber(
+                Math.abs(data.snapshot.inflow - data.snapshot.outflow),
+                0
+              )}`,
+              note: "CHF"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(NetFlowBars, { months: a.months, hidden: data.balancesHidden }),
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flow-legend", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "flow-legend__item", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--up", "aria-hidden": "true" }),
+            "Above the line: more came in than went out"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("span", { className: "flow-legend__item", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("span", { className: "flow-legend__swatch flow-legend__swatch--down", "aria-hidden": "true" }),
+            "Below: more went out"
+          ] })
+        ] }),
+        a.months.some((m) => m.partial) && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "micro m-0", children: "* Not a full month: the oldest one starts where your history does, and this one is still running." })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("section", { "aria-label": "The numbers as a table", children: [
         /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
           "button",
