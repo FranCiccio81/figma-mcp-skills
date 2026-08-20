@@ -1256,20 +1256,6 @@ button {
 .data-table td { text-align: right; }
 
 /* ---- Variant D · rings, monitors, metric rows -------------------- */
-/* The day's state survives scrolling: on a dashboard this long, losing the
-   headline to a scroll is losing the point of it. */
-.rings {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  justify-content: space-around;
-  gap: var(--space-xs);
-  background: var(--color-surface-app);
-  padding: var(--space-2xs) 0 var(--space-xs);
-  margin: 0 calc(var(--space-md) * -1);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
 .gauge { display: flex; flex-direction: column; align-items: center; gap: var(--space-2xs); min-width: 0; }
 /* The value sits inside its own arc, so the dial is the positioning context. */
 .gauge__dial { position: relative; display: inline-flex; }
@@ -1326,17 +1312,60 @@ button {
 .monitor__check-label { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
 .monitor__check-note { display: block; font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 
-.metric-list { display: flex; flex-direction: column; gap: var(--space-2xs); }
+/* ---- Dashboard sections: one Swissquote hue per subject ---------- */
+.dsection {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  /* The hue is set once per section and everything inside inherits it. */
+  --dsection-hue: var(--color-border-default);
+  --dsection-tint: var(--color-surface-muted);
+}
+.dsection--cash { --dsection-hue: var(--color-space-bank); --dsection-tint: var(--core-brand-100); }
+.dsection--markets { --dsection-hue: var(--color-space-trade); --dsection-tint: var(--core-blue-100); }
+.dsection--longterm { --dsection-hue: var(--color-space-plan); --dsection-tint: var(--core-green-100); }
+
+.dsection__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  /* A tint rather than the hue itself: the hue is a 3:1 dataviz colour, not
+     a 4.5:1 text colour, so it marks the section and the ink carries the words. */
+  background: var(--dsection-tint);
+  border-left: 3px solid var(--dsection-hue);
+}
+.dsection__title { font-size: var(--font-size-heading); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.dsection__caption { display: block; font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+/* Inside a section the ring wears the section's colour — colour means
+   subject here, not sentiment — and its label moves into the caption. */
+.dsection__head .gauge__label { display: none; }
+.dsection__head .gauge__arc { stroke: var(--dsection-hue); }
+/* An attention state still overrides it: that is the one case where the
+   ring has something to say that the section colour cannot. */
+.dsection__head .gauge__arc--attention { stroke: var(--color-feedback-warning); }
+.dsection__rows { padding: 0 var(--space-md); border-left: 3px solid var(--dsection-hue); }
+.dsection__extra {
+  padding: var(--space-md);
+  border-top: 1px solid var(--color-border-subtle);
+  border-left: 3px solid var(--dsection-hue);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.dsection__sub { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); }
+
 .metric {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
   min-height: var(--size-touch-target);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
+.metric:last-child { border-bottom: none; }
 .metric__label {
   flex: 1;
   min-width: 0;
