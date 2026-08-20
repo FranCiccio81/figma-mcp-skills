@@ -66,12 +66,15 @@ export interface Nav {
   wealthOpen: boolean;
   /** Question carried from Home into the Search tab's Ask AI mode. */
   askPrefill: string | null;
+  /** Which dashboard monitor is open as a sheet, if any. */
+  monitorKey: string | null;
   setTab: (tab: AppTab) => void;
   go: (screen: Screen) => void;
   openTxn: (id: string) => void;
   closeTxn: () => void;
   setBuyingPowerOpen: (open: boolean) => void;
   setWealthOpen: (open: boolean) => void;
+  setMonitorKey: (key: string | null) => void;
   ask: (question: string) => void;
 }
 
@@ -257,6 +260,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [buyingPowerOpen, setBuyingPowerOpen] = useState(false);
   const [wealthOpen, setWealthOpen] = useState(false);
   const [askPrefill, setAskPrefill] = useState<string | null>(null);
+  const [monitorKey, setMonitorKey] = useState<string | null>(null);
   const [homeVariant, setHomeVariant] = useState<HomeVariant>('A');
   const [homeScenario, setHomeScenario] = useState<HomeScenario>('full');
   const [balancesHidden, setBalancesHidden] = useState(false);
@@ -287,10 +291,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     buyingPowerOpen,
     wealthOpen,
     askPrefill,
+    monitorKey,
     setTab: (t) => {
       setTxnDetailId(null);
       setBuyingPowerOpen(false);
       setWealthOpen(false);
+      setMonitorKey(null);
       if (t !== 'search') setAskPrefill(null);
       setScreen('home');
       setTab(t);
@@ -299,6 +305,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setTxnDetailId(null);
       setBuyingPowerOpen(false);
       setWealthOpen(false);
+      setMonitorKey(null);
       setScreen(s);
       setTab('bank');
     },
@@ -306,6 +313,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     closeTxn: () => setTxnDetailId(null),
     setBuyingPowerOpen,
     setWealthOpen,
+    setMonitorKey,
     ask: (question) => {
       setAskPrefill(question);
       setTab('search');

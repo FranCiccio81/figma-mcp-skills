@@ -22,6 +22,7 @@ import { HomeVariantA } from './features/home-concepts/HomeVariantA';
 import { HomeVariantB } from './features/home-concepts/HomeVariantB';
 import { HomeVariantC } from './features/home-concepts/HomeVariantC';
 import { HomeVariantD } from './features/home-concepts/HomeVariantD';
+import { MonitorSheet } from './features/home-concepts/DashboardRows';
 import { PlanTab } from './features/plan/PlanTab';
 import { SearchTab } from './features/search/SearchTab';
 import { TradeTab } from './features/trade/TradeTab';
@@ -106,6 +107,7 @@ function Phone() {
       {/* The search screen is a full overlay in the app: keyboard up, no tab bar. */}
       {!onBankSubScreen && nav.tab !== 'search' && <BottomNav active={nav.tab} onSelect={nav.setTab} />}
       <BuyingPowerSheet />
+      <MonitorSheet />
       <MarginCallModal />
       {/* Balance changes announced to screen readers (§7 accessibility). */}
       <div aria-live="polite" className="sr-only">

@@ -38,7 +38,7 @@ The same rig forces every state each concept has to survive:
 | `actions.tsx` | The money actions, and the rule for which ones a client sees. |
 | `charts.tsx` | The three charts Variant D plots, in plain SVG on the project's tokens. |
 | `WealthAnalysis.tsx` | Variant D's AI tile: three levels of disclosure over findings the adapter computes. |
-| `DashboardRows.tsx` | Variant D's metric rows and monitor cards, and the preset switch. |
+| `DashboardRows.tsx` | Variant D's metric rows, monitor cards and their sheet, and the preset switch. |
 | `BENCHMARK.md` | Two benchmarks: how banking apps open (C, with the FCA line it does not cross) and what the best analytical dashboards show (D). |
 
 Rules the mock enforces, and a real service would have to keep:

@@ -1305,9 +1305,12 @@ button {
 .monitor--neutral { border-left-color: var(--color-chart-line); }
 .monitor__head { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: var(--space-sm) var(--space-md); min-height: var(--size-touch-target); }
 .monitor__title { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-.monitor__state { font-weight: var(--font-weight-bold); }
+.monitor__state { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); font-weight: var(--font-weight-bold); }
+.monitor__chevron { color: var(--color-text-disabled); font-size: var(--font-size-heading); font-weight: var(--font-weight-regular); }
 .monitor__detail { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 .monitor__checks { list-style: none; margin: 0; padding: 0 var(--space-md) var(--space-sm); display: flex; flex-direction: column; gap: var(--space-xs); }
+/* In the sheet the list is the content, so it drops the card's inset. */
+.monitor__checks--sheet { padding: 0; gap: var(--space-sm); }
 .monitor__check { display: flex; gap: var(--space-xs); }
 .monitor__dot {
   width: var(--space-md);

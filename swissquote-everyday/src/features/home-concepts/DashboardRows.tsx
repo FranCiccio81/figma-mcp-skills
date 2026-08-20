@@ -16,8 +16,9 @@
  *     an everyday client and a trader want different dashboards from the
  *     same account.
  */
-import { useState } from 'react';
-import type { Metric, MetricPreset, Monitor } from './homeData';
+import { Sheet } from '../../components/ui';
+import { useStore } from '../../state/store';
+import { useHomeData, type Metric, type MetricPreset, type Monitor } from './homeData';
 import { useGoTo } from './shared';
 
 const TREND_GLYPH: Record<Metric['trend'], string> = { up: '▲', down: '▼', flat: '•' };
@@ -111,23 +112,59 @@ export function MetricList({
 /**
  * A monitor: several checks reduced to one state, with the checks one tap
  * away. The state is never colour alone — it is a word first.
+ *
+ * The checks open in a bottom sheet rather than expanding in place: the card
+ * is small, the detail is not, and pushing the rest of the dashboard down to
+ * read five lines costs the client their place on the page.
  */
 function MonitorCard({ monitor }: { monitor: Monitor }) {
-  const [open, setOpen] = useState(false);
+  const { nav } = useStore();
   return (
     <div className={`monitor monitor--${monitor.tone}`}>
       <button
         type="button"
         className="monitor__head"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="dialog"
+        onClick={() => nav.setMonitorKey(monitor.key)}
       >
         <span className="monitor__title">{monitor.title}</span>
-        <span className="monitor__state">{monitor.state}</span>
+        <span className="monitor__state">
+          {monitor.state}
+          <span className="monitor__chevron" aria-hidden="true">›</span>
+        </span>
         <span className="monitor__detail">{monitor.detail}</span>
       </button>
-      {open && monitor.checks && (
-        <ul className="monitor__checks">
+    </div>
+  );
+}
+
+export function Monitors({ monitors }: { monitors: Monitor[] }) {
+  if (monitors.length === 0) return null;
+  return (
+    <div className="monitors" aria-label="Monitors">
+      {monitors.map((m) => (
+        <MonitorCard key={m.key} monitor={m} />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The open monitor, as a sheet. Rendered at the phone level so it overlays
+ * the whole screen instead of scrolling with the dashboard behind it.
+ */
+export function MonitorSheet() {
+  const { nav } = useStore();
+  const data = useHomeData();
+  const monitor = data.analytics.monitors.find((m) => m.key === nav.monitorKey);
+  if (!monitor) return null;
+
+  return (
+    <Sheet title={monitor.title} onClose={() => nav.setMonitorKey(null)}>
+      <p className="m-0" style={{ fontWeight: 'var(--font-weight-bold)' }}>{monitor.state}</p>
+      <p className="m-0 caption" style={{ marginBottom: 'var(--space-sm)' }}>{monitor.detail}</p>
+      {monitor.checks && (
+        <ul className="monitor__checks monitor__checks--sheet">
           {monitor.checks.map((c) => (
             <li key={c.label} className="monitor__check">
               <span className={`monitor__dot ${c.ok ? 'monitor__dot--ok' : 'monitor__dot--flag'}`} aria-hidden="true">
@@ -141,17 +178,10 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-export function Monitors({ monitors }: { monitors: Monitor[] }) {
-  if (monitors.length === 0) return null;
-  return (
-    <div className="monitors" aria-label="Monitors">
-      {monitors.map((m) => (
-        <MonitorCard key={m.key} monitor={m} />
-      ))}
-    </div>
+      <p className="micro m-0" style={{ marginTop: 'var(--space-sm)' }}>
+        Each threshold is a product decision, not a market rule — they are written out so you can judge them
+        yourself ⟨limits TO CONFIRM⟩.
+      </p>
+    </Sheet>
   );
 }

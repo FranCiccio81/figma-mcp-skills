@@ -7678,11 +7678,11 @@
   });
 
   // src/main.tsx
-  var import_react21 = __toESM(require_react(), 1);
+  var import_react20 = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
 
   // src/App.tsx
-  var import_react20 = __toESM(require_react(), 1);
+  var import_react19 = __toESM(require_react(), 1);
 
   // src/lib/format.ts
   function swissNumber(value, decimals = 2) {
@@ -9290,6 +9290,7 @@
     const [buyingPowerOpen, setBuyingPowerOpen] = (0, import_react.useState)(false);
     const [wealthOpen, setWealthOpen] = (0, import_react.useState)(false);
     const [askPrefill, setAskPrefill] = (0, import_react.useState)(null);
+    const [monitorKey, setMonitorKey] = (0, import_react.useState)(null);
     const [homeVariant, setHomeVariant] = (0, import_react.useState)("A");
     const [homeScenario, setHomeScenario] = (0, import_react.useState)("full");
     const [balancesHidden, setBalancesHidden] = (0, import_react.useState)(false);
@@ -9318,10 +9319,12 @@
       buyingPowerOpen,
       wealthOpen,
       askPrefill,
+      monitorKey,
       setTab: /* @__PURE__ */ __name((t) => {
         setTxnDetailId(null);
         setBuyingPowerOpen(false);
         setWealthOpen(false);
+        setMonitorKey(null);
         if (t !== "search") setAskPrefill(null);
         setScreen("home");
         setTab(t);
@@ -9330,6 +9333,7 @@
         setTxnDetailId(null);
         setBuyingPowerOpen(false);
         setWealthOpen(false);
+        setMonitorKey(null);
         setScreen(s);
         setTab("bank");
       }, "go"),
@@ -9337,6 +9341,7 @@
       closeTxn: /* @__PURE__ */ __name(() => setTxnDetailId(null), "closeTxn"),
       setBuyingPowerOpen,
       setWealthOpen,
+      setMonitorKey,
       ask: /* @__PURE__ */ __name((question) => {
         setAskPrefill(question);
         setTab("search");
@@ -13199,7 +13204,7 @@
   __name(HomeVariantC, "HomeVariantC");
 
   // src/features/home-concepts/HomeVariantD.tsx
-  var import_react18 = __toESM(require_react(), 1);
+  var import_react17 = __toESM(require_react(), 1);
 
   // src/features/home-concepts/charts.tsx
   var import_react15 = __toESM(require_react(), 1);
@@ -13379,7 +13384,6 @@
   __name(RingGauge, "RingGauge");
 
   // src/features/home-concepts/DashboardRows.tsx
-  var import_react16 = __toESM(require_react(), 1);
   var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
   var TREND_GLYPH = { up: "\u25B2", down: "\u25BC", flat: "\u2022" };
   var TREND_WORD = {
@@ -13449,30 +13453,24 @@
   }
   __name(MetricList, "MetricList");
   function MonitorCard({ monitor }) {
-    const [open, setOpen] = (0, import_react16.useState)(false);
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: `monitor monitor--${monitor.tone}`, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
-        "button",
-        {
-          type: "button",
-          className: "monitor__head",
-          "aria-expanded": open,
-          onClick: () => setOpen((v) => !v),
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__title", children: monitor.title }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__state", children: monitor.state }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__detail", children: monitor.detail })
-          ]
-        }
-      ),
-      open && monitor.checks && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("ul", { className: "monitor__checks", children: monitor.checks.map((c) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("li", { className: "monitor__check", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `monitor__dot ${c.ok ? "monitor__dot--ok" : "monitor__dot--flag"}`, "aria-hidden": "true", children: c.ok ? "\u2713" : "!" }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__check-label", children: c.label }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__check-note", children: c.note })
-        ] })
-      ] }, c.label)) })
-    ] });
+    const { nav } = useStore();
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: `monitor monitor--${monitor.tone}`, children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
+      "button",
+      {
+        type: "button",
+        className: "monitor__head",
+        "aria-haspopup": "dialog",
+        onClick: () => nav.setMonitorKey(monitor.key),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__title", children: monitor.title }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "monitor__state", children: [
+            monitor.state,
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__chevron", "aria-hidden": "true", children: "\u203A" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__detail", children: monitor.detail })
+        ]
+      }
+    ) });
   }
   __name(MonitorCard, "MonitorCard");
   function Monitors({ monitors }) {
@@ -13480,16 +13478,35 @@
     return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "monitors", "aria-label": "Monitors", children: monitors.map((m) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MonitorCard, { monitor: m }, m.key)) });
   }
   __name(Monitors, "Monitors");
+  function MonitorSheet() {
+    const { nav } = useStore();
+    const data = useHomeData();
+    const monitor = data.analytics.monitors.find((m) => m.key === nav.monitorKey);
+    if (!monitor) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(Sheet, { title: monitor.title, onClose: () => nav.setMonitorKey(null), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "m-0", style: { fontWeight: "var(--font-weight-bold)" }, children: monitor.state }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "m-0 caption", style: { marginBottom: "var(--space-sm)" }, children: monitor.detail }),
+      monitor.checks && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("ul", { className: "monitor__checks monitor__checks--sheet", children: monitor.checks.map((c) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("li", { className: "monitor__check", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `monitor__dot ${c.ok ? "monitor__dot--ok" : "monitor__dot--flag"}`, "aria-hidden": "true", children: c.ok ? "\u2713" : "!" }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__check-label", children: c.label }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "monitor__check-note", children: c.note })
+        ] })
+      ] }, c.label)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "micro m-0", style: { marginTop: "var(--space-sm)" }, children: "Each threshold is a product decision, not a market rule \u2014 they are written out so you can judge them yourself \u27E8limits TO CONFIRM\u27E9." })
+    ] });
+  }
+  __name(MonitorSheet, "MonitorSheet");
 
   // src/features/home-concepts/WealthAnalysis.tsx
-  var import_react17 = __toESM(require_react(), 1);
+  var import_react16 = __toESM(require_react(), 1);
   var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
   function FindingRow({
     finding,
     text,
     index
   }) {
-    const [proofOpen, setProofOpen] = (0, import_react17.useState)(false);
+    const [proofOpen, setProofOpen] = (0, import_react16.useState)(false);
     const goTo = useGoTo();
     return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("li", { className: "finding", children: [
       /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "finding__rank", "aria-hidden": "true", children: index + 1 }),
@@ -13534,7 +13551,7 @@
     analysis,
     status
   }) {
-    const [open, setOpen] = (0, import_react17.useState)(false);
+    const [open, setOpen] = (0, import_react16.useState)(false);
     const findings = all.slice(0, MAX_FINDINGS);
     const rest = all.length - findings.length;
     if (findings.length === 0) return null;
@@ -13596,8 +13613,8 @@
     const data = useHomeData();
     const { nav } = useStore();
     const goTo = useGoTo();
-    const [range, setRange] = (0, import_react18.useState)("3M");
-    const [tableOpen, setTableOpen] = (0, import_react18.useState)(false);
+    const [range, setRange] = (0, import_react17.useState)("3M");
+    const [tableOpen, setTableOpen] = (0, import_react17.useState)(false);
     const ai = useHomeAiAnalysis(data);
     const a = data.analytics;
     const days = RANGES.find((r) => r.key === range).days;
@@ -13608,7 +13625,7 @@
     const presets = [];
     if (data.analytics.metrics.some((m) => m.presets.includes("everyday"))) presets.push("everyday");
     if (data.analytics.metrics.some((m) => m.presets.includes("trader"))) presets.push("trader");
-    const [preset, setPreset] = (0, import_react18.useState)("everyday");
+    const [preset, setPreset] = (0, import_react17.useState)("everyday");
     const activePreset = presets.includes(preset) ? preset : presets[0] ?? "everyday";
     if (data.loading) return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(HomeSkeleton, { rows: 3 });
     return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "screen", children: [
@@ -13878,7 +13895,7 @@
   __name(PlanTab, "PlanTab");
 
   // src/features/search/SearchTab.tsx
-  var import_react19 = __toESM(require_react(), 1);
+  var import_react18 = __toESM(require_react(), 1);
   var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
   var RECENT = [
     { query: "BTC", type: "Crypto" },
@@ -13976,18 +13993,18 @@
   __name(Keyboard, "Keyboard");
   function SearchTab() {
     const { nav } = useStore();
-    const [mode, setMode] = (0, import_react19.useState)("ai");
-    const [query, setQuery] = (0, import_react19.useState)(nav.askPrefill ?? "");
-    const inputRef = (0, import_react19.useRef)(null);
+    const [mode, setMode] = (0, import_react18.useState)("ai");
+    const [query, setQuery] = (0, import_react18.useState)(nav.askPrefill ?? "");
+    const inputRef = (0, import_react18.useRef)(null);
     const onKey = /* @__PURE__ */ __name((key) => {
       setQuery((q2) => key === "\u232B" ? q2.slice(0, -1) : q2 + (q2.length === 0 ? key : key.toLowerCase()));
     }, "onKey");
     const q = query.trim().toLowerCase();
-    const questionMatches = (0, import_react19.useMemo)(
+    const questionMatches = (0, import_react18.useMemo)(
       () => q ? QUESTIONS.filter((s) => s.toLowerCase().includes(q)) : QUESTIONS.slice(0, 4),
       [q]
     );
-    const instrumentMatches = (0, import_react19.useMemo)(
+    const instrumentMatches = (0, import_react18.useMemo)(
       () => q ? INSTRUMENTS.filter((i) => i.name.toLowerCase().includes(q) || i.ticker.toLowerCase().includes(q)) : [],
       [q]
     );
@@ -14315,13 +14332,14 @@
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "phone__scroll", children: content }),
       !onBankSubScreen && nav.tab !== "search" && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(BottomNav, { active: nav.tab, onSelect: nav.setTab }),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(BuyingPowerSheet, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(MonitorSheet, {}),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(MarginCallModal, {}),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { "aria-live": "polite", className: "sr-only", children: state.announcement })
     ] });
   }
   __name(Phone, "Phone");
   function App() {
-    const [runId, setRunId] = (0, import_react20.useState)(0);
+    const [runId, setRunId] = (0, import_react19.useState)(0);
     return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(StoreProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("main", { className: "stage", children: [
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(Phone, {}),
       /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(SimulatePanel, { onReset: () => setRunId((x) => x + 1) })
@@ -14332,6 +14350,6 @@
   // src/main.tsx
   var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
   (0, import_client.createRoot)(document.getElementById("root")).render(
-    /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(import_react21.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(App, {}) })
+    /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(import_react20.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(App, {}) })
   );
 })();
