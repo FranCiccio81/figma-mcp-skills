@@ -12091,6 +12091,7 @@
       const avgBalance = averageEverydayBalance(state, 30);
       metrics.push({
         id: "available",
+        accent: "bank",
         label: "Available to spend",
         value: chf(availableNow, 0),
         baseline: chf(avgBalance, 0),
@@ -12102,6 +12103,7 @@
       const { total: committed, next: nextFixed } = committedBeforeSalary(state);
       metrics.push({
         id: "committed",
+        accent: "bank",
         label: "Fixed costs before salary",
         value: chf(committed, 0),
         baseline: nextFixed ? `next: ${nextFixed.label} ${chf(nextFixed.amount, 0)} on ${shortDate(nextFixed.day)}` : chf(forecast.keep, 0),
@@ -12114,6 +12116,7 @@
       const spend30 = state.txns.filter((t) => t.day > state.day - 30 && t.day <= state.day && t.amount < 0 && t.category !== "smart-liquidity").reduce((sum, t) => sum + -t.amount, 0);
       metrics.push({
         id: "spending",
+        accent: "bank",
         label: "Spending \xB7 30 days",
         value: chf(spend30, 0),
         baseline: chf(analytics.typicalSpend, 0),
@@ -12125,6 +12128,7 @@
       const subs = RECURRING_DEBITS.reduce((sum, r) => sum + r.amount, 0);
       metrics.push({
         id: "recurring",
+        accent: "bank",
         label: "Recurring, per month",
         value: chf(subs, 0),
         baseline: `${RECURRING_DEBITS.length} standing items`,
@@ -12145,6 +12149,7 @@
       const rate90 = in90 > 0 ? work90 / in90 * 100 : 0;
       metrics.push({
         id: "put-to-work",
+        accent: "plan",
         label: "Put to work \xB7 30 days",
         value: pct(analytics.putToWorkRate, 0),
         baseline: `${pct(rate90, 0)} over 3 months`,
@@ -12159,6 +12164,7 @@
       const dayPnl = tradeValue - tradeValue / (1 + TRADING_DAY_CHANGE_PCT / 100);
       metrics.push({
         id: "day-pnl",
+        accent: "trade",
         label: "Day P&L",
         value: hidden ? "CHF \u2022\u2022\u2022" : `${dayPnl >= 0 ? "+" : "\u2212"}${swissNumber(Math.abs(dayPnl), 0)} CHF`,
         baseline: `${TRADING_DAY_CHANGE_PCT >= 0 ? "+" : "\u2212"}${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}%`,
@@ -12170,6 +12176,7 @@
       });
       metrics.push({
         id: "period-pnl",
+        accent: "trade",
         label: "P&L \xB7 this period",
         value: hidden ? "CHF \u2022\u2022\u2022" : `${TRADING_PERIOD_GAIN >= 0 ? "+" : "\u2212"}${swissNumber(Math.abs(TRADING_PERIOD_GAIN), 0)} CHF`,
         baseline: "since the start of the week",
@@ -12182,6 +12189,7 @@
       const buyingPower = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
       metrics.push({
         id: "buying-power",
+        accent: "trade",
         label: "Buying power",
         value: chf(buyingPower, 0),
         baseline: `${chf(TRADING_ORDERS_RESERVED, 0)} reserved`,
@@ -12195,6 +12203,7 @@
       const topWeight = top.value / TRADING_POSITIONS * 100;
       metrics.push({
         id: "largest-position",
+        accent: "trade",
         label: `Largest position \xB7 ${top.ticker}`,
         value: pct(topWeight, 1),
         baseline: chf(top.value, 0),
@@ -12205,6 +12214,7 @@
       });
       metrics.push({
         id: "volatility",
+        accent: "trade",
         label: "Volatility \xB7 30 days",
         value: pct(PORTFOLIO_VOLATILITY_30D, 1),
         baseline: "12\u201315% typical \u27E8TO CONFIRM\u27E9",
@@ -12216,6 +12226,7 @@
       });
       metrics.push({
         id: "drawdown",
+        accent: "trade",
         label: "Drawdown from peak \xB7 90d",
         value: pct(PORTFOLIO_DRAWDOWN_90D, 1),
         baseline: "peak-to-trough",
@@ -12227,6 +12238,7 @@
       });
       metrics.push({
         id: "orders",
+        accent: "trade",
         label: "Orders",
         value: `${OPEN_ORDERS} open`,
         baseline: `${ORDERS_FILLED_TODAY} filled today`,
@@ -12238,6 +12250,7 @@
       });
       metrics.push({
         id: "fees",
+        accent: "trade",
         label: "Fees \xB7 this month",
         value: chf(FEES_THIS_MONTH, 0),
         baseline: chf(FEES_LAST_MONTH, 0),
@@ -12248,6 +12261,7 @@
       });
       metrics.push({
         id: "dividends",
+        accent: "trade",
         label: "Dividends \xB7 this year",
         value: chf(DIVIDENDS_YTD, 0),
         baseline: `${NEXT_DIVIDEND.label} ${chf(NEXT_DIVIDEND.amount, 0)} in ${NEXT_DIVIDEND.inDays} days`,
@@ -12259,6 +12273,7 @@
       });
       metrics.push({
         id: "lombard",
+        accent: "bank",
         label: "Lombard drawn",
         value: chf(a.lombardDrawn, 0),
         baseline: `${chf(a.lombardAvailable, 0)} available of ${chf(LOMBARD_LIMIT, 0)} \xB7 ${LOMBARD_RATE_PA}% p.a.`,
@@ -12273,6 +12288,7 @@
       const fx = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
       metrics.push({
         id: "fx",
+        accent: "bank",
         label: "Held in other currencies",
         value: chf(fx, 0),
         baseline: `EUR ${hidden ? "\u2022\u2022\u2022" : swissNumber(a.eurWallet, 0)} \xB7 USD ${hidden ? "\u2022\u2022\u2022" : swissNumber(a.usdWallet, 0)}`,
@@ -13407,10 +13423,11 @@
       "button",
       {
         type: "button",
-        className: "metric",
+        className: `metric metric--${metric.accent}`,
         "aria-label": name,
         onClick: () => metric.destination && goTo(metric.destination),
         children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__rail", "aria-hidden": "true" }),
           /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__label", children: metric.label }),
           /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__figures", children: [
             /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__value amount", children: [
@@ -13448,6 +13465,14 @@
           p
         )) })
       ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "metric-key m-0", children: [
+        { key: "bank", label: "Bank" },
+        { key: "trade", label: "Trade" },
+        { key: "plan", label: "Plan" }
+      ].filter((k) => rows.some((m) => m.accent === k.key)).map((k) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric-key__item", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `metric-key__swatch metric-key__swatch--${k.key}`, "aria-hidden": "true" }),
+        k.label
+      ] }, k.key)) }),
       /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "metric-list", children: rows.map((m) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MetricRow, { metric: m }, m.id)) })
     ] });
   }

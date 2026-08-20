@@ -47,10 +47,13 @@ function MetricRow({ metric }: { metric: Metric }) {
   return (
     <button
       type="button"
-      className="metric"
+      className={`metric metric--${metric.accent}`}
       aria-label={name}
       onClick={() => metric.destination && goTo(metric.destination)}
     >
+      {/* The rail is the row's world, not its state — decoration for the eye,
+          never the carrier of meaning, which is why it is aria-hidden. */}
+      <span className="metric__rail" aria-hidden="true" />
       <span className="metric__label">{metric.label}</span>
       <span className="metric__figures">
         <span className="metric__value amount">
@@ -100,6 +103,24 @@ export function MetricList({
           </div>
         )}
       </div>
+      {/* The rails are decoration until they are decodable — one line says
+          what the three colours mean, and then the list scans by colour. */}
+      <p className="metric-key m-0">
+        {(
+          [
+            { key: 'bank', label: 'Bank' },
+            { key: 'trade', label: 'Trade' },
+            { key: 'plan', label: 'Plan' },
+          ] as const
+        )
+          .filter((k) => rows.some((m) => m.accent === k.key))
+          .map((k) => (
+            <span key={k.key} className="metric-key__item">
+              <span className={`metric-key__swatch metric-key__swatch--${k.key}`} aria-hidden="true" />
+              {k.label}
+            </span>
+          ))}
+      </p>
       <div className="metric-list">
         {rows.map((m) => (
           <MetricRow key={m.id} metric={m} />

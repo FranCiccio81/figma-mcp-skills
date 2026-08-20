@@ -191,6 +191,12 @@ export type MetricPreset = 'everyday' | 'trader';
  */
 export interface Metric {
   id: string;
+  /**
+   * Which world the row belongs to. Rendered as a coloured rail down its left
+   * edge, in the same hue that space wears everywhere else in the app — so a
+   * long list stays scannable: find the colour, then read the label.
+   */
+  accent: UniverseKey;
   label: string;
   value: string;
   /** The comparison figure, printed under the value. */
@@ -918,6 +924,7 @@ function buildMetrics(
     const avgBalance = averageEverydayBalance(state, 30);
     metrics.push({
       id: 'available',
+      accent: 'bank',
       label: 'Available to spend',
       value: chf(availableNow, 0),
       baseline: chf(avgBalance, 0),
@@ -930,6 +937,7 @@ function buildMetrics(
     const { total: committed, next: nextFixed } = committedBeforeSalary(state);
     metrics.push({
       id: 'committed',
+      accent: 'bank',
       label: 'Fixed costs before salary',
       value: chf(committed, 0),
       baseline: nextFixed
@@ -947,6 +955,7 @@ function buildMetrics(
       .reduce((sum, t) => sum + -t.amount, 0);
     metrics.push({
       id: 'spending',
+      accent: 'bank',
       label: 'Spending · 30 days',
       value: chf(spend30, 0),
       baseline: chf(analytics.typicalSpend, 0),
@@ -959,6 +968,7 @@ function buildMetrics(
     const subs = RECURRING_DEBITS.reduce((sum, r) => sum + r.amount, 0);
     metrics.push({
       id: 'recurring',
+      accent: 'bank',
       label: 'Recurring, per month',
       value: chf(subs, 0),
       baseline: `${RECURRING_DEBITS.length} standing items`,
@@ -982,6 +992,7 @@ function buildMetrics(
     const rate90 = in90 > 0 ? (work90 / in90) * 100 : 0;
     metrics.push({
       id: 'put-to-work',
+      accent: 'plan',
       label: 'Put to work · 30 days',
       value: pct(analytics.putToWorkRate, 0),
       baseline: `${pct(rate90, 0)} over 3 months`,
@@ -998,6 +1009,7 @@ function buildMetrics(
     const dayPnl = tradeValue - tradeValue / (1 + TRADING_DAY_CHANGE_PCT / 100);
     metrics.push({
       id: 'day-pnl',
+      accent: 'trade',
       label: 'Day P&L',
       value: hidden ? 'CHF •••' : `${dayPnl >= 0 ? '+' : '−'}${swissNumber(Math.abs(dayPnl), 0)} CHF`,
       baseline: `${TRADING_DAY_CHANGE_PCT >= 0 ? '+' : '−'}${Math.abs(TRADING_DAY_CHANGE_PCT).toFixed(2)}%`,
@@ -1010,6 +1022,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'period-pnl',
+      accent: 'trade',
       label: 'P&L · this period',
       value: hidden
         ? 'CHF •••'
@@ -1025,6 +1038,7 @@ function buildMetrics(
     const buyingPower = Math.max(0, a.tradingCash - TRADING_ORDERS_RESERVED);
     metrics.push({
       id: 'buying-power',
+      accent: 'trade',
       label: 'Buying power',
       value: chf(buyingPower, 0),
       baseline: `${chf(TRADING_ORDERS_RESERVED, 0)} reserved`,
@@ -1039,6 +1053,7 @@ function buildMetrics(
     const topWeight = (top.value / TRADING_POSITIONS) * 100;
     metrics.push({
       id: 'largest-position',
+      accent: 'trade',
       label: `Largest position · ${top.ticker}`,
       value: pct(topWeight, 1),
       baseline: chf(top.value, 0),
@@ -1050,6 +1065,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'volatility',
+      accent: 'trade',
       label: 'Volatility · 30 days',
       value: pct(PORTFOLIO_VOLATILITY_30D, 1),
       baseline: '12–15% typical ⟨TO CONFIRM⟩',
@@ -1062,6 +1078,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'drawdown',
+      accent: 'trade',
       label: 'Drawdown from peak · 90d',
       value: pct(PORTFOLIO_DRAWDOWN_90D, 1),
       baseline: 'peak-to-trough',
@@ -1074,6 +1091,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'orders',
+      accent: 'trade',
       label: 'Orders',
       value: `${OPEN_ORDERS} open`,
       baseline: `${ORDERS_FILLED_TODAY} filled today`,
@@ -1086,6 +1104,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'fees',
+      accent: 'trade',
       label: 'Fees · this month',
       value: chf(FEES_THIS_MONTH, 0),
       baseline: chf(FEES_LAST_MONTH, 0),
@@ -1097,6 +1116,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'dividends',
+      accent: 'trade',
       label: 'Dividends · this year',
       value: chf(DIVIDENDS_YTD, 0),
       baseline: `${NEXT_DIVIDEND.label} ${chf(NEXT_DIVIDEND.amount, 0)} in ${NEXT_DIVIDEND.inDays} days`,
@@ -1109,6 +1129,7 @@ function buildMetrics(
 
     metrics.push({
       id: 'lombard',
+      accent: 'bank',
       label: 'Lombard drawn',
       value: chf(a.lombardDrawn, 0),
       baseline: `${chf(a.lombardAvailable, 0)} available of ${chf(LOMBARD_LIMIT, 0)} · ${LOMBARD_RATE_PA}% p.a.`,
@@ -1125,6 +1146,7 @@ function buildMetrics(
     const fx = a.eurWallet * FX.eurToChf + a.usdWallet * FX.usdToChf;
     metrics.push({
       id: 'fx',
+      accent: 'bank',
       label: 'Held in other currencies',
       value: chf(fx, 0),
       baseline: `EUR ${hidden ? '•••' : swissNumber(a.eurWallet, 0)} · USD ${

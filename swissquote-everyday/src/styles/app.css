@@ -1329,17 +1329,41 @@ button {
 .monitor__check-label { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
 .monitor__check-note { display: block; font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 
+.metric-key { display: flex; gap: var(--space-sm); margin-bottom: var(--space-xs); font-size: var(--font-size-micro); color: var(--color-text-secondary); }
+.metric-key__item { display: inline-flex; align-items: center; gap: var(--space-2xs); }
+.metric-key__swatch { width: 10px; height: 4px; border-radius: var(--radius-pill); }
+.metric-key__swatch--bank { background: var(--color-space-bank); }
+.metric-key__swatch--trade { background: var(--color-space-trade); }
+.metric-key__swatch--plan { background: var(--color-space-plan); }
+
 .metric-list { display: flex; flex-direction: column; gap: var(--space-2xs); }
 .metric {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
   min-height: var(--size-touch-target);
-  padding: var(--space-sm) var(--space-md);
+  /* Left padding clears the rail. */
+  padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-md);
   background: var(--color-surface-raised);
   border-radius: var(--radius-md);
+  overflow: hidden;
 }
+/* A rail in the hue of the space this row belongs to — Bank orange, Trade
+   blue, Plan green, the same three used in the allocation bar. */
+.metric__rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: var(--color-border-default);
+}
+.metric--bank .metric__rail { background: var(--color-space-bank); }
+.metric--trade .metric__rail { background: var(--color-space-trade); }
+.metric--plan .metric__rail { background: var(--color-space-plan); }
 .metric__label {
   flex: 1;
   min-width: 0;
