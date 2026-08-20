@@ -13428,13 +13428,15 @@
         onClick: () => metric.destination && goTo(metric.destination),
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__rail", "aria-hidden": "true" }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__label", children: metric.label }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__figures", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__value amount", children: [
-              metric.value,
-              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `metric__trend metric__trend--${metric.sentiment}`, "aria-hidden": "true", children: TREND_GLYPH[metric.trend] })
-            ] }),
-            metric.baseline && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__baseline amount", children: metric.baseline })
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__body", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__label", children: metric.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__figures", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "metric__value amount", children: [
+                metric.value,
+                /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: `metric__trend metric__trend--${metric.sentiment}`, "aria-hidden": "true", children: TREND_GLYPH[metric.trend] })
+              ] }),
+              metric.baseline && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "metric__baseline amount", children: metric.baseline })
+            ] })
           ] })
         ]
       }

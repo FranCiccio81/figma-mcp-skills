@@ -51,18 +51,20 @@ function MetricRow({ metric }: { metric: Metric }) {
       aria-label={name}
       onClick={() => metric.destination && goTo(metric.destination)}
     >
-      {/* The rail is the row's world, not its state — decoration for the eye,
-          never the carrier of meaning, which is why it is aria-hidden. */}
+      {/* A capsule beside the card, not a border on it — the row's world,
+          never its state, which is why it is aria-hidden. */}
       <span className="metric__rail" aria-hidden="true" />
-      <span className="metric__label">{metric.label}</span>
-      <span className="metric__figures">
-        <span className="metric__value amount">
-          {metric.value}
-          <span className={`metric__trend metric__trend--${metric.sentiment}`} aria-hidden="true">
-            {TREND_GLYPH[metric.trend]}
+      <span className="metric__body">
+        <span className="metric__label">{metric.label}</span>
+        <span className="metric__figures">
+          <span className="metric__value amount">
+            {metric.value}
+            <span className={`metric__trend metric__trend--${metric.sentiment}`} aria-hidden="true">
+              {TREND_GLYPH[metric.trend]}
+            </span>
           </span>
+          {metric.baseline && <span className="metric__baseline amount">{metric.baseline}</span>}
         </span>
-        {metric.baseline && <span className="metric__baseline amount">{metric.baseline}</span>}
       </span>
     </button>
   );

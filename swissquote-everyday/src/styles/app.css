@@ -1337,29 +1337,34 @@ button {
 .metric-key__swatch--plan { background: var(--color-space-plan); }
 
 .metric-list { display: flex; flex-direction: column; gap: var(--space-2xs); }
+/* The row is a capsule and a card side by side, not a card with a border:
+   the rail keeps its own rounding and its own gap, so the colour reads as a
+   marker rather than as an edge of the card. */
 .metric {
-  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2xs);
+  width: 100%;
+  min-height: var(--size-touch-target);
+  background: none;
+}
+/* The hue of the space this row belongs to — Bank orange, Trade blue, Plan
+   green, the same three used in the allocation bar. */
+.metric__rail {
+  flex: none;
+  width: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-default);
+}
+.metric__body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  width: 100%;
-  min-height: var(--size-touch-target);
-  /* Left padding clears the rail. */
-  padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   background: var(--color-surface-raised);
   border-radius: var(--radius-md);
-  overflow: hidden;
-}
-/* A rail in the hue of the space this row belongs to — Bank orange, Trade
-   blue, Plan green, the same three used in the allocation bar. */
-.metric__rail {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  background: var(--color-border-default);
 }
 .metric--bank .metric__rail { background: var(--color-space-bank); }
 .metric--trade .metric__rail { background: var(--color-space-trade); }
