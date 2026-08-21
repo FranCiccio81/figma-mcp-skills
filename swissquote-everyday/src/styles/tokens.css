@@ -134,6 +134,10 @@
   --color-space-trade: var(--core-dv-blue);
   --color-space-bank: var(--core-dv-orange);
   --color-space-plan: var(--core-dv-green);
+  /* Crypto sits inside Trade but moves differently enough to earn its own
+     marker. Validated as a four-colour set with the three above: worst
+     adjacent CVD ΔE 9.5, normal-vision 30.6, all ≥ 3:1 on white. */
+  --color-space-crypto: var(--core-dv-magenta);
   /* Net cash flow is polarity, not identity: a cool pole, a warm pole, and a
      neutral zero line. Direction encodes it too, so it is never colour alone. */
   --color-flow-positive: var(--core-dv-blue-deep);

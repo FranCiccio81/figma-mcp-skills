@@ -110,8 +110,9 @@ export function MetricList({
       <p className="metric-key m-0">
         {(
           [
+            { key: 'trade', label: 'Trading' },
+            { key: 'crypto', label: 'Crypto' },
             { key: 'bank', label: 'Bank' },
-            { key: 'trade', label: 'Trade' },
             { key: 'plan', label: 'Plan' },
           ] as const
         )

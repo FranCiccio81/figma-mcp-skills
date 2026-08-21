@@ -46,6 +46,13 @@ import type { EngineState } from '../../state/types';
 
 export type UniverseKey = 'trade' | 'bank' | 'plan';
 
+/**
+ * The worlds a dashboard row can belong to. Crypto is not a universe of its
+ * own — it lives inside Trade — but it moves differently enough that a
+ * client scanning the list wants to pick it out.
+ */
+export type MetricAccent = UniverseKey | 'crypto';
+
 export type Tone = 'positive' | 'neutral' | 'attention';
 
 /** Where a card or an action sends the client. Never invents a destination. */
@@ -196,7 +203,7 @@ export interface Metric {
    * edge, in the same hue that space wears everywhere else in the app — so a
    * long list stays scannable: find the colour, then read the label.
    */
-  accent: UniverseKey;
+  accent: MetricAccent;
   label: string;
   value: string;
   /** The comparison figure, printed under the value. */
@@ -1016,7 +1023,7 @@ function buildMetrics(
       baselineLabel: 'since yesterday’s close',
       trend: dayPnl >= 0 ? 'up' : 'down',
       sentiment: dayPnl >= 0 ? 'good' : 'bad',
-      presets: ['trader'],
+      presets: ['everyday', 'trader'],
       destination: { tab: 'trade' },
     });
 
@@ -1031,7 +1038,7 @@ function buildMetrics(
       baselineLabel: 'period',
       trend: TRADING_PERIOD_GAIN >= 0 ? 'up' : 'down',
       sentiment: TRADING_PERIOD_GAIN >= 0 ? 'good' : 'bad',
-      presets: ['trader'],
+      presets: ['everyday', 'trader'],
       destination: { tab: 'trade' },
     });
 
@@ -1048,6 +1055,30 @@ function buildMetrics(
       presets: ['trader'],
       destination: { tab: 'trade' },
     });
+
+    // BACKEND: instrument classification, so crypto can be told apart from
+    // equities and funds without matching on names.
+    const crypto = POSITIONS.filter((pos) => /bitcoin|ethereum|crypto|ETP/i.test(pos.name));
+    if (crypto.length > 0) {
+      const cryptoValue = crypto.reduce((sum, pos) => sum + pos.value, 0);
+      const cryptoDay =
+        crypto.reduce((sum, pos) => sum + pos.value * pos.dayPct, 0) / (cryptoValue || 1);
+      metrics.push({
+        id: 'crypto',
+        accent: 'crypto',
+        label: 'Crypto',
+        value: chf(cryptoValue, 0),
+        baseline: `${cryptoDay >= 0 ? '+' : '−'}${Math.abs(cryptoDay).toFixed(2)}% today · ${pct(
+          (cryptoValue / TRADING_POSITIONS) * 100,
+          1,
+        )} of your positions`,
+        baselineLabel: 'today, and its weight',
+        trend: cryptoDay >= 0 ? 'up' : 'down',
+        sentiment: cryptoDay >= 0 ? 'good' : 'bad',
+        presets: ['everyday', 'trader'],
+        destination: { tab: 'trade' },
+      });
+    }
 
     const top = [...POSITIONS].sort((x, y) => y.value - x.value)[0];
     const topWeight = (top.value / TRADING_POSITIONS) * 100;
