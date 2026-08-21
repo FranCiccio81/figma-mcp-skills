@@ -18,10 +18,12 @@
  * See README.md in this folder for the full design note.
  */
 import { useState } from 'react';
+import { ORDERS_FILLED_TODAY } from '../../data/mockLedger';
 import { swissNumber } from '../../lib/format';
 import { useStore } from '../../state/store';
+import { AskAnything } from './AskAnything';
 import { AllocationBar, NetFlowBars, RingGauge, TrendChart } from './charts';
-import { MetricList, Monitors } from './DashboardRows';
+import { MetricList, Monitors, OpenOrders } from './DashboardRows';
 import { useHomeData, type MetricPreset, type TrendPoint } from './homeData';
 import { BalanceVisibilityButton, BigAmount, HomeSkeleton, useGoTo } from './shared';
 import { useHomeAiAnalysis } from './useHomeAi';
@@ -76,6 +78,16 @@ export function HomeVariantD() {
   const [preset, setPreset] = useState<MetricPreset>('everyday');
   const activePreset = presets.includes(preset) ? preset : (presets[0] ?? 'everyday');
 
+  // Openers, drawn from this screen rather than from a fixed list — a
+  // suggestion about a product the client does not hold is worse than none.
+  const askSuggestions = [
+    a.allocation.length > 0
+      ? `Why so much in ${a.allocation.reduce((big, s) => (s.pct > big.pct ? s : big)).label}?`
+      : null,
+    a.orders.length > 0 ? 'What are my orders holding?' : null,
+    'How long would my cash last?',
+  ].filter((s): s is string => s !== null);
+
   if (data.loading) return <HomeSkeleton rows={3} />;
 
   return (
@@ -116,8 +128,15 @@ export function HomeVariantD() {
               charts below as the evidence. ---------------------------------- */}
       <WealthAnalysis findings={a.findings} analysis={ai.analysis} status={ai.status} />
 
+      {/* ---- The other direction: the tile pushes, this pulls. Openers
+              are drawn from what is actually on the screen. ------------- */}
+      <AskAnything suggestions={askSuggestions} />
+
       {/* ---- Monitors: checks reduced to one state each ---------------- */}
       <Monitors monitors={a.monitors} />
+
+      {/* ---- What is still resting in the market ----------------------- */}
+      <OpenOrders orders={a.orders} filledToday={ORDERS_FILLED_TODAY} />
 
       {/* ---- My dashboard: the metric rows, by preset ------------------ */}
       <MetricList
@@ -159,23 +178,27 @@ export function HomeVariantD() {
         <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-sm)' }}>
           How it's split
         </h2>
-        <AllocationBar slices={a.allocation} hidden={data.balancesHidden} />
-        <div style={{ marginTop: 'var(--space-sm)' }}>
+        {/* The legend is the navigation, and it reads across rather than down:
+            share first, because on this screen the share is the point, and
+            the capsule ties each chip to its segment in the bar underneath.
+            Colour is never the only cue — every chip is also named. */}
+        <div className="alloc-chips">
           {a.allocation.map((s) => (
             <button
               key={s.key}
               type="button"
-              className="alloc-row"
+              className={`alloc-chip alloc-chip--${s.key}`}
+              aria-label={`${s.label}, ${s.pct.toFixed(1)}% of your wealth, ${data.chf(s.value, 0)}`}
               onClick={() => goTo(s.destination)}
             >
-              <span className={`alloc-row__swatch alloc-row__swatch--${s.key}`} aria-hidden="true" />
-              <span className="flex-1 min-w-0">{s.label}</span>
-              <span className="alloc-row__pct amount">{s.pct.toFixed(1)}%</span>
-              <span className="alloc-row__value amount">{data.chf(s.value, 0)}</span>
-              <span className="product-row__chevron" aria-hidden="true">›</span>
+              <span className="alloc-chip__capsule" aria-hidden="true" />
+              <span className="alloc-chip__label">{s.label}</span>
+              <span className="alloc-chip__pct amount">{s.pct.toFixed(0)}%</span>
+              <span className="alloc-chip__value amount">{data.chf(s.value, 0)}</span>
             </button>
           ))}
         </div>
+        <AllocationBar slices={a.allocation} hidden={data.balancesHidden} />
       </section>
 
       {/* ---- Cash flow ------------------------------------------------- */}

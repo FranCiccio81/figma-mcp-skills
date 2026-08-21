@@ -38,7 +38,8 @@ The same rig forces every state each concept has to survive:
 | `actions.tsx` | The money actions, and the rule for which ones a client sees. |
 | `charts.tsx` | The three charts Variant D plots, in plain SVG on the project's tokens. |
 | `WealthAnalysis.tsx` | Variant D's AI tile: three levels of disclosure over findings the adapter computes. |
-| `DashboardRows.tsx` | Variant D's metric rows, monitor cards and their sheet, and the preset switch. |
+| `DashboardRows.tsx` | Variant D's metric rows, monitor cards and their sheet, the open-order strip, and the preset switch. |
+| `AskAnything.tsx` | The open field on Variant D — the pull half of the assistant. Hands off, never answers inline. |
 | `BENCHMARK.md` | Two benchmarks: how banking apps open (C, with the FCA line it does not cross) and what the best analytical dashboards show (D). |
 
 Rules the mock enforces, and a real service would have to keep:
@@ -179,12 +180,28 @@ devices that make saving stick make trading dangerous.
 
 **Shape.** Three sticky rings (Liquidity · Day move · Exposure) · total
 wealth with the change over the selected range · a **wealth-analysis tile**,
-closed by default · two monitors (Risk · Market) · **My dashboard** — metric
-rows with baselines, under an Everyday / Trader preset switch · a wealth trend chart with
-1W / 1M / 3M chips, crosshair and tooltip · allocation as one stacked bar
-whose legend rows are the navigation · the cash-flow triad (in / out / net)
+closed by default · an **ask field** · two monitors (Risk · Market) · the
+**open-order strip** · **My dashboard** — metric rows with baselines, under
+an Everyday / Trader preset switch · a wealth trend chart with 1W / 1M / 3M
+chips, crosshair and tooltip · allocation as one stacked bar under a row of
+**chips that are also the navigation** · the cash-flow triad (in / out / net)
 over a per-month diverging column chart · three ratios · a table view of the
 same numbers.
+
+**Push and pull.** The tile decides what stands out; the ask field lets the
+client raise what the tile did not. Neither answers on Home — the field hands
+the question to the assistant surface with the text prefilled, because an
+answer rendered here would have nowhere to show its sources. Two openers
+only, drawn from what is on this screen: a suggested question about a product
+the client does not hold is worse than no suggestion.
+
+**Colour means one thing.** Trade, Bank and Plan wear the same hue in the
+allocation chips, the stacked bar and the dashboard rails, with Crypto as a
+fourth marker inside Trade. Validated as a set — worst adjacent CVD ΔE 9.5,
+normal-vision 30.6, all ≥ 3:1 on white — and never the only cue: every chip,
+rail and segment is also named. The hue is carried by a capsule beside or
+above the label rather than as a filled pill behind white text, which none of
+the four can support at AA on label-sized type.
 
 **The wealth-analysis tile.** Three levels, each earning the space it takes:
 
@@ -245,6 +262,12 @@ valuation service that does not exist yet.
 - The tile specifically: what share of clients open it, how many go a level
   deeper into the figures, and does seeing the arithmetic increase or reduce
   their trust in the finding?
+- The ask field: do clients type, tap an opener, or ignore it? If they only
+  ever tap the openers, the field is a menu wearing a text input, and two
+  prompt chips would be the honest version.
+- The order strip: does "CHF 3'368 held" answer the question clients actually
+  have about their available cash, or do they still go looking for it in
+  Buying Power?
 
 ---
 

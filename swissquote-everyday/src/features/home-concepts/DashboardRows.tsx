@@ -18,7 +18,7 @@
  */
 import { Sheet } from '../../components/ui';
 import { useStore } from '../../state/store';
-import { useHomeData, type Metric, type MetricPreset, type Monitor } from './homeData';
+import { useHomeData, type Metric, type MetricPreset, type Monitor, type OrderRow } from './homeData';
 import { useGoTo } from './shared';
 
 const TREND_GLYPH: Record<Metric['trend'], string> = { up: '▲', down: '▼', flat: '•' };
@@ -127,6 +127,54 @@ export function MetricList({
       <div className="metric-list">
         {rows.map((m) => (
           <MetricRow key={m.id} metric={m} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Resting orders, as a strip.
+ *
+ * A count ("2 open") is a notification, not information. The strip names the
+ * instrument, the side and the limit, and — the part only a bank can add —
+ * the trading cash each order is holding, which is why the balance and the
+ * amount actually available disagree.
+ *
+ * The mark is the ticker, not a logo: a bank cannot ship a brand mark for
+ * every instrument it lists, and a strip where half the rows have one and
+ * half do not reads as broken.
+ */
+export function OpenOrders({ orders, filledToday }: { orders: OrderRow[]; filledToday: number }) {
+  const goTo = useGoTo();
+  if (orders.length === 0) return null;
+
+  return (
+    <section aria-label="Open orders">
+      <div className="flex items-baseline justify-between" style={{ marginBottom: 'var(--space-xs)' }}>
+        <h2 className="section-title m-0">
+          {orders.length} open {orders.length === 1 ? 'order' : 'orders'}
+        </h2>
+        <span className="micro">
+          {filledToday} filled today
+        </span>
+      </div>
+      <div className="order-strip">
+        {orders.map((o) => (
+          <button
+            key={o.ticker}
+            type="button"
+            className="order"
+            aria-label={`${o.name}, ${o.detail}, holding ${o.reserved} of your trading cash`}
+            onClick={() => goTo({ tab: 'trade' })}
+          >
+            <span className={`order__mark order__mark--${o.side}`} aria-hidden="true">
+              {o.ticker.slice(0, 4)}
+            </span>
+            <span className="order__name">{o.name}</span>
+            <span className="order__detail amount">{o.detail}</span>
+            <span className="order__reserved amount">{o.reserved} held</span>
+          </button>
         ))}
       </div>
     </section>

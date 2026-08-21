@@ -19,8 +19,7 @@ import {
   MARKET,
   NEXT_DIVIDEND,
   NEXT_EARNINGS,
-  OPEN_ORDERS,
-  ORDERS_FILLED_TODAY,
+  OPEN_ORDER_BOOK,
   PORTFOLIO_DRAWDOWN_90D,
   PORTFOLIO_VOLATILITY_30D,
   POSITIONS,
@@ -273,10 +272,27 @@ export interface Analytics {
   rings: Ring[];
   metrics: Metric[];
   monitors: Monitor[];
+  /** Resting orders — empty when the client holds no trading account. */
+  orders: OrderRow[];
+}
+
+/**
+ * A resting order, reduced to what makes it worth a tap: which instrument,
+ * which way, and the cash it is holding. The mark is the ticker rather than a
+ * logo — a bank cannot ship a brand mark for every instrument it lists, and a
+ * missing one is worse than none.
+ */
+export interface OrderRow {
+  ticker: string;
+  name: string;
+  side: 'buy' | 'sell';
+  /** "Buy 40 at CHF 84.20" */
+  detail: string;
+  reserved: string;
 }
 
 /** The measured part of the analytics, before anything is derived from it. */
-type AnalyticsBase = Omit<Analytics, 'findings' | 'rings' | 'metrics' | 'monitors'>;
+type AnalyticsBase = Omit<Analytics, 'findings' | 'rings' | 'metrics' | 'monitors' | 'orders'>;
 
 export interface HomeData {
   /** Sum of everything owned, less anything borrowed. */
@@ -1120,18 +1136,9 @@ function buildMetrics(
       destination: { tab: 'trade' },
     });
 
-    metrics.push({
-      id: 'orders',
-      accent: 'trade',
-      label: 'Orders',
-      value: `${OPEN_ORDERS} open`,
-      baseline: `${ORDERS_FILLED_TODAY} filled today`,
-      baselineLabel: 'today',
-      trend: 'flat',
-      sentiment: 'neutral',
-      presets: ['trader'],
-      destination: { tab: 'trade' },
-    });
+    // No "Orders — 2 open" row: the order strip above the dashboard says the
+    // same thing with the instruments in it, and a count on its own is not a
+    // figure anyone can act on.
 
     metrics.push({
       id: 'fees',
@@ -1404,7 +1411,23 @@ function buildAnalytics(
     rings: buildRings(base, dayChangePct, chf, ownedKeys),
     metrics: buildMetrics(state, forecast, base, chf, hidden, ownedKeys),
     monitors: buildMonitors(state, base, chf, ownedKeys),
+    orders: ownedKeys.has('trade') ? buildOrders(chf) : [],
   };
+}
+
+/**
+ * The order book, as rows. Orders reserve trading cash, which is why they
+ * belong on an analytical Home at all: they are the reason a balance and the
+ * amount actually available disagree.
+ */
+function buildOrders(chf: Money): OrderRow[] {
+  return OPEN_ORDER_BOOK.map((o) => ({
+    ticker: o.ticker,
+    name: o.name,
+    side: o.side,
+    detail: `${o.side === 'buy' ? 'Buy' : 'Sell'} ${o.quantity} at ${o.currency} ${swissNumber(o.limit, 2)}`,
+    reserved: chf(o.reservedChf, 0),
+  }));
 }
 
 /* ------------------------------------------------------------------ */

@@ -1175,22 +1175,144 @@ button {
 .alloc__seg--bank { background: var(--color-space-bank); }
 .alloc__seg--plan { background: var(--color-space-plan); }
 
-.alloc-row {
+/* The allocation legend, read across. Each chip carries its world's colour as
+   a capsule above the label — the same capsule idiom as the dashboard rails —
+   rather than as a filled pill behind white text, which none of the four
+   world colours can carry at AA on 11–13px type. */
+.alloc-chips {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: var(--space-sm);
+}
+.alloc-chips::-webkit-scrollbar { display: none; }
+.alloc-chip {
+  flex: 1 1 0;
+  min-width: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--size-touch-target);
+  padding: var(--space-xs) var(--space-xs) var(--space-sm);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+.alloc-chip__capsule {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-default);
+}
+.alloc-chip--trade .alloc-chip__capsule { background: var(--color-space-trade); }
+.alloc-chip--bank .alloc-chip__capsule { background: var(--color-space-bank); }
+.alloc-chip--plan .alloc-chip__capsule { background: var(--color-space-plan); }
+.alloc-chip__label,
+.alloc-chip__value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-micro);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+/* The share is the headline: on this card the question is proportion, and the
+   franc amount is the supporting figure rather than the other way round. */
+.alloc-chip__pct {
+  margin-top: var(--space-2xs);
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+/* Ask me anything — a warm field, the only place on the dashboard the client
+   starts the conversation instead of reading one. */
+.ask {
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  background: var(--gradient-card-ask);
+  border-radius: var(--radius-lg);
+}
+.ask__head { margin-bottom: var(--space-xs); }
+.ask__field {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  width: 100%;
+  gap: var(--space-xs);
   min-height: var(--size-touch-target);
-  padding: var(--space-xs) 0;
-  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 0 var(--space-2xs) 0 var(--space-sm);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
 }
-.alloc-row:last-child { border-bottom: none; }
-.alloc-row__swatch { width: 10px; height: 10px; border-radius: var(--radius-sm); flex: none; }
-.alloc-row__swatch--trade { background: var(--color-space-trade); }
-.alloc-row__swatch--bank { background: var(--color-space-bank); }
-.alloc-row__swatch--plan { background: var(--color-space-plan); }
-.alloc-row__pct { font-weight: var(--font-weight-semibold); }
-.alloc-row__value { color: var(--color-text-secondary); font-size: var(--font-size-caption); }
+.ask__field:focus-within { box-shadow: var(--shadow-input-focus); border-color: var(--color-focus-ring); }
+.ask__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  padding-right: var(--space-2xs);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+.ask__input::placeholder {
+  color: var(--color-text-secondary);
+  text-overflow: ellipsis;
+}
+/* Openers wrap rather than scroll: a chip cut off mid-word reads as broken,
+   and there are only ever a handful of them. */
+.ask__suggestions { flex-wrap: wrap; overflow: visible; }
+.ask__submit {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-action-primary);
+  color: var(--color-text-on-action);
+  font-size: var(--font-size-body);
+}
+.ask__submit:disabled { background: var(--color-border-default); color: var(--color-text-secondary); }
+.ask__suggestions { margin-top: var(--space-xs); }
+.ask__note { margin-top: var(--space-xs); }
+
+/* Open orders — the resting side of the book, with what each order holds. */
+.order-strip { display: flex; gap: var(--space-xs); overflow-x: auto; scrollbar-width: none; }
+.order-strip::-webkit-scrollbar { display: none; }
+.order {
+  flex: 1 0 9.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--space-sm);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-align: left;
+}
+.order__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 1.375rem;
+  padding: 0 var(--space-2xs);
+  margin-bottom: var(--space-2xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.02em;
+}
+/* Side is a word in the detail line too — the tint is a second cue, not the cue. */
+.order__mark--buy { background: var(--color-surface-info-subtle); color: var(--core-blue-600); }
+.order__mark--sell { background: var(--color-surface-brand-subtle); color: var(--core-brand-900); }
+.order__name { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+.order__detail { font-size: var(--font-size-caption); }
+.order__reserved { font-size: var(--font-size-micro); color: var(--color-text-secondary); }
 
 .flow-triad, .ratio-grid { display: flex; gap: var(--space-sm); }
 .ratio-grid { flex-wrap: wrap; }

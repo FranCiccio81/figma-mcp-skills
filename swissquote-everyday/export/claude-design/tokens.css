@@ -110,6 +110,9 @@
   /* Feature cards (Smart Liquidity, AI Budgeting) */
   --gradient-card-inverse: linear-gradient(140deg, var(--core-ink-surface) 20%, var(--core-ink-surface-high) 100%);
   --gradient-card-ai: linear-gradient(160deg, var(--core-blue-050) 20%, var(--core-blue-100) 100%);
+  /* The ask field — brand warmth, kept pale enough that ink text on it still
+     passes AA, unlike the accent itself. */
+  --gradient-card-ask: linear-gradient(150deg, var(--core-brand-100) 0%, var(--core-white) 85%);
   /* Warm welcome hero — brand heat over ink, so white text still passes AA. */
   --gradient-hero-warm: linear-gradient(
     155deg,
@@ -139,6 +142,10 @@
   --color-space-trade: var(--core-dv-blue);
   --color-space-bank: var(--core-dv-orange);
   --color-space-plan: var(--core-dv-green);
+  /* Crypto sits inside Trade but moves differently enough to earn its own
+     marker. Validated as a four-colour set with the three above: worst
+     adjacent CVD ΔE 9.5, normal-vision 30.6, all ≥ 3:1 on white. */
+  --color-space-crypto: var(--core-dv-magenta);
   /* Net cash flow is polarity, not identity: a cool pole, a warm pole, and a
      neutral zero line. Direction encodes it too, so it is never colour alone. */
   --color-flow-positive: var(--core-dv-blue-deep);

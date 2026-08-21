@@ -170,8 +170,29 @@ export const FEES_YTD = 612.0;
 /** BACKEND: dividend and coupon ledger, paid and announced. */
 export const DIVIDENDS_YTD = 1_842.3;
 export const NEXT_DIVIDEND = { label: 'Nestlé', amount: 410.0, inDays: 38 };
-/** BACKEND: order book — open, and filled since midnight. */
-export const OPEN_ORDERS = 2;
+export interface OpenOrder {
+  ticker: string;
+  name: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  /** Limit price, in the instrument's own currency. */
+  limit: number;
+  currency: string;
+  /** Trading cash held against the order, in CHF. Sums to TRADING_ORDERS_RESERVED. */
+  reservedChf: number;
+}
+
+/**
+ * BACKEND: the order book — resting orders with the cash each one reserves.
+ * A count alone ("2 open") tells the client nothing they can act on; the
+ * instrument, the side and the limit are what make an order worth a tap.
+ */
+export const OPEN_ORDER_BOOK: OpenOrder[] = [
+  { ticker: 'NESN', name: 'Nestlé', side: 'buy', quantity: 40, limit: 84.2, currency: 'CHF', reservedChf: 3_368 },
+  { ticker: 'ASML', name: 'ASML', side: 'sell', quantity: 4, limit: 720, currency: 'EUR', reservedChf: 2_632 },
+];
+export const OPEN_ORDERS = OPEN_ORDER_BOOK.length;
+/** BACKEND: fills booked since midnight. */
 export const ORDERS_FILLED_TODAY = 0;
 /** BACKEND: exchange calendars. `⟨hours TO CONFIRM per venue⟩` */
 export const MARKET = { open: true, venue: 'SIX Swiss Exchange', closesAt: '17:30' };

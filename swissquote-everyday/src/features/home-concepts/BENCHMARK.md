@@ -197,6 +197,60 @@ the adapter with the capability it would need — positions with live
 valuation, risk analytics, the order book, the fee and dividend ledgers, and
 exchange calendars.
 
+---
+
+# Part four — reading a proposed Home concept back into D
+
+A concept screen was put forward alongside these benchmarks: centred total
+wealth, two circular money actions, a scrollable row of coloured allocation
+chips over one stacked bar, an account card with a sparkline, an "Ask me
+anything" field, a pair of small tiles (open orders · monthly spending), a
+recent-transactions list, a Lombard capacity bar, three AI "portfolio health"
+rings, and the 3a allowance.
+
+Most of it Variant D already has, in one form or another. Three things it did
+not, and they are now in:
+
+**1. The allocation legend, read across.** The concept turns the split into a
+horizontal row of chips — each carrying its share as the headline — sitting
+directly over the bar in matching colours. That is better than a vertical
+legend list: the question this card answers is *proportion*, and a row of
+three percentages answers it in one fixation. D's `alloc-row` list is
+replaced by `alloc-chip` buttons, so the legend is still the navigation.
+
+One change was forced. The concept fills each pill with its colour and prints
+white text on it. None of the four world colours carries 11–13px text at AA
+on white — the blue is ≈3.6:1, the orange ≈3.4:1 — so the colour is carried
+by a capsule above the label instead, the same idiom as the dashboard rails.
+It also keeps the labels whole: a chip truncated to "In…" is a legend that
+cannot be read.
+
+**2. An open field for the assistant.** D pushes — the wealth-analysis tile
+decides what stands out and says so. It had no way to pull. `AskAnything` is
+that, with two openers drawn from what is actually on the screen and a note
+under the field saying what the assistant will and will not do. It does not
+answer inline: it hands the question to the assistant surface, because an
+answer on Home would have nowhere to show its sources.
+
+**3. Orders, with the instruments in them.** D had a row reading "Orders — 2
+open", which is a notification, not information. The strip names the
+instrument, the side, the limit and — the part only a bank can add — the
+trading cash each order is holding, which is the reason a balance and the
+amount actually available disagree. The mark is the ticker, not a brand logo:
+a bank cannot ship a logo for every instrument it lists, and a strip where
+half the rows have one reads as broken.
+
+Deliberately not taken:
+
+| From the concept | Why not |
+|---|---|
+| Recent transactions on Home | That is the Bank tab. Putting the list on Home duplicates a destination the five-tab nav already owns. |
+| A second, per-account sparkline card | D already plots wealth over time with 1W/1M/3M and a crosshair. A second chart of a subset is density without a new answer. |
+| AI-scored "portfolio health" rings | D's three rings are computed — liquidity, day move, exposure — and each names the arithmetic behind it. A score a model assigns, with one ring labelled "??", is the opposite of that. |
+| An "Elite" tier badge | Status tiering is a loyalty decision, and it sits on the wrong side of the FCA line in §3 above. |
+| A Lombard capacity bar | Borrowing capacity is already a dashboard row and the full breakdown is in Buying Power. A bar on Home advertising available credit is a product decision, not a layout one ⟨TO CONFIRM⟩. |
+| The concept's palette (teal / indigo / violet) | The four worlds already have validated hues that mean the same thing everywhere in the app. Adding a second categorical scale for the same data would break that. |
+
 ## Sources
 
 - [Top 15 Banking Apps with Exceptional UX Design (2026) — Wavespace](https://www.wavespace.agency/blog/banking-app-ux)

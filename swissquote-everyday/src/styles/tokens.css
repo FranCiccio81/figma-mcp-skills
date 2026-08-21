@@ -105,6 +105,9 @@
   /* Feature cards (Smart Liquidity, AI Budgeting) */
   --gradient-card-inverse: linear-gradient(140deg, var(--core-ink-surface) 20%, var(--core-ink-surface-high) 100%);
   --gradient-card-ai: linear-gradient(160deg, var(--core-blue-050) 20%, var(--core-blue-100) 100%);
+  /* The ask field — brand warmth, kept pale enough that ink text on it still
+     passes AA, unlike the accent itself. */
+  --gradient-card-ask: linear-gradient(150deg, var(--core-brand-100) 0%, var(--core-white) 85%);
   /* Warm welcome hero — brand heat over ink, so white text still passes AA. */
   --gradient-hero-warm: linear-gradient(
     155deg,
