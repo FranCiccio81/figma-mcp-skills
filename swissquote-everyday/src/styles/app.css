@@ -1380,36 +1380,53 @@ button {
 /* ---- Variant D · rings, monitors, metric rows -------------------- */
 /* The day's state survives scrolling: on a dashboard this long, losing the
    headline to a scroll is losing the point of it. */
-.rings {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+/* "Where you stand" — the three summary ratios, stated rather than drawn.
+   They used to be arcs pinned to the top of the screen; only one of the three
+   is a proportion, so the other two were dials against a scale that did not
+   exist. Same idiom as everything else on this dashboard: a capsule for the
+   state, the figure, and the sentence it is measured against. */
+.stand { display: flex; gap: var(--space-xs); }
+.stand__item {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
-  justify-content: space-around;
-  gap: var(--space-xs);
-  background: var(--color-surface-app);
-  padding: var(--space-2xs) 0 var(--space-xs);
-  margin: 0 calc(var(--space-md) * -1);
-  border-bottom: 1px solid var(--color-border-subtle);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--size-touch-target);
 }
-.gauge { display: flex; flex-direction: column; align-items: center; gap: var(--space-2xs); min-width: 0; }
-/* The value sits inside its own arc, so the dial is the positioning context. */
-.gauge__dial { position: relative; display: inline-flex; }
-.gauge__svg { width: 52px; height: 52px; display: block; }
-.gauge__arc--positive { stroke: var(--color-feedback-positive); }
-.gauge__arc--neutral { stroke: var(--color-chart-line); }
-.gauge__arc--attention { stroke: var(--color-feedback-warning); }
-.gauge__value {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.stand__item + .stand__item {
+  border-left: 1px solid var(--color-border-subtle);
+  padding-left: var(--space-xs);
+}
+.stand__capsule {
+  width: 1.75rem;
+  height: 4px;
+  margin-bottom: var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: var(--color-border-default);
+}
+.stand__item--positive .stand__capsule { background: var(--color-feedback-positive); }
+.stand__item--attention .stand__capsule { background: var(--color-feedback-warning); }
+.stand__item--neutral .stand__capsule { background: var(--color-chart-line); }
+.stand__label {
   font-size: var(--font-size-micro);
-  font-weight: var(--font-weight-bold);
-  font-feature-settings: var(--font-feature-numeric);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.gauge__label { font-size: var(--font-size-micro); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.stand__value {
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+.stand__note {
+  font-size: var(--font-size-micro);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
 
 /* Expanding one monitor must not stretch the other. */
 .monitors { display: flex; align-items: flex-start; gap: var(--space-sm); }

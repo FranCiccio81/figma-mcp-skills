@@ -876,10 +876,10 @@ function buildRings(
       key: 'liquidity',
       label: 'Liquidity',
       pct: Math.max(0, Math.min(100, (cover / 6) * 100)),
-      // Two characters plus a unit is all the dial holds; the metric row
-      // below carries the precise figure.
-      display: cover >= 10 ? `${Math.round(cover)}mo` : `${cover.toFixed(1)}mo`,
-      caption: `${chf(analytics.typicalSpend, 0)} a month`,
+      // Kept to one line so the three stats share a baseline; the unit is
+      // spelled out in the caption underneath.
+      display: cover >= 10 ? `${Math.round(cover)} mo` : `${cover.toFixed(1)} mo`,
+      caption: `of cover at ${chf(analytics.typicalSpend, 0)} a month`,
       tone: cover >= 3 ? 'positive' : 'attention',
       destination: { tab: 'bank', screen: 'home' },
     });
@@ -895,7 +895,7 @@ function buildRings(
       label: 'Day move',
       pct: Math.max(0, Math.min(100, ((dayChangePct + BAND) / (BAND * 2)) * 100)),
       display: `${dayChangePct >= 0 ? '+' : '−'}${Math.abs(dayChangePct).toFixed(2)}%`,
-      caption: 'inside a ±2% band',
+      caption: 'across your positions today',
       tone: dayChangePct >= 0 ? 'positive' : 'attention',
       destination: { tab: 'trade' },
     });
@@ -906,7 +906,7 @@ function buildRings(
     label: 'Exposure',
     pct: Math.max(0, Math.min(100, analytics.investedShare)),
     display: `${analytics.investedShare.toFixed(0)}%`,
-    caption: 'invested, not cash',
+    caption: 'invested — the rest is cash',
     tone: 'neutral',
     destination: { tab: 'plan' },
   });

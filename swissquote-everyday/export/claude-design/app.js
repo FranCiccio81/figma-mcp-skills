@@ -12047,10 +12047,10 @@
         key: "liquidity",
         label: "Liquidity",
         pct: Math.max(0, Math.min(100, cover / 6 * 100)),
-        // Two characters plus a unit is all the dial holds; the metric row
-        // below carries the precise figure.
-        display: cover >= 10 ? `${Math.round(cover)}mo` : `${cover.toFixed(1)}mo`,
-        caption: `${chf(analytics.typicalSpend, 0)} a month`,
+        // Kept to one line so the three stats share a baseline; the unit is
+        // spelled out in the caption underneath.
+        display: cover >= 10 ? `${Math.round(cover)} mo` : `${cover.toFixed(1)} mo`,
+        caption: `of cover at ${chf(analytics.typicalSpend, 0)} a month`,
         tone: cover >= 3 ? "positive" : "attention",
         destination: { tab: "bank", screen: "home" }
       });
@@ -12062,7 +12062,7 @@
         label: "Day move",
         pct: Math.max(0, Math.min(100, (dayChangePct + BAND) / (BAND * 2) * 100)),
         display: `${dayChangePct >= 0 ? "+" : "\u2212"}${Math.abs(dayChangePct).toFixed(2)}%`,
-        caption: "inside a \xB12% band",
+        caption: "across your positions today",
         tone: dayChangePct >= 0 ? "positive" : "attention",
         destination: { tab: "trade" }
       });
@@ -12072,7 +12072,7 @@
       label: "Exposure",
       pct: Math.max(0, Math.min(100, analytics.investedShare)),
       display: `${analytics.investedShare.toFixed(0)}%`,
-      caption: "invested, not cash",
+      caption: "invested \u2014 the rest is cash",
       tone: "neutral",
       destination: { tab: "plan" }
     });
@@ -13427,44 +13427,6 @@
     }) });
   }
   __name(NetFlowBars, "NetFlowBars");
-  function RingGauge({ ring, onOpen }) {
-    const R = 26;
-    const C = 2 * Math.PI * R;
-    const filled = Math.max(0, Math.min(100, ring.pct)) / 100 * C;
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(
-      "button",
-      {
-        type: "button",
-        className: "gauge",
-        onClick: onOpen,
-        "aria-label": `${ring.label}: ${ring.display}, ${ring.caption}`,
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("span", { className: "gauge__dial", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("svg", { viewBox: "0 0 64 64", className: "gauge__svg", "aria-hidden": "true", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("circle", { cx: "32", cy: "32", r: R, fill: "none", stroke: "var(--color-dataviz-grid)", strokeWidth: "5" }),
-              /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-                "circle",
-                {
-                  cx: "32",
-                  cy: "32",
-                  r: R,
-                  fill: "none",
-                  className: `gauge__arc gauge__arc--${ring.tone}`,
-                  strokeWidth: "5",
-                  strokeLinecap: "round",
-                  strokeDasharray: `${filled.toFixed(1)} ${(C - filled).toFixed(1)}`,
-                  transform: "rotate(-90 32 32)"
-                }
-              )
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "gauge__value", children: ring.display })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "gauge__label", children: ring.label })
-        ]
-      }
-    );
-  }
-  __name(RingGauge, "RingGauge");
 
   // src/features/home-concepts/DashboardRows.tsx
   var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
@@ -13766,7 +13728,6 @@
     ].filter((s) => s !== null);
     if (data.loading) return /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(HomeSkeleton, { rows: 3 });
     return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "screen", children: [
-      a.rings.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "rings", "aria-label": "Today at a glance", children: a.rings.map((r) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(RingGauge, { ring: r, onOpen: () => goTo(r.destination) }, r.key)) }),
       /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("section", { "aria-label": "Total wealth", children: [
         /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex items-start justify-between", children: [
           /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)(
@@ -13809,6 +13770,25 @@
           onPreset: setPreset
         }
       ),
+      a.rings.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("section", { className: "card", "aria-label": "Where you stand", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("h2", { className: "section-title m-0", style: { marginBottom: "var(--space-sm)" }, children: "Where you stand" }),
+        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "stand", children: a.rings.map((r) => /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: `stand__item stand__item--${r.tone}`,
+            "aria-label": `${r.label}: ${r.display}, ${r.caption}`,
+            onClick: () => goTo(r.destination),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "stand__capsule", "aria-hidden": "true" }),
+              /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "stand__label", children: r.label }),
+              /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "stand__value amount", children: r.display }),
+              /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "stand__note", children: r.caption })
+            ]
+          },
+          r.key
+        )) })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("section", { className: "card", "aria-label": "Wealth over time", children: [
         /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "chip-row", role: "tablist", "aria-label": "Time range", style: { marginBottom: "var(--space-sm)" }, children: RANGES.map((r) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
           "button",

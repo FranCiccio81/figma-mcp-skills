@@ -178,15 +178,24 @@ devices that make saving stick make trading dangerous.
 
 ## Variant D — The dashboard
 
-**Shape.** Three sticky rings (Liquidity · Day move · Exposure) · total
-wealth with the change over the selected range · a **wealth-analysis tile**,
-closed by default · an **ask field** · two monitors (Risk · Market) · the
-**open-order strip** · **My dashboard** — metric rows with baselines, under
-an Everyday / Trader preset switch · a wealth trend chart with 1W / 1M / 3M
+**Shape.** Total wealth with the change over the selected range · a
+**wealth-analysis tile**, closed by default · an **ask field** · two monitors
+(Risk · Market) · the **open-order strip** · **My dashboard** — metric rows
+with baselines, under an Everyday / Trader preset switch · **Where you
+stand** — the three summary ratios · a wealth trend chart with 1W / 1M / 3M
 chips, crosshair and tooltip · allocation as one stacked bar under a row of
 **chips that are also the navigation** · the cash-flow triad (in / out / net)
-over a per-month diverging column chart · three ratios · a table view of the
-same numbers.
+over a per-month diverging column chart · a table view of the same numbers.
+
+**Where you stand.** Liquidity, day move and exposure were three dials pinned
+to the top of the screen. Two things were wrong with that. They were the
+first thing read and the least self-explanatory — an arc means nothing until
+you know what it is drawn against. And only *exposure* is a proportion: the
+liquidity arc was months-of-cover against an invented six-month scale, so it
+clamped to full at six months and stopped moving while the figure kept
+going. The same three numbers now sit after the metric rows and before the
+charts — stated, not drawn, each with the sentence naming what it is measured
+against, and each still a way into Bank, Trade or Plan.
 
 **Push and pull.** The tile decides what stands out; the ask field lets the
 client raise what the tile did not. Neither answers on Home — the field hands

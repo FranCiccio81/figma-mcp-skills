@@ -144,7 +144,7 @@ almost unchanged.
 
 | Health pattern | What it does there | The banking equivalent in D |
 |---|---|---|
-| **Three rings, always on screen** (sleep / recovery / strain) | One glance answers "how am I today" | **Liquidity / Day move / Exposure** — sticky, so the day's state survives a long scroll |
+| **Three rings, always on screen** (sleep / recovery / strain) | One glance answers "how am I today" | **Liquidity / Day move / Exposure** — the trio survives, the ring does not: see the note below |
 | **A metric list with baselines** (23 today, 29 usually) | A number is trivia; a number *against its usual* is a judgement | Every dashboard row prints today's figure over what it usually is |
 | **Monitors** (Health monitor 5/5 · Stress monitor) | Several checks reduced to one word | **Risk monitor** (5 checks) and **Market** |
 | **Customize** | The dashboard is the client's, not the product's | **Everyday / Trader presets** — same account, two dashboards |
@@ -246,10 +246,44 @@ Deliberately not taken:
 |---|---|
 | Recent transactions on Home | That is the Bank tab. Putting the list on Home duplicates a destination the five-tab nav already owns. |
 | A second, per-account sparkline card | D already plots wealth over time with 1W/1M/3M and a crosshair. A second chart of a subset is density without a new answer. |
-| AI-scored "portfolio health" rings | D's three rings are computed — liquidity, day move, exposure — and each names the arithmetic behind it. A score a model assigns, with one ring labelled "??", is the opposite of that. |
+| AI-scored "portfolio health" rings | D's three ratios are computed — liquidity, day move, exposure — and each names the arithmetic behind it. A score a model assigns, with one ring labelled "??", is the opposite of that. (D dropped the ring *form* too — see below.) |
 | An "Elite" tier badge | Status tiering is a loyalty decision, and it sits on the wrong side of the FCA line in §3 above. |
 | A Lombard capacity bar | Borrowing capacity is already a dashboard row and the full breakdown is in Buying Power. A bar on Home advertising available credit is a product decision, not a layout one ⟨TO CONFIRM⟩. |
 | The concept's palette (teal / indigo / violet) | The four worlds already have validated hues that mean the same thing everywhere in the app. Adding a second categorical scale for the same data would break that. |
+
+---
+
+# Part five — why the rings became figures
+
+The health-dashboard grammar in part three gave D three rings: liquidity, day
+move, exposure, pinned to the top of the screen. The trio was right. The ring
+was not, for two reasons.
+
+**A dial has to be drawn against something.** In a fitness app the ring works
+because the range is real and shared — sleep against your need, strain against
+your capacity. Only *exposure* has that here: it is a share of total wealth,
+0–100, and the arc means exactly what it looks like. The liquidity ring was
+months-of-cover against a six-month scale nobody chose, so a client with 21
+months of cover saw a full circle — and would have seen the same full circle
+at 6 months, or at 60. The arc had stopped carrying information long before
+the number did. The day-move ring was worse: an arc against a ±2% band, where
+the *midpoint* means zero, so a flat day reads as a half-full dial.
+
+**Pinning them made the least legible thing the most prominent.** Sticky put
+three unexplained arcs above everything, permanently, with no room for the
+caption that would have explained them. The complaint they drew — that the
+screen felt crowded — was really that the top of it was decoration.
+
+The fix is not to move the rings. It is to state the numbers: same three
+ratios, in a **Where you stand** card between the metric rows and the charts,
+each with the sentence naming what it is measured against, each still a way
+into Bank, Trade or Plan. The one genuine proportion loses nothing by being
+written as "70% invested — the rest is cash", and the two that were never
+proportions stop pretending to be.
+
+The general rule, worth keeping: **a radial gauge is only honest when the
+range is real, externally meaningful, and hit often enough that the arc
+moves.** Otherwise it is a number wearing a costume.
 
 ## Sources
 

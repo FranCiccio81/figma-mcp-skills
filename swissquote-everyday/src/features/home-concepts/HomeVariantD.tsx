@@ -22,7 +22,7 @@ import { ORDERS_FILLED_TODAY } from '../../data/mockLedger';
 import { swissNumber } from '../../lib/format';
 import { useStore } from '../../state/store';
 import { AskAnything } from './AskAnything';
-import { AllocationBar, NetFlowBars, RingGauge, TrendChart } from './charts';
+import { AllocationBar, NetFlowBars, TrendChart } from './charts';
 import { MetricList, Monitors, OpenOrders } from './DashboardRows';
 import { useHomeData, type MetricPreset, type TrendPoint } from './homeData';
 import { BalanceVisibilityButton, BigAmount, HomeSkeleton, useGoTo } from './shared';
@@ -92,16 +92,6 @@ export function HomeVariantD() {
 
   return (
     <div className="screen">
-      {/* ---- The day's three states. Sticky: on a dashboard this long,
-              the top-level state has to survive scrolling. --------------- */}
-      {a.rings.length > 0 && (
-        <div className="rings" aria-label="Today at a glance">
-          {a.rings.map((r) => (
-            <RingGauge key={r.key} ring={r} onOpen={() => goTo(r.destination)} />
-          ))}
-        </div>
-      )}
-
       {/* ---- Position ------------------------------------------------- */}
       <section aria-label="Total wealth">
         <div className="flex items-start justify-between">
@@ -145,6 +135,44 @@ export function HomeVariantD() {
         preset={activePreset}
         onPreset={setPreset}
       />
+
+      {/* ---- The three summary ratios ---------------------------------
+              Formerly three dials pinned to the top of the screen. Two
+              problems with that: they were the first thing read and the
+              least self-explanatory, and only one of the three is actually a
+              proportion — an arc drawn for "21 months of cover" implies a
+              scale that does not exist, and clamps to full at six months, so
+              the ring stopped moving long before the figure did.
+
+              They belong here instead: after the rows that give the raw
+              figures, before the charts that give the history. Same three
+              numbers, stated rather than drawn, each with the sentence that
+              says what it is measured against. ------------------------- */}
+      {a.rings.length > 0 && (
+        <section className="card" aria-label="Where you stand">
+          <h2 className="section-title m-0" style={{ marginBottom: 'var(--space-sm)' }}>
+            Where you stand
+          </h2>
+          <div className="stand">
+            {a.rings.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                className={`stand__item stand__item--${r.tone}`}
+                aria-label={`${r.label}: ${r.display}, ${r.caption}`}
+                onClick={() => goTo(r.destination)}
+              >
+                {/* Tone as a capsule, the same idiom as the dashboard rails.
+                    State is in the caption too, so it is never colour alone. */}
+                <span className="stand__capsule" aria-hidden="true" />
+                <span className="stand__label">{r.label}</span>
+                <span className="stand__value amount">{r.display}</span>
+                <span className="stand__note">{r.caption}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---- Wealth over time ----------------------------------------- */}
       <section className="card" aria-label="Wealth over time">
