@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our portfolio list shows daily change in data/up and data/down at 12 px. Is that accessible in light and dark?",
+      "expected_output": "Analysis with computed ratios showing small text in data/up and data/down fails 4.5:1 on light surfaces and data/down fails on dark surface, with alternatives and a non-colour cue.",
+      "files": [],
+      "expectations": [
+        "Reports about 3.8:1 for data/up or data/down on white and calls it a failure for small text",
+        "Reports data/down on the dark surface below 4.5:1",
+        "Requires a sign or arrow in addition to colour",
+        "Suggests escalating a passing text token to the Governance"
+      ]
+    }
+  ]
+}

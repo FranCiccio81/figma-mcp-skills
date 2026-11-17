@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-compliance-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Check this handoff spec against Bridge: it uses color/text/status/error/primary, action/trade/buy/primary-bg and a green Buy button.",
+      "expected_output": "A compliance report that runs the token checker, flags both token names as unknown with the correct names, flags the green Buy button, and lists items not verifiable.",
+      "files": [],
+      "expectations": [
+        "Runs or cites scripts/check_tokens.py output",
+        "Gives text/error/primary and action/trade/buy-primary-bg as corrections",
+        "Flags the green Buy button as a colour role violation",
+        "Every finding has severity and fix"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill_name": "bridge-content-and-formats",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Format these for a French UI: 1234.5 CHF, 5000000000 market cap, IBAN CH9300762011623852957, and rewrite the button 'OK' on the buy confirmation.",
+      "expected_output": "CHF 1,234.50 with period decimal, '5 Md' abbreviation, IBAN in blocks of four, a button naming the order, and a flag about the unconfirmed thousands separator for French.",
+      "files": [],
+      "expectations": [
+        "Puts the currency code before the amount with two decimals",
+        "Uses the FR abbreviation 5 Md",
+        "Formats IBAN as CH93 0076 2011 6238 5295 7",
+        "Replaces OK with a label naming the order",
+        "Flags the thousands separator for French as an open question"
+      ]
+    }
+  ]
+}
