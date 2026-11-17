@@ -3,14 +3,14 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Implement a primary button using Bridge tokens in our web app.",
-      "expected_output": "Locates the Bridge token files first, uses only existing semantic or component tokens, follows tier rules and lists gaps.",
+      "prompt": "I'm a developer joining the Swissquote web team. Which Bridge rules and skills apply when I build a payments table?",
+      "expected_output": "Routes to bridge-web and bridge-developer-workflow, lists the shared rules (two token levels, tokens only, product actions in dark ink, themes, AA floor) and explains how to report gaps.",
       "files": [],
       "expectations": [
-        "Looks for the project's token files before writing code",
-        "Does not reference core tokens from the component",
-        "Does not invent token names; gaps are listed",
-        "Does not use Grey/400 for text"
+        "Names bridge-web and bridge-developer-workflow",
+        "States the two-level token model, not the 4-tier model",
+        "Mentions light and dark checks",
+        "Explains the [gap] and gap report process"
       ]
     }
   ]
