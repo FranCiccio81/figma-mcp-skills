@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-performance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our product page has an LCP of 4.8s on mobile in CrUX. Find out why and fix it.",
+      "expected_output": "A diagnosis identifying the LCP element and its delays, prioritized fixes, and a requirement for before and after measurements plus a CI budget.",
+      "files": [],
+      "expectations": [
+        "Identifies the LCP element before proposing fixes",
+        "Uses the 2.5 s good threshold at the 75th percentile",
+        "Requires before and after measurements",
+        "Proposes a regression guard"
+      ]
+    }
+  ]
+}

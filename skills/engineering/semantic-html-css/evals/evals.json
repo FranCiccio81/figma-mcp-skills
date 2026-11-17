@@ -1,0 +1,17 @@
+{
+  "skill_name": "semantic-html-css",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this sign-up page markup and CSS: [code with div buttons and placeholder-only inputs].",
+      "expected_output": "Findings that replace div buttons with buttons, add labels, fix landmarks and headings, propose token-based CSS and check reflow.",
+      "files": [],
+      "expectations": [
+        "Flags div-based buttons and proposes native buttons",
+        "Flags placeholder used as label",
+        "Checks landmarks and heading order",
+        "Mentions focus-visible styling"
+      ]
+    }
+  ]
+}

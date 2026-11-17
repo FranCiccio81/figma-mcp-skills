@@ -1,0 +1,17 @@
+{
+  "skill_name": "visual-regression-qa",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Set up visual regression tests for our React component library with Storybook in CI.",
+      "expected_output": "A setup reusing the existing stack, a state, theme, text size and RTL matrix, stabilization steps, thresholds, baseline workflow in CI and a triage process.",
+      "files": [],
+      "expectations": [
+        "Baselines generated in the CI environment",
+        "Animations, fonts and data are stabilized",
+        "Coverage includes dark theme and RTL",
+        "Triage classes regression, intended and flake"
+      ]
+    }
+  ]
+}

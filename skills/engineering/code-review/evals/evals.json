@@ -1,0 +1,17 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this PR that adds a currency input component: [diff].",
+      "expected_output": "A review summary with verdict, checks run, labeled comments by priority including correctness of number parsing, accessibility of the input and test coverage.",
+      "files": [],
+      "expectations": [
+        "States which checks were run and their result",
+        "Labels comments as Blocking, Should fix or Suggestion",
+        "Checks locale-aware number parsing and formatting",
+        "Checks the input has a label and error association"
+      ]
+    }
+  ]
+}

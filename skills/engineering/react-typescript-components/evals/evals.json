@@ -1,0 +1,17 @@
+{
+  "skill_name": "react-typescript-components",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a reusable Tabs component in React and TypeScript for our design system.",
+      "expected_output": "A typed Tabs component following the WAI-ARIA tabs pattern with roving focus and arrow-key navigation, token-based styling, tests querying by role and stories.",
+      "files": [],
+      "expectations": [
+        "Implements tablist, tab and tabpanel roles with aria-selected and aria-controls",
+        "Arrow keys move between tabs",
+        "No `any` in the public API",
+        "Tests use getByRole queries"
+      ]
+    }
+  ]
+}
