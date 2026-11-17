@@ -1,3 +1,8 @@
+> **Archived guide (March 2026), kept for traceability.** Superseded by `../SKILL.md` (2026-11-17).
+> This file is not loaded unless explicitly referenced. Known errata are listed below; the rest is preserved as written.
+> * Only the desktop MCP server is described. Figma now recommends the remote server (`https://mcp.figma.com/mcp`); tool availability differs between servers and must be discovered at runtime.
+> * The Compose and React templates are illustrative and specific to Bridge; prefer `material3-compose` and `react-typescript-components`.
+
 # SKILL : Design-to-Code — Figma → React / Jetpack Compose
 
 > Skill pour convertir des designs Figma en code production-ready,  

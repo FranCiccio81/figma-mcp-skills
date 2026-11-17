@@ -1,3 +1,8 @@
+> **Archived guide (March 2026), kept for traceability.** Superseded by `../SKILL.md` (2026-11-17).
+> This file is not loaded unless explicitly referenced. Known errata are listed below; the rest is preserved as written.
+> * Contrast values quoted from the Input test are wrong: `#9CA3AF` on white is 2.54:1, `#6B7280` on white is 4.83:1 (passes AA). Recomputed on 2026-11-17.
+> * The title says UX research; the content is design handoff. Research now lives in `ux-research-planning` and `usability-testing`.
+
 # SKILL : UX Research & Specs
 
 > Skill pour générer, structurer et maintenir les specs fonctionnelles,  

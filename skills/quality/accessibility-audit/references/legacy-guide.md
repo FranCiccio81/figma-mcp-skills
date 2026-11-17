@@ -1,3 +1,10 @@
+> **Archived guide (March 2026), kept for traceability.** Superseded by `../SKILL.md` (2026-11-17).
+> This file is not loaded unless explicitly referenced. Known errata are listed below; the rest is preserved as written.
+> * WCAG 2.1 is cited; the current W3C Recommendation is WCAG 2.2 (October 2023).
+> * 2.5.5 Target Size is level **AAA**, not AA. The AA criterion is 2.5.8 Target Size (Minimum), 24 × 24 CSS px. 44 pt (iOS) and 48 dp (Android) are platform guidelines.
+> * Contrast values are wrong: `#9CA3AF` on white is 2.54:1 (not 2.85:1); `#6B7280` on white is 4.83:1 and passes AA (not 4.48:1 borderline).
+> * No source supports the claim that FINMA mandates WCAG; applicability of EN 301 549 or other law must be confirmed case by case.
+
 # SKILL : Accessibilité — WCAG 2.1 AA
 
 > Skill pour auditer, corriger et documenter l'accessibilité des designs et du code,  

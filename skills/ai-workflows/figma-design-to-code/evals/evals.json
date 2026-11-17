@@ -1,0 +1,28 @@
+{
+  "skill_name": "figma-design-to-code",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement this Figma frame in our Next.js app: https://www.figma.com/design/abc/App?node-id=12-34",
+      "expected_output": "Code that reuses project components and tokens, built after discovering available Figma tools, with screenshot comparison and an implementation note listing tools used, token mapping and gaps.",
+      "files": [],
+      "expectations": [
+        "Lists which Figma MCP tools were available before using them",
+        "Calls get_screenshot or states why it could not",
+        "Maps Figma variables to existing project tokens and lists gaps instead of inventing names",
+        "Implementation note lists deviations and open questions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Implement this Figma frame in SwiftUI, but the Figma MCP server is not connected. Here is a screenshot.",
+      "expected_output": "Works from the screenshot with an explicit list of values that could not be verified, without fabricating exact Figma values.",
+      "files": [],
+      "expectations": [
+        "States that Figma MCP is unavailable and which checks cannot be done",
+        "Does not present guessed values as exact Figma values",
+        "Asks for the variable list or a spec"
+      ]
+    }
+  ]
+}

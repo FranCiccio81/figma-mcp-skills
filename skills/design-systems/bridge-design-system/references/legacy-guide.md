@@ -1,3 +1,8 @@
+> **Archived guide (March 2026), kept for traceability.** Superseded by `../SKILL.md` (2026-11-17).
+> This file is not loaded unless explicitly referenced. Known errata are listed below; the rest is preserved as written.
+> * Placeholder URLs (`[BRIDGE_FILE_ID]`, `[ID]`) are not real references.
+> * Token format examples predate the DTCG 2025.10 stable format; see `design-token-architecture`.
+
 # SKILL : Design System — Tokens, Composants & Bridge
 
 > Skill pour travailler avec un design system structuré en 4 tiers de tokens,  

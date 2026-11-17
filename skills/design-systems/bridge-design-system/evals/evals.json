@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-design-system",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement a primary button using Bridge tokens in our web app.",
+      "expected_output": "Locates the Bridge token files first, uses only existing semantic or component tokens, follows tier rules and lists gaps.",
+      "files": [],
+      "expectations": [
+        "Looks for the project's token files before writing code",
+        "Does not reference core tokens from the component",
+        "Does not invent token names; gaps are listed",
+        "Does not use Grey/400 for text"
+      ]
+    }
+  ]
+}
