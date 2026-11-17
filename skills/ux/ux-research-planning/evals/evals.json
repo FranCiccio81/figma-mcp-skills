@@ -1,0 +1,17 @@
+{
+  "skill_name": "ux-research-planning",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write an interview guide to understand how couples make joint investment decisions.",
+      "expected_output": "A research plan with decision, research questions, participant criteria and screener, consent and data handling, and a guide built on past-behavior questions.",
+      "files": [],
+      "expectations": [
+        "Guide questions map to research questions",
+        "No leading or hypothetical questions",
+        "Consent and handling of financial information are covered",
+        "Screener does not reveal the desired answers"
+      ]
+    }
+  ]
+}

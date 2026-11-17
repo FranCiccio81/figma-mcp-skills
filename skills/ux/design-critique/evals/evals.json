@@ -1,0 +1,17 @@
+{
+  "skill_name": "design-critique",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here are two options for our portfolio overview screen. Which is better? [images]",
+      "expected_output": "A critique restating the goal, comparing both options on the same criteria in a table, grounded in principles, with a conditional recommendation and strengths.",
+      "files": [],
+      "expectations": [
+        "Restates or asks for the goal before judging",
+        "Comparison uses the same criteria for both options",
+        "Recommendation is conditional on the primary task",
+        "Every issue cites a principle and a location"
+      ]
+    }
+  ]
+}

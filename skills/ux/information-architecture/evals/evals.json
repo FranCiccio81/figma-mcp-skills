@@ -1,0 +1,17 @@
+{
+  "skill_name": "information-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our settings screen has 40 items and users can't find notification preferences. Propose a new structure.",
+      "expected_output": "An inventory, a task-based grouping proposal with user-language labels, and a tree test plan to validate it.",
+      "files": [],
+      "expectations": [
+        "Groups are based on user tasks, not internal teams",
+        "A tree test plan with tasks including finding notification preferences",
+        "Labels avoid internal jargon",
+        "Navigation pattern fits the platform"
+      ]
+    }
+  ]
+}

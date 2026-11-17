@@ -1,0 +1,17 @@
+{
+  "skill_name": "ux-writing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Rewrite these error messages for our transfer form: 'Error 402', 'Invalid input', 'Something went wrong'.",
+      "expected_output": "A copy table with rewritten errors that say what happened and how to fix it, in plain language, plus notes on localization.",
+      "files": [],
+      "expectations": [
+        "Each rewrite explains how to recover",
+        "No error code shown alone",
+        "Language is plain and blame-free",
+        "Mentions localization or text expansion"
+      ]
+    }
+  ]
+}

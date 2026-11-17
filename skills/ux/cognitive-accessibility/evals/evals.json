@@ -1,0 +1,17 @@
+{
+  "skill_name": "cognitive-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review our retirement planning flow for people with memory or attention difficulties.",
+      "expected_output": "Findings referencing W3C cognitive patterns or WCAG criteria, with severity and recommendations, plus copy rewrites where language is the issue.",
+      "files": [],
+      "expectations": [
+        "Findings reference W3C cognitive guidance or WCAG criteria such as 3.3.7 or 3.3.8",
+        "Does not recommend removing legally required disclosures",
+        "Addresses memory load between steps",
+        "Recommends testing with people with cognitive disabilities"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "interaction-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the flow and states for adding a new payee in a mobile banking app.",
+      "expected_output": "A flow diagram with entry, steps, exits and re-entry, a state matrix per screen, validation and feedback rules, and a prototype plan.",
+      "files": [],
+      "expectations": [
+        "Each screen has empty, loading, error and success states defined",
+        "Errors explain how to recover and preserve input",
+        "Back and exit behavior is defined at each step",
+        "Covers reduced motion or assistive technology behavior"
+      ]
+    }
+  ]
+}

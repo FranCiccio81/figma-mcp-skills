@@ -1,0 +1,17 @@
+{
+  "skill_name": "heuristic-evaluation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Do a UX audit of these 5 screens of our trading app checkout: [screenshots].",
+      "expected_output": "A findings table using Nielsen's heuristics with evidence, severity 0 to 4, confidence, impact, effort and recommendations, plus quick wins and strengths.",
+      "files": [],
+      "expectations": [
+        "Each finding has evidence, severity, confidence, impact and effort",
+        "Domain-dependent findings are marked lower confidence",
+        "Accessibility issues are routed to an accessibility audit",
+        "Strengths are listed"
+      ]
+    }
+  ]
+}
