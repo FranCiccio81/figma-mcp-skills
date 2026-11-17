@@ -1,0 +1,17 @@
+{
+  "skill_name": "semantic-html-and-css",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this login page markup: div with onclick as the submit button, placeholders instead of labels, CSS with margin-left everywhere, 14 hex colors, and an animation on load. The site will launch in Arabic too.",
+      "expected_output": "Findings: replace div with button type=submit, add visible labels with autocomplete, replace hex values with tokens, convert margin-left to logical properties for RTL, wrap the animation in prefers-reduced-motion, and ensure focus-visible styles.",
+      "files": ["login.html", "login.css"],
+      "assertions": [
+        "The div button is replaced by a native button",
+        "Labels and autocomplete attributes are required",
+        "Logical properties are proposed for RTL",
+        "Reduced motion is handled"
+      ]
+    }
+  ]
+}

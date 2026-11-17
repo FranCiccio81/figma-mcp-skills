@@ -1,0 +1,17 @@
+{
+  "skill_name": "figma-token-mapping",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Map the variables of the Input frame to our CSS tokens. get_variable_defs returned Grey/900 #111827, Grey/400 #9CA3AF, Grey/300 #D1D5DB, Primary/500 #3B82F6, Danger/500 #EF4444, Shades/White #FFFFFF; raw values: radius 2px and 4px, padding 8/12/16px, gap 8px. Our CLAUDE.md has a mapping table.",
+      "expected_output": "A mapping table that applies the CLAUDE.md table first (Grey/900 to --color-text-primary, etc.), lists the raw radius, padding and gap values as hardcoded with nearest spacing tokens marked needs approval, flags Grey/400 at 2.54:1 as unusable for text, checks dark mode coverage and proposes a patch without creating tokens.",
+      "files": [".claude/CLAUDE.md"],
+      "assertions": [
+        "Project mapping rules are applied before value matching",
+        "Raw values are listed as hardcoded",
+        "No token is created without being marked pending approval",
+        "Grey/400 contrast is computed and flagged for text"
+      ]
+    }
+  ]
+}

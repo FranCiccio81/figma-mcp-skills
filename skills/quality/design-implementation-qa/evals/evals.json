@@ -1,0 +1,17 @@
+{
+  "skill_name": "design-implementation-qa",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Compare the Input component in Figma (node 729:14491) with our Storybook story Input--default. Figma MCP is connected; Storybook runs at localhost:6006.",
+      "expected_output": "A QA report that captures both screenshots at the same size and theme, compares variables to tokens (border, radius 2px vs 4px nesting, padding per size, label typography), lists deviations with design and code tokens, severity and side at fault, and names states not verified.",
+      "files": [],
+      "assertions": [
+        "Both the Figma screenshot and the Storybook screenshot are obtained before comparing",
+        "Deviations list design token and implemented token",
+        "Each deviation has a side at fault",
+        "Unverified states are listed"
+      ]
+    }
+  ]
+}

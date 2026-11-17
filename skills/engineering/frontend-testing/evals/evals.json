@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write tests for our TransferForm React component (amount, recipient IBAN, submit). The project uses Vitest, Testing Library, MSW and Playwright.",
+      "expected_output": "Component tests querying by role and label, covering validation errors, loading, API error with retry and success; MSW handlers including an error; an axe check; and one Playwright end-to-end test of the happy path with getByRole and web-first assertions and no sleeps.",
+      "files": ["TransferForm.tsx"],
+      "assertions": [
+        "Queries use getByRole or getByLabelText",
+        "An API error case is tested",
+        "An automated accessibility check is included",
+        "The Playwright test has no waitForTimeout or fixed sleep"
+      ]
+    }
+  ]
+}

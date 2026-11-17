@@ -1,0 +1,17 @@
+{
+  "skill_name": "figma-implementation-spec",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Génère le handoff développeur complet du composant Input depuis https://www.figma.com/design/<fileKey>/Foundations?node-id=729-14491 , format Notion, en français.",
+      "expected_output": "A French Notion-ready handoff with provenance, anatomy (Input > base.input-style > base.input-content), sizes, states with Read-only flagged as missing, token table from variables, hardcoded radius/padding/gap values, accessibility annotations including Grey/400 contrast 2.54:1 and target size for small sizes, and open questions.",
+      "files": ["components/input-documentation.md"],
+      "assertions": [
+        "The output is in French",
+        "Provenance with file key and node ID is at the top",
+        "Missing states are flagged as open questions",
+        "Hardcoded values are listed separately from tokens"
+      ]
+    }
+  ]
+}

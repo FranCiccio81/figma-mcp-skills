@@ -1,0 +1,28 @@
+{
+  "skill_name": "figma-design-context",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Get the design context for https://www.figma.com/design/<fileKey>/Foundations?node-id=729-14491 (a 1697x4407 px documentation frame) so we can write the Input handoff.",
+      "expected_output": "The agent lists the available Figma tools first, parses nodeId 729:14491, calls get_metadata, then get_design_context per section, get_screenshot and get_variable_defs, separates variables from hardcoded values and records provenance.",
+      "files": [],
+      "assertions": [
+        "Tool availability is checked before calls",
+        "The node ID is converted to 729:14491",
+        "get_metadata precedes per-section get_design_context calls for the large frame",
+        "Variables and hardcoded values are listed separately"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Implement this Figma frame: https://www.figma.com/design/<fileKey>/App?node-id=12-34 (no Figma MCP server is configured in this session).",
+      "expected_output": "The agent states that Figma could not be read, does not invent values, asks for screenshots or a spec, and labels any pixel-derived value as an assumption.",
+      "files": [],
+      "assertions": [
+        "The response states the MCP server is unavailable",
+        "No design value is invented",
+        "A fallback input is requested"
+      ]
+    }
+  ]
+}

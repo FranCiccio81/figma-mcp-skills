@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this PR: adds a PromoBanner component with inline style={{color:'#0057FF'}}, an img without alt, a useEffect that copies props into state, and no tests. Description says 'add banner per Figma'.",
+      "expected_output": "A review with an intent check, comments labelled by severity: hardcoded color (major, use token), missing alt (blocker or major depending on content), derived state in useEffect (major, compute during render), missing tests (major), plus a request-changes verdict.",
+      "files": ["PromoBanner.tsx"],
+      "assertions": [
+        "Every comment carries a severity label",
+        "The hardcoded color is flagged with a token suggestion",
+        "Missing alt text is flagged",
+        "The verdict is request changes"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "technical-specification",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a tech spec for adding real-time price updates to our watchlist (web and mobile web). Today prices refresh every 30 s by polling.",
+      "expected_output": "A design doc comparing at least WebSocket, Server-Sent Events and faster polling, with a chosen design, message contract with error and reconnect handling, throttling of UI updates and accessible announcements (no live region spam), performance budgets, security (auth on the socket), rollout with a flag and fallback to polling, observability and open questions.",
+      "files": [],
+      "assertions": [
+        "At least two alternatives are compared",
+        "Reconnect and error handling are specified",
+        "Accessibility of live updates is addressed",
+        "A rollback or fallback path exists"
+      ]
+    }
+  ]
+}

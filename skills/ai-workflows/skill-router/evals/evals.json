@@ -1,0 +1,27 @@
+{
+  "skill_name": "skill-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design and implement an accessible banking onboarding flow for iOS.",
+      "expected_output": "A plan that loads project rules first, then product-requirements, interaction-design-spec, apple-hig-review, swiftui-implementation and apple-accessibility, and lists Android and web skills as excluded.",
+      "files": [],
+      "assertions": [
+        "Project CLAUDE.md and rules are loaded first",
+        "apple-hig-review, swiftui-implementation and apple-accessibility are selected",
+        "No Android skill is selected",
+        "Excluded skills are listed with a reason"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Implement this screen.",
+      "expected_output": "The router detects no platform for an implementation task and asks which platform to target before selecting implementation skills.",
+      "files": [],
+      "assertions": [
+        "The router asks for the platform",
+        "No platform-specific implementation skill is selected"
+      ]
+    }
+  ]
+}

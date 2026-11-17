@@ -1,0 +1,10 @@
+{
+  "structure_exempt": {
+    "component": "Imported workflow skill with its own action-based structure (actions, principles, templates). Required sections are covered inside references/actions/*.md."
+  },
+  "reviewed_scripts": [
+    "skills/quality/accessibility-audit/scripts/contrast.py",
+    "skills/ai-workflows/skill-router/scripts/route.py"
+  ],
+  "reviewed_scripts_note": "Each script listed here was read in full, uses only the Python standard library, performs no network access and writes no files. It is covered by tests/test_skill_scripts.py."
+}

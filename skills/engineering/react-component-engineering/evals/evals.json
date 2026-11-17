@@ -1,0 +1,17 @@
+{
+  "skill_name": "react-component-engineering",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here is the get_design_context output for a 'Recent transactions' card (React + Tailwind with absolute positioning and hex colors). Implement it in our Next.js app that uses CSS modules, BEM and TanStack Query. The API is GET /api/transactions?limit=5.",
+      "expected_output": "A component rebuilt with flex/grid, CSS modules with BEM classes using CSS custom property tokens, a typed TanStack Query hook with loading, empty, error-with-retry and success states, semantic list markup, JSDoc, tests and no new dependency.",
+      "files": ["design-context.tsx"],
+      "assertions": [
+        "No absolute positioning copied from the MCP output",
+        "No hex values in styles",
+        "Loading, empty and error states are implemented",
+        "The existing data library is used instead of a new one"
+      ]
+    }
+  ]
+}

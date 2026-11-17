@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-performance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our marketing home page has LCP 4.1 s and CLS 0.24 at p75 on mobile (CrUX). The hero is a 2.4 MB PNG loaded with loading=lazy, web fonts swap late and a cookie banner pushes content down. Audit and fix.",
+      "expected_output": "An audit using the CrUX baseline, identifying the hero image as the LCP element, removing lazy loading on it, adding fetchpriority and a modern format with srcset, reserving space for the cookie banner or overlaying it, matching font fallback metrics, and planning before/after measurement and budgets.",
+      "files": [],
+      "assertions": [
+        "Lazy loading is removed from the LCP image",
+        "The cookie banner layout shift is addressed",
+        "Font loading shift is addressed",
+        "Before and after measurement is planned"
+      ]
+    }
+  ]
+}

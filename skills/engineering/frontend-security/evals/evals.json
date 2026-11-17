@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-security",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Security review: our React app stores the JWT in localStorage, renders news articles from a CMS with dangerouslySetInnerHTML, logs the full transfer payload (IBAN, amount, name) to Sentry, and redirects after login to ?next= without checks.",
+      "expected_output": "Findings with severity: token in localStorage readable by XSS (move to HttpOnly cookie), unsanitised CMS HTML (sanitise and CSP), personal and financial data in Sentry (mask or drop), open redirect via next (allowlist relative paths), with OWASP references.",
+      "files": [],
+      "assertions": [
+        "Token storage in localStorage is flagged",
+        "Sanitisation and CSP are required for CMS HTML",
+        "Personal data in Sentry is flagged",
+        "The open redirect is flagged with an allowlist fix"
+      ]
+    }
+  ]
+}

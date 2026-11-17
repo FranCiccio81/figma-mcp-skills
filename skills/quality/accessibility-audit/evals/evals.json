@@ -1,0 +1,28 @@
+{
+  "skill_name": "accessibility-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Check these Input component colors for WCAG: placeholder Grey/400 #9CA3AF on white, border Grey/300 #D1D5DB on white, label Grey/900 #111827 on white, focus ring Primary/500 #3B82F6 on white.",
+      "expected_output": "Computed ratios: #9CA3AF 2.54:1 fails text; #D1D5DB 1.47:1 fails 1.4.11 for the input border as a component boundary; #111827 passes; #3B82F6 3.68:1 passes 3:1 for a focus indicator but would fail as normal text. Each with SC references and fixes.",
+      "files": [],
+      "assertions": [
+        "Grey/400 is computed at 2.54:1 and fails for text",
+        "Grey/300 border is computed at 1.47:1 and flagged under 1.4.11",
+        "Primary/500 is computed at 3.68:1 with the correct pass or fail by use",
+        "Ratios come from computation, not estimation"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Audit our Figma signup screen for accessibility before development.",
+      "expected_output": "A design-stage audit covering visual, structure and content criteria, with keyboard and screen reader layers marked not tested and developer annotations for expected semantics.",
+      "files": [],
+      "assertions": [
+        "Criteria that cannot be assessed in Figma are marked not tested",
+        "Annotations for semantics are provided",
+        "Target size is checked against 2.5.8"
+      ]
+    }
+  ]
+}
