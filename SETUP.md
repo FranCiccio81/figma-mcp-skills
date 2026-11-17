@@ -1,5 +1,10 @@
 # SETUP — figma-mcp-skills
 
+> Inventaire historique de l'installation locale du 2026-03-29, conservé pour mémoire.
+> Les skills de ce dépôt sont désormais sous `skills/<domaine>/` et listées dans `docs/registry/skills-registry.md`.
+> Les 59 skills tiers de `skills-lock.json` sont installées hors dépôt ; leur provenance est suivie dans `docs/sources/source-registry.md`.
+> Le transport SSE (`/sse`) est remplacé par HTTP (`/mcp`).
+
 > 63 skills installés le 2026-03-29
 
 ## Architecture
@@ -164,8 +169,8 @@ skills-lock.json           → Registry des 59 skills installés via /skills
 {
   "mcpServers": {
     "figma-desktop": {
-      "type": "sse",
-      "url": "http://127.0.0.1:3845/sse"
+      "type": "http",
+      "url": "http://127.0.0.1:3845/mcp"
     }
   }
 }

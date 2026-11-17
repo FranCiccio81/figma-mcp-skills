@@ -2,6 +2,9 @@
 
 Guide pratique pour documenter un composant de design system directement depuis Figma Desktop via le MCP Server.
 
+> Ce guide est conservé comme retour d'expérience du 2026-03-28. Le flux maintenu est décrit par les skills
+> `skills/ai-workflows/figma-design-context` (lecture Figma) et `skills/ai-workflows/figma-implementation-spec` (handoff).
+
 ---
 
 ## Prérequis

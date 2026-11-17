@@ -2,6 +2,9 @@
 
 > Rules à copier dans `.cursor/rules`, `CLAUDE.md`, ou l'équivalent de ton éditeur.
 > Enrichies avec les learnings du test réel (2026-03-28).
+>
+> Version de référence du flux : skill `skills/ai-workflows/figma-design-context` (mise à jour le 2026-11-17).
+> En cas d'écart entre ce fichier et la skill, la skill fait foi.
 
 ---
 
@@ -11,12 +14,14 @@
 ## Figma MCP Integration Rules
 
 ### Flux obligatoire (ne pas sauter)
-1. Sur les frames > 800px de haut : appeler get_metadata en premier
+0. Vérifier les outils réellement exposés par le serveur (distant ou desktop) ; si le serveur le demande, appeler create_session avant les outils de fichier
+1. Sur les frames > 800px de haut : appeler get_metadata en premier. Sur les petites frames, get_design_context direct, puis get_metadata si la réponse est tronquée (flux du guide officiel Figma)
 2. Appeler get_design_context — par section si frame large
 3. Appeler get_screenshot systématiquement pour la référence visuelle
 4. Appeler get_variable_defs pour les tokens utilisés
 5. Traduire l'output (React + Tailwind) dans les conventions du projet
 6. Valider contre Figma pour une correspondance 1:1 avant de marquer comme terminé
+7. Ne jamais inventer une valeur non retournée par le MCP ; en cas d'accès refusé ou de quota, appeler whoami une fois, signaler, passer au repli (exports, spec écrite)
 
 ### Rules d'implémentation
 - Traiter l'output MCP comme une représentation du design, pas comme du code final
