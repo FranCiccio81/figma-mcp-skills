@@ -96,7 +96,7 @@ Check the component against all 5 principles. Load each principle file for detai
 [ ] Focus management (focus visible, focus trap for modals/dropdowns)
 [ ] ARIA attributes (role, aria-label, aria-expanded, etc.)
 [ ] Screen reader tested (meaningful announcements)
-[ ] Color contrast (WCAG 2.1 AA — 4.5:1 text, 3:1 large text)
+[ ] Color contrast (WCAG 2.2 AA — 4.5:1 text, 3:1 large text)
 [ ] Motion respects prefers-reduced-motion
 ```
 

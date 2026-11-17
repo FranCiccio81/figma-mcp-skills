@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0 (2026-11-17)
+
+- Moved to `skills/design-systems/component/` (canonical copy). `.claude/skills/component` is now a symbolic link, so existing Claude Code usage keeps working.
+- Description rewritten to state when to use the skill and which neighbouring skills to prefer.
+- Metadata aligned with the repository conventions (SemVer version, domain, status, trust, sources, review date, provenance note).
+- Accessibility baseline moved from WCAG 2.1 AA to WCAG 2.2 AA. Touch target checks now distinguish SC 2.5.8 (24x24 CSS px, AA) from platform guidance (44x44 pt iOS, 48x48 dp Android).
+- Added `evals/evals.json` built from the real Button spec in `ds/specs/active/button-spec.md`.
+
 ## v1.1 — 2026-03-14
 
 ### Renamed: `structure` → `spec`

@@ -1,6 +1,13 @@
 .agents/
+# Skills installés localement (npx skills, scripts/install-skills.sh).
+# Seul le lien de compatibilité vers la copie canonique est versionné.
 .claude/skills/*
-!.claude/skills/component/
+!.claude/skills/component
+
+# Espaces de travail des évaluations de skills
+*-workspace/
+__pycache__/
+.pytest_cache/
 
 # Dumps Redis — artefact d'un serveur lancé dans le dossier de travail.
 # Un binaire de 8 Ko s'est retrouvé committé pour cette raison exacte.

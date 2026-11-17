@@ -34,7 +34,7 @@ The `spec-review` action launches 4 expert reviewers in parallel for fast, thoro
 |-------------|-------|---------|
 | **Front Engineer** | Implementability, types, edge cases, testability | READY / NEEDS WORK / BLOCKED |
 | **DS Manager** | Consistency, naming, tokens, composition, API surface | CONSISTENT / NEEDS ALIGNMENT / INCONSISTENT |
-| **Accessibility Specialist** | WCAG 2.1 AA, keyboard, ARIA, screen reader, contrast | ACCESSIBLE / GAPS / NON-COMPLIANT |
+| **Accessibility Specialist** | WCAG 2.2 AA, keyboard, ARIA, screen reader, contrast | ACCESSIBLE / GAPS / NON-COMPLIANT |
 | **Product Designer** | Design intent, states, responsive, content flexibility | FAITHFUL / DRIFT / MISSING INTENT |
 
 Consolidated verdicts: **APPROVED** | **APPROVED WITH NOTES** | **NEEDS REVISION** | **BLOCKED**
@@ -46,7 +46,7 @@ Consolidated verdicts: **APPROVED** | **APPROVED WITH NOTES** | **NEEDS REVISION
 - Zero hardcoded values enforcement (colors, spacing, radius)
 - Token scan protocol: reuse existing tokens, never invent
 - Human-in-the-loop: new tokens require user approval
-- WCAG 2.1 AA accessibility compliance
+- WCAG 2.2 AA accessibility compliance
 - Atomic Design composition model
 - BEM naming conventions
 - DTCG token standard
@@ -70,7 +70,7 @@ System-wide:        audit {directory}
 | Naming | BEM (Block Element Modifier) | [naming.md](references/principles/naming.md) |
 | Tokens | DTCG (W3C Design Token Community Group) | [tokens.md](references/principles/tokens.md) |
 | Props API | Component API patterns | [props-api.md](references/principles/props-api.md) |
-| Accessibility | WCAG 2.1 AA | [accessibility.md](references/principles/accessibility.md) |
+| Accessibility | WCAG 2.2 AA | [accessibility.md](references/principles/accessibility.md) |
 
 ## Configuration
 

@@ -1,17 +1,23 @@
 ---
 name: component
-description: |
-  Design system component workflow. Spec, document, implement, review, spec-review, and audit
-  DS components with Figma as primary input.
-  6 actions: spec, doc, dev, review, spec-review, audit.
-  Auto-activates on: "component", "spec component", "doc component",
-  "dev component", "review component", "spec-review component", "audit component",
-  "design system", "ds component", "component spec", "component doc", "component dev",
-  "component review", "component spec-review", "component audit".
+description: >-
+  Design system component workflow with six actions (spec, spec-review, doc, dev, review, audit)
+  that take a DS component from Figma or a written brief to a reviewed, documented, token-compliant
+  implementation. Use when the user asks to spec, document, implement, review or audit a design
+  system component ("spec component Button", "review src/components/Input", "audit the DS").
+  Do not use for full screens or product flows (use figma-implementation-spec or
+  react-component-engineering) or for token architecture alone (use design-token-architecture).
 license: MIT
-compatibility: "Agent-agnostic. Works with Claude Code, OpenCode, Windsurf, Cursor, Codex, Aider, or any agent supporting SKILL.md."
+compatibility: "Agent-agnostic. Figma MCP optional (falls back to text input and codebase analysis)."
 metadata:
-  version: "1.1"
+  version: "1.2.0"
+  domain: design-systems
+  status: stable
+  trust: community-derived
+  sources: "W3C-WCAG22,W3C-APG,DTCG-2025-10,DOC-FIGMA-MCP"
+  platforms: "any"
+  last-reviewed: "2026-11-17"
+  provenance: "Imported 2026-03-29 from a local ~/.agents/skills install; original author not recorded"
 ---
 
 # Component
@@ -196,7 +202,7 @@ Standards that inform every action. Loaded by `review` and `audit` for complianc
 | Naming | BEM (Block Element Modifier) | [naming.md](references/principles/naming.md) |
 | Tokens | DTCG (W3C Design Token Community Group) | [tokens.md](references/principles/tokens.md) |
 | Props API | Component API patterns | [props-api.md](references/principles/props-api.md) |
-| Accessibility | WCAG 2.1 AA | [accessibility.md](references/principles/accessibility.md) |
+| Accessibility | WCAG 2.2 AA | [accessibility.md](references/principles/accessibility.md) |
 
 ## Templates
 

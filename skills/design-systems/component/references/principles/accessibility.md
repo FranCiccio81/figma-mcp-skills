@@ -1,6 +1,6 @@
-# Accessibility — WCAG 2.1 Component Patterns
+# Accessibility — WCAG 2.2 Component Patterns
 
-> Based on **WCAG 2.1 AA** and **WAI-ARIA Authoring Practices**.
+> Based on **WCAG 2.2 AA** and **WAI-ARIA Authoring Practices**.
 
 ## Core Principle
 

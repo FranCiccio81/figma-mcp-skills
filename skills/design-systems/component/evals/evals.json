@@ -1,0 +1,28 @@
+{
+  "skill_name": "component",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "component spec Button https://www.figma.com/design/<fileKey>/Foundations?node-id=729-17557 . The project uses React + TypeScript, CSS custom properties for tokens and BEM class names.",
+      "expected_output": "A spec saved under ds/specs/active/ that lists the Figma variant matrix, the props API, the token mapping split between tokens confirmed from Figma variables and missing component-tier tokens that need DS approval, acceptance criteria, edge cases, accessibility requirements and open blockers. No token is invented.",
+      "files": ["ds/specs/active/button-spec.md"],
+      "assertions": [
+        "The spec separates tokens confirmed from Figma variables from tokens that do not exist yet",
+        "Every missing token is flagged for approval instead of being created",
+        "The accessibility section cites WCAG 2.2 AA and the target size rule that applies",
+        "No hex value or pixel value is proposed as a final implementation value without a token"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "component review src/components/atoms/Input/Input.tsx (the Figma MCP server is not connected in this session).",
+      "expected_output": "A DS compliance report produced from the codebase alone, which states up front that Figma could not be consulted, lists hardcoded values as critical violations and gives a verdict.",
+      "files": [],
+      "assertions": [
+        "The report states that Figma MCP was unavailable and what could not be verified",
+        "Hardcoded colors, spacing or radii are reported as critical",
+        "The report ends with an explicit verdict"
+      ]
+    }
+  ]
+}

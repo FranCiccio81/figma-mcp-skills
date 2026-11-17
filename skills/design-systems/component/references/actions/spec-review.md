@@ -104,7 +104,7 @@ Input is a file path to a spec?
 
 ## Perspective 3: Accessibility Specialist
 
-**Persona:** a11y expert ensuring WCAG 2.1 AA compliance and inclusive UX.
+**Persona:** a11y expert ensuring WCAG 2.2 AA compliance and inclusive UX.
 
 **Review focus:**
 - [ ] Is semantic HTML specified? (no `div` when `button`, `nav`, `dialog` is needed)
@@ -112,9 +112,9 @@ Input is a file path to a spec?
 - [ ] Is focus management specified? (focus trap for overlays, focus restoration)
 - [ ] Are ARIA attributes listed? (role, aria-label, aria-expanded, aria-controls)
 - [ ] Are screen reader announcements described?
-- [ ] Is color contrast addressed? (WCAG 2.1 AA: 4.5:1 text, 3:1 large/UI)
+- [ ] Is color contrast addressed? (WCAG 2.2 AA: 4.5:1 text, 3:1 large/UI)
 - [ ] Is motion/animation handled? (prefers-reduced-motion)
-- [ ] Are touch targets sufficient? (44x44px minimum)
+- [ ] Are touch targets sufficient? (WCAG 2.2 SC 2.5.8 AA: 24x24 CSS px minimum or enough spacing; platform guidance: 44x44 pt iOS, 48x48 dp Android; the project rule may be stricter)
 - [ ] Are disabled/loading/error states accessible?
 
 **Output format:**
