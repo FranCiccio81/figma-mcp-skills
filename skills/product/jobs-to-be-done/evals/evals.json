@@ -1,0 +1,17 @@
+{
+  "skill_name": "jobs-to-be-done",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here are notes from 6 interviews with people who moved their 3a pension to our app in the last 2 months: [notes]. Extract the jobs and forces.",
+      "expected_output": "A jobs report with forces of progress, solution-free job statements with circumstances and interview counts, and job stories.",
+      "files": [],
+      "expectations": [
+        "Job statements contain no product or UI words",
+        "Each job shows how many of the 6 interviews support it",
+        "Forces are grouped into push, pull, anxiety and habit",
+        "No invented quotes; evidence is paraphrased from the notes"
+      ]
+    }
+  ]
+}

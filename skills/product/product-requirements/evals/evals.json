@@ -1,0 +1,18 @@
+{
+  "skill_name": "product-requirements",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a feature spec for letting users schedule recurring transfers between their own accounts in our banking app.",
+      "expected_output": "A feature spec with problem and evidence, goals and non-goals, scenarios, numbered testable requirements with Given/When/Then acceptance criteria, states table, non-functional requirements including WCAG 2.2 AA, metrics and open questions.",
+      "files": [],
+      "expectations": [
+        "Requirements are numbered and prioritized",
+        "Acceptance criteria cover failure cases such as insufficient funds and holidays",
+        "Accessibility and security appear as non-functional requirements",
+        "Evidence is labeled; no invented user quotes or numbers",
+        "Open questions have owners"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "product-strategy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this one-page strategy: 'Grow revenue 20%, launch crypto, redesign the app, improve NPS.' Is it a strategy?",
+      "expected_output": "A review explaining that the document lists goals, not a strategy, then a draft structure with diagnosis, guiding policy, bets with assumptions and stop criteria.",
+      "files": [],
+      "expectations": [
+        "Identifies the missing diagnosis and guiding policy",
+        "Asks for or proposes what the product will not do",
+        "Each proposed bet has an assumption, leading indicator and stop criterion",
+        "Does not invent market data"
+      ]
+    }
+  ]
+}
