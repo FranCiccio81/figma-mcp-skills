@@ -50,7 +50,9 @@ cp .claude/CLAUDE.md /chemin/vers/ton-projet/.claude/CLAUDE.md
 figma-mcp-skills/
 ├── .mcp.json                           # Config MCP prête à l'emploi
 ├── .claude/
-│   └── CLAUDE.md                       # Rules globales pour Claude Code
+│   ├── CLAUDE.md                       # Rules globales pour Claude Code
+│   └── agents/
+│       └── design-critic.md            # Agent de revue design (lecture seule)
 ├── skills/
 │   ├── 01-design-system/
 │   │   └── SKILL.md                    # Bridge tokens, composants, tier hierarchy
@@ -81,6 +83,18 @@ claude
 "Génère le code Jetpack Compose pour ma sélection Figma en suivant MD3"
 "Audite cette frame pour la conformité WCAG 2.1 AA"
 ```
+
+## Agent design-critic
+
+Sous-agent Claude Code en lecture seule pour critiquer des frames Figma, captures, flows ou écrans implémentés. Il s'appuie sur les skills, les rules Bridge et les specs de ce repo, et rend un rapport en français.
+
+```bash
+# Dans Claude Code, depuis ce repo ou un projet où .claude/agents/ est copié
+"Utilise design-critic en QUICK REVIEW sur ma sélection Figma"
+"design-critic, DEEP AUDIT de ce flow d'ordre de bourse"
+```
+
+Modes : QUICK REVIEW, DEEP AUDIT, DESIGN SYSTEM REVIEW, NATIVE REVIEW, ACCESSIBILITY REVIEW, COMPARATIVE REVIEW, DESIGN-TO-CODE REVIEW, PRE-HANDOFF REVIEW.
 
 ## Outils MCP disponibles
 
