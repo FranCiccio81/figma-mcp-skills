@@ -1,0 +1,860 @@
+{
+  "generated_by": "scripts/build_registry.py",
+  "skill_count": 36,
+  "skills": [
+    {
+      "name": "experiment-design",
+      "domain": "product",
+      "purpose": "Designs product experiments before they run: hypothesis, primary and guardrail metrics, minimum detectable effect, sample size and duration estimate, randomisation unit, risks and a decision rule fixed in advance; also chooses a non-A/B method when traffic is too low.",
+      "description": "Designs product experiments before they run: hypothesis, primary and guardrail metrics, minimum detectable effect, sample size and duration estimate, randomisation unit, risks and a decision rule fixed in advance; also chooses a non-A/B method when traffic is too low. Use when asked to plan an A/B test, fake door, pilot or any experiment, to size a test, or to review an experiment plan or read-out. Do not use to analyse qualitative research (use usability-testing or research-planning).",
+      "sources": [
+        "STRATEGYZER",
+        "NNG"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/experiment-design",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "jobs-to-be-done",
+      "domain": "product",
+      "purpose": "Applies Jobs-to-be-Done to real evidence: writes job statements and job stories, builds a job map, analyses the forces of progress (push, pull, anxiety, habit) and derives desired-outcome statements and value proposition fit.",
+      "description": "Applies Jobs-to-be-Done to real evidence: writes job statements and job stories, builds a job map, analyses the forces of progress (push, pull, anxiety, habit) and derives desired-outcome statements and value proposition fit. Use when the user asks for JTBD, job stories, switch interviews, a value proposition canvas, or wants to understand why customers hire or fire a product. Do not use as a substitute for research: without evidence it produces an interview guide, not jobs.",
+      "sources": [
+        "NNG",
+        "STRATEGYZER"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/jobs-to-be-done",
+      "eval_cases": 2,
+      "evaluation": "defined"
+    },
+    {
+      "name": "prioritization",
+      "domain": "product",
+      "purpose": "Ranks initiatives, features or opportunities with a method chosen for the context (RICE, cost of delay or WSJF, Kano, opportunity scoring, MoSCoW for scope), makes every score's assumptions visible, runs a sensitivity check and explains the trade-offs.",
+      "description": "Ranks initiatives, features or opportunities with a method chosen for the context (RICE, cost of delay or WSJF, Kano, opportunity scoring, MoSCoW for scope), makes every score's assumptions visible, runs a sensitivity check and explains the trade-offs. Use when asked to prioritise a backlog or roadmap, compare initiatives, score features or decide what to cut. Do not use to set strategy (use product-strategy) or to define metrics (use product-metrics).",
+      "sources": [
+        "NNG",
+        "STRATEGYZER"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/prioritization",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "product-discovery",
+      "domain": "product",
+      "purpose": "Runs a structured product discovery cycle: frames a desired outcome, maps user opportunities in an opportunity solution tree, surfaces the riskiest assumptions and plans the smallest tests that would reduce them.",
+      "description": "Runs a structured product discovery cycle: frames a desired outcome, maps user opportunities in an opportunity solution tree, surfaces the riskiest assumptions and plans the smallest tests that would reduce them. Use when a team must decide what to build next, when a feature request arrives without a validated problem, or when someone asks for an opportunity solution tree, assumption map or discovery plan. Do not use to write a delivery-ready spec (use product-requirements) or to size an A/B test (use experiment-design).",
+      "sources": [
+        "NNG",
+        "DESIGN-COUNCIL",
+        "STRATEGYZER"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/product-discovery",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "product-metrics",
+      "domain": "product",
+      "purpose": "Defines how a product or feature is measured: outcome and North Star metric, input metrics, HEART goals-signals-metrics, precise metric definitions, guardrails, instrumentation plan with event names and properties, and privacy constraints.",
+      "description": "Defines how a product or feature is measured: outcome and North Star metric, input metrics, HEART goals-signals-metrics, precise metric definitions, guardrails, instrumentation plan with event names and properties, and privacy constraints. Use when asked to choose KPIs, define success metrics, build a measurement or tracking plan, review a dashboard's metrics or prepare analytics for a launch. Do not use to size an experiment (use experiment-design).",
+      "sources": [
+        "NNG",
+        "STRATEGYZER"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/product-metrics",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "product-requirements",
+      "domain": "product",
+      "purpose": "Writes or reviews a product requirements document (PRD) or feature specification that makes the user problem, its importance, business impact, evidence, uncertainties, proposed solution, scope, requirements and success indicators explicit.",
+      "description": "Writes or reviews a product requirements document (PRD) or feature specification that makes the user problem, its importance, business impact, evidence, uncertainties, proposed solution, scope, requirements and success indicators explicit. Use when asked for a PRD, feature spec, one-pager, epic description or when a spec must be checked before delivery. Do not use for component-level design system specs (use component) or for engineering design docs (use technical-specification).",
+      "sources": [
+        "NNG",
+        "W3C-WCAG22",
+        "STRATEGYZER"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/product-requirements",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "product-strategy",
+      "domain": "product",
+      "purpose": "Builds or critiques a product strategy: diagnosis of the situation, guiding policy, coherent actions, target segment, value proposition and positioning, strategic bets with explicit assumptions and the metrics that tell if the strategy works.",
+      "description": "Builds or critiques a product strategy: diagnosis of the situation, guiding policy, coherent actions, target segment, value proposition and positioning, strategic bets with explicit assumptions and the metrics that tell if the strategy works. Use when asked to write, review or stress-test a product strategy, vision-to-roadmap link, positioning or value proposition. Do not use for ranking a backlog (use prioritization) or writing a feature PRD (use product-requirements).",
+      "sources": [
+        "STRATEGYZER",
+        "NNG",
+        "DESIGN-COUNCIL"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/product/product-strategy",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "information-architecture",
+      "domain": "ux",
+      "purpose": "Designs or audits information architecture: content inventory, organisation schemes, labelling, navigation model per platform, sitemap or app map, and validation with card sorting and tree testing.",
+      "description": "Designs or audits information architecture: content inventory, organisation schemes, labelling, navigation model per platform, sitemap or app map, and validation with card sorting and tree testing. Use when asked to structure navigation, a menu, a sitemap or app map, rename sections, plan a card sort or tree test, or fix \"users cannot find X\". Do not use for visual layout or component design.",
+      "sources": [
+        "NNG",
+        "APPLE-HIG",
+        "M3"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/information-architecture",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "interaction-design-spec",
+      "domain": "ux",
+      "purpose": "Specifies interaction behaviour for a flow or component: state inventory, transitions and triggers, feedback and response times, motion with reduced-motion alternatives, gestures with single-pointer alternatives, focus and keyboard behaviour, and the right prototype fidelity to validate it.",
+      "description": "Specifies interaction behaviour for a flow or component: state inventory, transitions and triggers, feedback and response times, motion with reduced-motion alternatives, gestures with single-pointer alternatives, focus and keyboard behaviour, and the right prototype fidelity to validate it. Use when asked to define interactions, states, transitions, micro-interactions, animation specs or a prototype plan. Do not use for visual token mapping (use figma-token-mapping) or for a full handoff document (use figma-implementation-spec, which can include this output).",
+      "sources": [
+        "NNG",
+        "W3C-WCAG22",
+        "W3C-APG",
+        "APPLE-HIG",
+        "M3"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/interaction-design-spec",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "journey-mapping",
+      "domain": "ux",
+      "purpose": "Builds evidence-based customer journey maps and service blueprints: stages, user actions, goals, touchpoints, emotions only when observed, pain points, frontstage and backstage actions, support processes and the lines of interaction, visibility and internal interaction, then derives opportunities.",
+      "description": "Builds evidence-based customer journey maps and service blueprints: stages, user actions, goals, touchpoints, emotions only when observed, pain points, frontstage and backstage actions, support processes and the lines of interaction, visibility and internal interaction, then derives opportunities. Use when asked for a journey map, experience map, service blueprint, current-state or future-state map, or to find where a cross-channel service breaks. Do not use for screen-level flows of a single feature (use interaction-design-spec).",
+      "sources": [
+        "TISDD",
+        "NNG",
+        "DESIGN-COUNCIL"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/journey-mapping",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "research-planning",
+      "domain": "ux",
+      "purpose": "Plans user research end to end: research questions tied to decisions, method selection (behavioural or attitudinal, qualitative or quantitative), interview guide design with non-leading questions on past behaviour, recruiting screener, consent and data protection, synthesis plan and deliverables.",
+      "description": "Plans user research end to end: research questions tied to decisions, method selection (behavioural or attitudinal, qualitative or quantitative), interview guide design with non-leading questions on past behaviour, recruiting screener, consent and data protection, synthesis plan and deliverables. Use when asked for a research plan, interview guide, discussion guide, screener or survey draft, or to choose a research method. Do not use to analyse usability sessions (use usability-testing).",
+      "sources": [
+        "NNG",
+        "DESIGN-COUNCIL",
+        "TISDD"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/research-planning",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "usability-testing",
+      "domain": "ux",
+      "purpose": "Plans, runs and analyses usability tests (moderated or unmoderated, remote or in person): objectives, participant criteria, realistic task scenarios, script, consent, metrics (task success, time, errors, SEQ, SUS), observation grid, synthesis and a findings report with severity.",
+      "description": "Plans, runs and analyses usability tests (moderated or unmoderated, remote or in person): objectives, participant criteria, realistic task scenarios, script, consent, metrics (task success, time, errors, SEQ, SUS), observation grid, synthesis and a findings report with severity. Use when asked to prepare a usability test, write test tasks or a script, or analyse session notes and recordings. Do not use for broad generative research (use research-planning) or for expert-only review (use ux-heuristic-evaluation).",
+      "sources": [
+        "NNG",
+        "W3C-WAI"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/usability-testing",
+      "eval_cases": 2,
+      "evaluation": "defined"
+    },
+    {
+      "name": "ux-heuristic-evaluation",
+      "domain": "ux",
+      "purpose": "Evaluates an interface (screens, prototype, Figma frame, live product) against usability heuristics and produces a design critique where every finding carries severity, confidence, evidence, effort and impact.",
+      "description": "Evaluates an interface (screens, prototype, Figma frame, live product) against usability heuristics and produces a design critique where every finding carries severity, confidence, evidence, effort and impact. Use when asked for a UX audit, heuristic evaluation, expert review, design critique or \"what is wrong with this screen\". Do not use for WCAG conformance (use accessibility-audit) or for platform convention checks (use apple-hig-review or material3-design-review), although findings can reference them.",
+      "sources": [
+        "NNG",
+        "W3C-WCAG22"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/ux-heuristic-evaluation",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "ux-writing",
+      "domain": "ux",
+      "purpose": "Writes and reviews interface copy: buttons, labels, errors, empty states, confirmations, notifications, onboarding and legal-adjacent microcopy, with plain language, cognitive accessibility, voice and tone, inclusive wording and localization constraints.",
+      "description": "Writes and reviews interface copy: buttons, labels, errors, empty states, confirmations, notifications, onboarding and legal-adjacent microcopy, with plain language, cognitive accessibility, voice and tone, inclusive wording and localization constraints. Use when asked to write or improve UI text, error messages, microcopy, a content style guide, or to check copy for clarity and accessibility. Do not use for marketing campaigns or long-form content.",
+      "sources": [
+        "NNG",
+        "W3C-WAI",
+        "W3C-WCAG22"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ux/ux-writing",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "component",
+      "domain": "design-systems",
+      "purpose": "Design system component workflow with six actions (spec, spec-review, doc, dev, review, audit) that take a DS component from Figma or a written brief to a reviewed, documented, token-compliant implementation.",
+      "description": "Design system component workflow with six actions (spec, spec-review, doc, dev, review, audit) that take a DS component from Figma or a written brief to a reviewed, documented, token-compliant implementation. Use when the user asks to spec, document, implement, review or audit a design system component (\"spec component Button\", \"review src/components/Input\", \"audit the DS\"). Do not use for full screens or product flows (use figma-implementation-spec or react-component-engineering) or for token architecture alone (use design-token-architecture).",
+      "sources": [
+        "W3C-WCAG22",
+        "W3C-APG",
+        "DTCG-2025-10",
+        "DOC-FIGMA-MCP"
+      ],
+      "trust": "community-derived",
+      "version": "1.2.0",
+      "status": "stable",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "Agent-agnostic. Figma MCP optional (falls back to text input and codebase analysis).",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/design-systems/component",
+      "eval_cases": 2,
+      "evaluation": "historical"
+    },
+    {
+      "name": "design-system-governance",
+      "domain": "design-systems",
+      "purpose": "Sets up or audits how a design system is run: team model, contribution workflow (proposal, review, acceptance criteria), versioning and release policy, deprecation, documentation standards, quality gates (accessibility, visual regression, token compliance), adoption measurement and communication.",
+      "description": "Sets up or audits how a design system is run: team model, contribution workflow (proposal, review, acceptance criteria), versioning and release policy, deprecation, documentation standards, quality gates (accessibility, visual regression, token compliance), adoption measurement and communication. Use when asked about DS governance, contribution guidelines, RFC process, versioning, breaking changes, deprecation policy, DS health or adoption metrics. Do not use to build a single component (use component).",
+      "sources": [
+        "DS-CARBON",
+        "DS-USWDS",
+        "DS-ATLASSIAN",
+        "DS-SPECTRUM",
+        "DS-FLUENT2",
+        "W3C-WCAG22"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/design-systems/design-system-governance",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "design-token-architecture",
+      "domain": "design-systems",
+      "purpose": "Designs, audits and migrates design token systems: tiers (primitive, semantic, component), naming, theming and modes, DTCG 2025.10 file format, aliasing rules, platform outputs (CSS, Compose, SwiftUI) and a safe migration plan for existing product tokens.",
+      "description": "Designs, audits and migrates design token systems: tiers (primitive, semantic, component), naming, theming and modes, DTCG 2025.10 file format, aliasing rules, platform outputs (CSS, Compose, SwiftUI) and a safe migration plan for existing product tokens. Use when asked to create or restructure tokens, define semantic tokens, convert tokens to the DTCG format, add dark mode or brand themes, audit hardcoded values or plan a token migration. Do not use to map a single Figma frame to existing tokens (use figma-token-mapping).",
+      "sources": [
+        "DTCG-2025-10",
+        "W3C-WCAG22",
+        "M3",
+        "APPLE-HIG",
+        "DS-CARBON",
+        "DS-ATLASSIAN",
+        "FIGMA-HELP"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/design-systems/design-token-architecture",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "apple-accessibility",
+      "domain": "apple",
+      "purpose": "Audits and implements accessibility on Apple platforms: VoiceOver labels, traits, grouping, rotor and custom actions; Dynamic Type including accessibility sizes; Reduce Motion, Reduce Transparency, Increase Contrast, Bold Text, Smart Invert; Voice Control and Switch Control; hit targets; color contrast; testing with Accessibility Inspector and real assistive technology.",
+      "description": "Audits and implements accessibility on Apple platforms: VoiceOver labels, traits, grouping, rotor and custom actions; Dynamic Type including accessibility sizes; Reduce Motion, Reduce Transparency, Increase Contrast, Bold Text, Smart Invert; Voice Control and Switch Control; hit targets; color contrast; testing with Accessibility Inspector and real assistive technology. Use when asked to make an iOS, iPadOS, macOS, watchOS or visionOS app accessible, review VoiceOver behaviour, support Dynamic Type or prepare Accessibility Nutrition Labels. Do not use for web WCAG audits (use accessibility-audit).",
+      "sources": [
+        "APPLE-ACCESSIBILITY",
+        "APPLE-HIG",
+        "APPLE-SWIFTUI",
+        "W3C-WCAG22"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "ios",
+        "ipados",
+        "macos",
+        "watchos",
+        "visionos"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/apple/apple-accessibility",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "apple-hig-review",
+      "domain": "apple",
+      "purpose": "Reviews or designs interfaces for Apple platforms against the Human Interface Guidelines: iOS navigation, iPadOS adaptivity and pointer, macOS windows, menus and toolbars, watchOS glanceable interaction, visionOS spatial input, Liquid Glass and materials, SF Symbols, system colors, Dynamic Type, dark mode and haptics.",
+      "description": "Reviews or designs interfaces for Apple platforms against the Human Interface Guidelines: iOS navigation, iPadOS adaptivity and pointer, macOS windows, menus and toolbars, watchOS glanceable interaction, visionOS spatial input, Liquid Glass and materials, SF Symbols, system colors, Dynamic Type, dark mode and haptics. Use when asked whether a design \"feels native\" on iPhone, iPad, Mac, Apple Watch or Vision Pro, to adapt a design to an Apple platform, or to check HIG compliance. Do not use for Android or web conventions, or for SwiftUI code (use swiftui-implementation).",
+      "sources": [
+        "APPLE-HIG",
+        "APPLE-LIQUID-GLASS",
+        "APPLE-ACCESSIBILITY",
+        "APPLE-DESIGN"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "ios",
+        "ipados",
+        "macos",
+        "watchos",
+        "visionos"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/apple/apple-hig-review",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "swiftui-implementation",
+      "domain": "apple",
+      "purpose": "Implements or reviews SwiftUI interfaces the native way: app and view architecture with Observation, navigation with NavigationStack and NavigationSplitView, system components first, design tokens mapped to SwiftUI, Liquid Glass adoption gated by availability, Dynamic Type, VoiceOver, localization and right-to-left layout, previews and tests.",
+      "description": "Implements or reviews SwiftUI interfaces the native way: app and view architecture with Observation, navigation with NavigationStack and NavigationSplitView, system components first, design tokens mapped to SwiftUI, Liquid Glass adoption gated by availability, Dynamic Type, VoiceOver, localization and right-to-left layout, previews and tests. Use when writing, porting or reviewing SwiftUI code, translating a Figma design into SwiftUI, or checking API availability against deployment targets. Do not use for UIKit-only codebases without SwiftUI or for design review without code (use apple-hig-review).",
+      "sources": [
+        "APPLE-SWIFTUI",
+        "APPLE-HIG",
+        "APPLE-LIQUID-GLASS",
+        "APPLE-ACCESSIBILITY"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "ios",
+        "ipados",
+        "macos",
+        "watchos",
+        "visionos"
+      ],
+      "compatibility": "Requires Xcode and Apple SDKs to build and run; API availability must be checked against the project's deployment targets.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/apple/swiftui-implementation",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "android-accessibility",
+      "domain": "android",
+      "purpose": "Audits and implements accessibility on Android: TalkBack labels, roles, states, headings, traversal order and custom actions in Compose and Views; font scaling up to 200 %; 48 dp touch targets; color contrast and non-color cues; Switch Access and keyboard; testing with Accessibility Scanner, TalkBack and automated checks.",
+      "description": "Audits and implements accessibility on Android: TalkBack labels, roles, states, headings, traversal order and custom actions in Compose and Views; font scaling up to 200 %; 48 dp touch targets; color contrast and non-color cues; Switch Access and keyboard; testing with Accessibility Scanner, TalkBack and automated checks. Use when asked to make an Android app accessible, review TalkBack behaviour, fix font scaling or prepare an Android accessibility test plan. Do not use for web WCAG audits (use accessibility-audit) or Apple platforms (use apple-accessibility).",
+      "sources": [
+        "ANDROID-DESIGN",
+        "ANDROID-COMPOSE",
+        "M3",
+        "W3C-WCAG22"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "android"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/android/android-accessibility",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "compose-implementation",
+      "domain": "android",
+      "purpose": "Implements or reviews Jetpack Compose UI with Material 3: theme mapping from design tokens, state hoisting and unidirectional data flow, Material components, adaptive layouts with window size classes, edge-to-edge insets, navigation, semantics for TalkBack, previews and Compose UI tests, delegating deep topics to the official Android skills.",
+      "description": "Implements or reviews Jetpack Compose UI with Material 3: theme mapping from design tokens, state hoisting and unidirectional data flow, Material components, adaptive layouts with window size classes, edge-to-edge insets, navigation, semantics for TalkBack, previews and Compose UI tests, delegating deep topics to the official Android skills. Use when writing, porting or reviewing Compose code, translating a Figma design to Compose, or checking Compose UI quality. Do not use for XML Views without Compose or for design-only review (use material3-design-review).",
+      "sources": [
+        "ANDROID-COMPOSE",
+        "ANDROID-ADAPTIVE",
+        "M3",
+        "REPO-ANDROID-SKILLS"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "android"
+      ],
+      "compatibility": "Requires the Android SDK and Gradle to build; check Compose BOM and Material 3 versions in the project.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/android/compose-implementation",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "material3-design-review",
+      "domain": "android",
+      "purpose": "Reviews or adapts designs for Android with Material Design 3: color roles and dynamic color, type scale, shape, components, navigation by window size class (navigation bar, rail, drawer), canonical adaptive layouts for tablets and foldables, edge-to-edge and system bars, predictive back, 48 dp touch targets and Android-specific patterns.",
+      "description": "Reviews or adapts designs for Android with Material Design 3: color roles and dynamic color, type scale, shape, components, navigation by window size class (navigation bar, rail, drawer), canonical adaptive layouts for tablets and foldables, edge-to-edge and system bars, predictive back, 48 dp touch targets and Android-specific patterns. Use when asked whether a design fits Android, to adapt an iOS or web design to Android, or to check Material 3 compliance. Do not use for Compose code (use compose-implementation) or for Apple platforms.",
+      "sources": [
+        "M3",
+        "ANDROID-DESIGN",
+        "ANDROID-ADAPTIVE",
+        "REPO-ANDROID-SKILLS"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "android"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/android/material3-design-review",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "frontend-code-review",
+      "domain": "engineering",
+      "purpose": "Reviews frontend pull requests with a consistent checklist and severity: correctness, design system and token compliance, accessibility, performance, security, tests, readability and maintainability, with actionable comments and a merge verdict.",
+      "description": "Reviews frontend pull requests with a consistent checklist and severity: correctness, design system and token compliance, accessibility, performance, security, tests, readability and maintainability, with actionable comments and a merge verdict. Use when asked to review a PR, diff or component code for a web or native UI, or to define a frontend review checklist. Do not use for writing new features from scratch.",
+      "sources": [
+        "W3C-WCAG22",
+        "OWASP",
+        "WEB-DEV",
+        "REACT-DOCS"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/frontend-code-review",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "frontend-performance",
+      "domain": "engineering",
+      "purpose": "Diagnoses and improves web performance from measurements: Core Web Vitals (LCP, INP, CLS) from field and lab data, critical rendering path, images and fonts, JavaScript cost and code splitting, React rendering, caching, and performance budgets in CI.",
+      "description": "Diagnoses and improves web performance from measurements: Core Web Vitals (LCP, INP, CLS) from field and lab data, critical rendering path, images and fonts, JavaScript cost and code splitting, React rendering, caching, and performance budgets in CI. Use when a page is slow, Core Web Vitals fail, a bundle is too large, or when asked for a performance audit or budget. Do not use for backend latency tuning.",
+      "sources": [
+        "WEB-DEV",
+        "WEB-MDN",
+        "REACT-DOCS"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/frontend-performance",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "frontend-security",
+      "domain": "engineering",
+      "purpose": "Reviews and hardens frontend code against common web risks: XSS and unsafe HTML rendering, Content Security Policy, token and session storage, CSRF, clickjacking, open redirects, third-party scripts and dependencies, secrets in bundles, and personal data in logs and analytics, with OWASP guidance.",
+      "description": "Reviews and hardens frontend code against common web risks: XSS and unsafe HTML rendering, Content Security Policy, token and session storage, CSRF, clickjacking, open redirects, third-party scripts and dependencies, secrets in bundles, and personal data in logs and analytics, with OWASP guidance. Use when building or reviewing auth flows, forms, rich text rendering, payment or account screens, third-party integrations, or when asked for a frontend security review. Do not use as a substitute for a professional penetration test or backend security review.",
+      "sources": [
+        "OWASP",
+        "WEB-MDN",
+        "REACT-DOCS"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/frontend-security",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "frontend-testing",
+      "domain": "engineering",
+      "purpose": "Plans and writes frontend tests that catch real regressions: unit and component tests with Testing Library queries by role, accessibility checks with axe, visual regression on component states, end-to-end tests with Playwright using resilient locators and web-first assertions, API mocking, and a policy for flaky tests.",
+      "description": "Plans and writes frontend tests that catch real regressions: unit and component tests with Testing Library queries by role, accessibility checks with axe, visual regression on component states, end-to-end tests with Playwright using resilient locators and web-first assertions, API mocking, and a policy for flaky tests. Use when asked to add or review tests for a web UI, set up component, visual or end-to-end testing, or choose what to test. Do not use for native mobile test setup (see compose-implementation and swiftui-implementation).",
+      "sources": [
+        "TESTING-LIBRARY",
+        "PLAYWRIGHT",
+        "STORYBOOK",
+        "W3C-WCAG22"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/frontend-testing",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "react-component-engineering",
+      "domain": "engineering",
+      "purpose": "Builds and refactors React and TypeScript UI the maintainable way: typed props APIs, composition over configuration, native elements for accessibility, controlled and uncontrolled patterns, state colocation, effects only for external synchronisation, typed API integration with loading, empty, error and retry states, and design tokens instead of hardcoded styles.",
+      "description": "Builds and refactors React and TypeScript UI the maintainable way: typed props APIs, composition over configuration, native elements for accessibility, controlled and uncontrolled patterns, state colocation, effects only for external synchronisation, typed API integration with loading, empty, error and retry states, and design tokens instead of hardcoded styles. Use when implementing React components or screens, integrating an API in a React UI, translating Figma output into project React code, or refactoring React code. Do not use for design-system component governance (use component) or for test strategy alone (use frontend-testing).",
+      "sources": [
+        "REACT-DOCS",
+        "TS-DOCS",
+        "WEB-MDN",
+        "W3C-APG"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/react-component-engineering",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "semantic-html-and-css",
+      "domain": "engineering",
+      "purpose": "Writes and reviews semantic HTML and maintainable CSS: landmarks, headings, forms and native controls, CSS architecture with tokens as custom properties, cascade layers, naming conventions (BEM or modules per project), responsive and fluid layouts with grid, flex, container queries and logical properties for right-to-left languages, and user preference media queries.",
+      "description": "Writes and reviews semantic HTML and maintainable CSS: landmarks, headings, forms and native controls, CSS architecture with tokens as custom properties, cascade layers, naming conventions (BEM or modules per project), responsive and fluid layouts with grid, flex, container queries and logical properties for right-to-left languages, and user preference media queries. Use when building or reviewing markup and styles, fixing layout or responsive issues, or setting a CSS architecture. Do not use for React state or data logic (use react-component-engineering).",
+      "sources": [
+        "WEB-MDN",
+        "W3C-WCAG22",
+        "W3C-APG",
+        "WEB-DEV"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/semantic-html-and-css",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "technical-specification",
+      "domain": "engineering",
+      "purpose": "Writes or reviews a technical specification (design doc or RFC) for a frontend or full-stack feature: context and goals, non-goals, proposed design, alternatives considered, API and data contracts, state and error handling, accessibility, security and privacy, performance, testing, rollout, observability and risks.",
+      "description": "Writes or reviews a technical specification (design doc or RFC) for a frontend or full-stack feature: context and goals, non-goals, proposed design, alternatives considered, API and data contracts, state and error handling, accessibility, security and privacy, performance, testing, rollout, observability and risks. Use when asked for a tech spec, design doc, RFC or architecture proposal for a feature, or to review one before implementation. Do not use for product requirements (use product-requirements).",
+      "sources": [
+        "OWASP",
+        "W3C-WCAG22",
+        "WEB-DEV"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/engineering/technical-specification",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "accessibility-audit",
+      "domain": "quality",
+      "purpose": "Audits web interfaces and designs for accessibility against WCAG 2.2 (level AA by default) in five layers: automated scan, keyboard, screen reader, visual (contrast, zoom, reflow, text spacing, motion) and cognitive and flow review, then reports issues with success criterion, user impact, severity, evidence and fix.",
+      "description": "Audits web interfaces and designs for accessibility against WCAG 2.2 (level AA by default) in five layers: automated scan, keyboard, screen reader, visual (contrast, zoom, reflow, text spacing, motion) and cognitive and flow review, then reports issues with success criterion, user impact, severity, evidence and fix. Includes a contrast calculator. Use when asked for an accessibility or WCAG audit, a contrast check, a VPAT-style review or an accessibility release gate for web or Figma designs. For native apps, use apple-accessibility or android-accessibility, which this skill can coordinate.",
+      "sources": [
+        "W3C-WCAG22",
+        "W3C-WAI",
+        "W3C-APG"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "web"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/quality/accessibility-audit",
+      "eval_cases": 2,
+      "evaluation": "executed"
+    },
+    {
+      "name": "design-implementation-qa",
+      "domain": "quality",
+      "purpose": "Compares a design source (Figma frame, screenshot or spec) with its implementation (running UI, screenshots, code) and produces a visual QA report of deviations in layout, spacing, typography, color and tokens, states, responsive behaviour, content and accessibility, each with evidence, severity and fix.",
+      "description": "Compares a design source (Figma frame, screenshot or spec) with its implementation (running UI, screenshots, code) and produces a visual QA report of deviations in layout, spacing, typography, color and tokens, states, responsive behaviour, content and accessibility, each with evidence, severity and fix. Use when asked to check design fidelity, run visual QA, compare Figma with a build, detect design drift or prepare visual regression baselines. Do not use to review a design on its own merits (use ux-heuristic-evaluation).",
+      "sources": [
+        "DOC-FIGMA-MCP",
+        "W3C-WCAG22",
+        "STORYBOOK",
+        "PLAYWRIGHT"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "Figma MCP server optional; without it the skill needs exported screenshots or a written spec.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/quality/design-implementation-qa",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "figma-design-context",
+      "domain": "ai-workflows",
+      "purpose": "Extracts reliable design context from Figma through the Figma MCP server: verifies which server and tools are actually available, parses file and node IDs, chooses a size-aware call strategy (metadata, design context per section, screenshot, variables, Code Connect), handles assets and warnings, and falls back transparently when MCP is unavailable.",
+      "description": "Extracts reliable design context from Figma through the Figma MCP server: verifies which server and tools are actually available, parses file and node IDs, chooses a size-aware call strategy (metadata, design context per section, screenshot, variables, Code Connect), handles assets and warnings, and falls back transparently when MCP is unavailable. Use when any task needs to read a Figma design (implementation, specs, token mapping, QA), when given a figma.com link or a desktop selection, or when Figma MCP calls fail or return truncated output. Do not use for writing to the Figma canvas (use the official figma-use skill).",
+      "sources": [
+        "DOC-FIGMA-MCP",
+        "REPO-FIGMA-MCP-GUIDE"
+      ],
+      "trust": "official-derived",
+      "version": "1.1.0",
+      "status": "stable",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "Needs the Figma MCP server (remote https://mcp.figma.com/mcp or desktop http://127.0.0.1:3845/mcp) for live data; otherwise works from exports.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ai-workflows/figma-design-context",
+      "eval_cases": 2,
+      "evaluation": "executed"
+    },
+    {
+      "name": "figma-implementation-spec",
+      "domain": "ai-workflows",
+      "purpose": "Turns a Figma frame or component into a developer handoff specification: anatomy, variants and states, tokens per element, spacing and sizing, typography, behaviour and interactions, responsive rules, content constraints, accessibility annotations, assets, acceptance criteria and open questions, in Notion-ready Markdown.",
+      "description": "Turns a Figma frame or component into a developer handoff specification: anatomy, variants and states, tokens per element, spacing and sizing, typography, behaviour and interactions, responsive rules, content constraints, accessibility annotations, assets, acceptance criteria and open questions, in Notion-ready Markdown. Use when asked for a handoff, dev spec, redlines, specs from Figma, component documentation from a design, or annotations for developers. Do not use to write code (use react-component-engineering, swiftui-implementation or compose-implementation).",
+      "sources": [
+        "DOC-FIGMA-MCP",
+        "W3C-WCAG22",
+        "W3C-APG",
+        "DTCG-2025-10"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "stable",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "Figma MCP server recommended; falls back to screenshots and a written brief.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ai-workflows/figma-implementation-spec",
+      "eval_cases": 1,
+      "evaluation": "historical"
+    },
+    {
+      "name": "figma-token-mapping",
+      "domain": "ai-workflows",
+      "purpose": "Maps Figma variables and styles used in a frame to the project's design tokens: exact matches, alias matches, nearest candidates flagged for approval, hardcoded values, mode coverage, and a proposed DTCG or code patch that never creates tokens without approval.",
+      "description": "Maps Figma variables and styles used in a frame to the project's design tokens: exact matches, alias matches, nearest candidates flagged for approval, hardcoded values, mode coverage, and a proposed DTCG or code patch that never creates tokens without approval. Use when asked to map Figma variables to tokens, find which tokens a design uses, detect hardcoded values, sync Figma variables with code tokens or prepare Code Connect token usage. Do not use to design a new token architecture (use design-token-architecture).",
+      "sources": [
+        "DOC-FIGMA-MCP",
+        "DTCG-2025-10",
+        "FIGMA-HELP",
+        "W3C-WCAG22"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "Needs Figma MCP get_variable_defs for live data; otherwise works from an exported variables JSON.",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ai-workflows/figma-token-mapping",
+      "eval_cases": 1,
+      "evaluation": "defined"
+    },
+    {
+      "name": "skill-router",
+      "domain": "ai-workflows",
+      "purpose": "Selects the smallest set of skills for a request from its intent (product, UX, design system, implementation, quality) and its platform context (iOS, iPadOS, macOS, watchOS, visionOS, Android, web), orders them, excludes skills for platforms that are not targeted, and applies an explicit precedence order when guidance conflicts.",
+      "description": "Selects the smallest set of skills for a request from its intent (product, UX, design system, implementation, quality) and its platform context (iOS, iPadOS, macOS, watchOS, visionOS, Android, web), orders them, excludes skills for platforms that are not targeted, and applies an explicit precedence order when guidance conflicts. Use when starting a multi-step design or product engineering request, when several skills could apply, or when the user asks which skills or workflow to use. Do not use for single, obvious tasks where one skill clearly applies.",
+      "sources": [
+        "SPEC-AGENTSKILLS"
+      ],
+      "trust": "internal",
+      "version": "1.0.0",
+      "status": "beta",
+      "platforms": [
+        "any"
+      ],
+      "compatibility": "",
+      "license": "MIT",
+      "last_reviewed": "2026-11-17",
+      "path": "skills/ai-workflows/skill-router",
+      "eval_cases": 2,
+      "evaluation": "automated"
+    }
+  ]
+}
