@@ -20,6 +20,8 @@ skills/
   engineering/       React/TS, HTML/CSS, tests, performance, sécurité, revue, spec technique
   quality/           audit d'accessibilité, QA visuelle et régression
   ai-workflows/      Figma MCP (design-to-code, handoff, dérive design/code), routeur de skills
+  bridge/            Bridge 2.0 (projet) : entrée, plateformes, rôles, contenu, accessibilité, conformité
+    _shared/         source unique des foundations Bridge, copiée dans chaque skill Bridge
 .claude/skills/component/   skill historique conservé à son emplacement
 tools/               validateur, générateur de registre, installation, tests
 docs/                audit, registre des sources, architecture, registre des skills
@@ -79,6 +81,14 @@ Les skills qui produisent un jugement (audit, critique, recherche, produit) sép
 | 10 | Complétude documentaire : sections obligatoires, longueur ≤ 500 lignes | Oui |
 
 En complément, la CI exécute `skills-ref validate` (validateur de référence, épinglé sur un commit relu) sur chaque skill.
+
+### Référence partagée (Bridge)
+
+Un skill doit fonctionner installé seul : ses fichiers sont relatifs à son dossier. Les skills Bridge portent donc chacun une copie de `bridge-foundations.md`. La source unique est `skills/bridge/_shared/bridge-foundations.md` ; `tools/sync_bridge_foundations.py` recopie, la CI vérifie l'identité des copies. C'est la seule duplication autorisée.
+
+### Skills importés
+
+Un skill importé garde son corps d'origine. Le validateur accepte ses intitulés équivalents (`Step 1: …` pour la procédure, `Output format(s)`, `Final check`, `Sources, in order of authority`). Les ajouts sont additifs (métadonnées, sections manquantes, évaluations) et l'origine est notée dans `metadata.origin`.
 
 ## 5. Orchestration
 

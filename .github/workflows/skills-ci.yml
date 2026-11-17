@@ -37,6 +37,8 @@ jobs:
         run: python3 tools/validate_skills.py
       - name: Registry is up to date
         run: python3 tools/build_registry.py --check
+      - name: Bridge foundations copies in sync
+        run: python3 tools/sync_bridge_foundations.py --check
       - name: Unit tests (validator and router)
         run: python3 -m unittest discover -s tools/tests -t . -v
       - name: Reference validator (agentskills/skills-ref, pinned and reviewed)

@@ -33,14 +33,21 @@ SPEC_FIELDS = {"name", "description", "license", "compatibility", "metadata", "a
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-DOMAINS = {"product", "ux", "design-systems", "apple", "android", "engineering", "quality", "ai-workflows"}
+DOMAINS = {"product", "ux", "design-systems", "apple", "android", "engineering", "quality", "ai-workflows", "bridge"}
 STATUSES = {"stable", "beta", "deprecated"}
 SCOPES = {"universal", "project"}
 TRUST = {"authored", "official-derived", "project-specific"}
-REQUIRED_SECTIONS = [
-    "When to use", "Inputs", "Procedure", "Output",
-    "Edge cases", "Acceptance criteria", "Sources",
-]
+# Required sections and the heading patterns accepted for each (imported skills use
+# "Step N: ..." for the procedure, "Output format(s)" and "Final check").
+REQUIRED_SECTIONS = {
+    "When to use": r"When to use",
+    "Inputs": r"Inputs",
+    "Procedure": r"(Procedure|Step 1\b.*)",
+    "Output": r"(Output|Output formats?)",
+    "Edge cases": r"Edge cases",
+    "Acceptance criteria": r"(Acceptance criteria|Final check)",
+    "Sources": r"Sources(, in order of authority)?",
+}
 MAX_LINES = 500
 WARN_LINES = 300
 
@@ -108,8 +115,9 @@ def host_of(url: str) -> str:
 
 
 def section(body: str, title: str) -> str:
-    m = re.search(rf"^## {re.escape(title)}\s*$(.*?)(?=^## |\Z)", body, re.M | re.S)
-    return m.group(1) if m else ""
+    pattern = REQUIRED_SECTIONS.get(title, re.escape(title))
+    m = re.search(rf"^## (?:{pattern})\s*$(?P<body>.*?)(?=^## |\Z)", body, re.M | re.S)
+    return m.group("body") if m else ""
 
 
 def check_spec(where: str, skill: Path, meta: dict, rep: Report) -> None:
@@ -143,8 +151,8 @@ def check_spec(where: str, skill: Path, meta: dict, rep: Report) -> None:
 
 def check_repo_rules(where: str, skill: Path, meta: dict, body: str, rep: Report, legacy: bool) -> None:
     desc = meta.get("description") or ""
-    if "use when" not in desc.lower() and "use this skill when" not in desc.lower():
-        (rep.warn if legacy else rep.err)(where, "description must say WHEN to use the skill ('Use when ...')")
+    if not any(k in desc.lower() for k in ("use when", "use this skill when", "use this skill for", "use this skill whenever")):
+        (rep.warn if legacy else rep.err)(where, "description must say WHEN to use the skill ('Use when ...' or 'Use this skill for/when ...')")
     if not meta.get("license") and (ROOT / "LICENSE").exists():
         rep.warn(where, "no license declared in frontmatter")
     if legacy:
@@ -165,8 +173,8 @@ def check_repo_rules(where: str, skill: Path, meta: dict, body: str, rep: Report
         rep.err(where, f"metadata.trust must be one of {sorted(TRUST)}")
     if not DATE_RE.match(md.get("last-reviewed", "")):
         rep.err(where, "metadata.last-reviewed must be YYYY-MM-DD")
-    for title in REQUIRED_SECTIONS:
-        if not re.search(rf"^## {re.escape(title)}\s*$", body, re.M):
+    for title, pattern in REQUIRED_SECTIONS.items():
+        if not re.search(rf"^## (?:{pattern})\s*$", body, re.M):
             rep.err(where, f"missing section '## {title}'")
 
 
