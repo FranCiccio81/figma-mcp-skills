@@ -1,0 +1,17 @@
+{
+  "skill_name": "product-strategy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review our 2027 mobile app strategy: 'Grow active users by 20%. Launch crypto staking, a new dashboard, dark mode and a referral program.'",
+      "expected_output": "A review stating the text is a goal plus a feature list with no diagnosis, guiding policy or target segment; a findings table; and a rebuilt skeleton with diagnosis placeholders labelled [Assumption], bets and a not-doing list.",
+      "files": [],
+      "assertions": [
+        "The review identifies the missing diagnosis",
+        "The four features are treated as candidate actions, not strategy",
+        "A not-doing list or forced ranking is proposed",
+        "Placeholders lacking evidence are labelled [Assumption]"
+      ]
+    }
+  ]
+}

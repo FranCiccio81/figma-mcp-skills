@@ -1,0 +1,28 @@
+{
+  "skill_name": "jobs-to-be-done",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here are notes from 9 interviews with people who opened a third-pillar pension account in the last six months (attached). Give me the jobs-to-be-done and the forces of progress.",
+      "expected_output": "A JTBD analysis with a solution-free job statement, job stories each linked to interview IDs, a forces of progress table with push, pull, anxiety and habit, desired outcome statements, and an explicit note that 9 interviews support counts but not percentages.",
+      "files": ["interviews-3a.md"],
+      "assertions": [
+        "Job statements contain no product or brand names",
+        "Each job story cites interview IDs",
+        "Anxiety and habit forces are present",
+        "Frequencies are given as counts out of 9, not percentages"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write the JTBD for our new budgeting feature.",
+      "expected_output": "Because no evidence is provided, the skill explains it cannot produce validated jobs and delivers a switch interview guide plus the hypotheses to test, each labelled [Assumption].",
+      "files": [],
+      "assertions": [
+        "The response states that no evidence was provided",
+        "A switch interview guide focused on past behaviour is produced",
+        "Any proposed job is labelled [Assumption]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill_name": "product-discovery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our head of sales wants an in-app chat with an advisor in our banking app because 'clients keep calling'. We have 40 call-center ticket summaries (attached) and no interviews. Run discovery.",
+      "expected_output": "A discovery brief that reframes the chat as one solution, derives opportunities only from the 40 tickets, labels them [Observed] with the ticket count, lists at least two non-chat solutions, maps desirability, usability, feasibility and viability (incl. compliance) assumptions and proposes tests with thresholds set in advance. It flags that no interviews exist.",
+      "files": ["tickets-summary.csv"],
+      "assertions": [
+        "In-app chat appears as one solution branch, not as the goal",
+        "No user quote or percentage appears that is not traceable to the tickets",
+        "At least three solutions are listed for the target opportunity",
+        "Every test has a numeric or explicit success threshold",
+        "The absence of qualitative research is stated as a gap"
+      ]
+    }
+  ]
+}

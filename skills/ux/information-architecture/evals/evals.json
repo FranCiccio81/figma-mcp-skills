@@ -1,0 +1,17 @@
+{
+  "skill_name": "information-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our app has 9 top-level tabs on iPhone and Android: Home, Portfolio, Trade, Crypto, eBanking, Cards, Documents, Offers, Settings. Users complain they can't find their tax documents. Propose a new structure.",
+      "expected_output": "A proposal with an inventory and top tasks, a reduced top level (iOS tab bar and Android navigation bar with 3-5 destinations), a tree placing tax documents under a predictable path with user vocabulary, a label glossary, and a tree test plan with success thresholds; the proposal is labelled as an assumption until tested.",
+      "files": [],
+      "assertions": [
+        "Android top-level destinations are between 3 and 5",
+        "iPhone tab bar has 5 or fewer tabs or explicitly handles overflow",
+        "A tree test plan with pre-set thresholds is included",
+        "The proposed tree is labelled as an assumption until validated"
+      ]
+    }
+  ]
+}

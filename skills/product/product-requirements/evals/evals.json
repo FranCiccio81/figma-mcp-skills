@@ -1,0 +1,18 @@
+{
+  "skill_name": "product-requirements",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a PRD for letting clients set a monthly savings goal in our mobile banking app. We know from analytics that 31% of active users open the savings tab weekly. No research on goals yet.",
+      "expected_output": "A PRD that keeps the 31% figure as [Observed] with its source, labels the goal-setting need as [Assumption], lists research as an uncertainty with an owner, includes Must requirements with Given/When/Then, WCAG 2.2 AA requirements, success metric with baseline and guardrails, and out-of-scope items.",
+      "files": [],
+      "assertions": [
+        "The 31% figure is the only quantitative user data and is labelled [Observed]",
+        "The need for savings goals is labelled as an assumption",
+        "Every Must requirement has Given/When/Then criteria",
+        "A guardrail metric is defined",
+        "An out-of-scope list exists"
+      ]
+    }
+  ]
+}

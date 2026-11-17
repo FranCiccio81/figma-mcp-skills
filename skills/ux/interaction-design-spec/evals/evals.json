@@ -1,0 +1,17 @@
+{
+  "skill_name": "interaction-design-spec",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Specify the interactions of a swipe-to-delete row in our watchlist (iOS, Android and web).",
+      "expected_output": "A spec with a state inventory, transitions including undo, a non-swipe alternative (button or menu) for single pointer and keyboard users, platform notes (no conflict with iOS edge swipe back or Android predictive back), reduced motion alternative, focus placement after delete and an undo snackbar or toast duration.",
+      "files": [],
+      "assertions": [
+        "A non-swipe alternative is specified",
+        "Undo or recovery is specified",
+        "Focus placement after deletion is defined",
+        "A reduced-motion alternative is defined"
+      ]
+    }
+  ]
+}

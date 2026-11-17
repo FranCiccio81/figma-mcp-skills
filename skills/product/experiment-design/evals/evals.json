@@ -1,0 +1,17 @@
+{
+  "skill_name": "experiment-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We want to A/B test a new onboarding screen. Current completion is 40%, we hope for +2 points. About 1,500 new users start onboarding per week. Plan it.",
+      "expected_output": "Plan with hypothesis, completion as primary metric, guardrails, user-level randomisation, n per variant ≈ 16*0.4*0.6/0.02^2 = 9,600, total ≈ 19,200 users, duration ≈ 13 weeks, which flags that this is long and offers alternatives or a larger MDE, plus a pre-registered decision rule including inconclusive.",
+      "files": [],
+      "assertions": [
+        "Sample size per variant is about 9,600 with the formula shown",
+        "Duration is estimated around 13 weeks and flagged as long",
+        "At least one alternative method or larger MDE is proposed",
+        "The decision rule covers an inconclusive result"
+      ]
+    }
+  ]
+}

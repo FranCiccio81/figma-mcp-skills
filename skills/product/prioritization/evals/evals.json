@@ -1,0 +1,17 @@
+{
+  "skill_name": "prioritization",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prioritise for Q1: dark mode, PSD3 compliance update (legal deadline March), referral program, faster login, new charts. We have 3 squads.",
+      "expected_output": "The compliance update is separated as a non-negotiable, the remaining four are scored with RICE with inputs labelled as assumptions where no data was given, a sensitivity check is shown, and a cut line and not-doing list are proposed.",
+      "files": [],
+      "assertions": [
+        "The legal deadline item is scheduled outside the scoring",
+        "Scores show their inputs and assumption labels",
+        "A sensitivity or rank-stability note is present",
+        "A cut line is stated"
+      ]
+    }
+  ]
+}

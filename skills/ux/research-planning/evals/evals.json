@@ -1,0 +1,17 @@
+{
+  "skill_name": "research-planning",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We want to know if our users would like an AI financial assistant. Write the interview guide.",
+      "expected_output": "A plan that rewrites the request into research questions about how people currently seek financial advice and make money decisions, an interview guide with past-behaviour questions and neutral probes, no question asking whether they would like the assistant, a screener, consent and data handling, and a synthesis plan.",
+      "files": [],
+      "assertions": [
+        "The guide contains no hypothetical 'would you use' question",
+        "Questions focus on specific past events",
+        "Consent and data retention are specified",
+        "Research questions are distinct from interview questions"
+      ]
+    }
+  ]
+}

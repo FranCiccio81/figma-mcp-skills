@@ -1,0 +1,17 @@
+{
+  "skill_name": "journey-mapping",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a service blueprint for opening a joint account, from the moment two partners decide to open it until both have card and app access. Attached: 12 support tickets and the back-office process doc.",
+      "expected_output": "A blueprint with user-centred stages, customer actions, frontstage, backstage and support layers, lines of interaction, visibility and internal interaction, cells tagged with evidence from tickets or the process doc, empty cells where unknown, failure points and opportunities pointing to their root-cause layer.",
+      "files": ["tickets.md", "backoffice-process.pdf"],
+      "assertions": [
+        "The three blueprint lines are present",
+        "Cells cite tickets or the process document",
+        "No emotion curve is invented without evidence",
+        "Opportunities name the layer of the root cause"
+      ]
+    }
+  ]
+}

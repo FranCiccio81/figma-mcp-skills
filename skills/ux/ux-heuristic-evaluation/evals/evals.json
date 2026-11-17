@@ -1,0 +1,17 @@
+{
+  "skill_name": "ux-heuristic-evaluation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Do a heuristic evaluation of these 4 screens of our money transfer flow (screenshots attached). Users are retail clients on iPhone.",
+      "expected_output": "A report that first lists the primary tasks, then findings each with location, heuristic, evidence, severity 0-4, confidence, impact and effort; missing error and confirmation states are flagged; findings needing user testing are listed; a note states it is a single-evaluator review.",
+      "files": ["transfer-1.png", "transfer-2.png", "transfer-3.png", "transfer-4.png"],
+      "assertions": [
+        "Primary tasks are listed before findings",
+        "Every finding has severity, confidence, impact and effort",
+        "Missing states (error, loading, confirmation) are checked",
+        "The single-evaluator limitation is stated"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "skill_name": "usability-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prepare a remote moderated usability test for our new 'invest easy' signup flow prototype (Figma). Participants: retail clients who never invested.",
+      "expected_output": "A plan with objectives tied to decisions, screener, about five participants per group, 4-6 scenario tasks without UI labels and with success criteria, a script with consent, think-aloud, SEQ after tasks, data handling and a pilot session.",
+      "files": [],
+      "assertions": [
+        "Tasks are written as goals without UI labels",
+        "Each task has a success criterion",
+        "Consent and data retention are covered",
+        "A pilot session is planned"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here are notes from 6 sessions (attached). Write the findings.",
+      "expected_output": "Findings with counts out of 6, verbatim quotes attributed to participant IDs present in the notes, severity ratings, and limitations; no invented quotes.",
+      "files": ["session-notes.md"],
+      "assertions": [
+        "Frequencies are expressed as counts out of 6",
+        "Quotes only come from the notes and carry participant IDs",
+        "Limitations are listed"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "product-metrics",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Define success metrics and the tracking plan for a new 'round-up savings' feature in our banking app. Our events use object_action naming.",
+      "expected_output": "A measurement plan with one outcome metric (for example share of eligible active users with round-up enabled after 30 days), input metrics, guardrails such as disable rate and support contacts, precise definitions, a tracking table with object_action events, no personal data in properties, and a read-out plan.",
+      "files": [],
+      "assertions": [
+        "Exactly one outcome metric is defined",
+        "Guardrail metrics are present",
+        "Event names follow object_action",
+        "Event properties exclude personal data such as amounts tied to identity or IBAN"
+      ]
+    }
+  ]
+}
