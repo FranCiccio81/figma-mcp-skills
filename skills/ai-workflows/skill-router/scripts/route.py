@@ -64,9 +64,19 @@ def route(prompt: str, project_ds: str | None = None, figma_available: bool | No
         if name == "skill-router":
             continue
         hits = [k for k in spec["keywords"] if has(text, k)]
-        if spec.get("project"):
-            if name in projects:
-                add(name, "project design system in use")
+        project = spec.get("project")
+        if project:
+            if project is True:  # legacy form: the skill is the project design system itself
+                project = name
+            if project not in projects:
+                continue
+            gates = spec.get("platforms")
+            if gates and not set(gates) & set(platforms):
+                if hits:
+                    excluded.append({"name": name, "reason": f"platforms {gates} not requested"})
+                continue
+            if spec.get("auto") or hits:
+                add(name, "project design system in use" + (": matched " + ", ".join(hits[:4]) if hits else ""))
             continue
         if not hits:
             continue

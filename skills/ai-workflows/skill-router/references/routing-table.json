@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "platforms": {
     "apple": [
       "ios",
@@ -33,7 +33,8 @@
       "foldable",
       "talkback",
       "pixel",
-      "chromeos"
+      "chromeos",
+      "foldables"
     ],
     "web": [
       "web",
@@ -63,7 +64,9 @@
       "loan",
       "credit",
       "wallet",
-      "fintech"
+      "fintech",
+      "swissquote",
+      "postfinance"
     ],
     "health": [
       "health",
@@ -82,8 +85,10 @@
     "bridge-design-system": [
       "bridge",
       "bridge ds",
+      "bridge 2.0",
       "bridge tokens",
-      "swissquote"
+      "swissquote",
+      "postfinance"
     ]
   },
   "skills": {
@@ -355,7 +360,8 @@
     "bridge-design-system": {
       "platform": null,
       "layer": "project-ds",
-      "project": true,
+      "project": "bridge-design-system",
+      "auto": true,
       "keywords": [
         "bridge"
       ]
@@ -436,7 +442,9 @@
         "large screen",
         "responsive",
         "multi-pane",
-        "chromeos"
+        "chromeos",
+        "tablets",
+        "foldables"
       ]
     },
     "android-accessibility": {
@@ -618,6 +626,186 @@
         "which skills",
         "route",
         "orchestrate skills"
+      ]
+    },
+    "bridge-ios": {
+      "platform": null,
+      "platforms": [
+        "apple"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "iphone",
+        "ios"
+      ]
+    },
+    "bridge-android": {
+      "platform": null,
+      "platforms": [
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "android"
+      ]
+    },
+    "bridge-web": {
+      "platform": null,
+      "platforms": [
+        "web"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "web"
+      ]
+    },
+    "bridge-tablet": {
+      "platform": null,
+      "platforms": [
+        "apple",
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "tablet",
+        "tablette",
+        "ipad",
+        "ipados",
+        "large screen",
+        "split view",
+        "navigation rail",
+        "multi-pane",
+        "resizable window",
+        "tablets"
+      ]
+    },
+    "bridge-foldables": {
+      "platform": null,
+      "platforms": [
+        "apple",
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "foldable",
+        "foldables",
+        "pliable",
+        "iphone duo",
+        "fold",
+        "flip",
+        "hinge",
+        "inner display",
+        "outer display"
+      ]
+    },
+    "bridge-designer-workflow": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "figma",
+        "mockup",
+        "maquette",
+        "handoff",
+        "design",
+        "designer",
+        "variables",
+        "library",
+        "libraries"
+      ]
+    },
+    "bridge-developer-workflow": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "implement",
+        "build",
+        "code",
+        "develop",
+        "developer",
+        "pull request",
+        "react",
+        "swiftui",
+        "compose",
+        "storybook",
+        "code connect",
+        "theme"
+      ]
+    },
+    "bridge-product-manager": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "prd",
+        "requirements",
+        "feature spec",
+        "user stories",
+        "acceptance criteria",
+        "roadmap",
+        "scope",
+        "product manager",
+        "pm"
+      ]
+    },
+    "bridge-content-and-formats": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "copy",
+        "wording",
+        "label",
+        "microcopy",
+        "error message",
+        "format",
+        "amount",
+        "iban",
+        "date",
+        "currency",
+        "translation",
+        "localisation",
+        "localization"
+      ]
+    },
+    "bridge-accessibility": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "accessible",
+        "accessibility",
+        "a11y",
+        "wcag",
+        "contrast",
+        "voiceover",
+        "talkback",
+        "dynamic type",
+        "dark mode"
+      ]
+    },
+    "bridge-compliance-review": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "review",
+        "audit",
+        "check",
+        "compliance",
+        "qa",
+        "conform",
+        "before merge",
+        "before handoff"
       ]
     }
   },
