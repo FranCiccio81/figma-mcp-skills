@@ -1,0 +1,17 @@
+{
+  "skill_name": "technical-specification",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a tech spec for adding offline support to our mobile web portfolio view.",
+      "expected_output": "A design document with context, current state, proposal with diagrams, alternatives, security and privacy of cached financial data, observability, rollout and rollback, risks and open questions.",
+      "files": [],
+      "expectations": [
+        "Documents at least one alternative with trade-offs",
+        "Addresses security of cached financial data on the device",
+        "Defines rollback and observability",
+        "Labels assumptions about scale or usage"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill_name": "accessibility-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit this login screen for WCAG: caption text #9CA3AF on white, placeholder #6B7280 on white, 32 px tall icon buttons on mobile.",
+      "expected_output": "A findings table citing WCAG 2.2 criteria with computed contrast ratios, target size analysis distinguishing 2.5.8 AA from platform minimums, severity, confidence and effort.",
+      "files": [],
+      "expectations": [
+        "Reports about 2.5:1 or lower for #9CA3AF on white as failing 1.4.3",
+        "Reports #6B7280 on white as passing at about 4.8:1 or states the computed ratio correctly",
+        "Uses 2.5.8 (24 by 24 CSS px) as the AA target size criterion, not 2.5.5",
+        "Notes that 32 px is below iOS 44 pt and Android 48 dp guidance",
+        "Does not claim overall conformance"
+      ]
+    }
+  ]
+}

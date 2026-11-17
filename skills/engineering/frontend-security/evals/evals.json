@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-security",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review our React banking dashboard for frontend security issues. We store the JWT in localStorage and render CMS HTML.",
+      "expected_output": "Findings flagging token storage and raw HTML rendering with fixes, recommended CSP and headers, and residual risk list.",
+      "files": [],
+      "expectations": [
+        "Flags localStorage token storage and recommends HttpOnly secure cookies",
+        "Flags raw HTML rendering and requires sanitization",
+        "Recommends a nonce or hash based CSP",
+        "Cites OWASP or MDN references"
+      ]
+    }
+  ]
+}

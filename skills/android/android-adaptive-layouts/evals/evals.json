@@ -1,0 +1,18 @@
+{
+  "skill_name": "android-adaptive-layouts",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our app is portrait-only and phone-shaped. We're moving to targetSdk 36. What has to change for tablets and foldables?",
+      "expected_output": "An adaptive layout plan explaining that orientation and resizability restrictions are ignored on large screens for targetSdk 36, with layouts per width class, navigation changes, state preservation and a test matrix.",
+      "files": [],
+      "expectations": [
+        "States the Android 16 large-screen behavior change",
+        "Uses the official width breakpoints 600, 840, 1200, 1600 dp",
+        "Switches navigation bar to rail at medium width or larger",
+        "Includes state preservation across folding and resizing",
+        "Recommends the official android/skills adaptive skill for implementation"
+      ]
+    }
+  ]
+}

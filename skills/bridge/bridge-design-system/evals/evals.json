@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-design-system",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm a developer joining the Swissquote web team. Which Bridge rules and skills apply when I build a payments table?",
+      "expected_output": "Routes to bridge-web and bridge-developer-workflow, lists the shared rules (two token levels, tokens only, product actions in dark ink, themes, AA floor) and explains how to report gaps.",
+      "files": [],
+      "expectations": [
+        "Names bridge-web and bridge-developer-workflow",
+        "States the two-level token model, not the 4-tier model",
+        "Mentions light and dark checks",
+        "Explains the [gap] and gap report process"
+      ]
+    }
+  ]
+}

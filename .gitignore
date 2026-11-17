@@ -5,3 +5,7 @@
 # Dumps Redis — artefact d'un serveur lancé dans le dossier de travail.
 # Un binaire de 8 Ko s'est retrouvé committé pour cette raison exacte.
 *.rdb
+
+# Python
+__pycache__/
+*.pyc

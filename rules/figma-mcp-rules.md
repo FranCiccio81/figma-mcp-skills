@@ -100,7 +100,7 @@ alwaysApply: true
 - Réutiliser les composants existants de /src/components
 - Priorité à la fidélité Figma
 - Utiliser les tokens, jamais de valeurs hardcodées
-- WCAG 2.1 AA sur tous les composants
+- WCAG 2.2 AA sur tous les composants
 - Documenter les composants générés
 - Vérifier les composants imbriqués pour les border-radius
 - L'état "Pressed" dans Figma = :focus-visible CSS (pas :active)

@@ -1,0 +1,18 @@
+{
+  "skill_name": "swiftui-implementation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement this account summary card in SwiftUI. Our app supports iOS 17 and later. Designers want the new glass look.",
+      "expected_output": "SwiftUI code using theme values, Dynamic Type, accessibility modifiers, glass effect gated with an availability check and a fallback for iOS 17 to 25, previews and tests.",
+      "files": [],
+      "expectations": [
+        "Uses `if #available(iOS 26, *)` or equivalent around glass APIs with a fallback",
+        "No literal colors or font sizes",
+        "Card is combined into a meaningful VoiceOver element",
+        "Includes previews for large Dynamic Type",
+        "Does not use invented API names"
+      ]
+    }
+  ]
+}

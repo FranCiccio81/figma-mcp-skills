@@ -1,0 +1,17 @@
+{
+  "skill_name": "experiment-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We want to A/B test a new onboarding screen. We get about 2,000 sign-ups per week and 30% complete onboarding. Design the experiment.",
+      "expected_output": "An experiment brief with decision rule, hypothesis, primary and guardrail metrics, a sample size calculation using the given baseline, a duration in full weeks, and a pre-set stopping rule.",
+      "files": [],
+      "expectations": [
+        "Uses the 30% baseline and states the minimum detectable effect chosen",
+        "Duration is computed from 2,000 sign-ups per week and given in full weeks",
+        "Decision and stopping rules are written before launch",
+        "Includes at least one guardrail metric"
+      ]
+    }
+  ]
+}

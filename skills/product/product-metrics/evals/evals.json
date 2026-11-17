@@ -1,0 +1,17 @@
+{
+  "skill_name": "product-metrics",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Define success metrics and a tracking plan for our new savings goals feature.",
+      "expected_output": "Metric hierarchy with outcome, leading and guardrail metrics, precise definitions, and a tracking plan with events and properties that avoid personal data.",
+      "files": [],
+      "expectations": [
+        "Each metric has formula, population, window and owner",
+        "At least one guardrail metric",
+        "Tracking plan events contain no personal or financial identifiers",
+        "No baseline is stated without a source"
+      ]
+    }
+  ]
+}

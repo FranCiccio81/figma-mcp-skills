@@ -1,0 +1,17 @@
+{
+  "skill_name": "apple-hig-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this iPhone onboarding design for an investment app and tell me how to adapt it to iPad and Mac.",
+      "expected_output": "A review table citing HIG areas plus an adaptation spec for iPad and Mac covering navigation, layout, pointer, keyboard and window behavior.",
+      "files": [],
+      "expectations": [
+        "Cites HIG areas for findings",
+        "Recommends sidebar or split view where space allows on iPad and Mac",
+        "Mentions keyboard shortcuts or menu bar for Mac",
+        "States OS availability and fallback for Liquid Glass if used"
+      ]
+    }
+  ]
+}

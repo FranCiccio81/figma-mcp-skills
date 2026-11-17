@@ -1,0 +1,17 @@
+{
+  "skill_name": "figma-design-code-drift",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Compare our production sign-in page with the Figma design and tell me what drifted.",
+      "expected_output": "A drift report comparing per category with evidence from both sides, direction (code drift, design drift, intentional, unknown) and severity.",
+      "files": [],
+      "expectations": [
+        "Aligns viewport, theme and data before comparing",
+        "Reports token mismatches by token name",
+        "Each deviation has direction and severity",
+        "Lists items that could not be verified"
+      ]
+    }
+  ]
+}

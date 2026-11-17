@@ -1,0 +1,17 @@
+{
+  "skill_name": "frontend-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our Cypress tests are flaky because of cy.wait(3000). Help us fix the test suite for the checkout flow.",
+      "expected_output": "A plan and code that replaces fixed waits with condition-based waits and network control, uses accessible queries, and quarantines remaining flakes with owners.",
+      "files": [],
+      "expectations": [
+        "Removes fixed sleeps in favor of waiting for conditions",
+        "Controls network with intercepts or mocks",
+        "Uses role or label based selectors",
+        "Defines a quarantine process with owner"
+      ]
+    }
+  ]
+}

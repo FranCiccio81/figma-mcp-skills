@@ -1,0 +1,17 @@
+{
+  "skill_name": "prioritization",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prioritize these 8 roadmap items for next quarter: [list including a WCAG fix required by law and a dark mode request].",
+      "expected_output": "A transparent scoring table, mandatory items separated, ranked list, sensitivity notes and a not-now list.",
+      "files": [],
+      "expectations": [
+        "The legally required accessibility fix is treated as mandatory, not ranked against optional items",
+        "Every score shows inputs and confidence",
+        "A 'not now' list is present",
+        "Method choice is justified"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "value-proposition-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Help me sharpen the value proposition of our robo-advisor for first-time investors versus keeping money in a savings account.",
+      "expected_output": "Customer profile, value map, fit matrix, differentiation versus the savings account, two or three proposition statements and an evidence plan.",
+      "files": [],
+      "expectations": [
+        "Each pain reliever maps to a named customer pain",
+        "Doing nothing or a savings account is treated as the competitive alternative",
+        "Rankings are evidenced or marked as assumptions",
+        "Flags that financial promises need compliance review"
+      ]
+    }
+  ]
+}

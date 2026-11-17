@@ -1,0 +1,17 @@
+{
+  "skill_name": "journey-mapping",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a service blueprint for opening an investment account, from the website to the first trade, including the back office identity check.",
+      "expected_output": "A blueprint with stages, customer actions, frontstage, line of visibility, backstage and support systems, failure and wait points, every cell labeled observed or assumed.",
+      "files": [],
+      "expectations": [
+        "Includes frontstage, backstage and support process lanes",
+        "Cells are labeled Observed or Assumed",
+        "Identity check wait points and failure points are marked",
+        "Pain points link to opportunities with owners"
+      ]
+    }
+  ]
+}

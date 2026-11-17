@@ -1,3 +1,5 @@
+> **Règles Bridge 1 (mars 2026), remplacées par Bridge 2.0.** Voir `skills/bridge/` (point d'entrée `bridge-design-system`). Différences majeures : 2 niveaux de tokens au lieu de 4 tiers, composants React sur primitives Radix, origine native ou custom sur mobile. Ce fichier est conservé pour l'historique.
+
 # Bridge Design System Rules — Swissquote
 
 > Rules spécifiques au design system Bridge de Swissquote.  

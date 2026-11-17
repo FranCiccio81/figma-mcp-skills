@@ -170,8 +170,8 @@ Le composant utilise un style unique (outlined) — pas de variante `filled-back
 |---------|--------------|------|--------------|-----------------|
 | Valeur saisie (actif) | `Grey/900` #111827 | White #FFFFFF | ~18.1:1 | ✅ Conforme |
 | Label | `Grey/900` #111827 | Fond page | ~18.1:1 | ✅ Conforme |
-| Caption | `Grey/400` #9CA3AF | White #FFFFFF | ~2.85:1 | ❌ **Non conforme** |
-| Placeholder | `Grey/500` #6B7280 | White #FFFFFF | ~4.48:1 | ⚠️ Limite — à vérifier |
+| Caption | `Grey/400` #9CA3AF | White #FFFFFF | 2.54:1 (recalculé le 2026-11-17) | ❌ **Non conforme** |
+| Placeholder | `Grey/500` #6B7280 | White #FFFFFF | 4.83:1 (recalculé le 2026-11-17) | ✅ Conforme AA |
 | Placeholder disabled | `Grey/400` #9CA3AF | `Grey/100` #F3F4F6 | ~2.43:1 | ❌ Acceptable pour disabled |
 
 > **⚠️ Action requise :** La `caption` (Grey/400 sur blanc) passe sous le seuil WCAG AA. Envisager `Grey/500` (#6B7280) minimum.

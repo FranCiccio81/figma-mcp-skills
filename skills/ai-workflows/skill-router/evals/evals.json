@@ -1,0 +1,17 @@
+{
+  "skill_name": "skill-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design and implement an accessible banking onboarding flow for iOS.",
+      "expected_output": "A routing note selecting product requirements, interaction design, Apple HIG, SwiftUI, Apple and WCAG accessibility, the project design system when declared, excluding Android and web implementation skills, with the regulated finance note.",
+      "files": [],
+      "expectations": [
+        "Selects apple-hig-review, swiftui-implementation and apple-accessibility",
+        "Excludes material3-compose and android-accessibility",
+        "Flags the regulated finance domain and asks about legal requirements",
+        "States the precedence order"
+      ]
+    }
+  ]
+}

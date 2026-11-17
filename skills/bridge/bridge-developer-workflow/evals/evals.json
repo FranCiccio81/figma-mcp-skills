@@ -1,0 +1,18 @@
+{
+  "skill_name": "bridge-developer-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement the Bridge button family in our React app and wire SQ and PF themes.",
+      "expected_output": "Reuses the coded Bridge component when available, otherwise styles Radix-based buttons with semantic CSS custom properties per theme, with states, tests and the PR checklist.",
+      "files": [],
+      "expectations": [
+        "Looks for the existing Bridge component via Code Connect or Storybook first",
+        "CSS custom properties keep the design token segments",
+        "Themes switched at the root, dark values not computed",
+        "Includes the PR checklist",
+        "Submitting state keeps button width"
+      ]
+    }
+  ]
+}

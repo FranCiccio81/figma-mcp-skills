@@ -1,0 +1,17 @@
+{
+  "skill_name": "opportunity-solution-tree",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our outcome is to increase the share of new users who make a second deposit within 30 days. Here are research findings: [list]. Build the tree.",
+      "expected_output": "A tree with one outcome root, research-sourced opportunities clustered into parents and children, one selected target opportunity with rationale, three or more solutions, each with assumption tests.",
+      "files": [],
+      "expectations": [
+        "Exactly one outcome at the root",
+        "Opportunities are phrased from the customer's perspective",
+        "At least three solutions for the chosen opportunity",
+        "Each solution lists at least one assumption test"
+      ]
+    }
+  ]
+}

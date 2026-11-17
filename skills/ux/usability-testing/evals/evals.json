@@ -1,0 +1,17 @@
+{
+  "skill_name": "usability-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a usability test script for our new pension simulator prototype.",
+      "expected_output": "A test plan and script with goals, realistic tasks without interface labels, think-aloud instructions, metrics and an analysis template.",
+      "files": [],
+      "expectations": [
+        "Tasks are scenarios that do not name UI labels",
+        "Script states that the design, not the participant, is tested",
+        "Metrics include task success and post-task ease",
+        "Report template separates frequency and severity"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+# Skills CI: quality gates for the skills library.
+# Runs only on changes to skills, tools, docs or this workflow. Executes no code
+# from the skills themselves except the reviewed, stdlib-only router script under test.
+
+name: skills-ci
+
+on:
+  pull_request:
+    paths:
+      - "skills/**"
+      - ".claude/skills/**"
+      - "tools/**"
+      - "docs/**"
+      - ".github/workflows/skills-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+      - ".claude/skills/**"
+      - "tools/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validator dependency
+        run: pip install "pyyaml>=6,<7"
+      - name: Repository quality gates (spec, metadata, links, provenance, security, evals)
+        run: python3 tools/validate_skills.py
+      - name: Registry is up to date
+        run: python3 tools/build_registry.py --check
+      - name: Bridge foundations copies in sync
+        run: python3 tools/sync_bridge_foundations.py --check
+      - name: Unit tests (validator and router)
+        run: python3 -m unittest discover -s tools/tests -t . -v
+      - name: Reference validator (agentskills/skills-ref, pinned and reviewed)
+        run: |
+          pip install "git+https://github.com/agentskills/agentskills@83021e2be457a9b6679148719c1f6074f0ad975e#subdirectory=skills-ref"
+          find skills .claude/skills -name SKILL.md -print0 | xargs -0 -n1 dirname | xargs -n1 skills-ref validate
+
+  links:
+    name: External links (informative)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pyyaml>=6,<7"
+      - run: python3 tools/validate_skills.py --external

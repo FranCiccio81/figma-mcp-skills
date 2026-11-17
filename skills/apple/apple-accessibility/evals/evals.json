@@ -1,0 +1,17 @@
+{
+  "skill_name": "apple-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our iOS portfolio chart is unusable with VoiceOver. How do we fix it?",
+      "expected_output": "A VoiceOver specification for the chart screen with summaries, an accessible data alternative, labels and values, and a test plan on device.",
+      "files": [],
+      "expectations": [
+        "Proposes a summary plus an accessible representation of the data",
+        "Currency values are read via formatted strings",
+        "Includes a device VoiceOver test of the critical task",
+        "Considers Reduce Motion for chart animations"
+      ]
+    }
+  ]
+}

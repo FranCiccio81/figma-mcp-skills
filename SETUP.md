@@ -1,3 +1,5 @@
+> **Document historique (2026-03-29).** Il décrit une installation locale passée et n'est plus tenu à jour. Voir le [README](README.md) pour l'installation actuelle et [docs/skill-registry.md](docs/skill-registry.md) pour le catalogue.
+
 # SETUP — figma-mcp-skills
 
 > 63 skills installés le 2026-03-29

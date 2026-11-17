@@ -42,13 +42,16 @@
 
 ## Design System — Bridge
 
-- Toujours utiliser les tokens Bridge (4 tiers : core → semantic → component → breakpoint)
+> Bridge 2.0 fait foi : skills `skills/bridge/` (point d'entrée `bridge-design-system`, par plateforme `bridge-ios`, `bridge-android`, `bridge-tablet`, `bridge-foldables`, `bridge-web`, par rôle `bridge-designer-workflow`, `bridge-developer-workflow`, `bridge-product-manager`, plus `bridge-content-and-formats`, `bridge-accessibility`, `bridge-compliance-review`). Les règles ci-dessous datent de mars 2026 ; en cas de conflit, Bridge 2.0 l'emporte.
+
+- Tokens Bridge 2.0 : 2 niveaux (primitives jamais utilisées, puis tokens sémantiques). Pas de niveau composant, sauf exceptions nommées. Le modèle 4 tiers de mars 2026 est remplacé
+- Noms exacts des tokens couleur : vérifier avec `skills/bridge/bridge-compliance-review/scripts/check_tokens.py`
 - Ne JAMAIS hardcoder couleurs, spacing ou typographie
 - Noms sémantiques : `color.action.primary` pas `#0057FF`
 - Atomic Design : atoms → molecules → organisms → templates
 - Nommage BEM pour les classes CSS
 
-### Correspondances Figma → CSS fréquentes
+### Correspondances Figma → CSS (Bridge 1, mars 2026, à vérifier contre Bridge 2.0)
 
 | Nom Figma | Token CSS |
 |-----------|-----------|
@@ -62,11 +65,11 @@
 
 ## Accessibilité
 
-- WCAG 2.1 AA obligatoire sur tous les composants
+- WCAG 2.2 AA obligatoire sur tous les composants (skill `accessibility-audit`)
 - Contraste : 4.5:1 texte / 3:1 éléments UI / 3:1 focus ring
-- Touch target : 44px web / 48dp Android (min)
+- Cible tactile : 24×24 px CSS minimum en WCAG 2.2 AA (2.5.8) ; 44×44 pt iOS et 48×48 dp Android selon les guides plateforme
 - ARIA approprié pour tous les composants complexes
-- ⚠️ `Grey/400` sur blanc = ratio 2.85:1 → JAMAIS utiliser pour du texte
+- ⚠️ `Grey/400` sur blanc = ratio 2.54:1 (recalculé le 2026-11-17) → JAMAIS utiliser pour du texte
 - ⚠️ État "Pressed" dans Figma = `:focus-visible` CSS (pas `:active`)
 - ⚠️ Tailles Micro (<30px) et Small (<36px) : touch target insuffisant sur mobile
 

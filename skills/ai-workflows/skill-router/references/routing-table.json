@@ -1,0 +1,829 @@
+{
+  "version": "1.1.0",
+  "platforms": {
+    "apple": [
+      "ios",
+      "ipados",
+      "ipad",
+      "iphone",
+      "macos",
+      "watchos",
+      "visionos",
+      "tvos",
+      "swiftui",
+      "swift",
+      "uikit",
+      "appkit",
+      "apple",
+      "xcode",
+      "voiceover",
+      "liquid glass",
+      "sf symbols",
+      "dynamic type"
+    ],
+    "android": [
+      "android",
+      "jetpack compose",
+      "compose",
+      "kotlin",
+      "material 3",
+      "material3",
+      "material design",
+      "wear os",
+      "foldable",
+      "talkback",
+      "pixel",
+      "chromeos",
+      "foldables"
+    ],
+    "web": [
+      "web",
+      "website",
+      "react",
+      "next.js",
+      "nextjs",
+      "html",
+      "css",
+      "typescript",
+      "browser",
+      "frontend",
+      "front-end",
+      "landing page",
+      "spa"
+    ]
+  },
+  "regulated_domains": {
+    "finance": [
+      "bank",
+      "banking",
+      "payment",
+      "trading",
+      "invest",
+      "pension",
+      "insurance",
+      "loan",
+      "credit",
+      "wallet",
+      "fintech",
+      "swissquote",
+      "postfinance"
+    ],
+    "health": [
+      "health",
+      "medical",
+      "patient",
+      "clinic",
+      "pharma"
+    ],
+    "public-sector": [
+      "government",
+      "public service",
+      "citizen"
+    ]
+  },
+  "project_design_systems": {
+    "bridge-design-system": [
+      "bridge",
+      "bridge ds",
+      "bridge 2.0",
+      "bridge tokens",
+      "swissquote",
+      "postfinance"
+    ]
+  },
+  "skills": {
+    "product-discovery": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "discovery",
+        "problem space",
+        "opportunity",
+        "explore the problem",
+        "new product idea",
+        "validate the problem"
+      ]
+    },
+    "jobs-to-be-done": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "jobs to be done",
+        "jtbd",
+        "job story",
+        "switch interview",
+        "hire the product"
+      ]
+    },
+    "value-proposition-design": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "value proposition",
+        "value prop",
+        "customer profile",
+        "pains and gains",
+        "positioning"
+      ]
+    },
+    "opportunity-solution-tree": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "opportunity solution tree",
+        "ost",
+        "desired outcome",
+        "map opportunities"
+      ]
+    },
+    "product-strategy": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "product strategy",
+        "vision",
+        "strategic bets",
+        "north star",
+        "roadmap themes",
+        "where to play"
+      ]
+    },
+    "product-requirements": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "prd",
+        "requirements",
+        "feature spec",
+        "specification",
+        "user stories",
+        "acceptance criteria",
+        "design and implement",
+        "onboarding flow",
+        "new feature"
+      ]
+    },
+    "experiment-design": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "experiment",
+        "a/b test",
+        "ab test",
+        "hypothesis",
+        "split test",
+        "fake door"
+      ]
+    },
+    "prioritization": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "prioritize",
+        "prioritise",
+        "prioritization",
+        "rice",
+        "backlog order",
+        "what to build first",
+        "trade-off"
+      ]
+    },
+    "product-metrics": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "metrics",
+        "kpi",
+        "analytics",
+        "tracking plan",
+        "measure success",
+        "north star metric",
+        "funnel",
+        "instrumentation"
+      ]
+    },
+    "ux-research-planning": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "research plan",
+        "user research",
+        "interview guide",
+        "user interviews",
+        "discussion guide",
+        "recruit participants",
+        "survey"
+      ]
+    },
+    "usability-testing": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "usability test",
+        "user test",
+        "test the prototype",
+        "task success",
+        "moderated",
+        "unmoderated"
+      ]
+    },
+    "heuristic-evaluation": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "heuristic",
+        "ux audit",
+        "nielsen",
+        "expert review",
+        "usability review"
+      ]
+    },
+    "journey-mapping": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "journey map",
+        "customer journey",
+        "service blueprint",
+        "touchpoints",
+        "end-to-end experience",
+        "backstage"
+      ]
+    },
+    "information-architecture": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "information architecture",
+        "navigation structure",
+        "sitemap",
+        "card sort",
+        "tree test",
+        "taxonomy",
+        "labeling"
+      ]
+    },
+    "interaction-design": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "flow",
+        "user flow",
+        "interaction",
+        "onboarding",
+        "wizard",
+        "states",
+        "prototype",
+        "microinteraction",
+        "task flow"
+      ]
+    },
+    "ux-writing": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "ux writing",
+        "microcopy",
+        "copy",
+        "error message",
+        "button label",
+        "content design",
+        "tone of voice",
+        "empty state text"
+      ]
+    },
+    "cognitive-accessibility": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "cognitive",
+        "plain language",
+        "cognitive load",
+        "neurodivergent",
+        "dyslexia",
+        "memory load",
+        "easy to understand"
+      ]
+    },
+    "design-critique": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "critique",
+        "feedback on my design",
+        "review this design",
+        "design review",
+        "what do you think of this screen"
+      ]
+    },
+    "design-token-architecture": {
+      "platform": null,
+      "layer": "project-ds",
+      "keywords": [
+        "token",
+        "tokens",
+        "design tokens",
+        "dtcg",
+        "semantic tokens",
+        "style dictionary",
+        "figma variables",
+        "theming",
+        "dark mode"
+      ]
+    },
+    "component-api-design": {
+      "platform": null,
+      "layer": "project-ds",
+      "keywords": [
+        "component api",
+        "props",
+        "variants",
+        "component states",
+        "slots",
+        "composition",
+        "new component"
+      ]
+    },
+    "design-system-governance": {
+      "platform": null,
+      "layer": "project-ds",
+      "keywords": [
+        "governance",
+        "contribution",
+        "versioning",
+        "deprecation",
+        "changelog",
+        "design system adoption",
+        "release process"
+      ]
+    },
+    "bridge-design-system": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "bridge"
+      ]
+    },
+    "apple-hig-review": {
+      "platform": "apple",
+      "layer": "platform",
+      "keywords": [
+        "hig",
+        "human interface guidelines",
+        "design",
+        "navigation",
+        "tab bar",
+        "sheet",
+        "liquid glass",
+        "ipad",
+        "macos",
+        "watchos",
+        "visionos",
+        "native feel",
+        "screen",
+        "flow"
+      ]
+    },
+    "swiftui-implementation": {
+      "platform": "apple",
+      "layer": "platform",
+      "keywords": [
+        "swiftui",
+        "implement",
+        "build",
+        "code",
+        "view",
+        "xcode",
+        "swift",
+        "test"
+      ]
+    },
+    "apple-accessibility": {
+      "platform": "apple",
+      "layer": "platform",
+      "keywords": [
+        "accessible",
+        "accessibility",
+        "a11y",
+        "voiceover",
+        "dynamic type",
+        "reduce motion",
+        "wcag"
+      ]
+    },
+    "material3-compose": {
+      "platform": "android",
+      "layer": "platform",
+      "keywords": [
+        "material",
+        "compose",
+        "implement",
+        "build",
+        "code",
+        "design",
+        "screen",
+        "theme",
+        "dynamic color",
+        "edge-to-edge",
+        "test",
+        "flow"
+      ]
+    },
+    "android-adaptive-layouts": {
+      "platform": "android",
+      "layer": "platform",
+      "keywords": [
+        "adaptive",
+        "tablet",
+        "foldable",
+        "window size",
+        "large screen",
+        "responsive",
+        "multi-pane",
+        "chromeos",
+        "tablets",
+        "foldables"
+      ]
+    },
+    "android-accessibility": {
+      "platform": "android",
+      "layer": "platform",
+      "keywords": [
+        "accessible",
+        "accessibility",
+        "a11y",
+        "talkback",
+        "font scale",
+        "touch target",
+        "wcag"
+      ]
+    },
+    "react-typescript-components": {
+      "platform": "web",
+      "layer": "reusable",
+      "keywords": [
+        "react",
+        "typescript",
+        "component",
+        "implement",
+        "build",
+        "code",
+        "hook"
+      ]
+    },
+    "semantic-html-css": {
+      "platform": "web",
+      "layer": "reusable",
+      "keywords": [
+        "html",
+        "css",
+        "semantic",
+        "responsive",
+        "layout",
+        "styles",
+        "landing page",
+        "implement",
+        "build"
+      ]
+    },
+    "frontend-testing": {
+      "platform": "web",
+      "layer": "reusable",
+      "keywords": [
+        "test",
+        "testing",
+        "unit test",
+        "e2e",
+        "playwright",
+        "vitest",
+        "jest",
+        "testing library",
+        "implement",
+        "build"
+      ]
+    },
+    "frontend-performance": {
+      "platform": "web",
+      "layer": "reusable",
+      "keywords": [
+        "performance",
+        "core web vitals",
+        "lcp",
+        "inp",
+        "cls",
+        "bundle size",
+        "slow",
+        "lighthouse"
+      ]
+    },
+    "frontend-security": {
+      "platform": "web",
+      "layer": "reusable",
+      "keywords": [
+        "security",
+        "xss",
+        "csp",
+        "csrf",
+        "secure",
+        "auth token",
+        "sanitize",
+        "dependency audit",
+        "bank",
+        "banking",
+        "payment"
+      ]
+    },
+    "code-review": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "code review",
+        "review this pr",
+        "review my code",
+        "pull request review",
+        "review the diff"
+      ]
+    },
+    "technical-specification": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "technical spec",
+        "tech spec",
+        "rfc",
+        "design doc",
+        "architecture decision",
+        "adr",
+        "implementation plan"
+      ]
+    },
+    "accessibility-audit": {
+      "platform": null,
+      "layer": "safety",
+      "keywords": [
+        "accessible",
+        "accessibility",
+        "a11y",
+        "wcag",
+        "contrast",
+        "screen reader",
+        "keyboard"
+      ]
+    },
+    "visual-regression-qa": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "visual regression",
+        "visual qa",
+        "screenshot test",
+        "pixel",
+        "snapshot test",
+        "chromatic",
+        "visual diff"
+      ]
+    },
+    "figma-design-to-code": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "figma",
+        "from the design",
+        "design to code",
+        "implement this frame",
+        "node-id"
+      ]
+    },
+    "figma-spec-handoff": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "handoff",
+        "hand off",
+        "annotate",
+        "document this component",
+        "spec from figma"
+      ]
+    },
+    "figma-design-code-drift": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "drift",
+        "matches the design",
+        "compare with figma",
+        "design vs code",
+        "deviation",
+        "design qa"
+      ]
+    },
+    "skill-router": {
+      "platform": null,
+      "layer": "reusable",
+      "keywords": [
+        "which skills",
+        "route",
+        "orchestrate skills"
+      ]
+    },
+    "bridge-ios": {
+      "platform": null,
+      "platforms": [
+        "apple"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "iphone",
+        "ios"
+      ]
+    },
+    "bridge-android": {
+      "platform": null,
+      "platforms": [
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "android"
+      ]
+    },
+    "bridge-web": {
+      "platform": null,
+      "platforms": [
+        "web"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "auto": true,
+      "keywords": [
+        "web"
+      ]
+    },
+    "bridge-tablet": {
+      "platform": null,
+      "platforms": [
+        "apple",
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "tablet",
+        "tablette",
+        "ipad",
+        "ipados",
+        "large screen",
+        "split view",
+        "navigation rail",
+        "multi-pane",
+        "resizable window",
+        "tablets"
+      ]
+    },
+    "bridge-foldables": {
+      "platform": null,
+      "platforms": [
+        "apple",
+        "android"
+      ],
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "foldable",
+        "foldables",
+        "pliable",
+        "iphone duo",
+        "fold",
+        "flip",
+        "hinge",
+        "inner display",
+        "outer display"
+      ]
+    },
+    "bridge-designer-workflow": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "figma",
+        "mockup",
+        "maquette",
+        "handoff",
+        "design",
+        "designer",
+        "variables",
+        "library",
+        "libraries"
+      ]
+    },
+    "bridge-developer-workflow": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "implement",
+        "build",
+        "code",
+        "develop",
+        "developer",
+        "pull request",
+        "react",
+        "swiftui",
+        "compose",
+        "storybook",
+        "code connect",
+        "theme"
+      ]
+    },
+    "bridge-product-manager": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "prd",
+        "requirements",
+        "feature spec",
+        "user stories",
+        "acceptance criteria",
+        "roadmap",
+        "scope",
+        "product manager",
+        "pm"
+      ]
+    },
+    "bridge-content-and-formats": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "copy",
+        "wording",
+        "label",
+        "microcopy",
+        "error message",
+        "format",
+        "amount",
+        "iban",
+        "date",
+        "currency",
+        "translation",
+        "localisation",
+        "localization"
+      ]
+    },
+    "bridge-accessibility": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "accessible",
+        "accessibility",
+        "a11y",
+        "wcag",
+        "contrast",
+        "voiceover",
+        "talkback",
+        "dynamic type",
+        "dark mode"
+      ]
+    },
+    "bridge-compliance-review": {
+      "platform": null,
+      "layer": "project-ds",
+      "project": "bridge-design-system",
+      "keywords": [
+        "review",
+        "audit",
+        "check",
+        "compliance",
+        "qa",
+        "conform",
+        "before merge",
+        "before handoff"
+      ]
+    }
+  },
+  "requires_figma": [
+    "figma-design-to-code",
+    "figma-spec-handoff",
+    "figma-design-code-drift"
+  ],
+  "implementation_intents": [
+    "implement",
+    "build",
+    "code",
+    "develop",
+    "ship"
+  ],
+  "testing_by_platform": {
+    "apple": "swiftui-implementation",
+    "android": "material3-compose",
+    "web": "frontend-testing"
+  }
+}

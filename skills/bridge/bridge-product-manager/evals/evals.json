@@ -1,0 +1,18 @@
+{
+  "skill_name": "bridge-product-manager",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Draft the PRD section for a new 'send money to a friend' feature in the Swissquote app.",
+      "expected_output": "PRD sections applying Bridge principles, financial-risk requirements, platform and theme scope, component availability, content and formats, states and Bridge acceptance criteria.",
+      "files": [],
+      "expectations": [
+        "Requires a review step with amount, fees, account and timing before confirmation",
+        "Step-up authentication after review",
+        "Lists platforms and whether PostFinance ships it",
+        "Adds the Bridge acceptance criteria block",
+        "Does not invent research or metrics"
+      ]
+    }
+  ]
+}

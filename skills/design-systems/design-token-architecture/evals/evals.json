@@ -1,0 +1,18 @@
+{
+  "skill_name": "design-token-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We have 300 color variables in Figma named like 'Blue/500' and components use them directly. Propose a token architecture with dark mode and DTCG output.",
+      "expected_output": "An architecture with primitive, semantic and component tiers, naming grammar, a DTCG 2025.10 JSON example, a mode strategy, a Figma collection plan and a migration plan with aliases.",
+      "files": [],
+      "expectations": [
+        "DTCG example uses $value and $type and curly-brace aliases",
+        "Components are shown consuming semantic, not primitive, tokens",
+        "Dark mode switches at the semantic tier",
+        "Migration keeps old names as deprecated aliases",
+        "Includes contrast checks per mode"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill_name": "product-discovery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We're a Swiss bank and want to build an app that helps people under 35 start saving for retirement. We have no research yet. Plan the discovery.",
+      "expected_output": "A discovery brief with a problem statement, an evidence table where everything is labeled as assumption, a risk-ranked assumption map, and cheap tests with falsifiable success signals.",
+      "files": [],
+      "expectations": [
+        "States explicitly that no user need is validated yet",
+        "Separates observations, validated findings, assumptions and unknowns",
+        "Includes legal or regulatory assumptions (for example advice regulation) as untested",
+        "Every test has a success signal and the decision it informs",
+        "Does not invent statistics about young savers"
+      ]
+    }
+  ]
+}

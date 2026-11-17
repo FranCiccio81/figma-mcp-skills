@@ -1,0 +1,17 @@
+{
+  "skill_name": "figma-spec-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write the handoff spec for the Input component frame in Figma (node 729:14488).",
+      "expected_output": "A Markdown spec with anatomy, variants and states marked shown or missing, tokens and unbound values, behavior, accessibility with contrast ratios, content rules, assumptions and open questions.",
+      "files": [],
+      "expectations": [
+        "States table has a Shown or Missing column",
+        "Hard-coded values are listed separately from tokens",
+        "Contrast ratios are computed for text pairs",
+        "Assumptions are labeled"
+      ]
+    }
+  ]
+}

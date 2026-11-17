@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-designer-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm about to hand off the new savings goal screens in Figma. What should I check?",
+      "expected_output": "A pre-handoff checklist and steps: libraries, modes, instances not detached, variables bound, states, themes, copy, accessibility annotations, compliance review, Section marked Ready for dev.",
+      "files": [],
+      "expectations": [
+        "Requires all fills, strokes, radius and spacing bound to variables",
+        "Requires light and dark (and PF if relevant) checks",
+        "Requires no detached instances and [gap] for missing components",
+        "Ends with marking the Section Ready for dev and a handoff note"
+      ]
+    }
+  ]
+}
