@@ -1,0 +1,17 @@
+{
+  "skill_name": "component-api-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the API for a new Banner component (info, success, warning, error, dismissible, optional action) for React, SwiftUI and Compose.",
+      "expected_output": "An API spec with anatomy, props table, variant and state matrix with invalid combinations, accessibility contract, content rules and a platform mapping table.",
+      "files": [],
+      "expectations": [
+        "Uses a variant enum instead of several booleans for status",
+        "Defines how the banner is announced to screen readers",
+        "Platform mapping covers React, SwiftUI and Compose",
+        "Lists invalid prop combinations"
+      ]
+    }
+  ]
+}

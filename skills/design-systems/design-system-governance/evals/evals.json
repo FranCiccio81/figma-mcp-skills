@@ -1,0 +1,17 @@
+{
+  "skill_name": "design-system-governance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We need to rename 40 color tokens. How do we release this without breaking product teams?",
+      "expected_output": "A plan applying semantic versioning, deprecated aliases, a migration guide, communication, usage measurement and a removal version.",
+      "files": [],
+      "expectations": [
+        "Treats renames as breaking unless aliased",
+        "Deprecated aliases with replacement names",
+        "Announces a removal version or date",
+        "Measures remaining usage before removal"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill_name": "material3-compose",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Convert this iOS settings screen design to Android with Jetpack Compose and our brand colors.",
+      "expected_output": "A Compose implementation using a Material 3 theme mapped from tokens, Material components, Android navigation conventions, insets handling, previews and tests.",
+      "files": [],
+      "expectations": [
+        "Replaces iOS-specific patterns with Material equivalents",
+        "Brand colors map to color scheme roles, not raw values in composables",
+        "Handles edge-to-edge insets",
+        "Touch targets are at least 48 dp",
+        "Includes previews at large font scale"
+      ]
+    }
+  ]
+}

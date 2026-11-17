@@ -1,0 +1,17 @@
+{
+  "skill_name": "android-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "TalkBack reads each line of our transaction list item separately and users get lost. Fix it in Compose.",
+      "expected_output": "A TalkBack specification and Compose changes merging the list item semantics with a meaningful description and custom actions, plus a device test.",
+      "files": [],
+      "expectations": [
+        "Uses mergeDescendants or equivalent to group the item",
+        "Keeps interactive children reachable or exposes them as custom actions",
+        "Amount and date are read in a spoken-friendly way",
+        "Includes a TalkBack device test"
+      ]
+    }
+  ]
+}
