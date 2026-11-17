@@ -162,18 +162,210 @@
       "last_reviewed": "2026-11-17"
     },
     {
-      "name": "bridge-design-system",
-      "domain": "design-systems",
-      "purpose": "Project-specific rules for the Bridge design system: four-tier token hierarchy (core, semantic, component, breakpoint), naming, Figma-to-token mappings and component conventions. Use when working inside a project that consumes Bridge: the user mentions Bridge, Bridge tokens or Bridge components, or when the repository contains Bridge token files. Do not use for other design systems.",
-      "path": "skills/design-systems/bridge-design-system",
+      "name": "bridge-accessibility",
+      "domain": "bridge",
+      "purpose": "Applies the Bridge 2.0 accessibility rules to Swissquote and PostFinance screens on web, iOS and Android: WCAG 2.2 AA floor and AAA targets for trade confirmation, authentication and fee disclosure, contrast of Bridge token pairs in light and dark, touch targets and focus ring tokens, text scaling limits, screen-reader patterns for financial rows, and known risky token pairings. Use when designing, building or reviewing a Bridge screen for accessibility, choosing token pairs for text or borders, or checking dark mode legibility.",
+      "path": "skills/bridge/bridge-accessibility",
       "sources": [
-        "designtokens.org"
+        "developer.apple.com",
+        "m3.material.io",
+        "w3.org"
       ],
       "trust": "project-specific",
-      "version": "2.0.0",
+      "version": "1.0.0",
       "status": "beta",
       "scope": "project",
       "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-android",
+      "domain": "bridge",
+      "purpose": "Design, review or build Swissquote Android phone screens with the Bridge 2.0 design system and Material 3 Expressive. Use this skill for any Swissquote or PostFinance Android work: phone mockups in Figma, Jetpack Compose screens, Material theme mapping, design critique, handoff specs, component choice (native vs custom Bridge), trade tickets, banking flows, font scaling, TalkBack, edge to edge, predictive back. Trigger on mentions of Android, Compose, Material, M3, Kotlin, Play Store, \"écran Android\", even when Bridge is not named. For Android tablets use bridge-tablet, for Android foldables use bridge-foldables.",
+      "path": "skills/bridge/bridge-android",
+      "sources": [
+        "developer.android.com",
+        "github.com",
+        "m3.material.io",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "0.2.1",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-compliance-review",
+      "domain": "bridge",
+      "purpose": "Reviews a Figma frame, a handoff spec or code against Bridge 2.0 and reports deviations by severity: component origin and status, detached instances, unbound values, tokens (exact names checked by a script against the colour token index), colour roles, states, themes, accessibility, data formats and financial-risk patterns. Use when a designer, developer or product manager asks whether a Swissquote or PostFinance screen, spec or pull request follows Bridge, before handoff, before merge, or during a design QA.",
+      "path": "skills/bridge/bridge-compliance-review",
+      "sources": [
+        "developer.apple.com",
+        "developers.figma.com",
+        "m3.material.io",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-content-and-formats",
+      "domain": "bridge",
+      "purpose": "Applies the Bridge 2.0 voice and data format rules to Swissquote and PostFinance interfaces: friendly-expert tone, sentence case, button labels that name the action, error and confirmation copy, and the formats for amounts, large numbers, dates, times, IBAN and phone numbers, with localisation rules. Use when someone writes or reviews copy, labels or error messages for a Swissquote or PostFinance screen, formats amounts or dates in a design or in code, or prepares strings for translation.",
+      "path": "skills/bridge/bridge-content-and-formats",
+      "sources": [
+        "developer.mozilla.org",
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-design-system",
+      "domain": "bridge",
+      "purpose": "Entry point to the Bridge 2.0 design system of Swissquote and PostFinance: what Bridge is, the rules that hold on every platform (two token levels, themes, component origins, principles), which Bridge skill to use for each platform and role (designer, developer, product manager), and how to report gaps or contribute. Use this skill when a request mentions Bridge, Swissquote or PostFinance design system, Bridge tokens or components, or when it is unclear which Bridge skill applies.",
+      "path": "skills/bridge/bridge-design-system",
+      "sources": [
+        "designtokens.org",
+        "developers.figma.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "3.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-designer-workflow",
+      "domain": "bridge",
+      "purpose": "Guides product designers working with Bridge 2.0 in Figma: library setup, frames and variable modes (themes, typography size), instances and property conventions, binding every fill, stroke, radius and spacing to variables, states, copy, accessibility annotations, self-check and handoff to developers. Use when a Swissquote or PostFinance designer creates or updates mockups, prepares a handoff, asks how to use a Bridge library or variable, or wants a pre-handoff check of a Figma file.",
+      "path": "skills/bridge/bridge-designer-workflow",
+      "sources": [
+        "developer.apple.com",
+        "developers.figma.com",
+        "m3.material.io",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Figma with access to the Bridge 2.0 libraries. The Figma MCP helps with self-checks but is not required.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-developer-workflow",
+      "domain": "bridge",
+      "purpose": "Guides developers implementing or reviewing Swissquote and PostFinance interfaces with Bridge 2.0 on web (React), iOS (SwiftUI) and Android (Compose): consuming semantic tokens per theme, mapping component origins to code, using Code Connect and Storybook first, central formatters for amounts and dates, states, tests and a pull request checklist. Use when a developer builds a Bridge screen or component, translates a Figma handoff to code, wires themes, or reviews a pull request against Bridge.",
+      "path": "skills/bridge/bridge-developer-workflow",
+      "sources": [
+        "developer.android.com",
+        "developer.apple.com",
+        "developers.figma.com",
+        "radix-ui.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-foldables",
+      "domain": "bridge",
+      "purpose": "Design, review or build Swissquote layouts for foldable phones (Apple iPhone Duo on iOS 27.1, Android foldables such as Galaxy Z Fold, Pixel Fold and flip devices) with the Bridge 2.0 design system. Use this skill whenever a Swissquote or PostFinance screen must work on a folding device: outer and inner display, fold and hinge, poses and postures (book, table, tabletop), continuity when unfolding, vertical bars, reserved regions, arrangement views, two pane layouts around the fold. Trigger on mentions of foldable, pliable, pliant, iPhone Duo, Fold, Flip, hinge, charnière, inner display, outer display, cover screen, dual screen, even when Bridge is not named.",
+      "path": "skills/bridge/bridge-foldables",
+      "sources": [
+        "developer.android.com",
+        "developer.apple.com",
+        "github.com"
+      ],
+      "trust": "project-specific",
+      "version": "0.2.1",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-ios",
+      "domain": "bridge",
+      "purpose": "Design, review or build Swissquote iPhone screens with the Bridge 2.0 design system, Apple HIG and iOS 27 Liquid Glass. Use this skill for any Swissquote or PostFinance iOS work: iPhone mockups in Figma, SwiftUI or UIKit screens, design critique, handoff specs, component choice (native vs custom Bridge), trade tickets, banking flows, Dynamic Type, VoiceOver, dark mode. Trigger on mentions of iOS, iPhone, SwiftUI, HIG, Liquid Glass, App Store, \"app Apple\", \"écran iPhone\", even when Bridge is not named. For iPad use bridge-tablet, for iPhone Duo use bridge-foldables.",
+      "path": "skills/bridge/bridge-ios",
+      "sources": [
+        "developer.apple.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "0.2.1",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-product-manager",
+      "domain": "bridge",
+      "purpose": "Helps product managers write and review requirements for Swissquote and PostFinance features so that they fit Bridge 2.0: design principles turned into requirements, financial-risk patterns (review and confirm, fees before commitment, step-up authentication), accessibility floor and targets, platform and theme scope, component availability as an effort and risk signal, copy and formats, and Bridge acceptance criteria. Use when a PM drafts or reviews a PRD, feature spec, user stories or release scope for a Swissquote or PostFinance product.",
+      "path": "skills/bridge/bridge-product-manager",
+      "sources": [
+        "developer.android.com",
+        "developer.apple.com",
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-tablet",
+      "domain": "bridge",
+      "purpose": "Design, review or build Swissquote tablet and large screen layouts (iPad with iPadOS 27 windowing, Android tablets) with the Bridge 2.0 design system. Use this skill whenever a Swissquote or PostFinance screen must work on iPad, an Android tablet, a resizable window, split screen, landscape, or with keyboard and pointer: adapting phone screens to tablet, list detail and multi pane layouts, sidebar and navigation rail, form sheets, reading width. Trigger on mentions of tablet, tablette, iPad, iPadOS, large screen, regular width, medium or expanded window, NavigationSplitView, navigation rail, split view, multitasking, even when Bridge is not named.",
+      "path": "skills/bridge/bridge-tablet",
+      "sources": [
+        "developer.android.com",
+        "developer.apple.com"
+      ],
+      "trust": "project-specific",
+      "version": "0.2.1",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-web",
+      "domain": "bridge",
+      "purpose": "Design, review or build Swissquote web interfaces with the Bridge 2.0 design system: eBanking and trading platforms, back office tools, dashboards, forms, tables, responsive pages, marketing pages. Use this skill for any Swissquote or PostFinance web work: Figma web mockups, React components, HTML and CSS, design critique, handoff specs, responsive behaviour, keyboard and screen reader accessibility, dark mode, theming. Trigger on mentions of web, desktop, browser, responsive, React, Storybook, CSS, breakpoint, dashboard, table, sidebar, eBanking, \"plateforme web\", even when Bridge is not named. For native apps use bridge-ios or bridge-android.",
+      "path": "skills/bridge/bridge-web",
+      "sources": [
+        "radix-ui.com",
+        "w3.org"
+      ],
+      "trust": "project-specific",
+      "version": "0.2.1",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.",
       "last_reviewed": "2026-11-17"
     },
     {

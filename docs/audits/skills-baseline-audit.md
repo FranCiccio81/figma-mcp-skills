@@ -75,3 +75,14 @@ Constats majeurs :
 2. Le skill `component` reste à son emplacement pour ne pas casser son usage actuel.
 3. Boussole, Pension Partner et cv-job-matching ne sont pas modifiés.
 4. Toute nouvelle connaissance est rédigée à partir de sources primaires vérifiées (voir `docs/sources/source-registry.md`).
+
+## 7. Complément du 2026-11-17 : intégration Bridge 2.0
+
+Source : archive `bridge-platform-skills.zip` v0.2 (5 skills plateforme et un fichier de foundations partagé), inspectée avant intégration (aucun script, aucun secret, `skills-ref` valide).
+
+Constats :
+* **Conflit de modèle de tokens.** Les règles de mars 2026 (`rules/bridge-design-system-rules.md`, `.claude/CLAUDE.md`, ancien skill `bridge-design-system`) imposent 4 tiers ; Bridge 2.0 a décidé 2 niveaux (primitives et sémantique), sans niveau composant hors exceptions nommées. Bridge 2.0 l'emporte ; les anciens fichiers portent désormais un avertissement.
+* **Noms de tokens.** Le vérificateur ajouté (`bridge-compliance-review/scripts/check_tokens.py`) confirme que les 5 skills plateforme ne citent que des noms de tokens couleur présents dans l'index exact, et rejette les erreurs documentées.
+* **Contrastes à risque** (calculés sur l'instantané, à confirmer sur les valeurs Figma en direct) : `data/up` et `data/down` en petit texte sur fond clair (environ 3.8:1) ; `data/down` sur la surface sombre (4.47:1) ; bordures `border/default` et `border/strong` en SQ Dark (environ 1.8:1) ; fonds primaires brand et destructive avec texte blanc (3.18:1) si le token `on-primary-text` est blanc. Détail : `skills/bridge/bridge-accessibility/references/contrast-matrix.md`.
+* **Duplication volontaire.** Le fichier de foundations est copié dans chaque skill Bridge pour rester autonome à l'installation ; une source unique et un contrôle CI empêchent les écarts.
+* **Confidentialité.** L'intégration publie davantage d'informations internes (clés de fichiers Figma, décisions de gouvernance) dans un dépôt public. Décision du propriétaire attendue.

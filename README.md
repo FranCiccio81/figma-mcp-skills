@@ -32,7 +32,8 @@ Le registre complet (version, statut, confiance, sources, compatibilité) est g�
 |---|---|
 | Produit | `product-discovery`, `jobs-to-be-done`, `value-proposition-design`, `opportunity-solution-tree`, `product-strategy`, `product-requirements`, `experiment-design`, `prioritization`, `product-metrics` |
 | UX | `ux-research-planning`, `usability-testing`, `heuristic-evaluation`, `journey-mapping`, `information-architecture`, `interaction-design`, `ux-writing`, `cognitive-accessibility`, `design-critique` |
-| Design systems | `design-token-architecture`, `component-api-design`, `design-system-governance`, `bridge-design-system` (spécifique projet) |
+| Design systems | `design-token-architecture`, `component-api-design`, `design-system-governance` |
+| Bridge 2.0 (Swissquote, PostFinance) | Entrée : `bridge-design-system`. Plateformes : `bridge-ios`, `bridge-android`, `bridge-tablet`, `bridge-foldables`, `bridge-web`. Rôles : `bridge-designer-workflow`, `bridge-developer-workflow`, `bridge-product-manager`. Transverses : `bridge-content-and-formats`, `bridge-accessibility`, `bridge-compliance-review` |
 | Apple | `apple-hig-review`, `swiftui-implementation`, `apple-accessibility` |
 | Android | `material3-compose`, `android-adaptive-layouts`, `android-accessibility` |
 | Ingénierie | `react-typescript-components`, `semantic-html-css`, `frontend-testing`, `frontend-performance`, `frontend-security`, `code-review`, `technical-specification` |
@@ -41,6 +42,18 @@ Le registre complet (version, statut, confiance, sources, compatibilité) est g�
 | Historique | `component` (dans `.claude/skills/component`, workflow composant DS en 6 actions) |
 
 Tous les nouveaux skills sont en statut `beta` : ils passent en `stable` après exécution et relecture de leurs évaluations (voir [l'architecture](docs/architecture/skill-architecture.md)).
+
+### Bridge 2.0 : quel skill pour qui
+
+| Rôle | Commencer par | Puis |
+|---|---|---|
+| Designer | `bridge-designer-workflow` | le skill de la plateforme, `bridge-accessibility`, `bridge-compliance-review` avant le handoff |
+| Développeur | `bridge-developer-workflow` | le skill de la plateforme, `bridge-content-and-formats` pour les formateurs, `bridge-compliance-review` avant le merge |
+| Product manager | `bridge-product-manager` | `product-requirements`, `bridge-content-and-formats`, `bridge-accessibility` |
+
+Règles communes : 2 niveaux de tokens (primitives jamais utilisées, tokens sémantiques seuls utilisés), 6 modes (SQ, Default, PF en clair et sombre), aucune valeur brute ni teinte par opacité, actions produit en encre sombre, orange de marque réservé aux moments de marque, Buy bleu et Sell rouge, WCAG 2.2 AA minimum et AAA visé sur confirmation d'ordre, authentification et frais.
+
+Les cinq skills plateforme proviennent de l'archive `bridge-platform-skills` v0.2 (12 novembre 2026), importés sans modification de fond puis complétés (métadonnées, sections, évaluations). L'instantané des foundations vit dans `skills/bridge/_shared/bridge-foundations.md` ; chaque skill Bridge en porte une copie synchronisée par `tools/sync_bridge_foundations.py` (vérifiée en CI). Le script `skills/bridge/bridge-compliance-review/scripts/check_tokens.py` vérifie les noms de tokens couleur contre l'index exact.
 
 ### Skills officiels recommandés en complément
 
@@ -66,7 +79,12 @@ tools/install.sh ~/.claude/skills --skill skill-router --skill accessibility-aud
 tools/install.sh /chemin/vers/mon-projet/.claude/skills --copy --domain product
 ```
 
-Le script n'écrase jamais un dossier existant sans `--force` et ignore les skills spécifiques à un projet (`bridge-design-system`) sans `--include-project`.
+Le script n'écrase jamais un dossier existant sans `--force` et ignore les skills spécifiques à un projet (tous les skills Bridge) sans `--include-project` :
+
+```bash
+# Tous les skills Bridge dans un projet Swissquote
+tools/install.sh /chemin/vers/app-swissquote/.claude/skills --domain bridge --include-project
+```
 
 ## Configuration Claude Code
 
@@ -123,6 +141,7 @@ Guide pas à pas historique : [docs/workflow-figma-mcp.md](docs/workflow-figma-m
 4. Vérifiez localement :
    ```bash
    pip install pyyaml
+   python3 tools/sync_bridge_foundations.py   # si les foundations Bridge ont changé
    python3 tools/validate_skills.py
    python3 tools/build_registry.py
    python3 -m unittest discover -s tools/tests -t .

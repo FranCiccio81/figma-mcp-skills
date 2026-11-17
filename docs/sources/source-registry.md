@@ -93,7 +93,17 @@ Sources primaires des skills `engineering/*` et `quality/visual-regression-qa`. 
 | https://www.producttalk.org/opportunity-solution-trees/ | Teresa Torres (auteure de la méthode) | Source primaire de la méthode | 4 |
 | https://developer.apple.com/documentation/xctest | Apple | Officiel | 5 |
 
-## 8. Candidats communautaires
+## 8. Bridge 2.0 (sources internes Swissquote)
+
+| Source | Propriétaire | Statut | Vérification | Confiance | Décision |
+|---|---|---|---|---|---|
+| Archive `bridge-platform-skills.zip` v0.2 (12 novembre 2026), fournie par le propriétaire du dépôt | Équipe design Swissquote | Interne | Inspectée (12 fichiers, aucun script, aucun secret ; `bridge-web` valide avec `skills-ref`) | 4 | **Adoptée** : 5 skills plateforme importés tels quels puis complétés (métadonnées, sections, evals) |
+| Figma Bridge 2.0 : Foundations, Components Library, Mobile library 2.0 (clés citées dans les skills) | Swissquote | Interne, source de vérité | Non lue dans cette session (lecture par le Figma MCP au moment de l'usage) | 5 | Source de vérité ; l'instantané `skills/bridge/_shared/bridge-foundations.md` sert de repli |
+| https://www.radix-ui.com/primitives | WorkOS (Radix UI) | Officiel du projet | Référencé | 4 | Primitives des composants React Bridge (comportement clavier et focus) |
+
+Risque : ces sources décrivent un design system d'entreprise. Leur publication dans un dépôt public relève d'une décision du propriétaire (voir l'audit).
+
+## 9. Candidats communautaires
 
 | Source | Licence | Dernière activité | Vérification | Analyse | Confiance | Décision |
 |---|---|---|---|---|---|---|
@@ -102,7 +112,7 @@ Sources primaires des skills `engineering/*` et `quality/visual-regression-qa`. 
 | https://github.com/flitzrrr/frontend-design-skills | MIT | 2026-04-06 | Inspecté | Inactif depuis 7 mois ; scripts de scraping ; référence WCAG 2.1 | 2 | **Rejeté.** |
 | https://github.com/wondelai/skills (41 entrées de `skills-lock.json`) | MIT (dépôt) | 2026-11-13 | Inspecté sommairement | Skills dérivés de livres sous droits ; la licence MIT du dépôt ne règle pas la question des œuvres sources | 2 | **Statu quo** : laissé dans le lockfile, revue de licence recommandée avant réutilisation dans des livrables. |
 
-## 9. Règles de mise à jour
+## 10. Règles de mise à jour
 
 1. Toute nouvelle source passe par ce registre avant d'être citée dans un skill.
 2. Un skill qui s'appuie sur une source *Référencée* pour un détail technique (nom d'API, seuil chiffré) doit la faire passer en *Vérifiée*.
