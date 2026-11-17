@@ -1,0 +1,690 @@
+{
+  "skills": [
+    {
+      "name": "figma-design-code-drift",
+      "domain": "ai-workflows",
+      "purpose": "Compares an implemented screen or component with its Figma source and produces a visual QA report of deviations (layout, spacing, typography, color, tokens, states, content, responsive behavior), each with evidence, severity and suggested fix. Use when the user asks whether the build matches the design, wants a design QA pass before release, or suspects design and code have drifted apart.",
+      "path": "skills/ai-workflows/figma-design-code-drift",
+      "sources": [
+        "designtokens.org",
+        "developers.figma.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Needs a way to render the implementation (browser, simulator or emulator screenshots). Figma MCP recommended; otherwise exported Figma frames.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "figma-design-to-code",
+      "domain": "ai-workflows",
+      "purpose": "Turns a Figma frame or component into production code that follows the target project's stack, components and design tokens, using whichever Figma MCP tools are actually available and a documented fallback when they are not. Use when the user shares a Figma link or selection and asks to implement, build, port or update UI from it (web, SwiftUI or Jetpack Compose), or to map Figma variables to code tokens.",
+      "path": "skills/ai-workflows/figma-design-to-code",
+      "sources": [
+        "developers.figma.com",
+        "github.com"
+      ],
+      "trust": "authored",
+      "version": "2.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Works best with the Figma MCP server (remote https://mcp.figma.com/mcp or desktop http://127.0.0.1:3845/mcp). Degrades to screenshot and manual-spec input without it.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "figma-spec-handoff",
+      "domain": "ai-workflows",
+      "purpose": "Produces an implementation-ready handoff specification (anatomy, variants, states, tokens, behavior, accessibility, content rules, open questions) from a Figma frame or component, without writing code. Use when a designer or developer asks to document, annotate or hand off a Figma design, write a component or screen spec, or prepare a Notion-ready handoff page.",
+      "path": "skills/ai-workflows/figma-spec-handoff",
+      "sources": [
+        "developers.figma.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "2.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Uses the Figma MCP server when available; otherwise works from screenshots and designer notes.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "skill-router",
+      "domain": "ai-workflows",
+      "purpose": "Selects which skills of this library apply to a request, based on intent, platform (Apple, Android, web), regulated domain and the project's design system, and states the precedence order to apply when their guidance conflicts. Use when starting any multi-step design, product or implementation request that spans several disciplines, or when the user asks which skills or guidelines should drive the work.",
+      "path": "skills/ai-workflows/skill-router",
+      "sources": [
+        "developer.android.com",
+        "developer.apple.com",
+        "github.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "android-accessibility",
+      "domain": "android",
+      "purpose": "Designs, implements and tests accessibility for Android apps built with Compose or Views: TalkBack semantics (labels, roles, states, headings, grouping, custom actions), focus order, font scaling up to 200 %, touch targets, color and contrast, Switch Access and keyboard, and testing with Accessibility Scanner and automated checks. Use when the user works on Android accessibility, TalkBack behavior, font scaling issues, or needs an Android accessibility review.",
+      "path": "skills/android/android-accessibility",
+      "sources": [
+        "developer.android.com",
+        "m3.material.io",
+        "w3.org"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "android-adaptive-layouts",
+      "domain": "android",
+      "purpose": "Designs and reviews adaptive Android layouts for phones, foldables, tablets, ChromeOS and desktop windows: window size classes, canonical layouts (list-detail, supporting pane, feed), adaptive navigation (bar, rail), posture and hinge handling, resizability and state preservation. Use when the user designs for large screens or foldables, asks which layout to use at which width, adapts a phone design to tablet, or prepares an app for Android 16 large-screen behavior.",
+      "path": "skills/android/android-adaptive-layouts",
+      "sources": [
+        "developer.android.com",
+        "github.com"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Implementation details evolve quickly; for code, install and follow the official `adaptive` skill from https://github.com/android/skills.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "material3-compose",
+      "domain": "android",
+      "purpose": "Designs and implements Android UI with Material Design 3 and Jetpack Compose: theme (color scheme roles, dynamic color, typography, shapes) mapped from design tokens, Material components, navigation patterns, edge-to-edge and insets, states, previews and Compose UI tests. Use when the user builds or reviews Android screens in Compose, converts a Figma design to Compose, sets up a Material 3 theme, or adapts an iOS or web design to Android conventions.",
+      "path": "skills/android/material3-compose",
+      "sources": [
+        "developer.android.com",
+        "github.com",
+        "m3.material.io"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Requires an Android project using Jetpack Compose. For deeper official workflows install the matching skills from https://github.com/android/skills.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "apple-accessibility",
+      "domain": "apple",
+      "purpose": "Designs, implements and tests accessibility on Apple platforms: VoiceOver labels, traits, grouping and focus order, Dynamic Type up to accessibility sizes, Voice Control, Switch Control, Full Keyboard Access, Reduce Motion and Transparency, Increase Contrast, and testing with Accessibility Inspector and UI test audits. Use when the user works on accessibility of an iOS, iPadOS, macOS, watchOS or visionOS app, asks about VoiceOver or Dynamic Type, or needs an Apple accessibility review.",
+      "path": "skills/apple/apple-accessibility",
+      "sources": [
+        "developer.apple.com",
+        "w3.org"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "apple-hig-review",
+      "domain": "apple",
+      "purpose": "Designs or reviews interfaces for Apple platforms (iOS, iPadOS, macOS, watchOS, visionOS) against the Human Interface Guidelines: navigation, system components, layout and adaptivity, typography and SF Symbols, materials including Liquid Glass, gestures and feedback, and platform-specific conventions. Use when the user designs an Apple app screen or flow, asks whether a design feels native, adapts an iPhone design to iPad, Mac, Watch or Vision Pro, or adopts the latest Apple design language.",
+      "path": "skills/apple/apple-hig-review",
+      "sources": [
+        "developer.apple.com"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "swiftui-implementation",
+      "domain": "apple",
+      "purpose": "Implements and reviews SwiftUI interfaces: view structure and state, navigation, native components, design tokens as a theme, Dynamic Type, accessibility modifiers, localization, Liquid Glass adoption with availability checks, previews and tests (Swift Testing, XCTest UI tests, accessibility audits). Use when the user builds or reviews SwiftUI code, converts a design to SwiftUI, adopts a new SwiftUI API, or writes tests for an Apple app.",
+      "path": "skills/apple/swiftui-implementation",
+      "sources": [
+        "developer.apple.com"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Requires Xcode and the Apple SDKs for the deployment targets. Check every API's availability against the project's minimum OS versions.",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "bridge-design-system",
+      "domain": "design-systems",
+      "purpose": "Project-specific rules for the Bridge design system: four-tier token hierarchy (core, semantic, component, breakpoint), naming, Figma-to-token mappings and component conventions. Use when working inside a project that consumes Bridge: the user mentions Bridge, Bridge tokens or Bridge components, or when the repository contains Bridge token files. Do not use for other design systems.",
+      "path": "skills/design-systems/bridge-design-system",
+      "sources": [
+        "designtokens.org"
+      ],
+      "trust": "project-specific",
+      "version": "2.0.0",
+      "status": "beta",
+      "scope": "project",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "component-api-design",
+      "domain": "design-systems",
+      "purpose": "Designs the public API of a design system component across Figma and code: anatomy, props and variants, states, slots and composition, naming, defaults, accessibility contract, responsive behavior and platform mapping (React, SwiftUI, Compose). Use when the user creates a new component, adds variants or props, reviews a component's API, aligns Figma component properties with code props, or prepares Code Connect.",
+      "path": "skills/design-systems/component-api-design",
+      "sources": [
+        "atlassian.design",
+        "carbondesignsystem.com",
+        "github.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "design-system-governance",
+      "domain": "design-systems",
+      "purpose": "Sets up and runs design system operations: contribution model and intake, decision rights, review checklist, semantic versioning and release process, deprecation and migration, documentation standards, adoption and health metrics. Use when the user defines how teams contribute to a design system, plans a release or breaking change, writes a changelog or migration guide, or measures design system adoption.",
+      "path": "skills/design-systems/design-system-governance",
+      "sources": [
+        "carbondesignsystem.com",
+        "designtokens.org",
+        "polaris.shopify.com",
+        "semver.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "design-token-architecture",
+      "domain": "design-systems",
+      "purpose": "Designs, audits or migrates a design token system: tiers (primitive, semantic, component), naming, theming and modes, the DTCG 2025.10 JSON format, Figma variables mapping, and the build pipeline to platforms (CSS, iOS, Android). Use when the user creates or restructures tokens, defines semantic or component tokens, maps Figma variables to code, adds dark mode or brands, or migrates tokens to the DTCG format.",
+      "path": "skills/design-systems/design-token-architecture",
+      "sources": [
+        "designtokens.org",
+        "developers.figma.com",
+        "w3.org"
+      ],
+      "trust": "official-derived",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "code-review",
+      "domain": "engineering",
+      "purpose": "Reviews code changes (pull requests, diffs) for correctness, security, accessibility, design system compliance, tests, readability and maintainability, and writes actionable, prioritized comments distinguishing blocking issues from suggestions. Use when the user asks to review a PR, a diff or a file, or wants a second opinion on a change before merging.",
+      "path": "skills/engineering/code-review",
+      "sources": [
+        "cheatsheetseries.owasp.org",
+        "google.github.io"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "frontend-performance",
+      "domain": "engineering",
+      "purpose": "Diagnoses and improves web frontend performance with measurement first: Core Web Vitals (LCP, INP, CLS) from field and lab data, loading strategy, JavaScript and rendering costs, images and fonts, caching, and performance budgets in CI. Use when the user reports a slow page or app, asks to improve Core Web Vitals or Lighthouse scores, reduce bundle size, or set performance budgets.",
+      "path": "skills/engineering/frontend-performance",
+      "sources": [
+        "developer.mozilla.org",
+        "web.dev"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "frontend-security",
+      "domain": "engineering",
+      "purpose": "Reviews and hardens web frontend security: XSS prevention and safe rendering, Content Security Policy and security headers, authentication token and session handling, CSRF, third-party scripts and supply chain, secrets in client code, sensitive data in logs and analytics, and secure forms for regulated domains. Use when the user builds or reviews a web frontend handling user data, authentication or payments, asks about XSS, CSP or CSRF, or prepares a security review.",
+      "path": "skills/engineering/frontend-security",
+      "sources": [
+        "cheatsheetseries.owasp.org",
+        "developer.mozilla.org",
+        "owasp.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "frontend-testing",
+      "domain": "engineering",
+      "purpose": "Plans and writes frontend tests at the right level: unit tests for logic, component tests that query by role and accessible name, end-to-end tests for critical journeys, accessibility checks, and visual tests, with stable, non-flaky practices. Use when the user adds tests to a web frontend, chooses between unit, component and end-to-end tests, fixes flaky tests, or reviews test quality.",
+      "path": "skills/engineering/frontend-testing",
+      "sources": [
+        "playwright.dev",
+        "testing-library.com",
+        "web.dev"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "react-typescript-components",
+      "domain": "engineering",
+      "purpose": "Builds and reviews React components in TypeScript: typed props that make invalid states unrepresentable, composition over configuration, controlled and uncontrolled patterns, accessibility semantics, design tokens instead of literals, state and effects discipline, and co-located tests and stories. Use when the user writes or refactors React components, designs a component's TypeScript API, or reviews React code for correctness, accessibility and maintainability.",
+      "path": "skills/engineering/react-typescript-components",
+      "sources": [
+        "react.dev",
+        "typescriptlang.org",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "semantic-html-css",
+      "domain": "engineering",
+      "purpose": "Writes and reviews semantic HTML and maintainable CSS: document structure and landmarks, forms, native elements before ARIA, CSS architecture with design tokens as custom properties, cascade layers, responsive and intrinsic layouts, container queries, logical properties for RTL, and user preferences (reduced motion, color scheme, contrast). Use when the user builds or reviews markup, page layouts, responsive behavior, or a CSS architecture.",
+      "path": "skills/engineering/semantic-html-css",
+      "sources": [
+        "developer.mozilla.org",
+        "w3.org",
+        "web.dev"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "technical-specification",
+      "domain": "engineering",
+      "purpose": "Writes or reviews a technical specification or design document: context and requirements, proposed architecture, data and API contracts, alternatives considered, security, privacy, accessibility, performance and observability, rollout and migration, risks and open questions, plus architecture decision records. Use when the user asks for a tech spec, RFC, design doc, ADR or implementation plan, or a review of one.",
+      "path": "skills/engineering/technical-specification",
+      "sources": [
+        "cheatsheetseries.owasp.org",
+        "google.github.io"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "component",
+      "domain": "legacy",
+      "purpose": "Design system component workflow. Spec, document, implement, review, spec-review, and audit DS components with Figma as primary input. 6 actions: spec, doc, dev, review, spec-review, audit. Auto-activates on: \"component\", \"spec component\", \"doc component\", \"dev component\", \"review component\", \"spec-review component\", \"audit component\", \"design system\", \"ds component\", \"component spec\", \"component doc\", \"component dev\", \"component review\", \"component spec-review\", \"component audit\".",
+      "path": ".claude/skills/component",
+      "sources": [],
+      "trust": "authored",
+      "version": "1.1",
+      "status": "stable",
+      "scope": "universal",
+      "compatibility": "Agent-agnostic. Works with Claude Code, OpenCode, Windsurf, Cursor, Codex, Aider, or any agent supporting SKILL.md.",
+      "last_reviewed": "n/a"
+    },
+    {
+      "name": "experiment-design",
+      "domain": "product",
+      "purpose": "Designs product experiments that can actually change a decision: hypothesis, method (A/B test, fake door, concierge, prototype test), primary and guardrail metrics, sample size and duration, decision rules set in advance, and analysis pitfalls. Use when the user wants to test an idea, run an A/B test, validate an assumption cheaply, or interpret experiment results.",
+      "path": "skills/product/experiment-design",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "jobs-to-be-done",
+      "domain": "product",
+      "purpose": "Applies Jobs-to-be-Done to understand why people adopt or switch products: plans switch interviews, extracts functional, emotional and social jobs, forces of progress, and writes job stories grounded in evidence. Use when the user mentions JTBD, job stories, why customers hire or fire a product, switching behavior, or wants needs framed independently of solutions.",
+      "path": "skills/product/jobs-to-be-done",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "opportunity-solution-tree",
+      "domain": "product",
+      "purpose": "Builds an opportunity solution tree that links one measurable outcome to customer opportunities (needs, pains, desires) found in research, then to candidate solutions and the assumption tests that de-risk them. Use when a team needs to choose what to work on toward an outcome, map research findings into opportunities, or avoid jumping from a goal straight to a feature.",
+      "path": "skills/product/opportunity-solution-tree",
+      "sources": [
+        "nngroup.com",
+        "producttalk.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "prioritization",
+      "domain": "product",
+      "purpose": "Prioritizes a backlog, roadmap or set of opportunities with an explicit, explainable method (RICE, cost of delay, Kano, opportunity scoring, MoSCoW for scoping), exposes the assumptions behind each score, and produces a ranked list with trade-offs. Use when the user must decide what to build first, compare initiatives, cut scope, or justify a priority order to stakeholders.",
+      "path": "skills/product/prioritization",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "product-discovery",
+      "domain": "product",
+      "purpose": "Structures product discovery for a problem space: frames the problem, maps assumptions by risk, chooses the cheapest evidence-gathering activities, and synthesizes what was learned into a decision (pursue, pivot, park). Use when the user explores a new product idea or problem area, asks whether a problem is worth solving, or needs a discovery plan before committing to a solution.",
+      "path": "skills/product/product-discovery",
+      "sources": [
+        "designcouncil.org.uk",
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "product-metrics",
+      "domain": "product",
+      "purpose": "Defines how product success is measured: outcome and guardrail metrics, metric definitions with formulas, a tracking plan (events, properties, ownership), privacy constraints, and a review routine. Use when the user asks which metrics or KPIs to track, needs a tracking or instrumentation plan, defines success metrics for a feature, or wants to analyze product analytics without misleading conclusions.",
+      "path": "skills/product/product-metrics",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "product-requirements",
+      "domain": "product",
+      "purpose": "Writes or reviews a product requirements document (PRD) or a feature specification: problem, evidence, goals and non-goals, users and scenarios, functional and non-functional requirements, acceptance criteria, success metrics, risks and open questions. Use when the user asks for a PRD, feature spec, user stories with acceptance criteria, or a review of an existing requirements document.",
+      "path": "skills/product/product-requirements",
+      "sources": [
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "product-strategy",
+      "domain": "product",
+      "purpose": "Drafts or reviews a product strategy: diagnosis of the situation, target segments, where to play and how to win, strategic bets with explicit assumptions, guardrails and the measures that show progress. Use when the user writes a product vision or strategy, defines annual bets or roadmap themes, evaluates a strategic option, or asks whether a plan is actually a strategy.",
+      "path": "skills/product/product-strategy",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "value-proposition-design",
+      "domain": "product",
+      "purpose": "Builds and stress-tests a value proposition by mapping customer jobs, pains and gains against products, pain relievers and gain creators, then defines the evidence needed to prove fit. Use when the user wants to articulate or sharpen a value proposition, check problem-solution fit, compare positioning options, or prepare messaging grounded in customer needs.",
+      "path": "skills/product/value-proposition-design",
+      "sources": [
+        "nngroup.com",
+        "strategyzer.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "accessibility-audit",
+      "domain": "quality",
+      "purpose": "Audits a design (Figma, screenshots) or an implementation (web, iOS, Android) against WCAG 2.2 level AA and platform accessibility guidance, and reports each finding with success criterion, evidence, severity, confidence, effort and fix. Use when the user asks for an accessibility or WCAG review, a contrast or target-size check, a screen-reader or keyboard review, or an accessibility conformance summary.",
+      "path": "skills/quality/accessibility-audit",
+      "sources": [
+        "developer.apple.com",
+        "m3.material.io",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "2.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "visual-regression-qa",
+      "domain": "quality",
+      "purpose": "Sets up and reviews visual regression testing for UI components and screens: choosing what to capture, stabilizing snapshots, configuring thresholds, and triaging diffs as regression, intended change or flake. Use when the user wants screenshot or snapshot tests, a visual QA gate in CI, or help reviewing failing visual diffs on web, iOS or Android.",
+      "path": "skills/quality/visual-regression-qa",
+      "sources": [
+        "developer.apple.com",
+        "github.com",
+        "playwright.dev"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "cognitive-accessibility",
+      "domain": "ux",
+      "purpose": "Reviews and designs for cognitive and learning accessibility: memory load, attention, language complexity, predictability, error tolerance, time limits and authentication, following W3C cognitive accessibility guidance and the related WCAG 2.2 criteria. Use when the user asks about cognitive load, plain language, users with dyslexia, ADHD, memory or learning disabilities, older users, or simplifying complex flows such as finance or health tasks.",
+      "path": "skills/ux/cognitive-accessibility",
+      "sources": [
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "design-critique",
+      "domain": "ux",
+      "purpose": "Gives structured, principle-based design critique on screens, flows or visual directions: restates the goal, evaluates hierarchy, layout, typography, color, consistency, usability and accessibility, and separates blocking issues from suggestions. Use when the user shares a design and asks for feedback, a critique, a review before a stakeholder presentation, or a comparison between design options.",
+      "path": "skills/ux/design-critique",
+      "sources": [
+        "developer.apple.com",
+        "m3.material.io",
+        "nngroup.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "heuristic-evaluation",
+      "domain": "ux",
+      "purpose": "Runs an expert heuristic evaluation (UX audit) of a screen, flow or product using Nielsen's ten usability heuristics plus platform conventions, and reports each issue with evidence, severity, confidence, impact and effort. Use when the user asks for a UX audit, expert review, usability review of screens, or a prioritized list of UX problems without running a user test.",
+      "path": "skills/ux/heuristic-evaluation",
+      "sources": [
+        "developer.apple.com",
+        "m3.material.io",
+        "nngroup.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "information-architecture",
+      "domain": "ux",
+      "purpose": "Designs or audits information architecture: content inventory, user mental models, grouping and labeling, navigation structure and sitemap, validated with card sorting and tree testing. Use when the user asks to organize content or features, design navigation or a sitemap, rename menu items, plan a card sort or tree test, or fix findability problems.",
+      "path": "skills/ux/information-architecture",
+      "sources": [
+        "designsystem.digital.gov",
+        "nngroup.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "interaction-design",
+      "domain": "ux",
+      "purpose": "Designs task flows and interactions: user flow with entry points and exits, screen states (empty, loading, error, success, partial), feedback and transitions, input and validation behavior, and the right prototype fidelity to test it. Use when the user designs or reviews a flow (onboarding, checkout, sign-up, settings), defines component or screen states, plans microinteractions, or asks what to prototype.",
+      "path": "skills/ux/interaction-design",
+      "sources": [
+        "developer.apple.com",
+        "m3.material.io",
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "journey-mapping",
+      "domain": "ux",
+      "purpose": "Creates customer journey maps and service blueprints from evidence: stages, user actions, thoughts and emotions, touchpoints, frontstage and backstage processes, support systems, pain points and opportunities. Use when the user wants a journey map, an experience map, a service blueprint, an end-to-end view across channels, or to find where a service breaks between teams.",
+      "path": "skills/ux/journey-mapping",
+      "sources": [
+        "nngroup.com",
+        "thisisservicedesigndoing.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "usability-testing",
+      "domain": "ux",
+      "purpose": "Plans, runs and reports usability tests of prototypes or live products: goals, realistic task scenarios, moderated or unmoderated setup, metrics (task success, errors, time, confidence), think-aloud facilitation, and a findings report with severity and evidence. Use when the user wants to test a design with users, write usability tasks or a test script, or analyze usability session results.",
+      "path": "skills/ux/usability-testing",
+      "sources": [
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "ux-research-planning",
+      "domain": "ux",
+      "purpose": "Plans user research that answers a real decision: research questions, method choice, participant criteria and screener, consent and privacy, interview or discussion guide with neutral questions, and synthesis approach. Use when the user needs a research plan, an interview guide, a screener, help choosing between research methods, or a synthesis of interview notes into findings.",
+      "path": "skills/ux/ux-research-planning",
+      "sources": [
+        "nngroup.com",
+        "thisisservicedesigndoing.com"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    },
+    {
+      "name": "ux-writing",
+      "domain": "ux",
+      "purpose": "Writes and reviews interface copy: buttons, labels, helper text, error messages, empty states, confirmations, notifications and onboarding, following a voice and tone, plain-language and localization rules. Use when the user asks for microcopy, error message wording, button labels, a content review of screens, or a UX writing style guide.",
+      "path": "skills/ux/ux-writing",
+      "sources": [
+        "designsystem.digital.gov",
+        "nngroup.com",
+        "w3.org"
+      ],
+      "trust": "authored",
+      "version": "1.0.0",
+      "status": "beta",
+      "scope": "universal",
+      "compatibility": "Agent Skills compatible clients",
+      "last_reviewed": "2026-11-17"
+    }
+  ]
+}

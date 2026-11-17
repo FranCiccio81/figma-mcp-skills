@@ -13,7 +13,7 @@ La popularité (étoiles GitHub) n'a été utilisée comme critère pour aucune 
 
 | Source | Propriétaire | Statut | Licence | Dernière activité | Vérification | Confiance | Pertinence | Décision |
 |---|---|---|---|---|---|---|---|---|
-| https://github.com/agentskills/agentskills (spécification `docs/specification.mdx`, validateur `skills-ref`) | Projet Agent Skills (initié par Anthropic) | Officiel | Apache-2.0 | 2026-11-04 | Inspecté | 5 | 5 | **Adopté** comme norme. Règles de frontmatter réimplémentées dans `tools/validate_skills.py`. `skills-ref` (déclaré « démonstration ») exécuté en CI en complément, épinglé sur un commit. |
+| https://github.com/agentskills/agentskills (spécification `docs/specification.mdx`, validateur `skills-ref`) | Projet Agent Skills (initié par Anthropic) | Officiel | Apache-2.0 | 2026-11-04 | Inspecté | 5 | 5 | **Adopté** comme norme. Règles de frontmatter réimplémentées dans `tools/validate_skills.py`. `skills-ref` (déclaré outil de démonstration par ses auteurs) exécuté en CI en complément, épinglé sur un commit. |
 | https://agentskills.io/specification | Projet Agent Skills | Officiel | Apache-2.0 | n/a | URL bloquée par le proxy de session ; contenu identique lu dans le dépôt source | 5 | 5 | Adopté (via le dépôt) |
 | https://github.com/anthropics/skills | Anthropic | Officiel | Apache-2.0 par skill (`LICENSE.txt`) | 2026-11-16 | Inspecté (20 skills, aucune exécution) | 5 | 3 | **Référencé, non copié.** `skill-creator` fournit le schéma `evals/evals.json` repris ici. `frontend-design` et `webapp-testing` recommandés à l'installation. |
 | https://github.com/android/skills | Google (Android) | Officiel | Apache-2.0 | 2026-11-15 | Inspecté (37 skills ; validés avec `skills-ref`) | 5 | 5 | **Adopté par référence.** Nos skills Android délèguent l'implémentation détaillée à `edge-to-edge`, `adaptive`, `navigation-3`, `testing-setup`, `migrate-xml-views-to-jetpack-compose`. Note de sécurité : `devtools/android-cli` contient `curl … \| bash` vers `dl.google.com` (domaine officiel) ; ne jamais l'exécuter automatiquement. |
@@ -75,7 +75,25 @@ Cadres utilisés de façon critique, sans reproduction de contenu protégé.
 | https://www.thisisservicedesigndoing.com/ | Blueprint de service, méthodes | 4 |
 | Teresa Torres, *Continuous Discovery Habits* (2021) | Opportunity Solution Tree (concept cité, non reproduit) | 4 |
 
-## 7. Candidats communautaires
+## 7. Ingénierie frontend et qualité
+
+Sources primaires des skills `engineering/*` et `quality/visual-regression-qa`. Statut *Référencé* : URL canoniques des éditeurs, contenu non relu en détail dans cette session.
+
+| Source | Propriétaire | Statut | Confiance |
+|---|---|---|---|
+| https://react.dev/ | Meta (React) | Officiel | 5 |
+| https://www.typescriptlang.org/docs/ | Microsoft | Officiel | 5 |
+| https://developer.mozilla.org/ | Mozilla | Référence de facto | 5 |
+| https://web.dev/ | Google Chrome | Officiel (Core Web Vitals : LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1 au 75e centile) | 5 |
+| https://testing-library.com/docs/guiding-principles | Testing Library | Officiel du projet | 4 |
+| https://playwright.dev/docs/intro | Microsoft (Playwright) | Officiel | 5 |
+| https://owasp.org/ et https://cheatsheetseries.owasp.org/ | OWASP Foundation | Référence sécurité | 5 |
+| https://google.github.io/eng-practices/ | Google | Guide public de revue de code | 4 |
+| https://semver.org/ | Projet SemVer | Spécification | 5 |
+| https://www.producttalk.org/opportunity-solution-trees/ | Teresa Torres (auteure de la méthode) | Source primaire de la méthode | 4 |
+| https://developer.apple.com/documentation/xctest | Apple | Officiel | 5 |
+
+## 8. Candidats communautaires
 
 | Source | Licence | Dernière activité | Vérification | Analyse | Confiance | Décision |
 |---|---|---|---|---|---|---|
@@ -84,7 +102,7 @@ Cadres utilisés de façon critique, sans reproduction de contenu protégé.
 | https://github.com/flitzrrr/frontend-design-skills | MIT | 2026-04-06 | Inspecté | Inactif depuis 7 mois ; scripts de scraping ; référence WCAG 2.1 | 2 | **Rejeté.** |
 | https://github.com/wondelai/skills (41 entrées de `skills-lock.json`) | MIT (dépôt) | 2026-11-13 | Inspecté sommairement | Skills dérivés de livres sous droits ; la licence MIT du dépôt ne règle pas la question des œuvres sources | 2 | **Statu quo** : laissé dans le lockfile, revue de licence recommandée avant réutilisation dans des livrables. |
 
-## 8. Règles de mise à jour
+## 9. Règles de mise à jour
 
 1. Toute nouvelle source passe par ce registre avant d'être citée dans un skill.
 2. Un skill qui s'appuie sur une source *Référencée* pour un détail technique (nom d'API, seuil chiffré) doit la faire passer en *Vérifiée*.
