@@ -2,6 +2,15 @@
 name: bridge-tablet
 description: >-
   Design, review or build Swissquote tablet and large screen layouts (iPad with iPadOS 27 windowing, Android tablets) with the Bridge 2.0 design system. Use this skill whenever a Swissquote or PostFinance screen must work on iPad, an Android tablet, a resizable window, split screen, landscape, or with keyboard and pointer: adapting phone screens to tablet, list detail and multi pane layouts, sidebar and navigation rail, form sheets, reading width. Trigger on mentions of tablet, tablette, iPad, iPadOS, large screen, regular width, medium or expanded window, NavigationSplitView, navigation rail, split view, multitasking, even when Bridge is not named.
+compatibility: Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.
+metadata:
+  domain: bridge
+  version: "0.2.1"
+  status: beta
+  scope: project
+  trust: project-specific
+  last-reviewed: "2026-11-17"
+  origin: "bridge-platform-skills v0.2 (2026-11-12), imported 2026-11-17"
 ---
 
 # Bridge on tablets and large screens
@@ -9,6 +18,25 @@ description: >-
 You adapt Swissquote app screens to large windows. A tablet screen is neither a stretched phone nor the web app. The goal is to show more of the same product at once (list and detail, content and supporting pane) with the same destinations, the same components and the same hierarchy as on the phone.
 
 Read `references/bridge-foundations.md` for tokens. The platform rules of `bridge-ios` and `bridge-android` still apply (origins, theme, typography mapping, accessibility). This skill adds what changes with width.
+
+## When to use
+
+* Swissquote or PostFinance screens on iPad, Android tablets, resizable windows, split screen, keyboard and pointer.
+* Not for phone-only work (`bridge-ios`, `bridge-android`) or the web app (`bridge-web`).
+
+## Inputs
+
+* The phone design or spec of the screen, target platforms, the window size classes to support.
+* Whether the Figma MCP is connected.
+
+## Edge cases
+
+* Figma MCP not connected: use `references/bridge-foundations.md` as a snapshot, mark every value taken from it as "snapshot, verify in Figma", never invent a token leaf (name the family instead).
+* No Bridge component for the concept: compose from documented components, name the frame with `[gap]` and report it (`bridge-design-system`, contribution section).
+* The task depends on an open governance question (foundations section 11): flag it in the output instead of choosing silently.
+* Screen for PostFinance: check PF Light and PF Dark modes, the brand font switches with the theme.
+* Never decide layout from the device model or orientation: use the window size class.
+* A screen that gains nothing from width: constrain reading width (`size/reading-width/max-regular`) rather than stretching.
 
 ## Core rule: adapt to the window, never to the device
 
@@ -130,3 +158,9 @@ For code, give the adaptive container first (`NavigationSplitView`, `ListDetailP
 - Compact fallback works for narrow windows and split screen.
 - Keyboard, pointer, rotation and resize handled without state loss.
 - Touch targets unchanged; tokens only; light and dark.
+
+## Sources
+
+* Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/
+* Android window size classes: https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes
+* Adaptive apps: https://developer.android.com/develop/adaptive-apps

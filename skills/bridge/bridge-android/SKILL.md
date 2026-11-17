@@ -2,6 +2,15 @@
 name: bridge-android
 description: >-
   Design, review or build Swissquote Android phone screens with the Bridge 2.0 design system and Material 3 Expressive. Use this skill for any Swissquote or PostFinance Android work: phone mockups in Figma, Jetpack Compose screens, Material theme mapping, design critique, handoff specs, component choice (native vs custom Bridge), trade tickets, banking flows, font scaling, TalkBack, edge to edge, predictive back. Trigger on mentions of Android, Compose, Material, M3, Kotlin, Play Store, "écran Android", even when Bridge is not named. For Android tablets use bridge-tablet, for Android foldables use bridge-foldables.
+compatibility: Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.
+metadata:
+  domain: bridge
+  version: "0.2.1"
+  status: beta
+  scope: project
+  trust: project-specific
+  last-reviewed: "2026-11-17"
+  origin: "bridge-platform-skills v0.2 (2026-11-12), imported 2026-11-17"
 ---
 
 # Bridge on Android (phone)
@@ -10,11 +19,36 @@ You help designers and developers produce Swissquote Android screens that behave
 
 Read `references/bridge-foundations.md` before choosing any colour, size or text style.
 
+## When to use
+
+* Any Swissquote or PostFinance Android phone work: mockups, Jetpack Compose code, Material theme mapping, review, handoff.
+* Not for Android tablets (`bridge-tablet`), foldables (`bridge-foldables`), or Android work outside Swissquote products (`material3-compose`).
+
+## Inputs
+
+* Brief, Figma frame or existing code; target themes; `minSdk` and `targetSdk`.
+* Whether the Figma MCP is connected.
+
+## Edge cases
+
+* Figma MCP not connected: use `references/bridge-foundations.md` as a snapshot, mark every value taken from it as "snapshot, verify in Figma", never invent a token leaf (name the family instead).
+* No Bridge component for the concept: compose from documented components, name the frame with `[gap]` and report it (`bridge-design-system`, contribution section).
+* The task depends on an open governance question (foundations section 11): flag it in the output instead of choosing silently.
+* Screen for PostFinance: check PF Light and PF Dark modes, the brand font switches with the theme.
+* Do not port the iOS design: bars, back navigation, dialogs, radii and heights differ on purpose.
+* Apps targeting Android 16 (API 36) cannot opt out of edge-to-edge: insets must be handled.
+
 ## Sources, in order of authority
 
 1. Live Figma files through the Figma MCP when connected: Foundations (`jnTucpT3dDk7LLnbKjXavK`, including the `Android` and `05mobile` collections), Mobile library 2.0 (`ZaE1qygacCTQHZBSC9YEB7`). Each component set has a structured description with an `Android:` line naming the Compose API. Read it before placing the component.
 2. This skill and its reference file.
 3. Material 3 guidelines and developer.android.com for anything not covered. This file reflects Material 3 Expressive (Compose Material 3 1.4 stable, 1.5 beta). Check the current docs for API status.
+
+Official references:
+* Material Design 3: https://m3.material.io/
+* Jetpack Compose: https://developer.android.com/develop/ui/compose
+* Official Android agent skills: https://github.com/android/skills
+* WCAG 2.2: https://www.w3.org/TR/WCAG22/
 
 ## Step 1: pick the origin of each component
 

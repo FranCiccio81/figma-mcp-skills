@@ -2,6 +2,15 @@
 name: bridge-ios
 description: >-
   Design, review or build Swissquote iPhone screens with the Bridge 2.0 design system, Apple HIG and iOS 27 Liquid Glass. Use this skill for any Swissquote or PostFinance iOS work: iPhone mockups in Figma, SwiftUI or UIKit screens, design critique, handoff specs, component choice (native vs custom Bridge), trade tickets, banking flows, Dynamic Type, VoiceOver, dark mode. Trigger on mentions of iOS, iPhone, SwiftUI, HIG, Liquid Glass, App Store, "app Apple", "écran iPhone", even when Bridge is not named. For iPad use bridge-tablet, for iPhone Duo use bridge-foldables.
+compatibility: Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.
+metadata:
+  domain: bridge
+  version: "0.2.1"
+  status: beta
+  scope: project
+  trust: project-specific
+  last-reviewed: "2026-11-17"
+  origin: "bridge-platform-skills v0.2 (2026-11-12), imported 2026-11-17"
 ---
 
 # Bridge on iOS (iPhone)
@@ -10,11 +19,35 @@ You help designers and developers produce Swissquote iPhone screens that feel na
 
 Read `references/bridge-foundations.md` before choosing any colour, size or text style. It holds the token grammar, values and the data format rules.
 
+## When to use
+
+* Any Swissquote or PostFinance iPhone work: mockups, SwiftUI or UIKit code, review, handoff, component choice.
+* Not for iPad (`bridge-tablet`), iPhone Duo (`bridge-foldables`), or iOS work outside Swissquote products (`apple-hig-review`, `swiftui-implementation`).
+
+## Inputs
+
+* Brief, Figma frame or existing code; target themes (SQ, PF; light and dark); minimum iOS version.
+* Whether the Figma MCP is connected (live variables beat the snapshot).
+
+## Edge cases
+
+* Figma MCP not connected: use `references/bridge-foundations.md` as a snapshot, mark every value taken from it as "snapshot, verify in Figma", never invent a token leaf (name the family instead).
+* No Bridge component for the concept: compose from documented components, name the frame with `[gap]` and report it (`bridge-design-system`, contribution section).
+* The task depends on an open governance question (foundations section 11): flag it in the output instead of choosing silently.
+* Screen for PostFinance: check PF Light and PF Dark modes, the brand font switches with the theme.
+* Bridge and the HIG disagree: the platform wins on behaviour, Bridge on appearance.
+* Liquid Glass or other APIs newer than the deployment target: provide the fallback surface and gate the API.
+
 ## Sources, in order of authority
 
 1. Live Figma files through the Figma MCP when connected: Foundations (`jnTucpT3dDk7LLnbKjXavK`), Mobile library 2.0 (`ZaE1qygacCTQHZBSC9YEB7`), web Components Library (`IL9AFNRoFqsJBPwjYlP3lT`). Every mobile component set has a structured description (Purpose, Use when, Do not use, iOS, Android, Accessibility, Properties, Tokens). Read it before placing the component.
 2. This skill and its reference file.
 3. Apple Human Interface Guidelines for anything not covered. Check the current HIG online for OS specifics; iOS changes every year and this file reflects iOS 27.
+
+Official references:
+* Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/
+* Adopting Liquid Glass: https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
+* WCAG 2.2: https://www.w3.org/TR/WCAG22/
 
 ## Step 1: pick the origin of each component
 

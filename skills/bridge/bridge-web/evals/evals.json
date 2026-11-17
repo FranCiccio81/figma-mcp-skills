@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-web",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Spec the 'Payments to validate' page for the eBanking web platform.",
+      "expected_output": "A page spec with shell, grid, components with status, responsive layouts for Large, Medium and Small, states, tokens, accessibility and gaps.",
+      "files": [],
+      "expectations": [
+        "Defines Large, Medium and Small layouts and reflow at 320",
+        "Uses product actions, not brand orange",
+        "Table has numeric columns right aligned and sortable headers with aria-sort",
+        "Notes component status (stable, ready, work in progress)"
+      ]
+    }
+  ]
+}

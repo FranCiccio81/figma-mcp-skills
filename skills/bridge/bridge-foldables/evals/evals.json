@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-foldables",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "What changes for the trade ticket on an Android foldable and iPhone Duo?",
+      "expected_output": "A spec covering outer and inner displays, the fold, postures and continuity, with a note to verify current platform guidance.",
+      "files": [],
+      "expectations": [
+        "Keeps controls and key figures off the fold",
+        "Preserves the order in progress when folding or unfolding",
+        "Asks to verify current iPhone Duo guidance",
+        "Reuses tablet layouts for the inner display"
+      ]
+    }
+  ]
+}

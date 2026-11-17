@@ -2,6 +2,15 @@
 name: bridge-web
 description: >-
   Design, review or build Swissquote web interfaces with the Bridge 2.0 design system: eBanking and trading platforms, back office tools, dashboards, forms, tables, responsive pages, marketing pages. Use this skill for any Swissquote or PostFinance web work: Figma web mockups, React components, HTML and CSS, design critique, handoff specs, responsive behaviour, keyboard and screen reader accessibility, dark mode, theming. Trigger on mentions of web, desktop, browser, responsive, React, Storybook, CSS, breakpoint, dashboard, table, sidebar, eBanking, "plateforme web", even when Bridge is not named. For native apps use bridge-ios or bridge-android.
+compatibility: Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.
+metadata:
+  domain: bridge
+  version: "0.2.1"
+  status: beta
+  scope: project
+  trust: project-specific
+  last-reviewed: "2026-11-17"
+  origin: "bridge-platform-skills v0.2 (2026-11-12), imported 2026-11-17"
 ---
 
 # Bridge on the web
@@ -10,6 +19,25 @@ You help designers and developers produce Swissquote web interfaces from Bridge 
 
 Read `references/bridge-foundations.md` before choosing any colour, size or text style.
 
+## When to use
+
+* Any Swissquote or PostFinance web work: eBanking and trading platforms, back office, dashboards, forms, tables, marketing pages, React code, review, handoff.
+* Not for native apps (`bridge-ios`, `bridge-android`). Generic web work outside Swissquote: `react-typescript-components`, `semantic-html-css`.
+
+## Inputs
+
+* Brief, Figma frame or existing code; breakpoints to deliver; themes; component status in the library.
+* Whether the Figma MCP, Code Connect and Storybook are available.
+
+## Edge cases
+
+* Figma MCP not connected: use `references/bridge-foundations.md` as a snapshot, mark every value taken from it as "snapshot, verify in Figma", never invent a token leaf (name the family instead).
+* No Bridge component for the concept: compose from documented components, name the frame with `[gap]` and report it (`bridge-design-system`, contribution section).
+* The task depends on an open governance question (foundations section 11): flag it in the output instead of choosing silently.
+* Screen for PostFinance: check PF Light and PF Dark modes, the brand font switches with the theme.
+* Component marked work in progress: use it and say so in the handoff; planned: compose and mark `[gap]`.
+* Buttons on an inverse surface inside a theme: no token set exists yet; do not place buttons there.
+
 ## Sources, in order of authority
 
 1. Live Figma files through the Figma MCP when connected: Foundations (`jnTucpT3dDk7LLnbKjXavK`) and Components Library (`IL9AFNRoFqsJBPwjYlP3lT`). Code Connect mappings and Storybook when available: prefer the coded Bridge component and its props to anything rebuilt.
@@ -17,6 +45,11 @@ Read `references/bridge-foundations.md` before choosing any colour, size or text
 3. WAI-ARIA Authoring Practices and WCAG 2.2 for behaviour not documented in Bridge.
 
 Each Bridge component page documents design guidelines, technical guidelines and examples in context. Read the page before using a component in a new way.
+
+Official references:
+* WAI-ARIA Authoring Practices: https://www.w3.org/WAI/ARIA/apg/
+* WCAG 2.2: https://www.w3.org/TR/WCAG22/
+* Radix UI primitives (used by the Bridge React components): https://www.radix-ui.com/primitives
 
 ## Step 1: use the component, check its status
 

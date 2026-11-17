@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-tablet",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Adapt our iPhone portfolio screen to iPad and Android tablets.",
+      "expected_output": "A layout spec per window size class with navigation changes, list-detail or supporting pane choices, reading width and input behaviour, same destinations as phone.",
+      "files": [],
+      "expectations": [
+        "Decides layout by window size class, not device",
+        "Keeps the same destinations and hierarchy as the phone",
+        "Uses a sidebar or navigation rail at larger widths",
+        "Constrains reading width with the mobile token"
+      ]
+    }
+  ]
+}

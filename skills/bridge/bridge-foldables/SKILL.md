@@ -2,6 +2,15 @@
 name: bridge-foldables
 description: >-
   Design, review or build Swissquote layouts for foldable phones (Apple iPhone Duo on iOS 27.1, Android foldables such as Galaxy Z Fold, Pixel Fold and flip devices) with the Bridge 2.0 design system. Use this skill whenever a Swissquote or PostFinance screen must work on a folding device: outer and inner display, fold and hinge, poses and postures (book, table, tabletop), continuity when unfolding, vertical bars, reserved regions, arrangement views, two pane layouts around the fold. Trigger on mentions of foldable, pliable, pliant, iPhone Duo, Fold, Flip, hinge, charnière, inner display, outer display, cover screen, dual screen, even when Bridge is not named.
+compatibility: Swissquote and PostFinance products only. Reads the Bridge Figma libraries through the Figma MCP when connected; otherwise uses the bundled foundations snapshot.
+metadata:
+  domain: bridge
+  version: "0.2.1"
+  status: beta
+  scope: project
+  trust: project-specific
+  last-reviewed: "2026-11-17"
+  origin: "bridge-platform-skills v0.2 (2026-11-12), imported 2026-11-17"
 ---
 
 # Bridge on foldables
@@ -11,6 +20,25 @@ A foldable is one device with two window sizes and a set of physical positions. 
 Read `references/bridge-foundations.md` for tokens. Platform rules come from `bridge-ios` and `bridge-android`; multi pane layouts come from `bridge-tablet`.
 
 Foldable guidance is recent and moving, especially for iPhone Duo (announced September 2026, iOS 27.1). Before final specs or code, check the current Apple HIG page "Designing for iPhone Duo" and the Android large screen and foldable documentation. Treat API names below as accurate at the time of writing and verify their availability.
+
+## When to use
+
+* Swissquote or PostFinance screens on foldable phones: outer and inner displays, fold, postures, continuity.
+* Size-class adaptation itself is covered by `bridge-tablet`; platform rules by `bridge-ios` and `bridge-android`.
+
+## Inputs
+
+* The phone and tablet designs of the screen, target devices, the postures to support.
+* Current platform documentation: foldable guidance is recent and moving.
+
+## Edge cases
+
+* Figma MCP not connected: use `references/bridge-foundations.md` as a snapshot, mark every value taken from it as "snapshot, verify in Figma", never invent a token leaf (name the family instead).
+* No Bridge component for the concept: compose from documented components, name the frame with `[gap]` and report it (`bridge-design-system`, contribution section).
+* The task depends on an open governance question (foundations section 11): flag it in the output instead of choosing silently.
+* Screen for PostFinance: check PF Light and PF Dark modes, the brand font switches with the theme.
+* iPhone Duo guidance could not be verified against Apple's page when this skill was written: verify the current HIG before final specs or code.
+* Nothing interactive or important may sit on the fold.
 
 ## The mental model
 
@@ -127,3 +155,9 @@ States, accessibility, gaps, items to verify against current platform docs
 - Folding and unfolding lose no state and trigger no financial action.
 - No device model check, no fixed width, no orientation check.
 - Platform facts verified against the current HIG and Android documentation.
+
+## Sources
+
+* Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/
+* Android adaptive apps and foldables: https://developer.android.com/develop/adaptive-apps
+* Official Android `adaptive` skill: https://github.com/android/skills

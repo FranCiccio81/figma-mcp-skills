@@ -1,0 +1,17 @@
+{
+  "skill_name": "bridge-android",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this Compose screen for a Swissquote transfer: it uses a custom bottom bar copied from iOS and hex colours.",
+      "expected_output": "Findings by severity citing component origin, Material behaviour, tokens and states, with fixes.",
+      "files": [],
+      "expectations": [
+        "Flags the iOS-style bottom bar and asks for the Material navigation component themed by Bridge",
+        "Flags hex colours and names the semantic tokens to use",
+        "Checks edge-to-edge insets and 48 dp targets",
+        "Checks the review step before the transfer"
+      ]
+    }
+  ]
+}

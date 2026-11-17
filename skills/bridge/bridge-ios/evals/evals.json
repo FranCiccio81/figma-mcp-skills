@@ -1,0 +1,18 @@
+{
+  "skill_name": "bridge-ios",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the Buy order ticket for Nestlé on iPhone with Bridge.",
+      "expected_output": "A top-to-bottom screen spec naming each component with its origin, key properties and tokens, the review step with fees, states, accessibility notes and gaps.",
+      "files": [],
+      "expectations": [
+        "Uses Buttons Buy-Sell [Mobile] with a label naming the order",
+        "Top app bar and segmented control are [Native]",
+        "Shows estimated cost and fees before confirmation",
+        "Lists loading, market closed, insufficient funds and rejected states",
+        "Only token names that exist in the index"
+      ]
+    }
+  ]
+}
