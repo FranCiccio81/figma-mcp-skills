@@ -1,0 +1,17 @@
+{
+  "skill_name": "compose-implementation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement a Compose watchlist screen from this Figma frame: list of instruments with price and change, a search field, and on tablets a detail pane on the right. Our theme is BridgeTheme with tokens mapped to MaterialTheme.",
+      "expected_output": "Compose code using BridgeTheme/MaterialTheme roles, hoisted state, a list-detail layout driven by window size class, edge-to-edge insets and imePadding for the search field, semantics for price change (not color only), previews for dark, font scale 2.0, RTL and expanded width, and a pointer to the official adaptive skill.",
+      "files": [],
+      "assertions": [
+        "Layout changes based on window size class",
+        "No raw Color(0x...) values in components",
+        "Price change is conveyed by text or semantics, not color alone",
+        "Previews include large font scale and RTL"
+      ]
+    }
+  ]
+}

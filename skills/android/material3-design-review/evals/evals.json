@@ -1,0 +1,17 @@
+{
+  "skill_name": "material3-design-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review our Android trading screen designed by copying the iPhone version: tab bar with 6 tabs, back chevron 'Portfolio' at top-left, segmented control, content stops below the status bar, 40x40 dp icon buttons. It must also run on tablets and foldables.",
+      "expected_output": "A review recommending a navigation bar with 3-5 destinations on compact and a rail on medium/expanded, removal of the iOS back chevron label in favour of top app bar navigation and predictive back, segmented buttons or tabs, edge-to-edge with insets, 48 dp targets, and medium/expanded layouts such as list-detail.",
+      "files": [],
+      "assertions": [
+        "Six tabs are reduced or moved to a drawer or rail",
+        "Edge-to-edge with insets is required",
+        "40x40 dp targets are flagged against 48 dp",
+        "Tablet and foldable layouts are proposed per window size class"
+      ]
+    }
+  ]
+}

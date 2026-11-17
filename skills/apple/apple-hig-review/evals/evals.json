@@ -1,0 +1,17 @@
+{
+  "skill_name": "apple-hig-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this iPhone onboarding design ported from our Android app: hamburger drawer top-left, floating action button bottom-right, custom 36x36 pt icon buttons, back arrow on the first screen. Deployment target iOS 18 and 26.",
+      "expected_output": "A review that replaces the drawer with a tab bar or appropriate structure, replaces the FAB with a toolbar or primary button, flags 36x36 pt buttons against the 44x44 pt default, removes back on the root view, and gives Liquid Glass guidance only for iOS 26 while keeping iOS 18 appearance guidance.",
+      "files": [],
+      "assertions": [
+        "The navigation drawer is replaced by an Apple structure",
+        "The FAB is replaced by an Apple equivalent",
+        "36x36 pt targets are flagged against 44x44 pt",
+        "Liquid Glass guidance is scoped to iOS 26"
+      ]
+    }
+  ]
+}

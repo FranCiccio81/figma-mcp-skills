@@ -1,0 +1,17 @@
+{
+  "skill_name": "design-token-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our tokens.json has 140 flat entries like primary-blue: #0057FF, grey-400: #9CA3AF, spacing-16: 16px. We need light and dark modes and DTCG format. Our CLAUDE.md requires 4 tiers: core, semantic, component, breakpoint. Propose the architecture and migration.",
+      "expected_output": "An architecture that keeps the project's 4-tier model (it takes precedence), semantic names without raw values, modes at the semantic tier, DTCG examples with $value/$type and aliases, a contrast table that flags grey-400 on white at about 2.54:1 as unusable for text, and a migration table with deprecation aliases instead of deletions.",
+      "files": ["tokens.json"],
+      "assertions": [
+        "The four project tiers are kept instead of a generic three-tier model",
+        "No semantic token name contains a palette step or value",
+        "Contrast for #9CA3AF on white is computed near 2.54:1 and flagged for text",
+        "Old tokens are kept as deprecated aliases with a removal plan"
+      ]
+    }
+  ]
+}

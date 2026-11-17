@@ -1,0 +1,17 @@
+{
+  "skill_name": "android-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "TalkBack reads our watchlist row as 'AAPL, 189.20, plus 1.2 percent, image, image, button'. The change is green or red only. Fix it in Compose.",
+      "expected_output": "Merged semantics so the row reads as one item with a clear description, decorative images set to null, the change announced with direction words, a custom action or visible control for the row's secondary action, and a non-color cue for gains and losses.",
+      "files": [],
+      "assertions": [
+        "Row semantics are merged",
+        "Decorative images get null contentDescription",
+        "Gain or loss is conveyed without color alone",
+        "The secondary action is exposed as a custom action or labelled control"
+      ]
+    }
+  ]
+}

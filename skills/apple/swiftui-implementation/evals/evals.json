@@ -1,0 +1,17 @@
+{
+  "skill_name": "swiftui-implementation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement a SwiftUI portfolio summary card with a floating 'Trade' button using Liquid Glass. Deployment target is iOS 17. Tokens live in Assets.xcassets as BridgeColors.",
+      "expected_output": "SwiftUI code using asset catalog colors, text styles, Observation-compatible data flow for iOS 17, the floating button using .buttonStyle(.glassProminent) inside if #available(iOS 26, *) with a material fallback, an accessibility label, previews for dark mode and large text, and a note listing API minimum versions.",
+      "files": [],
+      "assertions": [
+        "Liquid Glass APIs are gated by #available(iOS 26, *)",
+        "A pre-iOS 26 fallback is implemented",
+        "No hex color literals appear in the views",
+        "A note lists the APIs used and their minimum OS versions"
+      ]
+    }
+  ]
+}

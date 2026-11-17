@@ -1,0 +1,17 @@
+{
+  "skill_name": "design-system-governance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our DS team is 2 designers and 1 engineer serving 8 squads on web, iOS and Android. Squads detach components in Figma and copy code. Write a governance model.",
+      "expected_output": "A hybrid or federated model suited to a small team, a light contribution workflow with service levels, acceptance criteria including WCAG 2.2 AA and tokens only, SemVer and deprecation policy, quality gates, and health metrics including detached instances and copied components, plus a communication plan.",
+      "files": [],
+      "assertions": [
+        "The operating model fits a three-person team",
+        "Detached instances or forks are measured as a health metric",
+        "A deprecation timeline is defined",
+        "Acceptance criteria include accessibility and token-only styling"
+      ]
+    }
+  ]
+}

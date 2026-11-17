@@ -1,0 +1,17 @@
+{
+  "skill_name": "apple-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the accessibility of our SwiftUI account balance screen (code attached). It has a balance header with custom 13pt fixed font, an icon-only eye button to hide the balance, a parallax header and a chart of the last 30 days.",
+      "expected_output": "Findings: fixed 13pt font ignores Dynamic Type; icon-only button lacks a label and state value (hidden/shown); parallax needs a Reduce Motion alternative; chart needs an accessible summary or audio graph; balance should read currency correctly; plus a test matrix and fixes with SwiftUI APIs.",
+      "files": ["BalanceView.swift"],
+      "assertions": [
+        "The fixed font size is flagged for Dynamic Type",
+        "The eye button gets a label and a state",
+        "A Reduce Motion alternative is required for the parallax",
+        "The chart gets an accessible alternative"
+      ]
+    }
+  ]
+}
